@@ -1,0 +1,259 @@
+package com.bf410.goaldaylocal.data
+
+import androidx.compose.ui.graphics.Color
+import com.tencent.mmkv.MMKV
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.UUID
+
+class LocalStateStore(
+    private val mmkv: MMKV,
+) {
+    fun selectedBookIndex(): Int = mmkv.decodeInt(KEY_BOOK, 0)
+
+    fun selectedPageIndex(bookId: String): Int = mmkv.decodeInt("page_$bookId", 0)
+
+    fun setSelectedBookIndex(index: Int) {
+        mmkv.encode(KEY_BOOK, index)
+    }
+
+    fun setSelectedPageIndex(bookId: String, index: Int) {
+        mmkv.encode("page_$bookId", index)
+    }
+
+    fun isChecked(bookId: String, pageTitle: String, item: String): Boolean =
+        mmkv.decodeBool(checkKey(bookId, pageTitle, item), false)
+
+    fun setChecked(bookId: String, pageTitle: String, item: String, checked: Boolean) {
+        mmkv.encode(checkKey(bookId, pageTitle, item), checked)
+    }
+
+    fun savedBookIds(): Set<String> = mmkv.decodeStringSet(KEY_SAVED_BOOKS, emptySet()) ?: emptySet()
+
+    fun saveBook(bookId: String) {
+        mmkv.encode(KEY_SAVED_BOOKS, savedBookIds() + bookId)
+    }
+
+    fun removeSavedBook(bookId: String) {
+        mmkv.encode(KEY_SAVED_BOOKS, savedBookIds() - bookId)
+    }
+
+    fun calendarAnchorYear(): Int = mmkv.decodeInt(KEY_CALENDAR_YEAR, 2026)
+
+    fun calendarAnchorMonth(): Int = mmkv.decodeInt(KEY_CALENDAR_MONTH, 5)
+
+    fun setCalendarAnchor(year: Int, month: Int) {
+        mmkv.encode(KEY_CALENDAR_YEAR, year)
+        mmkv.encode(KEY_CALENDAR_MONTH, month)
+    }
+
+    fun scheduleEntries(): List<ScheduleEntry> {
+        val raw = mmkv.decodeString(KEY_SCHEDULES, "[]") ?: "[]"
+        val array = JSONArray(raw)
+        return buildList {
+            repeat(array.length()) { index ->
+                val item = array.getJSONObject(index)
+                add(
+                    ScheduleEntry(
+                        id = item.getString("id"),
+                        title = item.getString("title"),
+                        year = item.getInt("year"),
+                        month = item.getInt("month"),
+                        day = item.getInt("day"),
+                        note = item.optString("note"),
+                        completed = item.optBoolean("completed", false),
+                    ),
+                )
+            }
+        }
+    }
+
+    fun saveScheduleEntries(entries: List<ScheduleEntry>) {
+        val array = JSONArray()
+        entries.forEach { entry ->
+            array.put(
+                JSONObject()
+                    .put("id", entry.id)
+                    .put("title", entry.title)
+                    .put("year", entry.year)
+                    .put("month", entry.month)
+                    .put("day", entry.day)
+                    .put("note", entry.note)
+                    .put("completed", entry.completed),
+            )
+        }
+        mmkv.encode(KEY_SCHEDULES, array.toString())
+    }
+
+    fun addScheduleEntry(
+        title: String,
+        year: Int,
+        month: Int,
+        day: Int,
+        note: String = "",
+    ) {
+        val updated = scheduleEntries() + ScheduleEntry(
+            id = UUID.randomUUID().toString(),
+            title = title,
+            year = year,
+            month = month,
+            day = day,
+            note = note,
+        )
+        saveScheduleEntries(updated)
+    }
+
+    fun diaryText(bookId: String, pageTitle: String): String =
+        mmkv.decodeString(diaryKey(bookId, pageTitle), "") ?: ""
+
+    fun setDiaryText(bookId: String, pageTitle: String, text: String) {
+        mmkv.encode(diaryKey(bookId, pageTitle), text)
+    }
+
+    fun customPageItems(bookId: String, pageTitle: String): List<String> {
+        val raw = mmkv.decodeString(pageItemsKey(bookId, pageTitle), "[]") ?: "[]"
+        val array = JSONArray(raw)
+        return buildList {
+            repeat(array.length()) { index ->
+                add(array.getString(index))
+            }
+        }
+    }
+
+    fun saveCustomPageItems(bookId: String, pageTitle: String, items: List<String>) {
+        val array = JSONArray()
+        items.forEach(array::put)
+        mmkv.encode(pageItemsKey(bookId, pageTitle), array.toString())
+    }
+
+    fun customBooks(): List<TopicBook> {
+        val raw = mmkv.decodeString(KEY_CUSTOM_BOOKS, "[]") ?: "[]"
+        val array = JSONArray(raw)
+        return buildList {
+            repeat(array.length()) { index ->
+                val item = array.getJSONObject(index)
+                add(
+                    TopicBook(
+                        id = item.getString("id"),
+                        title = item.getString("title"),
+                        subtitle = item.getString("subtitle"),
+                        color = Color(item.getInt("color")),
+                        pages = decodePages(item.getJSONArray("pages")),
+                    ),
+                )
+            }
+        }
+    }
+
+    fun saveCustomBooks(books: List<TopicBook>) {
+        val array = JSONArray()
+        books.forEach { book ->
+            array.put(
+                JSONObject()
+                    .put("id", book.id)
+                    .put("title", book.title)
+                    .put("subtitle", book.subtitle)
+                    .put("color", book.color.toArgbCompat())
+                    .put("pages", encodePages(book.pages)),
+            )
+        }
+        mmkv.encode(KEY_CUSTOM_BOOKS, array.toString())
+    }
+
+    fun addCustomBook(title: String, subtitle: String, color: Color): TopicBook {
+        val book = TopicBook(
+            id = "custom_${UUID.randomUUID()}",
+            title = title,
+            subtitle = subtitle,
+            color = color,
+            pages = listOf(
+                TargetPage("目标页", emptyList()),
+                PlanPage("计划页", emptyList()),
+                SchedulePage("日程页", emptyList()),
+                DiaryPage("日记页", "写下这本书今天最重要的一条记录。"),
+            ),
+        )
+        saveCustomBooks(customBooks() + book)
+        return book
+    }
+
+    fun updateCustomBook(book: TopicBook) {
+        saveCustomBooks(
+            customBooks().map { existing ->
+                if (existing.id == book.id) book else existing
+            },
+        )
+    }
+
+    fun removeCustomBook(bookId: String) {
+        saveCustomBooks(customBooks().filterNot { it.id == bookId })
+    }
+
+    private fun checkKey(bookId: String, pageTitle: String, item: String): String =
+        "check_${bookId}_${pageTitle}_${item.hashCode()}"
+
+    private fun diaryKey(bookId: String, pageTitle: String): String =
+        "diary_${bookId}_${pageTitle.hashCode()}"
+
+    private fun pageItemsKey(bookId: String, pageTitle: String): String =
+        "page_items_${bookId}_${pageTitle.hashCode()}"
+
+    private fun encodePages(pages: List<BookPage>): JSONArray {
+        val array = JSONArray()
+        pages.forEach { page ->
+            val json = JSONObject().put("title", page.title)
+            when (page) {
+                is TargetPage -> {
+                    json.put("type", "target")
+                    json.put("items", JSONArray(page.items))
+                }
+                is PlanPage -> {
+                    json.put("type", "plan")
+                    json.put("items", JSONArray(page.items))
+                }
+                is SchedulePage -> {
+                    json.put("type", "schedule")
+                    json.put("items", JSONArray(page.items))
+                }
+                is DiaryPage -> {
+                    json.put("type", "diary")
+                    json.put("prompt", page.prompt)
+                }
+            }
+            array.put(json)
+        }
+        return array
+    }
+
+    private fun decodePages(array: JSONArray): List<BookPage> =
+        buildList {
+            repeat(array.length()) { index ->
+                val item = array.getJSONObject(index)
+                val title = item.getString("title")
+                when (item.getString("type")) {
+                    "target" -> add(TargetPage(title, item.toStringList("items")))
+                    "plan" -> add(PlanPage(title, item.toStringList("items")))
+                    "schedule" -> add(SchedulePage(title, item.toStringList("items")))
+                    "diary" -> add(DiaryPage(title, item.optString("prompt", "")))
+                }
+            }
+        }
+
+    private companion object {
+        const val KEY_BOOK = "selected_book"
+        const val KEY_SAVED_BOOKS = "saved_books"
+        const val KEY_CALENDAR_YEAR = "calendar_year"
+        const val KEY_CALENDAR_MONTH = "calendar_month"
+        const val KEY_SCHEDULES = "schedules"
+        const val KEY_CUSTOM_BOOKS = "custom_books"
+    }
+}
+
+private fun JSONObject.toStringList(key: String): List<String> {
+    val array = optJSONArray(key) ?: JSONArray()
+    return buildList {
+        repeat(array.length()) { index -> add(array.getString(index)) }
+    }
+}
+
+private fun Color.toArgbCompat(): Int = value.toLong().toInt()

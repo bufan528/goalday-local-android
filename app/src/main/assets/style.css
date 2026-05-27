@@ -1,0 +1,47 @@
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #fffaf3;
+  color: #342c24;
+  font-family: sans-serif;
+}
+
+#editor {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 18px 2px 24px;
+  outline: none;
+  line-height: 1.75;
+  font-size: 17px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+#editor[placeholder]:empty:not(:focus):before {
+  content: attr(placeholder);
+  opacity: 0.45;
+}
+
+b, strong {
+  font-weight: 700;
+}
+
+h1, h2 {
+  font-weight: 700;
+  margin: 0.6em 0 0.35em;
+}
+
+ul, ol {
+  padding-left: 1.4em;
+}
+
+blockquote {
+  margin: 0.8em 0;
+  padding-left: 0.8em;
+  border-left: 3px solid #d8c0a8;
+  color: #6c635a;
+}
