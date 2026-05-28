@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -91,14 +92,15 @@ fun BookPageTurner(
     val canTurnPrevious = previousPage != null
     val canTurnNext = nextPage != null
     val dragProgress = progress.value.coerceIn(0f, 1f)
+    val visualProgress = visualTurnProgress(dragProgress)
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     val turnRotation = when (direction) {
-        TurnDirection.NEXT -> -100f * dragProgress
-        TurnDirection.PREVIOUS -> 100f * dragProgress
+        TurnDirection.NEXT -> -108f * visualProgress
+        TurnDirection.PREVIOUS -> 108f * visualProgress
         null -> 0f
     }
-    val turnShadowWidth = (18f + dragProgress * dragProgress * 86f).dp
+    val turnShadowWidth = (18f + visualProgress * visualProgress * 92f).dp
     val destinationPage = when (direction) {
         TurnDirection.NEXT -> nextPage
         TurnDirection.PREVIOUS -> previousPage
@@ -203,17 +205,7 @@ fun BookPageTurner(
                     ),
             )
 
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .width(12.dp)
-                    .fillMaxHeight()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color(0xFFB79E83), Color(0xFFF0E1D1), Color(0xFFB79E83)),
-                        ),
-                    ),
-            )
+            SpineLayer(visualProgress = visualProgress, active = direction != null)
 
             DestinationPageLayer(
                 modifier = Modifier
@@ -236,11 +228,11 @@ fun BookPageTurner(
                         .padding(20.dp)
                         .graphicsLayer {
                             transformOrigin = if (draggingToNext) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
-                            rotationY = turnRotation * 0.96f
-                            cameraDistance = 34f * density
+                            rotationY = turnRotation * 0.92f
+                            cameraDistance = 30f * density
                         },
                     tint = tint,
-                    progress = dragProgress,
+                    progress = visualProgress,
                     direction = direction,
                 )
             }
@@ -253,11 +245,11 @@ fun BookPageTurner(
                         transformOrigin = if (draggingToNext) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
                         rotationY = turnRotation
                         translationX = when {
-                            draggingToNext -> -(dragProgress * 26f + dragProgress * dragProgress * 28f)
-                            draggingToPrevious -> dragProgress * 26f + dragProgress * dragProgress * 28f
+                            draggingToNext -> -(visualProgress * 22f + visualProgress * visualProgress * 42f)
+                            draggingToPrevious -> visualProgress * 22f + visualProgress * visualProgress * 42f
                             else -> 0f
                         }
-                        cameraDistance = 34f * density
+                        cameraDistance = 30f * density
                         shadowElevation = 24f
                     },
                 page = page,
@@ -290,7 +282,7 @@ fun BookPageTurner(
                             if (draggingToNext) {
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color.Black.copy(alpha = (0.10f + dragProgress * dragProgress * 0.34f).coerceAtMost(0.50f)),
+                                        Color.Black.copy(alpha = (0.10f + visualProgress * visualProgress * 0.34f).coerceAtMost(0.50f)),
                                         Color(0x22000000),
                                         Color.Transparent,
                                     ),
@@ -300,10 +292,32 @@ fun BookPageTurner(
                                     listOf(
                                         Color.Transparent,
                                         Color(0x22000000),
-                                        Color.Black.copy(alpha = (0.10f + dragProgress * dragProgress * 0.34f).coerceAtMost(0.50f)),
+                                        Color.Black.copy(alpha = (0.10f + visualProgress * visualProgress * 0.34f).coerceAtMost(0.50f)),
                                     ),
                                 )
                             },
+                        ),
+                )
+
+                Box(
+                    modifier = Modifier
+                        .align(if (draggingToNext) Alignment.CenterEnd else Alignment.CenterStart)
+                        .width((2f + visualProgress * 6f).dp)
+                        .fillMaxHeight()
+                        .background(
+                            Brush.horizontalGradient(
+                                if (draggingToNext) {
+                                    listOf(
+                                        Color.White.copy(alpha = (0.10f + visualProgress * 0.22f).coerceAtMost(0.28f)),
+                                        Color.Black.copy(alpha = (0.06f + visualProgress * 0.16f).coerceAtMost(0.20f)),
+                                    )
+                                } else {
+                                    listOf(
+                                        Color.Black.copy(alpha = (0.06f + visualProgress * 0.16f).coerceAtMost(0.20f)),
+                                        Color.White.copy(alpha = (0.10f + visualProgress * 0.22f).coerceAtMost(0.28f)),
+                                    )
+                                },
+                            ),
                         ),
                 )
             }
@@ -336,6 +350,46 @@ fun BookPageTurner(
                     },
             )
         }
+    }
+}
+
+@Composable
+private fun BoxScope.SpineLayer(
+    visualProgress: Float,
+    active: Boolean,
+) {
+    Box(
+        modifier = Modifier
+            .align(Alignment.Center)
+            .width(12.dp)
+            .fillMaxHeight()
+            .background(
+                Brush.horizontalGradient(
+                    listOf(
+                        Color(0xFFAA8D71).copy(alpha = if (active) (0.72f + visualProgress * 0.20f).coerceAtMost(0.94f) else 0.72f),
+                        Color(0xFFE9D7C4),
+                        Color(0xFFAA8D71).copy(alpha = if (active) (0.72f + visualProgress * 0.20f).coerceAtMost(0.94f) else 0.72f),
+                    ),
+                ),
+            ),
+    )
+
+    if (active) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width((10f + visualProgress * 6f).dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color.Black.copy(alpha = (0.06f + visualProgress * 0.14f).coerceAtMost(0.18f)),
+                            Color.Transparent,
+                            Color.Black.copy(alpha = (0.06f + visualProgress * 0.14f).coerceAtMost(0.18f)),
+                        ),
+                    ),
+                ),
+        )
     }
 }
 
@@ -377,7 +431,7 @@ private fun DestinationPageLayer(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer { alpha = (0.08f + revealProgress * revealProgress * 0.92f).coerceIn(0.08f, 1f) },
+                .graphicsLayer { alpha = (0.06f + visualTurnProgress(revealProgress) * 0.94f).coerceIn(0.06f, 1f) },
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(99.dp)).background(tint.copy(alpha = 0.78f)))
@@ -410,9 +464,9 @@ private fun PageBackLayer(
             .background(
                 Brush.horizontalGradient(
                     if (direction == TurnDirection.NEXT) {
-                        listOf(Color(0xFFE5D5C0), Color(0xFFF8F1E7), Color(0xFFFFFCF7))
+                        listOf(Color(0xFFE0CFB9), Color(0xFFF4EBDF), Color(0xFFFFFCF7))
                     } else {
-                        listOf(Color(0xFFFFFCF7), Color(0xFFF8F1E7), Color(0xFFE5D5C0))
+                        listOf(Color(0xFFFFFCF7), Color(0xFFF4EBDF), Color(0xFFE0CFB9))
                     },
                 ),
             )
@@ -430,6 +484,30 @@ private fun PageBackLayer(
             Text("当前进度 ${(progress * 100).toInt()}%", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF9C8F81))
             Spacer(Modifier.weight(1f))
         }
+
+        Box(
+            modifier = Modifier
+                .align(if (direction == TurnDirection.NEXT) Alignment.CenterStart else Alignment.CenterEnd)
+                .width((12f + progress * 26f).dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        if (direction == TurnDirection.NEXT) {
+                            listOf(
+                                Color.Black.copy(alpha = (0.08f + progress * 0.16f).coerceAtMost(0.22f)),
+                                Color.White.copy(alpha = (0.10f + progress * 0.18f).coerceAtMost(0.24f)),
+                                Color.Transparent,
+                            )
+                        } else {
+                            listOf(
+                                Color.Transparent,
+                                Color.White.copy(alpha = (0.10f + progress * 0.18f).coerceAtMost(0.24f)),
+                                Color.Black.copy(alpha = (0.08f + progress * 0.16f).coerceAtMost(0.22f)),
+                            )
+                        },
+                    ),
+                ),
+        )
     }
 }
 

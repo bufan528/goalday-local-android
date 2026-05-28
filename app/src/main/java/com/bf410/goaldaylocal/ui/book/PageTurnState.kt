@@ -66,3 +66,9 @@ fun applyBoundaryResistance(rawProgress: Float, canTurn: Boolean): Float {
 }
 
 fun initialEdgeTapProgress(): Float = EDGE_TAP_START_PROGRESS
+
+fun visualTurnProgress(progress: Float): Float {
+    val clamped = progress.coerceIn(0f, 1f)
+    val lateLift = clamped * clamped * (3f - 2f * clamped)
+    return (clamped * 0.55f + lateLift * 0.65f).coerceIn(0f, 1f)
+}

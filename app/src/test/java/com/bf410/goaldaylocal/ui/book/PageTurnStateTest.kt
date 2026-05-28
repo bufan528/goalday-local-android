@@ -90,4 +90,11 @@ class PageTurnStateTest {
 
         assertTrue(progress in 0.18f..0.35f)
     }
+
+    @Test
+    fun visual_progress_emphasizes_late_turn_more_than_linear_progress() {
+        val visual = visualTurnProgress(0.7f)
+
+        assertTrue(visual > 0.7f)
+    }
 }
