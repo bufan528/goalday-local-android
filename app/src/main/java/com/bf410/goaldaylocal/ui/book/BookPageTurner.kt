@@ -1,5 +1,9 @@
 package com.bf410.goaldaylocal.ui.book
 
+import android.annotation.SuppressLint
+import android.webkit.JavascriptInterface
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -31,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +56,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.PlanPage
@@ -59,12 +65,6 @@ import com.bf410.goaldaylocal.data.TargetPage
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import kotlin.math.abs
-
-private const val TURN_DISTANCE_THRESHOLD = 0.32f
-private const val TURN_FLING_THRESHOLD = 1600f
-private const val BOUNDARY_RESISTANCE_FACTOR = 0.28f
-private const val OPPOSING_VELOCITY_THRESHOLD = 600f
-private const val EDGE_TAP_START_PROGRESS = 0.24f
 
 @Composable
 fun BookPageTurner(
@@ -808,13 +808,22 @@ private fun DiarySection(
                 DiaryToolChip("引用") { onCommand(RichEditorCommand("formatBlock", "<blockquote>")) }
                 DiaryToolChip("完成") { onContentModeChange(PageContentMode.Browsing) }
             }
-            OutlinedTextField(
-                value = diaryDraft,
-                onValueChange = onDiaryChange,
-                modifier = Modifier.fillMaxWidth().height(320.dp),
-                shape = RoundedCornerShape(24.dp),
-                placeholder = { Text("写下今天的记录、感受或下一步。") },
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(320.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color(0xFFFFFBF5))
+                    .padding(18.dp),
+            ) {
+                InlineRichDiaryEditor(
+                    html = diaryDraft,
+                    placeholder = "写下今天的记录、感受或下一步。",
+                    modifier = Modifier.fillMaxSize(),
+                    pendingCommand = pendingCommand,
+                    onHtmlChange = onDiaryChange,
+                )
+            }
         } else {
             PaperNoteCard(
                 modifier = Modifier.clickable {
@@ -905,47 +914,66 @@ private fun DiaryToolChip(
     )
 }
 
-private fun resolvePageTurnRelease(
-    direction: TurnDirection,
-    progress: Float,
-    velocity: Float,
-    hasPreviousPage: Boolean,
-    hasNextPage: Boolean,
-): TurnReleaseResult {
-    val canTurn = when (direction) {
-        TurnDirection.NEXT -> hasNextPage
-        TurnDirection.PREVIOUS -> hasPreviousPage
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun InlineRichDiaryEditor(
+    html: String,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    pendingCommand: RichEditorCommand? = null,
+    onHtmlChange: (String) -> Unit,
+) {
+    var initialHtmlLoaded by remember { mutableStateOf(false) }
+    var lastAppliedHtml by remember { mutableStateOf<String?>(null) }
+    var appliedCommandCount by remember { mutableIntStateOf(0) }
+    val bridge = remember {
+        object {
+            @JavascriptInterface
+            fun onChange(value: String) {
+                lastAppliedHtml = value
+                onHtmlChange(value)
+            }
+        }
     }
-    if (!canTurn) return TurnReleaseResult.SnapBack
 
-    val progressPasses = progress >= TURN_DISTANCE_THRESHOLD
-    val velocityPasses = when (direction) {
-        TurnDirection.NEXT -> velocity <= -TURN_FLING_THRESHOLD
-        TurnDirection.PREVIOUS -> velocity >= TURN_FLING_THRESHOLD
-    }
-    val opposingVelocity = when (direction) {
-        TurnDirection.NEXT -> velocity >= OPPOSING_VELOCITY_THRESHOLD
-        TurnDirection.PREVIOUS -> velocity <= -OPPOSING_VELOCITY_THRESHOLD
-    }
+    AndroidView(
+        modifier = modifier,
+        factory = { context ->
+            WebView(context).apply {
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                isVerticalScrollBarEnabled = false
+                addJavascriptInterface(bridge, "AndroidEditor")
+                webViewClient = object : WebViewClient() {
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        view?.evaluateJavascript("RE.setPlaceholder(${placeholder.asJsLiteral()});", null)
+                        view?.evaluateJavascript("RE.setHtml(${html.asJsLiteral()});", null)
+                        lastAppliedHtml = html
+                        initialHtmlLoaded = true
+                    }
+                }
+                loadUrl("file:///android_asset/editor.html")
+            }
+        },
+        update = { webView ->
+            webView.evaluateJavascript("RE.setPlaceholder(${placeholder.asJsLiteral()});", null)
 
-    return when {
-        opposingVelocity -> TurnReleaseResult.SnapBack
-        progressPasses || velocityPasses -> if (direction == TurnDirection.NEXT) TurnReleaseResult.CompleteNext else TurnReleaseResult.CompletePrevious
-        else -> TurnReleaseResult.SnapBack
-    }
+            if (initialHtmlLoaded && html != lastAppliedHtml) {
+                webView.evaluateJavascript("RE.setHtml(${html.asJsLiteral()});", null)
+                lastAppliedHtml = html
+            }
+
+            if (pendingCommand != null) {
+                val commandKey = pendingCommand.hashCode()
+                if (appliedCommandCount != commandKey) {
+                    val value = pendingCommand.value?.asJsLiteral() ?: "null"
+                    webView.evaluateJavascript("RE.command(${pendingCommand.name.asJsLiteral()}, $value);", null)
+                    appliedCommandCount = commandKey
+                }
+            }
+        },
+    )
 }
 
-private fun applyBoundaryResistance(rawProgress: Float, canTurn: Boolean): Float {
-    if (canTurn) return rawProgress.coerceIn(0f, 1f)
-    val distance = abs(rawProgress)
-    val curved = (distance * BOUNDARY_RESISTANCE_FACTOR) / (1f + distance * 0.9f)
-    return curved.coerceIn(0f, 0.17f)
-}
-
-private fun initialEdgeTapProgress(): Float = EDGE_TAP_START_PROGRESS
-
-private fun visualTurnProgress(progress: Float): Float {
-    val clamped = progress.coerceIn(0f, 1f)
-    val lateLift = clamped * clamped * (3f - 2f * clamped)
-    return (clamped * 0.55f + lateLift * 0.65f).coerceIn(0f, 1f)
-}
+private fun String.asJsLiteral(): String =
+    "'" + replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "") + "'"
