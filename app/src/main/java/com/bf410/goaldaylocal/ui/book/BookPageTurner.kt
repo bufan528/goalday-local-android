@@ -184,14 +184,14 @@ fun BookPageTurner(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 16.dp)
-                .shadow(28.dp, RoundedCornerShape(30.dp), clip = false)
-                .clip(RoundedCornerShape(30.dp))
+                .padding(horizontal = 8.dp, vertical = 6.dp)
+                .shadow(34.dp, RoundedCornerShape(42.dp), clip = false)
+                .clip(RoundedCornerShape(42.dp))
                 .background(
                     Brush.linearGradient(
-                        listOf(Color(0xFFE7D4BE), Color(0xFFF7F0E6), Color(0xFFE6D2BC)),
-                        start = Offset.Zero,
-                        end = Offset(1100f, 1500f),
+                        listOf(Color(0xFFC79B75), Color(0xFFE7C7A5), Color(0xFFD2A784)),
+                        start = Offset(0f, 0f),
+                        end = Offset(1300f, 900f),
                     ),
                 ),
         ) {
@@ -199,8 +199,26 @@ fun BookPageTurner(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        Brush.horizontalGradient(
-                            listOf(Color(0x22A18362), Color.Transparent, Color(0x22A18362)),
+                        Brush.verticalGradient(
+                            listOf(
+                                Color(0x26FFFFFF),
+                                Color.Transparent,
+                                Color(0x18000000),
+                            ),
+                        ),
+                    ),
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 18.dp, vertical = 20.dp)
+                    .clip(RoundedCornerShape(36.dp))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(Color(0xFFC89B72), Color(0xFFE5C49F), Color(0xFFBE8F63)),
+                            start = Offset(0f, 180f),
+                            end = Offset(1200f, 780f),
                         ),
                     ),
             )
@@ -210,7 +228,7 @@ fun BookPageTurner(
             DestinationPageLayer(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp),
+                    .padding(horizontal = 28.dp, vertical = 26.dp),
                 bookTitle = bookTitle,
                 subtitle = subtitle,
                 page = destinationPage,
@@ -225,7 +243,7 @@ fun BookPageTurner(
                 PageBackLayer(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(20.dp)
+                        .padding(horizontal = 28.dp, vertical = 26.dp)
                         .graphicsLayer {
                             transformOrigin = if (draggingToNext) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
                             rotationY = turnRotation * 0.92f
@@ -240,7 +258,7 @@ fun BookPageTurner(
             ActivePageLayer(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp)
+                    .padding(horizontal = 28.dp, vertical = 26.dp)
                     .graphicsLayer {
                         transformOrigin = if (draggingToNext) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
                         rotationY = turnRotation
@@ -325,7 +343,7 @@ fun BookPageTurner(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .width(52.dp)
+                    .width(60.dp)
                     .fillMaxHeight()
                     .clickable(enabled = canTurnPrevious) {
                         direction = TurnDirection.PREVIOUS
@@ -339,7 +357,7 @@ fun BookPageTurner(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .width(52.dp)
+                    .width(60.dp)
                     .fillMaxHeight()
                     .clickable(enabled = canTurnNext) {
                         direction = TurnDirection.NEXT
@@ -361,14 +379,14 @@ private fun BoxScope.SpineLayer(
     Box(
         modifier = Modifier
             .align(Alignment.Center)
-            .width(12.dp)
+            .width(18.dp)
             .fillMaxHeight()
             .background(
                 Brush.horizontalGradient(
                     listOf(
-                        Color(0xFFAA8D71).copy(alpha = if (active) (0.72f + visualProgress * 0.20f).coerceAtMost(0.94f) else 0.72f),
-                        Color(0xFFE9D7C4),
-                        Color(0xFFAA8D71).copy(alpha = if (active) (0.72f + visualProgress * 0.20f).coerceAtMost(0.94f) else 0.72f),
+                        Color(0xFF8E6243).copy(alpha = if (active) (0.76f + visualProgress * 0.18f).coerceAtMost(0.95f) else 0.76f),
+                        Color(0xFFF4E2CF),
+                        Color(0xFF8E6243).copy(alpha = if (active) (0.76f + visualProgress * 0.18f).coerceAtMost(0.95f) else 0.76f),
                     ),
                 ),
             ),
@@ -378,7 +396,7 @@ private fun BoxScope.SpineLayer(
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width((10f + visualProgress * 6f).dp)
+                .width((14f + visualProgress * 8f).dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
@@ -420,14 +438,28 @@ private fun DestinationPageLayer(
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(28.dp, 28.dp, 22.dp, 22.dp))
             .background(
                 Brush.horizontalGradient(
-                    listOf(Color(0xFFF1E0CA), Color(0xFFFFFBF5), Color(0xFFEFDFC9)),
+                    listOf(Color(0xFFF5E9D8), Color(0xFFFFFCF7), Color(0xFFF0DECA)),
                 ),
             )
-            .padding(26.dp),
+            .padding(horizontal = 28.dp, vertical = 26.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0x14A07856),
+                            Color.Transparent,
+                            Color(0x10C9AA87),
+                        ),
+                    ),
+                ),
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -460,7 +492,7 @@ private fun PageBackLayer(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(24.dp, 24.dp, 28.dp, 28.dp))
             .background(
                 Brush.horizontalGradient(
                     if (direction == TurnDirection.NEXT) {
@@ -470,8 +502,22 @@ private fun PageBackLayer(
                     },
                 ),
             )
-            .padding(26.dp),
+            .padding(horizontal = 28.dp, vertical = 26.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.Transparent,
+                            Color(0x10FFFFFF),
+                            Color.Transparent,
+                        ),
+                    ),
+                ),
+        )
+
         Column(modifier = Modifier.fillMaxSize()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(99.dp)).background(tint.copy(alpha = 0.64f)))
@@ -508,6 +554,22 @@ private fun PageBackLayer(
                     ),
                 ),
         )
+
+        Box(
+            modifier = Modifier
+                .align(if (direction == TurnDirection.NEXT) Alignment.CenterStart else Alignment.CenterEnd)
+                .width((3f + progress * 4f).dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.White.copy(alpha = (0.12f + progress * 0.20f).coerceAtMost(0.26f)),
+                            Color.Transparent,
+                            Color.Black.copy(alpha = (0.06f + progress * 0.12f).coerceAtMost(0.16f)),
+                        ),
+                    ),
+                ),
+        )
     }
 }
 
@@ -535,14 +597,28 @@ private fun ActivePageLayer(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(26.dp, 26.dp, 30.dp, 30.dp))
             .background(
                 Brush.horizontalGradient(
-                    listOf(Color(0xFFFFFEFB), Color(0xFFF9F2E9), Color(0xFFEBDAC4)),
+                    listOf(Color(0xFFFFFEFB), Color(0xFFFBF4EB), Color(0xFFECD9C0)),
                 ),
             )
-            .padding(26.dp),
+            .padding(horizontal = 30.dp, vertical = 28.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0x0D9D7456),
+                            Color.Transparent,
+                            Color(0x12986B49),
+                        ),
+                    ),
+                ),
+        )
+
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(99.dp)).background(tint))
