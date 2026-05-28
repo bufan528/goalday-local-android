@@ -662,18 +662,48 @@ private fun EditableBulletPage(
     onContentModeChange: (PageContentMode) -> Unit,
 ) {
     var newItem by remember(pageTitle) { mutableStateOf("") }
+    var editedBaseItems by remember(pageTitle, baseItems) { mutableStateOf(baseItems) }
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        baseItems.forEach { item ->
-            ActionBulletRow(pageTitle, item, tint, isChecked(pageTitle, item), false, onToggleChecked, onAddToSchedule, onRemoveCustomItem, onRenameCustomItem, contentMode, onContentModeChange)
+        editedBaseItems.forEach { item ->
+            ActionBulletRow(
+                pageTitle = pageTitle,
+                item = item,
+                tint = tint,
+                checked = isChecked(pageTitle, item),
+                removable = false,
+                onToggleChecked = onToggleChecked,
+                onAddToSchedule = onAddToSchedule,
+                onRemoveCustomItem = onRemoveCustomItem,
+                onRenameCustomItem = onRenameCustomItem,
+                contentMode = contentMode,
+                onContentModeChange = onContentModeChange,
+                onRenameDisplayedItem = { oldItem, replacement ->
+                    editedBaseItems = renameDisplayedChecklistItem(editedBaseItems, oldItem, replacement)
+                },
+            )
         }
         if (customItems.isNotEmpty()) {
             Text("我的内容", style = MaterialTheme.typography.titleMedium, color = Color(0xFF5E4837))
             customItems.forEach { item ->
-                ActionBulletRow(pageTitle, item, tint, isChecked(pageTitle, item), true, onToggleChecked, onAddToSchedule, onRemoveCustomItem, onRenameCustomItem, contentMode, onContentModeChange)
+                ActionBulletRow(
+                    pageTitle = pageTitle,
+                    item = item,
+                    tint = tint,
+                    checked = isChecked(pageTitle, item),
+                    removable = true,
+                    onToggleChecked = onToggleChecked,
+                    onAddToSchedule = onAddToSchedule,
+                    onRemoveCustomItem = onRemoveCustomItem,
+                    onRenameCustomItem = onRenameCustomItem,
+                    contentMode = contentMode,
+                    onContentModeChange = onContentModeChange,
+                    onRenameDisplayedItem = { _, _ -> },
+                )
             }
         }
         PaperNoteCard {
+            Text("先浏览，再点条目编辑。新增内容仍然在这里完成。", style = MaterialTheme.typography.bodySmall, color = Color(0xFF7B6B5A))
             OutlinedTextField(
                 value = newItem,
                 onValueChange = { newItem = it },
@@ -706,13 +736,14 @@ private fun ActionBulletRow(
     onRenameCustomItem: (String, String) -> Unit,
     contentMode: PageContentMode,
     onContentModeChange: (PageContentMode) -> Unit,
+    onRenameDisplayedItem: (String, String) -> Unit,
 ) {
     val activeEdit = contentMode as? PageContentMode.EditingChecklistItem
     val isEditingThisRow = activeEdit?.title == pageTitle && activeEdit.item == item
     var draft by remember(pageTitle, item) { mutableStateOf(item) }
 
     PaperNoteCard {
-        if (isEditingThisRow && removable) {
+        if (isEditingThisRow) {
             OutlinedTextField(
                 value = draft,
                 onValueChange = { draft = it },
@@ -724,17 +755,23 @@ private fun ActionBulletRow(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 TextButton(onClick = {
-                    onRenameCustomItem(item, draft)
+                    if (removable) {
+                        onRenameCustomItem(item, draft)
+                    } else {
+                        onRenameDisplayedItem(item, draft)
+                    }
                     onContentModeChange(PageContentMode.Browsing)
                 }) { Text("保存") }
                 TextButton(onClick = {
                     draft = item
                     onContentModeChange(PageContentMode.Browsing)
                 }) { Text("取消") }
-                TextButton(onClick = {
-                    onRemoveCustomItem(item)
-                    onContentModeChange(PageContentMode.Browsing)
-                }) { Text("删除") }
+                if (removable) {
+                    TextButton(onClick = {
+                        onRemoveCustomItem(item)
+                        onContentModeChange(PageContentMode.Browsing)
+                    }) { Text("删除") }
+                }
             }
         } else {
             Row(
@@ -772,16 +809,14 @@ private fun ActionBulletRow(
                         .clickable { onAddToSchedule(item, LocalDate.now().dayOfMonth) }
                         .padding(horizontal = 10.dp, vertical = 8.dp),
                 )
-                if (removable) {
-                    Text(
-                        text = "编辑",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = Color(0xFF8F684F),
-                        modifier = Modifier
-                            .clickable { onContentModeChange(PageContentMode.EditingChecklistItem(pageTitle, item)) }
-                            .padding(top = 8.dp),
-                    )
-                }
+                Text(
+                    text = "编辑",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color(0xFF8F684F),
+                    modifier = Modifier
+                        .clickable { onContentModeChange(PageContentMode.EditingChecklistItem(pageTitle, item)) }
+                        .padding(top = 8.dp),
+                )
             }
         }
     }
@@ -871,7 +906,19 @@ private fun PaperNoteCard(
             )
             .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color(0x14A17856)),
+        )
         content()
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color(0x0EA17856)),
+        )
     }
 }
 

@@ -30,3 +30,17 @@ fun pageContentModeForTap(
 }
 
 fun canTurnPage(mode: PageContentMode): Boolean = mode == PageContentMode.Browsing
+
+fun renameDisplayedChecklistItem(
+    items: List<String>,
+    oldItem: String,
+    newItem: String,
+): List<String> {
+    val trimmed = newItem.trim()
+    if (trimmed.isBlank()) {
+        return items
+    }
+    return items.map { item ->
+        if (item == oldItem) trimmed else item
+    }
+}

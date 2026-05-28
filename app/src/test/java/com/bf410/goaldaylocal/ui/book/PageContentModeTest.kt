@@ -41,4 +41,26 @@ class PageContentModeTest {
         assertFalse(canTurnPage(PageContentMode.EditingDiary(title = "Diary")))
         assertFalse(canTurnPage(PageContentMode.EditingChecklistItem(title = "Plan", item = "A")))
     }
+
+    @Test
+    fun renaming_displayed_checklist_item_updates_matching_entry() {
+        val result = renameDisplayedChecklistItem(
+            items = listOf("A", "B", "C"),
+            oldItem = "B",
+            newItem = "B edited",
+        )
+
+        assertEquals(listOf("A", "B edited", "C"), result)
+    }
+
+    @Test
+    fun renaming_displayed_checklist_item_ignores_blank_replacement() {
+        val result = renameDisplayedChecklistItem(
+            items = listOf("A", "B", "C"),
+            oldItem = "B",
+            newItem = "   ",
+        )
+
+        assertEquals(listOf("A", "B", "C"), result)
+    }
 }
