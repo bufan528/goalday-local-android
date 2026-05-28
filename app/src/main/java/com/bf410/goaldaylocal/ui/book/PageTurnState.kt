@@ -16,6 +16,8 @@ enum class TurnReleaseResult {
 private const val TURN_DISTANCE_THRESHOLD = 0.32f
 private const val TURN_FLING_THRESHOLD = 1600f
 private const val BOUNDARY_RESISTANCE_FACTOR = 0.28f
+private const val OPPOSING_VELOCITY_THRESHOLD = 600f
+private const val EDGE_TAP_START_PROGRESS = 0.24f
 
 fun resolvePageTurnRelease(
     direction: TurnDirection,
@@ -37,8 +39,13 @@ fun resolvePageTurnRelease(
         TurnDirection.NEXT -> velocity <= -TURN_FLING_THRESHOLD
         TurnDirection.PREVIOUS -> velocity >= TURN_FLING_THRESHOLD
     }
+    val opposingVelocity = when (direction) {
+        TurnDirection.NEXT -> velocity >= OPPOSING_VELOCITY_THRESHOLD
+        TurnDirection.PREVIOUS -> velocity <= -OPPOSING_VELOCITY_THRESHOLD
+    }
 
     return when {
+        opposingVelocity -> TurnReleaseResult.SnapBack
         progressPasses || velocityPasses -> {
             when (direction) {
                 TurnDirection.NEXT -> TurnReleaseResult.CompleteNext
@@ -53,5 +60,9 @@ fun applyBoundaryResistance(rawProgress: Float, canTurn: Boolean): Float {
     if (canTurn) {
         return rawProgress.coerceIn(0f, 1f)
     }
-    return (abs(rawProgress) * BOUNDARY_RESISTANCE_FACTOR).coerceIn(0f, 0.18f)
+    val distance = abs(rawProgress)
+    val curved = (distance * BOUNDARY_RESISTANCE_FACTOR) / (1f + distance * 0.9f)
+    return curved.coerceIn(0f, 0.17f)
 }
+
+fun initialEdgeTapProgress(): Float = EDGE_TAP_START_PROGRESS

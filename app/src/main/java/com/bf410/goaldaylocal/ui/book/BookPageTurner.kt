@@ -1,6 +1,8 @@
 package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -92,11 +94,11 @@ fun BookPageTurner(
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     val turnRotation = when (direction) {
-        TurnDirection.NEXT -> -92f * dragProgress
-        TurnDirection.PREVIOUS -> 92f * dragProgress
+        TurnDirection.NEXT -> -100f * dragProgress
+        TurnDirection.PREVIOUS -> 100f * dragProgress
         null -> 0f
     }
-    val turnShadowWidth = (20f + dragProgress * 64f).dp
+    val turnShadowWidth = (18f + dragProgress * dragProgress * 86f).dp
     val destinationPage = when (direction) {
         TurnDirection.NEXT -> nextPage
         TurnDirection.PREVIOUS -> previousPage
@@ -107,15 +109,15 @@ fun BookPageTurner(
         scope.launch {
             when (result) {
                 TurnReleaseResult.CompleteNext -> {
-                    progress.animateTo(1f, animationSpec = tween(durationMillis = 220))
+                    progress.animateTo(1f, animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing))
                     onFlipNext()
                 }
                 TurnReleaseResult.CompletePrevious -> {
-                    progress.animateTo(1f, animationSpec = tween(durationMillis = 220))
+                    progress.animateTo(1f, animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing))
                     onFlipPrevious()
                 }
                 TurnReleaseResult.SnapBack -> {
-                    progress.animateTo(0f, animationSpec = tween(durationMillis = 220))
+                    progress.animateTo(0f, animationSpec = tween(durationMillis = 280, easing = LinearOutSlowInEasing))
                 }
             }
             progress.snapTo(0f)
@@ -251,8 +253,8 @@ fun BookPageTurner(
                         transformOrigin = if (draggingToNext) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
                         rotationY = turnRotation
                         translationX = when {
-                            draggingToNext -> -dragProgress * 34f
-                            draggingToPrevious -> dragProgress * 34f
+                            draggingToNext -> -(dragProgress * 26f + dragProgress * dragProgress * 28f)
+                            draggingToPrevious -> dragProgress * 26f + dragProgress * dragProgress * 28f
                             else -> 0f
                         }
                         cameraDistance = 34f * density
@@ -288,7 +290,7 @@ fun BookPageTurner(
                             if (draggingToNext) {
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color.Black.copy(alpha = (0.12f + dragProgress * 0.26f).coerceAtMost(0.42f)),
+                                        Color.Black.copy(alpha = (0.10f + dragProgress * dragProgress * 0.34f).coerceAtMost(0.50f)),
                                         Color(0x22000000),
                                         Color.Transparent,
                                     ),
@@ -298,7 +300,7 @@ fun BookPageTurner(
                                     listOf(
                                         Color.Transparent,
                                         Color(0x22000000),
-                                        Color.Black.copy(alpha = (0.12f + dragProgress * 0.26f).coerceAtMost(0.42f)),
+                                        Color.Black.copy(alpha = (0.10f + dragProgress * dragProgress * 0.34f).coerceAtMost(0.50f)),
                                     ),
                                 )
                             },
@@ -313,6 +315,9 @@ fun BookPageTurner(
                     .fillMaxHeight()
                     .clickable(enabled = canTurnPrevious) {
                         direction = TurnDirection.PREVIOUS
+                        scope.launch {
+                            progress.snapTo(initialEdgeTapProgress())
+                        }
                         settle(TurnReleaseResult.CompletePrevious)
                     },
             )
@@ -324,6 +329,9 @@ fun BookPageTurner(
                     .fillMaxHeight()
                     .clickable(enabled = canTurnNext) {
                         direction = TurnDirection.NEXT
+                        scope.launch {
+                            progress.snapTo(initialEdgeTapProgress())
+                        }
                         settle(TurnReleaseResult.CompleteNext)
                     },
             )
@@ -369,7 +377,7 @@ private fun DestinationPageLayer(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer { alpha = (0.18f + revealProgress * 0.82f).coerceIn(0.18f, 1f) },
+                .graphicsLayer { alpha = (0.08f + revealProgress * revealProgress * 0.92f).coerceIn(0.08f, 1f) },
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(99.dp)).background(tint.copy(alpha = 0.78f)))

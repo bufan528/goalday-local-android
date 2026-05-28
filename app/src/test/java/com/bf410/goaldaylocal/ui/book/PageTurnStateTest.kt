@@ -63,4 +63,31 @@ class PageTurnStateTest {
 
         assertTrue(resisted in 0f..0.2f)
     }
+
+    @Test
+    fun boundary_resistance_clamps_large_unavailable_drag_more_aggressively() {
+        val resisted = applyBoundaryResistance(rawProgress = 0.9f, canTurn = false)
+
+        assertTrue(resisted < 0.18f)
+    }
+
+    @Test
+    fun opposing_velocity_snaps_back_even_when_progress_is_near_threshold() {
+        val result = resolvePageTurnRelease(
+            direction = TurnDirection.NEXT,
+            progress = 0.30f,
+            velocity = 900f,
+            hasPreviousPage = true,
+            hasNextPage = true,
+        )
+
+        assertEquals(TurnReleaseResult.SnapBack, result)
+    }
+
+    @Test
+    fun edge_tap_progress_starts_in_turning_range() {
+        val progress = initialEdgeTapProgress()
+
+        assertTrue(progress in 0.18f..0.35f)
+    }
 }
