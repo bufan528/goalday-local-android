@@ -66,11 +66,6 @@ private const val BOUNDARY_RESISTANCE_FACTOR = 0.28f
 private const val OPPOSING_VELOCITY_THRESHOLD = 600f
 private const val EDGE_TAP_START_PROGRESS = 0.24f
 
-private data class LocalRichEditorCommand(
-    val name: String,
-    val value: String? = null,
-)
-
 @Composable
 fun BookPageTurner(
     bookId: String,
@@ -102,7 +97,7 @@ fun BookPageTurner(
     var pageWidthPx by remember { mutableFloatStateOf(1f) }
     var lastVelocityPxPerSecond by remember { mutableFloatStateOf(0f) }
     var lastEventTimeMs by remember { mutableStateOf(0L) }
-    var diaryCommand by remember(pageIndex) { mutableStateOf<LocalRichEditorCommand?>(null) }
+    var diaryCommand by remember(pageIndex) { mutableStateOf<RichEditorCommand?>(null) }
     var contentMode by remember(pageIndex, bookId) { mutableStateOf<PageContentMode>(PageContentMode.Browsing) }
 
     val canTurnPrevious = previousPage != null
@@ -562,8 +557,8 @@ private fun ActivePageLayer(
     onRemoveCustomItem: (String) -> Unit,
     onRenameCustomItem: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
-    pendingCommand: LocalRichEditorCommand?,
-    onCommand: (LocalRichEditorCommand) -> Unit,
+    pendingCommand: RichEditorCommand?,
+    onCommand: (RichEditorCommand) -> Unit,
     contentMode: PageContentMode,
     onContentModeChange: (PageContentMode) -> Unit,
 ) {
@@ -795,8 +790,8 @@ private fun DiarySection(
     prompt: String,
     tint: Color,
     diaryDraft: String,
-    pendingCommand: LocalRichEditorCommand?,
-    onCommand: (LocalRichEditorCommand) -> Unit,
+    pendingCommand: RichEditorCommand?,
+    onCommand: (RichEditorCommand) -> Unit,
     onDiaryChange: (String) -> Unit,
     contentMode: PageContentMode,
     onContentModeChange: (PageContentMode) -> Unit,
@@ -807,10 +802,10 @@ private fun DiarySection(
         Text(text = prompt, style = MaterialTheme.typography.titleSmall, color = Color(0xFF342C24))
         if (editingDiary?.title == title) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                DiaryToolChip("加粗") { onCommand(LocalRichEditorCommand("bold")) }
-                DiaryToolChip("标题") { onCommand(LocalRichEditorCommand("formatBlock", "<h2>")) }
-                DiaryToolChip("列表") { onCommand(LocalRichEditorCommand("insertUnorderedList")) }
-                DiaryToolChip("引用") { onCommand(LocalRichEditorCommand("formatBlock", "<blockquote>")) }
+                DiaryToolChip("加粗") { onCommand(RichEditorCommand("bold")) }
+                DiaryToolChip("标题") { onCommand(RichEditorCommand("formatBlock", "<h2>")) }
+                DiaryToolChip("列表") { onCommand(RichEditorCommand("insertUnorderedList")) }
+                DiaryToolChip("引用") { onCommand(RichEditorCommand("formatBlock", "<blockquote>")) }
                 DiaryToolChip("完成") { onContentModeChange(PageContentMode.Browsing) }
             }
             OutlinedTextField(
