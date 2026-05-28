@@ -76,4 +76,5 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
 
     implementation("com.tencent:mmkv:1.3.5")
+    testImplementation("junit:junit:4.13.2")
 }
