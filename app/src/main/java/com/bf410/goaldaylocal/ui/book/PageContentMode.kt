@@ -44,3 +44,18 @@ fun renameDisplayedChecklistItem(
         if (item == oldItem) trimmed else item
     }
 }
+
+fun destinationPageSubtitle(direction: TurnDirection?, fallback: String): String =
+    when (direction) {
+        TurnDirection.NEXT -> "下一页"
+        TurnDirection.PREVIOUS -> "上一页"
+        null -> fallback
+    }
+
+fun condensedPreviewText(text: String, maxLength: Int = 80): String {
+    val normalized = text.replace('\n', ' ').trim()
+    if (normalized.length <= maxLength) {
+        return normalized
+    }
+    return normalized.take(maxLength).trimEnd() + "…"
+}

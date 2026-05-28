@@ -63,4 +63,18 @@ class PageContentModeTest {
 
         assertEquals(listOf("A", "B", "C"), result)
     }
+
+    @Test
+    fun destination_page_subtitle_tracks_turn_direction() {
+        assertEquals("下一页", destinationPageSubtitle(TurnDirection.NEXT, "Fallback"))
+        assertEquals("上一页", destinationPageSubtitle(TurnDirection.PREVIOUS, "Fallback"))
+        assertEquals("Fallback", destinationPageSubtitle(null, "Fallback"))
+    }
+
+    @Test
+    fun condensed_preview_text_normalizes_whitespace_and_truncates() {
+        val result = condensedPreviewText("A line\nwith text that should be shortened for preview display", maxLength = 18)
+
+        assertEquals("A line with text t…", result)
+    }
 }
