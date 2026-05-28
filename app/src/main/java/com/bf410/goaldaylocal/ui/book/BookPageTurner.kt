@@ -168,9 +168,7 @@ fun BookPageTurner(
                         lastVelocityPxPerSecond = (dragAmount / deltaMs) * 1000f
                         lastEventTimeMs = nowMs
 
-                        scope.launch {
-                            progress.snapTo(adjustedProgress)
-                        }
+                        scope.launch { progress.snapTo(adjustedProgress) }
                     },
                     onDragCancel = { settle(TurnReleaseResult.SnapBack) },
                     onDragEnd = {
@@ -205,11 +203,7 @@ fun BookPageTurner(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color(0x26FFFFFF), Color.Transparent, Color(0x18000000)),
-                        ),
-                    ),
+                    .background(Brush.verticalGradient(listOf(Color(0x26FFFFFF), Color.Transparent, Color(0x18000000)))),
             )
 
             Box(
@@ -229,9 +223,7 @@ fun BookPageTurner(
             SpineLayer(visualProgress = visualProgress, active = direction != null)
 
             DestinationPageLayer(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 28.dp, vertical = 26.dp),
+                modifier = Modifier.fillMaxSize().padding(horizontal = 28.dp, vertical = 26.dp),
                 bookTitle = bookTitle,
                 subtitle = subtitle,
                 page = destinationPage,
@@ -441,21 +433,13 @@ private fun DestinationPageLayer(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(28.dp, 28.dp, 22.dp, 22.dp))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(Color(0xFFF5E9D8), Color(0xFFFFFCF7), Color(0xFFF0DECA)),
-                ),
-            )
+            .background(Brush.horizontalGradient(listOf(Color(0xFFF5E9D8), Color(0xFFFFFCF7), Color(0xFFF0DECA))))
             .padding(horizontal = 28.dp, vertical = 26.dp),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0x14A07856), Color.Transparent, Color(0x10C9AA87)),
-                    ),
-                ),
+                .background(Brush.verticalGradient(listOf(Color(0x14A07856), Color.Transparent, Color(0x10C9AA87)))),
         )
 
         Column(
@@ -505,11 +489,7 @@ private fun PageBackLayer(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color.Transparent, Color(0x10FFFFFF), Color.Transparent),
-                    ),
-                ),
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0x10FFFFFF), Color.Transparent))),
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
@@ -595,21 +575,13 @@ private fun ActivePageLayer(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(26.dp, 26.dp, 30.dp, 30.dp))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(Color(0xFFFFFEFB), Color(0xFFFBF4EB), Color(0xFFECD9C0)),
-                ),
-            )
+            .background(Brush.horizontalGradient(listOf(Color(0xFFFFFEFB), Color(0xFFFBF4EB), Color(0xFFECD9C0))))
             .padding(horizontal = 30.dp, vertical = 28.dp),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0x0D9D7456), Color.Transparent, Color(0x12986B49)),
-                    ),
-                ),
+                .background(Brush.verticalGradient(listOf(Color(0x0D9D7456), Color.Transparent, Color(0x12986B49)))),
         )
 
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -899,26 +871,12 @@ private fun PaperNoteCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFFFFFCF6), Color(0xFFFAF2E8), Color(0xFFF5E7D6)),
-                ),
-            )
+            .background(Brush.verticalGradient(listOf(Color(0xFFFFFCF6), Color(0xFFFAF2E8), Color(0xFFF5E7D6))))
             .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(Color(0x14A17856)),
-        )
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x14A17856)))
         content()
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(Color(0x0EA17856)),
-        )
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x0EA17856)))
     }
 }
 
