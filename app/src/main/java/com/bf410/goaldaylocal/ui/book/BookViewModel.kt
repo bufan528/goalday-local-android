@@ -113,6 +113,17 @@ class BookViewModel(
         _uiState.update { it.copy(customPageItems = updated) }
     }
 
+    fun renameCustomPageItem(oldItem: String, newItem: String) {
+        if (!supportsCustomItems()) return
+        val trimmed = newItem.trim()
+        if (trimmed.isBlank()) return
+        val updated = _uiState.value.customPageItems.map { item ->
+            if (item == oldItem) trimmed else item
+        }.distinct()
+        store.saveCustomPageItems(currentBook().id, currentPage().title, updated)
+        _uiState.update { it.copy(customPageItems = updated) }
+    }
+
     fun addItemToSchedule(item: String, day: Int) {
         val current = LocalDate.now()
         store.addScheduleEntry(

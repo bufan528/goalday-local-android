@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -46,6 +48,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.BookPage
@@ -77,6 +80,7 @@ fun BookPageTurner(
     onDiaryChange: (String) -> Unit,
     onAddCustomItem: (String) -> Unit,
     onRemoveCustomItem: (String) -> Unit,
+    onRenameCustomItem: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
     onFlipNext: () -> Unit,
     onFlipPrevious: () -> Unit,
@@ -88,9 +92,11 @@ fun BookPageTurner(
     var lastVelocityPxPerSecond by remember { mutableFloatStateOf(0f) }
     var lastEventTimeMs by remember { mutableStateOf(0L) }
     var diaryCommand by remember(pageIndex) { mutableStateOf<RichEditorCommand?>(null) }
+    var contentMode by remember(pageIndex, bookId) { mutableStateOf<PageContentMode>(PageContentMode.Browsing) }
 
     val canTurnPrevious = previousPage != null
     val canTurnNext = nextPage != null
+    val turnEnabled = canTurnPage(contentMode)
     val dragProgress = progress.value.coerceIn(0f, 1f)
     val visualProgress = visualTurnProgress(dragProgress)
     val draggingToNext = direction == TurnDirection.NEXT
@@ -134,7 +140,8 @@ fun BookPageTurner(
             .fillMaxWidth()
             .fillMaxHeight()
             .onSizeChanged { pageWidthPx = it.width.toFloat().coerceAtLeast(1f) }
-            .pointerInput(pageIndex, bookId, canTurnNext, canTurnPrevious, pageWidthPx) {
+            .pointerInput(pageIndex, bookId, canTurnNext, canTurnPrevious, pageWidthPx, turnEnabled) {
+                if (!turnEnabled) return@pointerInput
                 detectHorizontalDragGestures(
                     onDragStart = {
                         lastVelocityPxPerSecond = 0f
@@ -200,11 +207,7 @@ fun BookPageTurner(
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            listOf(
-                                Color(0x26FFFFFF),
-                                Color.Transparent,
-                                Color(0x18000000),
-                            ),
+                            listOf(Color(0x26FFFFFF), Color.Transparent, Color(0x18000000)),
                         ),
                     ),
             )
@@ -285,9 +288,12 @@ fun BookPageTurner(
                 onDiaryChange = onDiaryChange,
                 onAddCustomItem = onAddCustomItem,
                 onRemoveCustomItem = onRemoveCustomItem,
+                onRenameCustomItem = onRenameCustomItem,
                 onAddToSchedule = onAddToSchedule,
                 pendingCommand = diaryCommand,
                 onCommand = { diaryCommand = it },
+                contentMode = contentMode,
+                onContentModeChange = { contentMode = it },
             )
 
             if (direction != null && dragProgress > 0.01f) {
@@ -345,11 +351,9 @@ fun BookPageTurner(
                     .align(Alignment.CenterStart)
                     .width(60.dp)
                     .fillMaxHeight()
-                    .clickable(enabled = canTurnPrevious) {
+                    .clickable(enabled = canTurnPrevious && turnEnabled) {
                         direction = TurnDirection.PREVIOUS
-                        scope.launch {
-                            progress.snapTo(initialEdgeTapProgress())
-                        }
+                        scope.launch { progress.snapTo(initialEdgeTapProgress()) }
                         settle(TurnReleaseResult.CompletePrevious)
                     },
             )
@@ -359,11 +363,9 @@ fun BookPageTurner(
                     .align(Alignment.CenterEnd)
                     .width(60.dp)
                     .fillMaxHeight()
-                    .clickable(enabled = canTurnNext) {
+                    .clickable(enabled = canTurnNext && turnEnabled) {
                         direction = TurnDirection.NEXT
-                        scope.launch {
-                            progress.snapTo(initialEdgeTapProgress())
-                        }
+                        scope.launch { progress.snapTo(initialEdgeTapProgress()) }
                         settle(TurnReleaseResult.CompleteNext)
                     },
             )
@@ -451,11 +453,7 @@ private fun DestinationPageLayer(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(
-                            Color(0x14A07856),
-                            Color.Transparent,
-                            Color(0x10C9AA87),
-                        ),
+                        listOf(Color(0x14A07856), Color.Transparent, Color(0x10C9AA87)),
                     ),
                 ),
         )
@@ -509,11 +507,7 @@ private fun PageBackLayer(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(
-                            Color.Transparent,
-                            Color(0x10FFFFFF),
-                            Color.Transparent,
-                        ),
+                        listOf(Color.Transparent, Color(0x10FFFFFF), Color.Transparent),
                     ),
                 ),
         )
@@ -591,9 +585,12 @@ private fun ActivePageLayer(
     onDiaryChange: (String) -> Unit,
     onAddCustomItem: (String) -> Unit,
     onRemoveCustomItem: (String) -> Unit,
+    onRenameCustomItem: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
     pendingCommand: RichEditorCommand?,
     onCommand: (RichEditorCommand) -> Unit,
+    contentMode: PageContentMode,
+    onContentModeChange: (PageContentMode) -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -610,11 +607,7 @@ private fun ActivePageLayer(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(
-                            Color(0x0D9D7456),
-                            Color.Transparent,
-                            Color(0x12986B49),
-                        ),
+                        listOf(Color(0x0D9D7456), Color.Transparent, Color(0x12986B49)),
                     ),
                 ),
         )
@@ -633,17 +626,10 @@ private fun ActivePageLayer(
             Text(text = page.title, style = MaterialTheme.typography.headlineMedium, color = Color(0xFF2D261F))
             Spacer(Modifier.height(18.dp))
             when (page) {
-                is TargetPage -> EditableBulletPage(page.title, page.items, customPageItems, tint, "添加你的目标", isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onAddToSchedule)
-                is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), "添加你的日程任务", isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onAddToSchedule)
-                is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), "添加你的计划", isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onAddToSchedule)
-                is DiaryPage -> DiarySection(
-                    prompt = page.prompt,
-                    tint = tint,
-                    diaryDraft = diaryDraft,
-                    pendingCommand = pendingCommand,
-                    onCommand = onCommand,
-                    onDiaryChange = onDiaryChange,
-                )
+                is TargetPage -> EditableBulletPage(page.title, page.items, customPageItems, tint, "添加你的目标", isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, contentMode, onContentModeChange)
+                is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), "添加你的日程任务", isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, contentMode, onContentModeChange)
+                is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), "添加你的计划", isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, contentMode, onContentModeChange)
+                is DiaryPage -> DiarySection(page.title, page.prompt, tint, diaryDraft, pendingCommand, onCommand, onDiaryChange, contentMode, onContentModeChange)
             }
             Spacer(Modifier.height(28.dp))
             Text(text = "${pageIndex + 1} / $pageCount", style = MaterialTheme.typography.labelLarge, color = Color(0xFF7A7065))
@@ -670,33 +656,39 @@ private fun EditableBulletPage(
     onToggleChecked: (String, String) -> Unit,
     onAddCustomItem: (String) -> Unit,
     onRemoveCustomItem: (String) -> Unit,
+    onRenameCustomItem: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
+    contentMode: PageContentMode,
+    onContentModeChange: (PageContentMode) -> Unit,
 ) {
     var newItem by remember(pageTitle) { mutableStateOf("") }
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         baseItems.forEach { item ->
-            ActionBulletRow(pageTitle, item, tint, isChecked(pageTitle, item), false, onToggleChecked, onAddToSchedule, onRemoveCustomItem)
+            ActionBulletRow(pageTitle, item, tint, isChecked(pageTitle, item), false, onToggleChecked, onAddToSchedule, onRemoveCustomItem, onRenameCustomItem, contentMode, onContentModeChange)
         }
         if (customItems.isNotEmpty()) {
             Text("我的内容", style = MaterialTheme.typography.titleMedium, color = Color(0xFF5E4837))
             customItems.forEach { item ->
-                ActionBulletRow(pageTitle, item, tint, isChecked(pageTitle, item), true, onToggleChecked, onAddToSchedule, onRemoveCustomItem)
+                ActionBulletRow(pageTitle, item, tint, isChecked(pageTitle, item), true, onToggleChecked, onAddToSchedule, onRemoveCustomItem, onRenameCustomItem, contentMode, onContentModeChange)
             }
         }
-        OutlinedTextField(
-            value = newItem,
-            onValueChange = { newItem = it },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            label = { Text(inputLabel) },
-            singleLine = true,
-        )
-        TextButton(onClick = {
-            onAddCustomItem(newItem)
-            newItem = ""
-        }) {
-            Text("保存")
+        PaperNoteCard {
+            OutlinedTextField(
+                value = newItem,
+                onValueChange = { newItem = it },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                label = { Text(inputLabel) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            )
+            TextButton(onClick = {
+                onAddCustomItem(newItem)
+                newItem = ""
+            }) {
+                Text("保存")
+            }
         }
     }
 }
@@ -711,51 +703,86 @@ private fun ActionBulletRow(
     onToggleChecked: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
     onRemoveCustomItem: (String) -> Unit,
+    onRenameCustomItem: (String, String) -> Unit,
+    contentMode: PageContentMode,
+    onContentModeChange: (PageContentMode) -> Unit,
 ) {
-    Row(
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(
-            verticalAlignment = Alignment.Top,
-            modifier = Modifier
-                .clickable { onToggleChecked(pageTitle, item) }
-                .fillMaxWidth(0.66f),
-        ) {
-            Box(
-                modifier = Modifier
-                    .padding(top = 6.dp)
-                    .size(18.dp)
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(if (checked) tint else Color(0xFFE5DBCD)),
+    val activeEdit = contentMode as? PageContentMode.EditingChecklistItem
+    val isEditingThisRow = activeEdit?.title == pageTitle && activeEdit.item == item
+    var draft by remember(pageTitle, item) { mutableStateOf(item) }
+
+    PaperNoteCard {
+        if (isEditingThisRow && removable) {
+            OutlinedTextField(
+                value = draft,
+                onValueChange = { draft = it },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                label = { Text("编辑内容") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             )
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text = item,
-                style = completedTextStyle(checked),
-                color = if (checked) Color(0xFF8B847D) else Color(0xFF342C24),
-            )
-        }
-        Text(
-            text = "加入日历",
-            style = MaterialTheme.typography.labelLarge,
-            color = Color(0xFF8F684F),
-            modifier = Modifier
-                .clip(RoundedCornerShape(99.dp))
-                .background(Color(0x1A8F684F))
-                .clickable { onAddToSchedule(item, LocalDate.now().dayOfMonth) }
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-        )
-        if (removable) {
-            Text(
-                text = "删除",
-                style = MaterialTheme.typography.labelLarge,
-                color = Color(0xFF9C5A52),
-                modifier = Modifier
-                    .clickable { onRemoveCustomItem(item) }
-                    .padding(top = 8.dp),
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                TextButton(onClick = {
+                    onRenameCustomItem(item, draft)
+                    onContentModeChange(PageContentMode.Browsing)
+                }) { Text("保存") }
+                TextButton(onClick = {
+                    draft = item
+                    onContentModeChange(PageContentMode.Browsing)
+                }) { Text("取消") }
+                TextButton(onClick = {
+                    onRemoveCustomItem(item)
+                    onContentModeChange(PageContentMode.Browsing)
+                }) { Text("删除") }
+            }
+        } else {
+            Row(
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    modifier = Modifier
+                        .clickable { onToggleChecked(pageTitle, item) }
+                        .fillMaxWidth(0.66f),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 6.dp)
+                            .size(18.dp)
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(if (checked) tint else Color(0xFFE5DBCD)),
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = item,
+                        style = completedTextStyle(checked),
+                        color = if (checked) Color(0xFF8B847D) else Color(0xFF342C24),
+                    )
+                }
+                Text(
+                    text = "加入日历",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color(0xFF8F684F),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x1A8F684F))
+                        .clickable { onAddToSchedule(item, LocalDate.now().dayOfMonth) }
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                )
+                if (removable) {
+                    Text(
+                        text = "编辑",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color(0xFF8F684F),
+                        modifier = Modifier
+                            .clickable { onContentModeChange(PageContentMode.EditingChecklistItem(pageTitle, item)) }
+                            .padding(top = 8.dp),
+                    )
+                }
+            }
         }
     }
 }
@@ -768,42 +795,83 @@ private fun completedTextStyle(completed: Boolean): TextStyle =
 
 @Composable
 private fun DiarySection(
+    title: String,
     prompt: String,
     tint: Color,
     diaryDraft: String,
     pendingCommand: RichEditorCommand?,
     onCommand: (RichEditorCommand) -> Unit,
     onDiaryChange: (String) -> Unit,
+    contentMode: PageContentMode,
+    onContentModeChange: (PageContentMode) -> Unit,
 ) {
+    val editingDiary = contentMode as? PageContentMode.EditingDiary
+
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(text = prompt, style = MaterialTheme.typography.titleMedium, color = Color(0xFF342C24))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            DiaryToolChip("加粗") { onCommand(RichEditorCommand("bold")) }
-            DiaryToolChip("标题") { onCommand(RichEditorCommand("formatBlock", "<h2>")) }
-            DiaryToolChip("列表") { onCommand(RichEditorCommand("insertUnorderedList")) }
-            DiaryToolChip("引用") { onCommand(RichEditorCommand("formatBlock", "<blockquote>")) }
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(320.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFFFFFBF5))
-                .padding(18.dp),
-        ) {
-            RichDiaryEditor(
-                html = diaryDraft,
-                placeholder = "写下今天的记录、感受或下一步。",
-                modifier = Modifier.fillMaxSize(),
-                pendingCommand = pendingCommand,
-                onHtmlChange = onDiaryChange,
-            )
+        if (editingDiary?.title == title) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                DiaryToolChip("加粗") { onCommand(RichEditorCommand("bold")) }
+                DiaryToolChip("标题") { onCommand(RichEditorCommand("formatBlock", "<h2>")) }
+                DiaryToolChip("列表") { onCommand(RichEditorCommand("insertUnorderedList")) }
+                DiaryToolChip("引用") { onCommand(RichEditorCommand("formatBlock", "<blockquote>")) }
+                DiaryToolChip("完成") { onContentModeChange(PageContentMode.Browsing) }
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(320.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color(0xFFFFFBF5))
+                    .padding(18.dp),
+            ) {
+                RichDiaryEditor(
+                    html = diaryDraft,
+                    placeholder = "写下今天的记录、感受或下一步。",
+                    modifier = Modifier.fillMaxSize(),
+                    pendingCommand = pendingCommand,
+                    onHtmlChange = onDiaryChange,
+                )
+            }
+        } else {
+            PaperNoteCard(
+                modifier = Modifier.clickable {
+                    onContentModeChange(pageContentModeForTap(DiaryPage(title, prompt)))
+                },
+            ) {
+                Text(
+                    text = if (diaryDraft.isBlank()) "点击这里开始编辑日记，默认先展示内容。" else diaryDraft,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (diaryDraft.isBlank()) Color(0xFF8E806F) else Color(0xFF342C24),
+                )
+            }
         }
         Text(
             text = "纸页内容会保存在本地，不依赖服务器。",
             style = MaterialTheme.typography.bodySmall,
             color = tint.copy(alpha = 0.72f),
         )
+    }
+}
+
+@Composable
+private fun PaperNoteCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFFFFCF6), Color(0xFFFAF2E8), Color(0xFFF5E7D6)),
+                ),
+            )
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+    ) {
+        content()
     }
 }
 

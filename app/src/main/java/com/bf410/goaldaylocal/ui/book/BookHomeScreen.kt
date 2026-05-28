@@ -272,6 +272,7 @@ private fun BookDetailView(
             onDiaryChange = viewModel::updateDiaryDraft,
             onAddCustomItem = viewModel::addCustomPageItem,
             onRemoveCustomItem = viewModel::removeCustomPageItem,
+            onRenameCustomItem = viewModel::renameCustomPageItem,
             onAddToSchedule = viewModel::addItemToSchedule,
             onFlipNext = { if (uiState.selectedPageIndex < book.pages.lastIndex) viewModel.setPage(uiState.selectedPageIndex + 1) },
             onFlipPrevious = { if (uiState.selectedPageIndex > 0) viewModel.setPage(uiState.selectedPageIndex - 1) },
