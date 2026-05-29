@@ -1098,19 +1098,27 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
                 DiaryBlock("小幸福", state.smallJoy)
                 val photos = state.photoNotes.lines().map(String::trim).filter(String::isNotBlank)
                 if (photos.isNotEmpty()) {
-                    Text("图片", style = MaterialTheme.typography.labelLarge, color = Color(0xFF7A6D60))
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        photos.take(2).forEach { note ->
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(78.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(Color(0xFFEFE9E0))
-                                    .border(1.dp, Color(0xFFDDD3C5), RoundedCornerShape(10.dp))
-                                    .padding(6.dp),
-                            ) {
-                                Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258))
+                    DiarySticker("图片墙")
+                    val rows = photos.chunked(3)
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        rows.take(2).forEach { rowItems ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                                repeat(3) { index ->
+                                    val note = rowItems.getOrNull(index)
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(62.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(if (note == null) Color(0xFFF8F4EE) else Color(0xFFEFE9E0))
+                                            .border(1.dp, Color(0xFFDDD3C5), RoundedCornerShape(10.dp))
+                                            .padding(6.dp),
+                                    ) {
+                                        if (note != null) {
+                                            Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258))
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1123,8 +1131,16 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
 @Composable
 private fun DiaryBlock(title: String, content: String) {
     if (content.isBlank()) return
-    Text(title, style = MaterialTheme.typography.labelLarge, color = Color(0xFF7A6D60))
-    Text(content, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF342C24))
+    DiarySticker(title)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0x0EF4DABB))
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+    ) {
+        Text(content, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF342C24))
+    }
 }
 
 @Composable
