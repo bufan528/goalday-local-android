@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.border
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +45,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.consume
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
@@ -604,17 +606,22 @@ private fun TodayBoardSection(
                 )
                 .padding(horizontal = 6.dp, vertical = 4.dp),
         )
-        todayPlanItems.forEach { item ->
-            Text(
-                text = "• $item",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(2.dp, RoundedCornerShape(12.dp))
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0x22B88A58))
-                    .clickable { onMoveItemToCompleted(item) }
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
-            )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.animateContentSize(),
+        ) {
+            todayPlanItems.forEach { item ->
+                Text(
+                    text = "• $item",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(2.dp, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0x22B88A58))
+                        .clickable { onMoveItemToCompleted(item) }
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                )
+            }
         }
         Text(
             "今日完成",
@@ -630,19 +637,24 @@ private fun TodayBoardSection(
                 )
                 .padding(horizontal = 6.dp, vertical = 4.dp),
         )
-        todayCompletedItems.forEach { item ->
-            Text(
-                text = item,
-                style = completedTextStyle(completed = true),
-                color = Color(0xFF8B847D),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(2.dp, RoundedCornerShape(12.dp))
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0x22BBD1AD))
-                    .clickable { onRestoreItemFromCompleted(item) }
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
-            )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.animateContentSize(),
+        ) {
+            todayCompletedItems.forEach { item ->
+                Text(
+                    text = item,
+                    style = completedTextStyle(completed = true),
+                    color = Color(0xFF8B847D),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(2.dp, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0x22BBD1AD))
+                        .clickable { onRestoreItemFromCompleted(item) }
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                )
+            }
         }
         if (todayPlanItems.isNotEmpty()) {
             TextButton(onClick = { todayPlanItems.forEach(onRestoreItemFromToday) }) {
@@ -694,11 +706,26 @@ private fun SourcePoolSection(
                 targetValue = if (dragOffsetX <= -150f) 0.82f else 1f,
                 label = "rowAlpha",
             )
+            val rowScale by animateFloatAsState(
+                targetValue = if (dragOffsetX < -6f) 0.985f else 1f,
+                animationSpec = spring(dampingRatio = 0.80f, stiffness = 420f),
+                label = "rowScale",
+            )
+            val rowLift by animateFloatAsState(
+                targetValue = if (dragOffsetX < -6f) -3f else 0f,
+                animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f),
+                label = "rowLift",
+            )
             RowWithDragFeedback(
                 modifier = Modifier
                     .fillMaxWidth()
                     .offset { IntOffset(dragOffsetX.roundToInt(), 0) }
                     .alpha(rowAlpha)
+                    .graphicsLayer {
+                        scaleX = rowScale
+                        scaleY = rowScale
+                        translationY = rowLift
+                    }
                     .pointerInput(item) {
                         detectDragGesturesAfterLongPress(
                             onDragStart = {
@@ -800,7 +827,8 @@ private fun RowWithDragFeedback(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(background)
-            .padding(horizontal = 4.dp, vertical = 2.dp),
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .animateContentSize(),
         verticalAlignment = verticalAlignment,
         horizontalArrangement = horizontalArrangement,
     ) {
