@@ -987,72 +987,73 @@ private fun StructuredDiaryEditor(
     onStateChange: (StructuredDiary) -> Unit,
     onDone: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        OutlinedTextField(
-            value = state.todayDone,
-            onValueChange = { onStateChange(state.copy(todayDone = it)) },
+    NotebookSpread {
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("今日完成") },
-            minLines = 2,
-            maxLines = 4,
-        )
-        OutlinedTextField(
-            value = state.workTasks,
-            onValueChange = { onStateChange(state.copy(workTasks = it)) },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("工作任务") },
-            minLines = 2,
-            maxLines = 4,
-        )
-        OutlinedTextField(
-            value = state.smallJoy,
-            onValueChange = { onStateChange(state.copy(smallJoy = it)) },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("小幸福") },
-            minLines = 2,
-            maxLines = 4,
-        )
-        OutlinedTextField(
-            value = state.canImprove,
-            onValueChange = { onStateChange(state.copy(canImprove = it)) },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("可改进点") },
-            minLines = 2,
-            maxLines = 4,
-        )
-        OutlinedTextField(
-            value = state.photoNotes,
-            onValueChange = { onStateChange(state.copy(photoNotes = it)) },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("图片描述（每行一条）") },
-            minLines = 2,
-            maxLines = 4,
-        )
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                DiarySticker("今日完成")
+                SectionField(state.todayDone) { onStateChange(state.copy(todayDone = it)) }
+                DiarySticker("工作任务")
+                SectionField(state.workTasks) { onStateChange(state.copy(workTasks = it)) }
+                DiarySticker("可改进点")
+                SectionField(state.canImprove) { onStateChange(state.copy(canImprove = it)) }
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                DiarySticker("小幸福")
+                SectionField(state.smallJoy) { onStateChange(state.copy(smallJoy = it)) }
+                DiarySticker("图片描述")
+                SectionField(state.photoNotes) { onStateChange(state.copy(photoNotes = it)) }
+            }
+        }
         TextButton(onClick = onDone) { Text("完成") }
     }
 }
 
 @Composable
 private fun StructuredDiaryPreview(state: StructuredDiary) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        DiaryBlock("今日完成", state.todayDone)
-        DiaryBlock("工作任务", state.workTasks)
-        DiaryBlock("小幸福", state.smallJoy)
-        DiaryBlock("可改进", state.canImprove)
-        val photos = state.photoNotes.lines().map(String::trim).filter(String::isNotBlank)
-        if (photos.isNotEmpty()) {
-            Text("图片", style = MaterialTheme.typography.labelLarge, color = Color(0xFF7A6D60))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                photos.take(3).forEach { note ->
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(72.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0xFFEFE9E0))
-                            .padding(6.dp),
-                    ) {
-                        Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258))
+    NotebookSpread {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                DiaryBlock("今日完成", state.todayDone)
+                DiaryBlock("工作任务", state.workTasks)
+                DiaryBlock("可改进", state.canImprove)
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                DiaryBlock("小幸福", state.smallJoy)
+                val photos = state.photoNotes.lines().map(String::trim).filter(String::isNotBlank)
+                if (photos.isNotEmpty()) {
+                    Text("图片", style = MaterialTheme.typography.labelLarge, color = Color(0xFF7A6D60))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        photos.take(2).forEach { note ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(78.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFFEFE9E0))
+                                    .border(1.dp, Color(0xFFDDD3C5), RoundedCornerShape(10.dp))
+                                    .padding(6.dp),
+                            ) {
+                                Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258))
+                            }
+                        }
                     }
                 }
             }
@@ -1065,6 +1066,51 @@ private fun DiaryBlock(title: String, content: String) {
     if (content.isBlank()) return
     Text(title, style = MaterialTheme.typography.labelLarge, color = Color(0xFF7A6D60))
     Text(content, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF342C24))
+}
+
+@Composable
+private fun NotebookSpread(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFFFFFEFB))
+            .border(1.dp, Color(0xFFE8DFD3), RoundedCornerShape(16.dp))
+            .padding(12.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(Brush.horizontalGradient(listOf(Color(0x22C6B8A5), Color.Transparent, Color(0x22C6B8A5)))),
+        )
+        content()
+    }
+}
+
+@Composable
+private fun DiarySticker(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = Color(0xFF5B4A3C),
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0x33E9D6BC))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    )
+}
+
+@Composable
+private fun SectionField(value: String, onValueChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier.fillMaxWidth(),
+        minLines = 2,
+        maxLines = 5,
+    )
 }
 
 @Composable
