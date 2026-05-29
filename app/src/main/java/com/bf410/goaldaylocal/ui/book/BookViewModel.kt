@@ -134,12 +134,22 @@ class BookViewModel(
         val year = store.calendarAnchorYear()
         val month = store.calendarAnchorMonth().coerceIn(1, 12)
         val maxDay = YearMonth.of(year, month).lengthOfMonth()
+        val safeDay = day.coerceIn(1, maxDay)
+        val bookTitle = currentBook().title
+        val duplicated = store.scheduleEntries().any { entry ->
+            entry.title == title &&
+                entry.year == year &&
+                entry.month == month &&
+                entry.day == safeDay &&
+                entry.note == bookTitle
+        }
+        if (duplicated) return
         store.addScheduleEntry(
             title = title,
             year = year,
             month = month,
-            day = day.coerceIn(1, maxDay),
-            note = currentBook().title,
+            day = safeDay,
+            note = bookTitle,
         )
     }
 
