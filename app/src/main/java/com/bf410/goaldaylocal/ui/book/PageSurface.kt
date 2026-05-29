@@ -2,6 +2,7 @@ package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.weight
@@ -36,9 +38,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.consume
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
@@ -46,6 +51,7 @@ import com.bf410.goaldaylocal.data.PlanPage
 import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetPage
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 @Composable
 fun BoxScope.SpineLayer(
@@ -346,6 +352,7 @@ private fun EditableBulletPage(
     val sourceBaseItems = remember(editedBaseItems, stagedItems) { editedBaseItems.filterNot { it in stagedItems } }
     val sourceCustomItems = remember(customItems, stagedItems) { customItems.filterNot { it in stagedItems } }
     val sourceItems = sourceBaseItems + sourceCustomItems
+    var dragPreviewTarget by remember(pageTitle) { mutableStateOf(DragTarget.NONE) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         WeekThemeSection(theme = weeklyTheme, onThemeChange = onWeeklyThemeChange)
@@ -359,6 +366,7 @@ private fun EditableBulletPage(
                 onMoveItemToCompleted = onMoveItemToCompleted,
                 onRestoreItemFromToday = onRestoreItemFromToday,
                 onRestoreItemFromCompleted = onRestoreItemFromCompleted,
+                dragPreviewTarget = dragPreviewTarget,
                 modifier = Modifier.weight(1f),
             )
             SourcePoolSection(
@@ -372,6 +380,7 @@ private fun EditableBulletPage(
                     onMoveItemToCompleted(it)
                     onAddToSchedule(it, LocalDate.now().dayOfMonth)
                 },
+                onDragPreviewTargetChange = { dragPreviewTarget = it },
                 modifier = Modifier.weight(1f),
             )
         }
@@ -541,6 +550,7 @@ private fun TodayBoardSection(
     onMoveItemToCompleted: (String) -> Unit,
     onRestoreItemFromToday: (String) -> Unit,
     onRestoreItemFromCompleted: (String) -> Unit,
+    dragPreviewTarget: DragTarget,
     modifier: Modifier = Modifier,
 ) {
     PaperNoteCard(modifier = modifier) {
@@ -549,7 +559,15 @@ private fun TodayBoardSection(
             Text("从右侧清单拖入（点击）到今日执行或完成区。", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
         }
-        Text("今日计划", color = Color(0xFF5E4837))
+        Text(
+            "今日计划",
+            color = Color(0xFF5E4837),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(if (dragPreviewTarget == DragTarget.TODAY) Color(0x33D9A97E) else Color.Transparent)
+                .padding(horizontal = 6.dp, vertical = 4.dp),
+        )
         todayPlanItems.forEach { item ->
             Text(
                 text = "• $item",
@@ -561,7 +579,15 @@ private fun TodayBoardSection(
                     .padding(horizontal = 10.dp, vertical = 8.dp),
             )
         }
-        Text("今日完成", color = Color(0xFF5E4837))
+        Text(
+            "今日完成",
+            color = Color(0xFF5E4837),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(if (dragPreviewTarget == DragTarget.DONE) Color(0x33A5C49D) else Color.Transparent)
+                .padding(horizontal = 6.dp, vertical = 4.dp),
+        )
         todayCompletedItems.forEach { item ->
             Text(
                 text = item,
@@ -592,6 +618,7 @@ private fun SourcePoolSection(
     onToggleChecked: (String, String) -> Unit,
     onMoveItemToToday: (String) -> Unit,
     onMoveItemToCompleted: (String) -> Unit,
+    onDragPreviewTargetChange: (DragTarget) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     PaperNoteCard(modifier = modifier) {
@@ -601,8 +628,40 @@ private fun SourcePoolSection(
             return@PaperNoteCard
         }
         items.forEach { item ->
+            var dragOffsetX by remember(item) { mutableStateOf(0f) }
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset { IntOffset(dragOffsetX.roundToInt(), 0) }
+                    .pointerInput(item) {
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = {
+                                onDragPreviewTargetChange(DragTarget.TODAY)
+                            },
+                            onDragEnd = {
+                                when {
+                                    dragOffsetX <= -150f -> onMoveItemToCompleted(item)
+                                    dragOffsetX <= -70f -> onMoveItemToToday(item)
+                                }
+                                dragOffsetX = 0f
+                                onDragPreviewTargetChange(DragTarget.NONE)
+                            },
+                            onDragCancel = {
+                                dragOffsetX = 0f
+                                onDragPreviewTargetChange(DragTarget.NONE)
+                            },
+                        ) { change, dragAmount ->
+                            change.consume()
+                            dragOffsetX = (dragOffsetX + dragAmount.x).coerceIn(-220f, 0f)
+                            onDragPreviewTargetChange(
+                                when {
+                                    dragOffsetX <= -150f -> DragTarget.DONE
+                                    dragOffsetX <= -70f -> DragTarget.TODAY
+                                    else -> DragTarget.NONE
+                                },
+                            )
+                        }
+                    },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -635,6 +694,12 @@ private fun SourcePoolSection(
             }
         }
     }
+}
+
+private enum class DragTarget {
+    NONE,
+    TODAY,
+    DONE,
 }
 
 @Composable
