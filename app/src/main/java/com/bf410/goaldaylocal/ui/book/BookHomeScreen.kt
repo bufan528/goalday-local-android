@@ -39,6 +39,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.BookPage
+import com.bf410.goaldaylocal.data.DiaryPage
+import com.bf410.goaldaylocal.data.PlanPage
+import com.bf410.goaldaylocal.data.SchedulePage
+import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
 
 private val bookPalette = listOf(
@@ -48,6 +52,12 @@ private val bookPalette = listOf(
     Color(0xFFBBD1AD),
     Color(0xFF9EAADB),
 )
+
+private enum class BookSegment(val label: String) {
+    WEEK("周视图"),
+    DIARY("日记"),
+    LIST("清单"),
+}
 
 @Composable
 fun BookHomeScreen(
@@ -236,23 +246,55 @@ private fun BookDetailView(
     onShowEditBook: () -> Unit,
     onShowInspiration: () -> Unit,
 ) {
+    var segment by remember(book.id) { mutableStateOf(resolveSegment(currentPage)) }
+    val filteredPages = remember(book.pages, segment) {
+        book.pages.filter { page ->
+            when (segment) {
+                BookSegment.WEEK -> page is TargetPage || page is PlanPage || page is SchedulePage
+                BookSegment.DIARY -> page is DiaryPage
+                BookSegment.LIST -> page is PlanPage || page is TargetPage
+            }
+        }.ifEmpty { book.pages }
+    }
+    val segmentPageIndex = filteredPages.indexOfFirst { it.title == currentPage.title }.coerceAtLeast(0)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 8.dp),
     ) {
-        Text(
-            text = BookStrings.appTitle,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 18.dp),
-        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(BookStrings.backToLibrary, color = Color(0xFF8F684F), modifier = Modifier.clickable(onClick = onBackToLibrary))
+            Text("18周", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Text("完成", color = Color(0xFF2B2B2B), modifier = Modifier.clickable(onClick = onBackToLibrary))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BookSegment.entries.forEach { item ->
+                Text(
+                    text = item.label,
+                    color = if (item == segment) Color(0xFF2A261F) else Color(0xFF9E978D),
+                    fontWeight = if (item == segment) FontWeight.SemiBold else FontWeight.Normal,
+                    modifier = Modifier.clickable {
+                        segment = item
+                        val firstIndex = book.pages.indexOfFirst { page ->
+                            when (item) {
+                                BookSegment.WEEK -> page is TargetPage || page is PlanPage || page is SchedulePage
+                                BookSegment.DIARY -> page is DiaryPage
+                                BookSegment.LIST -> page is PlanPage || page is TargetPage
+                            }
+                        }
+                        if (firstIndex >= 0) viewModel.setPage(firstIndex)
+                    },
+                )
+            }
+            Spacer(Modifier.weight(1f))
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -276,13 +318,14 @@ private fun BookDetailView(
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
         ) {
-            book.pages.forEachIndexed { index, item ->
+            filteredPages.forEachIndexed { idx, item ->
+                val index = book.pages.indexOfFirst { it.title == item.title }.coerceAtLeast(0)
                 Text(
                     text = item.title,
-                    color = if (index == uiState.selectedPageIndex) Color(0xFF2F261D) else Color(0xFF7A7065),
+                    color = if (idx == segmentPageIndex) Color(0xFF2F261D) else Color(0xFF7A7065),
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(if (index == uiState.selectedPageIndex) Color(0x4DB88A58) else Color(0x18FFFFFF))
+                        .background(if (idx == segmentPageIndex) Color(0x4DB88A58) else Color(0x18FFFFFF))
                         .clickable { viewModel.setPage(index) }
                         .padding(horizontal = 12.dp, vertical = 7.dp),
                 )
@@ -325,6 +368,13 @@ private fun BookDetailView(
         )
     }
 }
+
+private fun resolveSegment(page: BookPage): BookSegment =
+    when (page) {
+        is DiaryPage -> BookSegment.DIARY
+        is PlanPage, is TargetPage -> BookSegment.LIST
+        is SchedulePage -> BookSegment.WEEK
+    }
 
 @Composable
 private fun InspirationCenterView(
