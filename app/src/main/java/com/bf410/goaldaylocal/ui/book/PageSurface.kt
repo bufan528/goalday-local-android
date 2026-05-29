@@ -908,47 +908,26 @@ private fun DiarySection(
     onContentModeChange: (PageContentMode) -> Unit,
 ) {
     val editingDiary = contentMode as? PageContentMode.EditingDiary
+    var structured by remember(title, diaryDraft) { mutableStateOf(StructuredDiary.fromRaw(diaryDraft)) }
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(text = prompt, style = MaterialTheme.typography.titleSmall, color = Color(0xFF342C24))
         if (editingDiary?.title == title) {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                DiaryToolChip("加粗") { onCommand(RichEditorCommand("bold")) }
-                DiaryToolChip("标题") { onCommand(RichEditorCommand("formatBlock", "<h2>")) }
-                DiaryToolChip("列表") { onCommand(RichEditorCommand("insertUnorderedList")) }
-                DiaryToolChip("引用") { onCommand(RichEditorCommand("formatBlock", "<blockquote>")) }
-                DiaryToolChip("完成") { onContentModeChange(PageContentMode.Browsing) }
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(320.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color(0xFFFFFBF5))
-                    .padding(18.dp),
-            ) {
-                RichDiaryEditor(
-                    html = diaryDraft,
-                    placeholder = BookStrings.diaryPlaceholder,
-                    modifier = Modifier.fillMaxSize(),
-                    pendingCommand = pendingCommand,
-                    onHtmlChange = onDiaryChange,
-                )
-            }
+            StructuredDiaryEditor(
+                state = structured,
+                onStateChange = { structured = it },
+                onDone = {
+                    onDiaryChange(structured.toRaw())
+                    onContentModeChange(PageContentMode.Browsing)
+                },
+            )
         } else {
             PaperNoteCard(
                 modifier = Modifier.clickable {
                     onContentModeChange(pageContentModeForTap(DiaryPage(title, prompt)))
                 },
             ) {
-                Text(
-                    text = condensedPreviewText(
-                        if (diaryDraft.isBlank()) BookStrings.diaryEmptyPreview else diaryDraft,
-                        maxLength = 180,
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (diaryDraft.isBlank()) Color(0xFF8E806F) else Color(0xFF342C24),
-                )
+                StructuredDiaryPreview(state = StructuredDiary.fromRaw(diaryDraft))
             }
         }
         Text(
@@ -957,6 +936,135 @@ private fun DiarySection(
             color = tint.copy(alpha = 0.72f),
         )
     }
+}
+
+private data class StructuredDiary(
+    val todayDone: String,
+    val workTasks: String,
+    val smallJoy: String,
+    val canImprove: String,
+    val photoNotes: String,
+) {
+    fun toRaw(): String = buildString {
+        appendLine("# 今日完成")
+        appendLine(todayDone.trim())
+        appendLine("# 工作任务")
+        appendLine(workTasks.trim())
+        appendLine("# 小幸福")
+        appendLine(smallJoy.trim())
+        appendLine("# 可改进")
+        appendLine(canImprove.trim())
+        appendLine("# 图片")
+        append(photoNotes.trim())
+    }
+
+    companion object {
+        fun fromRaw(raw: String): StructuredDiary {
+            if (raw.isBlank()) return StructuredDiary("", "", "", "", "")
+            fun section(name: String, next: String?): String {
+                val start = raw.indexOf("# $name")
+                if (start < 0) return ""
+                val bodyStart = raw.indexOf('\n', start).takeIf { it >= 0 }?.plus(1) ?: return ""
+                val bodyEnd = next?.let { marker ->
+                    raw.indexOf("# $marker", bodyStart).takeIf { it >= 0 }
+                } ?: raw.length
+                return raw.substring(bodyStart, bodyEnd).trim()
+            }
+            return StructuredDiary(
+                todayDone = section("今日完成", "工作任务"),
+                workTasks = section("工作任务", "小幸福"),
+                smallJoy = section("小幸福", "可改进"),
+                canImprove = section("可改进", "图片"),
+                photoNotes = section("图片", null),
+            )
+        }
+    }
+}
+
+@Composable
+private fun StructuredDiaryEditor(
+    state: StructuredDiary,
+    onStateChange: (StructuredDiary) -> Unit,
+    onDone: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedTextField(
+            value = state.todayDone,
+            onValueChange = { onStateChange(state.copy(todayDone = it)) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("今日完成") },
+            minLines = 2,
+            maxLines = 4,
+        )
+        OutlinedTextField(
+            value = state.workTasks,
+            onValueChange = { onStateChange(state.copy(workTasks = it)) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("工作任务") },
+            minLines = 2,
+            maxLines = 4,
+        )
+        OutlinedTextField(
+            value = state.smallJoy,
+            onValueChange = { onStateChange(state.copy(smallJoy = it)) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("小幸福") },
+            minLines = 2,
+            maxLines = 4,
+        )
+        OutlinedTextField(
+            value = state.canImprove,
+            onValueChange = { onStateChange(state.copy(canImprove = it)) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("可改进点") },
+            minLines = 2,
+            maxLines = 4,
+        )
+        OutlinedTextField(
+            value = state.photoNotes,
+            onValueChange = { onStateChange(state.copy(photoNotes = it)) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("图片描述（每行一条）") },
+            minLines = 2,
+            maxLines = 4,
+        )
+        TextButton(onClick = onDone) { Text("完成") }
+    }
+}
+
+@Composable
+private fun StructuredDiaryPreview(state: StructuredDiary) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        DiaryBlock("今日完成", state.todayDone)
+        DiaryBlock("工作任务", state.workTasks)
+        DiaryBlock("小幸福", state.smallJoy)
+        DiaryBlock("可改进", state.canImprove)
+        val photos = state.photoNotes.lines().map(String::trim).filter(String::isNotBlank)
+        if (photos.isNotEmpty()) {
+            Text("图片", style = MaterialTheme.typography.labelLarge, color = Color(0xFF7A6D60))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                photos.take(3).forEach { note ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(72.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFFEFE9E0))
+                            .padding(6.dp),
+                    ) {
+                        Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DiaryBlock(title: String, content: String) {
+    if (content.isBlank()) return
+    Text(title, style = MaterialTheme.typography.labelLarge, color = Color(0xFF7A6D60))
+    Text(content, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF342C24))
 }
 
 @Composable
