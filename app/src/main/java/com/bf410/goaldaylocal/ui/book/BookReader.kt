@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.BookPage
+import com.bf410.goaldaylocal.data.ScheduleEntry
 
 @Composable
 fun BookReader(
@@ -29,6 +30,7 @@ fun BookReader(
     weeklyTheme: String,
     todayPlanItems: List<String>,
     todayCompletedItems: List<String>,
+    schedulePreviewEntries: List<ScheduleEntry>,
     onToggleSaved: () -> Unit,
     isChecked: (String, String) -> Boolean,
     onToggleChecked: (String, String) -> Unit,
@@ -114,6 +116,7 @@ fun BookReader(
                 weeklyTheme = weeklyTheme,
                 todayPlanItems = todayPlanItems,
                 todayCompletedItems = todayCompletedItems,
+                schedulePreviewEntries = schedulePreviewEntries,
                 onToggleSaved = onToggleSaved,
                 isChecked = isChecked,
                 onToggleChecked = onToggleChecked,

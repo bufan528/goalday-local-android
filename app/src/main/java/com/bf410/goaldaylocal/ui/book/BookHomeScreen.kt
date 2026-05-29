@@ -286,6 +286,7 @@ private fun BookDetailView(
             weeklyTheme = uiState.weeklyTheme,
             todayPlanItems = uiState.todayPlanItems,
             todayCompletedItems = uiState.todayCompletedItems,
+            schedulePreviewEntries = uiState.schedulePreviewEntries,
             onToggleSaved = viewModel::toggleSavedCurrentBook,
             isChecked = { pageTitle, item -> viewModel.isChecked(pageTitle, item) },
             onToggleChecked = { pageTitle, item -> viewModel.toggleChecked(pageTitle, item) },

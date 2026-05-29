@@ -9,6 +9,7 @@ import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.LocalStateStore
 import com.bf410.goaldaylocal.data.PlanPage
 import com.bf410.goaldaylocal.data.SampleLibrary
+import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
@@ -35,6 +36,7 @@ class BookViewModel(
             weeklyTheme = "",
             todayPlanItems = emptyList(),
             todayCompletedItems = emptyList(),
+            schedulePreviewEntries = monthEntriesForAnchor(),
             customBookCount = store.customBooks().size,
             inLibraryMode = true,
         ),
@@ -157,6 +159,7 @@ class BookViewModel(
             day = safeDay,
             note = bookTitle,
         )
+        _uiState.update { it.copy(schedulePreviewEntries = monthEntriesForAnchor()) }
     }
 
     fun updateWeeklyTheme(text: String) {
@@ -313,6 +316,7 @@ class BookViewModel(
                         weeklyTheme = store.weeklyTheme(book.id),
                         todayPlanItems = emptyList(),
                         todayCompletedItems = emptyList(),
+                        schedulePreviewEntries = monthEntriesForAnchor(),
                     )
                 }
             }
@@ -324,10 +328,19 @@ class BookViewModel(
                         weeklyTheme = store.weeklyTheme(book.id),
                         todayPlanItems = store.todayPlanItems(book.id, page.title),
                         todayCompletedItems = store.todayCompletedItems(book.id, page.title),
+                        schedulePreviewEntries = monthEntriesForAnchor(),
                     )
                 }
             }
         }
+    }
+
+    private fun monthEntriesForAnchor(): List<ScheduleEntry> {
+        val year = store.calendarAnchorYear()
+        val month = store.calendarAnchorMonth().coerceIn(1, 12)
+        return store.scheduleEntries()
+            .filter { it.year == year && it.month == month }
+            .sortedWith(compareBy({ it.day }, { it.title }))
     }
 
     private fun updateCurrentBookPages(transform: (List<BookPage>) -> List<BookPage>) {
