@@ -13,11 +13,11 @@ enum class TurnReleaseResult {
     SnapBack,
 }
 
-private const val TURN_DISTANCE_THRESHOLD = 0.32f
-private const val TURN_FLING_THRESHOLD = 1600f
-private const val BOUNDARY_RESISTANCE_FACTOR = 0.28f
+private const val TURN_DISTANCE_THRESHOLD = 0.29f
+private const val TURN_FLING_THRESHOLD = 1350f
+private const val BOUNDARY_RESISTANCE_FACTOR = 0.22f
 private const val OPPOSING_VELOCITY_THRESHOLD = 600f
-private const val EDGE_TAP_START_PROGRESS = 0.24f
+private const val EDGE_TAP_START_PROGRESS = 0.28f
 
 fun resolvePageTurnRelease(
     direction: TurnDirection,
@@ -61,14 +61,32 @@ fun applyBoundaryResistance(rawProgress: Float, canTurn: Boolean): Float {
         return rawProgress.coerceIn(0f, 1f)
     }
     val distance = abs(rawProgress)
-    val curved = (distance * BOUNDARY_RESISTANCE_FACTOR) / (1f + distance * 0.9f)
-    return curved.coerceIn(0f, 0.17f)
+    val curved = (distance * BOUNDARY_RESISTANCE_FACTOR) / (1f + distance * 1.15f)
+    return curved.coerceIn(0f, 0.15f)
 }
 
 fun initialEdgeTapProgress(): Float = EDGE_TAP_START_PROGRESS
 
+fun updatedTurnProgress(
+    currentProgress: Float,
+    dragAmountPx: Float,
+    pageWidthPx: Float,
+    canTurn: Boolean,
+): Float {
+    val safeWidth = pageWidthPx.coerceAtLeast(1f)
+    val delta = abs(dragAmountPx) / safeWidth
+    val raw = currentProgress + delta
+    return applyBoundaryResistance(raw, canTurn)
+}
+
 fun visualTurnProgress(progress: Float): Float {
     val clamped = progress.coerceIn(0f, 1f)
     val lateLift = clamped * clamped * (3f - 2f * clamped)
-    return (clamped * 0.55f + lateLift * 0.65f).coerceIn(0f, 1f)
+    val committedLift = lateLift * lateLift
+    return (clamped * 0.42f + lateLift * 0.36f + committedLift * 0.38f).coerceIn(0f, 1f)
+}
+
+fun destinationRevealAlpha(progress: Float): Float {
+    val emphasized = visualTurnProgress(progress).coerceIn(0f, 1f)
+    return (0.05f + emphasized * 0.95f).coerceIn(0.05f, 1f)
 }

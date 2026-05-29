@@ -134,15 +134,19 @@ private fun LibraryView(
     onOpenBook: (Int) -> Unit,
     onCreateBook: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 8.dp),
+    ) {
         Text(
-            text = "Goalday Local",
+            text = BookStrings.appTitle,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(top = 18.dp),
         )
         Text(
-            text = "离线书库与手帐",
+            text = BookStrings.librarySubtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = Color(0xFF6F675D),
         )
@@ -153,11 +157,11 @@ private fun LibraryView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "书库 ${books.size} 本 · 自建 $customBookCount 本",
+                text = BookStrings.librarySummary.format(books.size, customBookCount),
                 color = Color(0xFF6F675D),
             )
             Text(
-                text = "新建一本书",
+                text = BookStrings.createBook,
                 color = Color(0xFF8F684F),
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
@@ -184,16 +188,16 @@ private fun LibraryView(
                             ),
                         )
                         .clickable { onOpenBook(index) }
-                        .padding(20.dp),
+                        .padding(horizontal = 22.dp, vertical = 20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(book.title, style = MaterialTheme.typography.titleLarge, color = Color(0xFF2F261D))
                         Text(book.subtitle, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF4B3D31))
-                        Text("${book.pages.size} 页", style = MaterialTheme.typography.labelLarge, color = Color(0xFF5D4B3D))
+                        Text("${book.pages.size} ${BookStrings.pageUnit}", style = MaterialTheme.typography.labelLarge, color = Color(0xFF5D4B3D))
                     }
-                    Text("打开", color = Color(0xFF5D4B3D))
+                    Text(BookStrings.openBook, color = Color(0xFF5D4B3D))
                 }
             }
         }
@@ -213,9 +217,13 @@ private fun BookDetailView(
     onShowRenamePage: () -> Unit,
     onShowEditBook: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 8.dp),
+    ) {
         Text(
-            text = "Goalday Local",
+            text = BookStrings.appTitle,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(top = 18.dp),
@@ -225,35 +233,35 @@ private fun BookDetailView(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("返回书库", color = Color(0xFF8F684F), modifier = Modifier.clickable(onClick = onBackToLibrary))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(BookStrings.backToLibrary, color = Color(0xFF8F684F), modifier = Modifier.clickable(onClick = onBackToLibrary))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (book.id.startsWith("custom_")) {
-                    Text("改书", color = Color(0xFF8F684F), modifier = Modifier.clickable(onClick = onShowEditBook))
-                    Text("新增页", color = Color(0xFF8F684F), modifier = Modifier.clickable(onClick = onShowAddPage))
-                    Text("改页名", color = Color(0xFF8F684F), modifier = Modifier.clickable(onClick = onShowRenamePage))
-                    Text("左移", color = Color(0xFF8F684F), modifier = Modifier.clickable(onClick = viewModel::moveCurrentPageLeft))
-                    Text("右移", color = Color(0xFF8F684F), modifier = Modifier.clickable(onClick = viewModel::moveCurrentPageRight))
-                    Text("删页", color = Color(0xFF9C5A52), modifier = Modifier.clickable(onClick = viewModel::deleteCurrentPage))
-                    Text("删书", color = Color(0xFF9C5A52), modifier = Modifier.clickable(onClick = viewModel::removeCurrentCustomBook))
+                    ActionChip(label = BookStrings.editBook, color = Color(0xFF8F684F), onClick = onShowEditBook)
+                    ActionChip(label = BookStrings.addPage, color = Color(0xFF8F684F), onClick = onShowAddPage)
+                    ActionChip(label = BookStrings.renamePage, color = Color(0xFF8F684F), onClick = onShowRenamePage)
+                    ActionChip(label = BookStrings.moveLeft, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageLeft)
+                    ActionChip(label = BookStrings.moveRight, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageRight)
+                    ActionChip(label = BookStrings.deletePage, color = Color(0xFF9C5A52), onClick = viewModel::deleteCurrentPage)
+                    ActionChip(label = BookStrings.deleteBook, color = Color(0xFF9C5A52), onClick = viewModel::removeCurrentCustomBook)
                 }
             }
         }
         Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             book.pages.forEachIndexed { index, item ->
                 Text(
                     text = item.title,
                     color = if (index == uiState.selectedPageIndex) Color(0xFF2F261D) else Color(0xFF7A7065),
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(if (index == uiState.selectedPageIndex) Color(0x33B88A58) else Color(0x10FFFFFF))
+                        .background(if (index == uiState.selectedPageIndex) Color(0x4DB88A58) else Color(0x18FFFFFF))
                         .clickable { viewModel.setPage(index) }
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                        .padding(horizontal = 12.dp, vertical = 7.dp),
                 )
             }
         }
         Spacer(Modifier.height(16.dp))
-        BookPageTurner(
+        BookReader(
             bookId = book.id,
             bookTitle = book.title,
             subtitle = book.subtitle,
@@ -299,15 +307,15 @@ private fun CreateBookDialog(
                     }
                 },
             ) {
-                Text("创建")
+                Text(BookStrings.create)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
-        title = { Text("新建一本书") },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(BookStrings.cancel) } },
+        title = { Text(BookStrings.createBookTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("书名") }, singleLine = true)
-                OutlinedTextField(value = subtitle, onValueChange = { subtitle = it }, label = { Text("副标题") }, singleLine = true)
+                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.bookName) }, singleLine = true)
+                OutlinedTextField(value = subtitle, onValueChange = { subtitle = it }, label = { Text(BookStrings.subtitle) }, singleLine = true)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     bookPalette.forEachIndexed { index, color ->
                         Box(
@@ -322,6 +330,23 @@ private fun CreateBookDialog(
                 }
             }
         },
+    )
+}
+
+@Composable
+private fun ActionChip(
+    label: String,
+    color: Color,
+    onClick: () -> Unit,
+) {
+    Text(
+        text = label,
+        color = color,
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(color.copy(alpha = 0.10f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
     )
 }
 
@@ -345,15 +370,15 @@ private fun EditBookDialog(
                     }
                 },
             ) {
-                Text("保存")
+                Text(BookStrings.save)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
-        title = { Text("编辑这本书") },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(BookStrings.cancel) } },
+        title = { Text(BookStrings.editBookTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("书名") }, singleLine = true)
-                OutlinedTextField(value = subtitle, onValueChange = { subtitle = it }, label = { Text("副标题") }, singleLine = true)
+                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.bookName) }, singleLine = true)
+                OutlinedTextField(value = subtitle, onValueChange = { subtitle = it }, label = { Text(BookStrings.subtitle) }, singleLine = true)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     bookPalette.forEachIndexed { index, color ->
                         Box(
@@ -383,14 +408,14 @@ private fun CreatePageDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             Button(onClick = { if (title.isNotBlank()) onConfirm(type, title) }) {
-                Text("创建页面")
+                Text(BookStrings.createPage)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
-        title = { Text("新增页面") },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(BookStrings.cancel) } },
+        title = { Text(BookStrings.addPageTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("页面标题") }, singleLine = true)
+                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.pageTitle) }, singleLine = true)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     listOf(
                         "target" to "目标",
@@ -424,9 +449,9 @@ private fun RenamePageDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { Button(onClick = { if (title.isNotBlank()) onConfirm(title.trim()) }) { Text("保存") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
-        title = { Text("修改页名") },
-        text = { OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("页面标题") }, singleLine = true) },
+        confirmButton = { Button(onClick = { if (title.isNotBlank()) onConfirm(title.trim()) }) { Text(BookStrings.save) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(BookStrings.cancel) } },
+        title = { Text(BookStrings.renamePageTitle) },
+        text = { OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.pageTitle) }, singleLine = true) },
     )
 }

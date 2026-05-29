@@ -47,8 +47,8 @@ fun renameDisplayedChecklistItem(
 
 fun destinationPageSubtitle(direction: TurnDirection?, fallback: String): String =
     when (direction) {
-        TurnDirection.NEXT -> "下一页"
-        TurnDirection.PREVIOUS -> "上一页"
+        TurnDirection.NEXT -> BookStrings.destinationNext
+        TurnDirection.PREVIOUS -> BookStrings.destinationPrevious
         null -> fallback
     }
 

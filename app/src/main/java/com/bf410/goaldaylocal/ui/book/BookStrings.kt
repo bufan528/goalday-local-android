@@ -1,0 +1,62 @@
+package com.bf410.goaldaylocal.ui.book
+
+internal object BookStrings {
+    const val appTitle = "Goalday Local"
+    const val tabBook = "\u4e66\u672c"
+    const val tabCalendar = "\u65e5\u5386"
+    const val tabSettings = "\u8bbe\u7f6e"
+
+    const val librarySubtitle = "\u79bb\u7ebf\u4e66\u5e93\u4e0e\u624b\u5e10"
+    const val librarySummary = "\u4e66\u5e93 %d \u672c \u00b7 \u81ea\u5efa %d \u672c"
+    const val createBook = "\u65b0\u5efa\u4e00\u672c\u4e66"
+    const val openBook = "\u6253\u5f00"
+    const val pageUnit = "\u9875"
+
+    const val backToLibrary = "\u8fd4\u56de\u4e66\u5e93"
+    const val editBook = "\u6539\u4e66"
+    const val addPage = "\u65b0\u589e\u9875"
+    const val renamePage = "\u6539\u9875\u540d"
+    const val moveLeft = "\u5de6\u79fb"
+    const val moveRight = "\u53f3\u79fb"
+    const val deletePage = "\u5220\u9875"
+    const val deleteBook = "\u5220\u4e66"
+
+    const val saveBook = "\u4fdd\u5b58\u4e3a\u6211\u7684\u4e66"
+    const val savedBook = "\u5df2\u4fdd\u5b58\u5230\u6211\u7684\u4e66"
+    const val pagePreview = "\u7ffb\u9875\u9884\u89c8"
+    const val cover = "\u5c01\u9762"
+    const val pageBack = "\u7eb8\u9875\u80cc\u9762"
+    const val pageTurning = "\u7ffb\u9875\u8fdb\u884c\u4e2d"
+    const val turnProgress = "\u5f53\u524d\u8fdb\u5ea6 %d%%"
+    const val contentEmpty = "\u8fd9\u4e00\u9875\u8fd8\u6ca1\u6709\u5185\u5bb9"
+    const val destinationNext = "\u4e0b\u4e00\u9875"
+    const val destinationPrevious = "\u4e0a\u4e00\u9875"
+
+    const val myContent = "\u6211\u7684\u5185\u5bb9"
+    const val editHint = "\u5148\u6d4f\u89c8\uff0c\u518d\u70b9\u6761\u76ee\u7f16\u8f91\u3002\u65b0\u589e\u5185\u5bb9\u4ecd\u7136\u5728\u8fd9\u91cc\u5b8c\u6210\u3002"
+    const val save = "\u4fdd\u5b58"
+    const val cancel = "\u53d6\u6d88"
+    const val delete = "\u5220\u9664"
+    const val addToCalendar = "\u52a0\u5165\u65e5\u5386"
+    const val edit = "\u7f16\u8f91"
+    const val editContent = "\u7f16\u8f91\u5185\u5bb9"
+
+    const val diaryPlaceholder = "\u5199\u4e0b\u4eca\u5929\u7684\u8bb0\u5f55\u3001\u611f\u53d7\u6216\u4e0b\u4e00\u6b65\u3002"
+    const val diaryEmptyPreview = "\u70b9\u51fb\u8fd9\u91cc\u5f00\u59cb\u7f16\u8f91\u65e5\u8bb0\uff0c\u9ed8\u8ba4\u5148\u5c55\u793a\u5185\u5bb9\u3002"
+    const val diaryLocalOnly = "\u7eb8\u9875\u5185\u5bb9\u4f1a\u4fdd\u5b58\u5728\u672c\u5730\uff0c\u4e0d\u4f9d\u8d56\u670d\u52a1\u5668\u3002"
+    const val diaryPromptDefault = "\u5199\u4e0b\u8fd9\u4e00\u9875\u6700\u91cd\u8981\u7684\u8bb0\u5f55\u3002"
+
+    const val addTarget = "\u6dfb\u52a0\u4f60\u7684\u76ee\u6807"
+    const val addSchedule = "\u6dfb\u52a0\u4f60\u7684\u65e5\u7a0b\u4efb\u52a1"
+    const val addPlan = "\u6dfb\u52a0\u4f60\u7684\u8ba1\u5212"
+
+    const val create = "\u521b\u5efa"
+    const val createPage = "\u521b\u5efa\u9875\u9762"
+    const val createBookTitle = "\u65b0\u5efa\u4e00\u672c\u4e66"
+    const val editBookTitle = "\u7f16\u8f91\u8fd9\u672c\u4e66"
+    const val addPageTitle = "\u65b0\u589e\u9875\u9762"
+    const val renamePageTitle = "\u4fee\u6539\u9875\u540d"
+    const val bookName = "\u4e66\u540d"
+    const val subtitle = "\u526f\u6807\u9898"
+    const val pageTitle = "\u9875\u9762\u6807\u9898"
+}

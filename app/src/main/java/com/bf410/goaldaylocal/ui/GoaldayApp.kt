@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bf410.goaldaylocal.ui.book.BookStrings
 import com.bf410.goaldaylocal.ui.book.BookHomeScreen
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.calendar.CalendarScreen
@@ -26,9 +27,9 @@ import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
 
 private enum class RootTab(val label: String) {
-    BOOK("书本"),
-    CALENDAR("日历"),
-    SETTINGS("设置"),
+    BOOK(BookStrings.tabBook),
+    CALENDAR(BookStrings.tabCalendar),
+    SETTINGS(BookStrings.tabSettings),
 }
 
 @Composable

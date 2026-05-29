@@ -97,4 +97,37 @@ class PageTurnStateTest {
 
         assertTrue(visual > 0.7f)
     }
+
+    @Test
+    fun drag_update_for_next_turn_accumulates_progress_from_left_swipe() {
+        val next = updatedTurnProgress(
+            currentProgress = 0.20f,
+            dragAmountPx = -120f,
+            pageWidthPx = 400f,
+            canTurn = true,
+        )
+
+        assertEquals(0.50f, next, 0.0001f)
+    }
+
+    @Test
+    fun drag_update_for_blocked_turn_uses_boundary_resistance() {
+        val next = updatedTurnProgress(
+            currentProgress = 0.05f,
+            dragAmountPx = -180f,
+            pageWidthPx = 360f,
+            canTurn = false,
+        )
+
+        assertTrue(next < 0.20f)
+    }
+
+    @Test
+    fun reveal_alpha_stays_low_early_and_rises_late() {
+        val early = destinationRevealAlpha(0.10f)
+        val late = destinationRevealAlpha(0.82f)
+
+        assertTrue(early < 0.20f)
+        assertTrue(late > 0.80f)
+    }
 }
