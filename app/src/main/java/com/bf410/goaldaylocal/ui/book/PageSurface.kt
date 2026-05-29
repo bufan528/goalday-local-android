@@ -643,15 +643,35 @@ private fun TodayBoardSection(
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
                     todayPlanItems.forEach { item ->
-                        Text(
-                            text = "• $item",
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .shadow(2.dp, RoundedCornerShape(12.dp))
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(8.dp))
                                 .background(BoardTonePlan)
                                 .clickable { onMoveItemToCompleted(item) }
-                                .padding(horizontal = 12.dp, vertical = 9.dp),
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFFF6F1E7))
+                                    .border(1.dp, Color(0xFFD9CFBF), RoundedCornerShape(4.dp)),
+                            )
+                            Text(
+                                text = item,
+                                color = Color(0xFF2F2922),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(Color(0x10A17856)),
                         )
                     }
                 }
@@ -671,17 +691,34 @@ private fun TodayBoardSection(
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
                     todayCompletedItems.forEach { item ->
-                        Text(
-                            text = item,
-                            style = completedTextStyle(completed = true),
-                            color = Color(0xFF8B847D),
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .shadow(2.dp, RoundedCornerShape(12.dp))
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(8.dp))
                                 .background(BoardToneDone)
                                 .clickable { onRestoreItemFromCompleted(item) }
-                                .padding(horizontal = 12.dp, vertical = 9.dp),
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFF84B787)),
+                            )
+                            Text(
+                                text = item,
+                                style = completedTextStyle(completed = true),
+                                color = Color(0xFF8B847D),
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(Color(0x1095B087)),
                         )
                     }
                 }
