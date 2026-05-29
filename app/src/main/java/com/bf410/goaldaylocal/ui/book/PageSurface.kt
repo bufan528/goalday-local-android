@@ -3,6 +3,7 @@ package com.bf410.goaldaylocal.ui.book
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -51,6 +53,7 @@ import com.bf410.goaldaylocal.data.PlanPage
 import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetPage
 import java.time.LocalDate
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
@@ -555,6 +558,7 @@ private fun TodayBoardSection(
 ) {
     PaperNoteCard(modifier = modifier) {
         Text("今日执行看板", style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
+        Text("长按右侧任务拖到计划/完成区", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
         if (todayPlanItems.isEmpty() && todayCompletedItems.isEmpty()) {
             Text("从右侧清单拖入（点击）到今日执行或完成区。", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
@@ -565,7 +569,12 @@ private fun TodayBoardSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(if (dragPreviewTarget == DragTarget.TODAY) Color(0x33D9A97E) else Color.Transparent)
+                .background(if (dragPreviewTarget == DragTarget.TODAY) Color(0x44D9A97E) else Color(0x14A17856))
+                .border(
+                    width = if (dragPreviewTarget == DragTarget.TODAY) 1.dp else 0.dp,
+                    color = Color(0xCCB77A5A),
+                    shape = RoundedCornerShape(10.dp),
+                )
                 .padding(horizontal = 6.dp, vertical = 4.dp),
         )
         todayPlanItems.forEach { item ->
@@ -573,6 +582,7 @@ private fun TodayBoardSection(
                 text = "• $item",
                 modifier = Modifier
                     .fillMaxWidth()
+                    .shadow(2.dp, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color(0x22B88A58))
                     .clickable { onMoveItemToCompleted(item) }
@@ -585,7 +595,12 @@ private fun TodayBoardSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(if (dragPreviewTarget == DragTarget.DONE) Color(0x33A5C49D) else Color.Transparent)
+                .background(if (dragPreviewTarget == DragTarget.DONE) Color(0x44A5C49D) else Color(0x14A17856))
+                .border(
+                    width = if (dragPreviewTarget == DragTarget.DONE) 1.dp else 0.dp,
+                    color = Color(0xCC79A16E),
+                    shape = RoundedCornerShape(10.dp),
+                )
                 .padding(horizontal = 6.dp, vertical = 4.dp),
         )
         todayCompletedItems.forEach { item ->
@@ -595,6 +610,7 @@ private fun TodayBoardSection(
                 color = Color(0xFF8B847D),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .shadow(2.dp, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color(0x22BBD1AD))
                     .clickable { onRestoreItemFromCompleted(item) }
@@ -623,13 +639,14 @@ private fun SourcePoolSection(
 ) {
     PaperNoteCard(modifier = modifier) {
         Text("待办来源池", style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
+        Text("左滑到计划，继续左滑到完成", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
         if (items.isEmpty()) {
             Text("来源池已清空", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
         }
         items.forEach { item ->
             var dragOffsetX by remember(item) { mutableStateOf(0f) }
-            Row(
+            RowWithDragFeedback(
                 modifier = Modifier
                     .fillMaxWidth()
                     .offset { IntOffset(dragOffsetX.roundToInt(), 0) }
@@ -662,6 +679,16 @@ private fun SourcePoolSection(
                             )
                         }
                     },
+                background = if (abs(dragOffsetX) > 0.5f) {
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color.Transparent,
+                            if (dragOffsetX <= -150f) Color(0x3379A16E) else Color(0x33D9A97E),
+                        ),
+                    )
+                } else {
+                    Brush.horizontalGradient(listOf(Color.Transparent, Color.Transparent))
+                },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -693,6 +720,26 @@ private fun SourcePoolSection(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun RowWithDragFeedback(
+    modifier: Modifier,
+    background: Brush,
+    verticalAlignment: Alignment.Vertical,
+    horizontalArrangement: Arrangement.Horizontal,
+    content: @Composable () -> Unit,
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(background)
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+        verticalAlignment = verticalAlignment,
+        horizontalArrangement = horizontalArrangement,
+    ) {
+        content()
     }
 }
 
