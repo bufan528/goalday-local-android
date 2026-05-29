@@ -697,12 +697,21 @@ private fun SourcePoolSection(
                     ),
                 ),
         )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text("轻滑", style = MaterialTheme.typography.labelSmall, color = BoardHintColor)
+            Text("到计划", style = MaterialTheme.typography.labelSmall, color = BoardHintColor)
+            Text("到完成", style = MaterialTheme.typography.labelSmall, color = BoardHintColor)
+        }
         if (items.isEmpty()) {
             Text("来源池已清空", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
         }
         items.forEach { item ->
             var dragOffsetX by remember(item) { mutableStateOf(0f) }
+            val isDragging = dragOffsetX < -2f
             val animatedOffsetX by animateFloatAsState(
                 targetValue = dragOffsetX,
                 animationSpec = spring(dampingRatio = 0.78f, stiffness = 420f),
@@ -789,7 +798,7 @@ private fun SourcePoolSection(
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
                         .background(Color(0x1A8F684F))
-                        .clickable { onMoveItemToToday(item) }
+                        .clickable(enabled = !isDragging) { onMoveItemToToday(item) }
                         .padding(horizontal = 9.dp, vertical = 5.dp),
                 )
                 Text(
@@ -798,7 +807,7 @@ private fun SourcePoolSection(
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
                         .background(Color(0x1A6A9F68))
-                        .clickable { onMoveItemToCompleted(item) }
+                        .clickable(enabled = !isDragging) { onMoveItemToCompleted(item) }
                         .padding(horizontal = 9.dp, vertical = 5.dp),
                 )
             }
