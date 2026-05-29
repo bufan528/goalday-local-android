@@ -350,15 +350,32 @@ private fun EditableBulletPage(
 ) {
     var newItem by remember(pageTitle) { mutableStateOf("") }
     var dueDayText by remember(pageTitle) { mutableStateOf("") }
-    var editedBaseItems by remember(pageTitle, baseItems) { mutableStateOf(baseItems) }
     val stagedItems = remember(todayPlanItems, todayCompletedItems) { (todayPlanItems + todayCompletedItems).toSet() }
-    val sourceBaseItems = remember(editedBaseItems, stagedItems) { editedBaseItems.filterNot { it in stagedItems } }
+    val sourceBaseItems = remember(baseItems, stagedItems) { baseItems.filterNot { it in stagedItems } }
     val sourceCustomItems = remember(customItems, stagedItems) { customItems.filterNot { it in stagedItems } }
     val sourceItems = sourceBaseItems + sourceCustomItems
     var dragPreviewTarget by remember(pageTitle) { mutableStateOf(DragTarget.NONE) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         WeekThemeSection(theme = weeklyTheme, onThemeChange = onWeeklyThemeChange)
+        QuickAddTaskSection(
+            inputLabel = inputLabel,
+            newItem = newItem,
+            onNewItemChange = { newItem = it },
+            dueDayText = dueDayText,
+            onDueDayChange = { dueDayText = it.filter(Char::isDigit).take(2) },
+            onSaveWithDeadline = {
+                val parsedDay = dueDayText.toIntOrNull()
+                onAddCustomItemWithDeadline(newItem, parsedDay)
+                newItem = ""
+                dueDayText = ""
+            },
+            onSaveOnly = {
+                onAddCustomItem(newItem)
+                newItem = ""
+                dueDayText = ""
+            },
+        )
         SchedulePreviewSection(entries = schedulePreviewEntries)
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -386,72 +403,42 @@ private fun EditableBulletPage(
                 modifier = Modifier.weight(1f),
             )
         }
+    }
+}
 
-        sourceBaseItems.forEach { item ->
-            ActionBulletRow(
-                pageTitle = pageTitle,
-                item = item,
-                tint = tint,
-                checked = isChecked(pageTitle, item),
-                removable = false,
-                onToggleChecked = onToggleChecked,
-                onRemoveCustomItem = onRemoveCustomItem,
-                onRenameCustomItem = onRenameCustomItem,
-                contentMode = contentMode,
-                onContentModeChange = onContentModeChange,
-                onRenameDisplayedItem = { oldItem, replacement ->
-                    editedBaseItems = renameDisplayedChecklistItem(editedBaseItems, oldItem, replacement)
-                },
-            )
-        }
-        sourceCustomItems.forEach { item ->
-            ActionBulletRow(
-                pageTitle = pageTitle,
-                item = item,
-                tint = tint,
-                checked = isChecked(pageTitle, item),
-                removable = true,
-                onToggleChecked = onToggleChecked,
-                onRemoveCustomItem = onRemoveCustomItem,
-                onRenameCustomItem = onRenameCustomItem,
-                contentMode = contentMode,
-                onContentModeChange = onContentModeChange,
-                onRenameDisplayedItem = { _, _ -> },
-            )
-        }
-        PaperNoteCard {
-            Text(BookStrings.editHint, style = MaterialTheme.typography.bodySmall, color = Color(0xFF7B6B5A))
-            OutlinedTextField(
-                value = newItem,
-                onValueChange = { newItem = it },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                label = { Text(inputLabel) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            )
-            OutlinedTextField(
-                value = dueDayText,
-                onValueChange = { dueDayText = it.filter(Char::isDigit).take(2) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                label = { Text("截止日（可选，1-31）") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            )
-            TextButton(onClick = {
-                val parsedDay = dueDayText.toIntOrNull()
-                onAddCustomItemWithDeadline(newItem, parsedDay)
-                newItem = ""
-                dueDayText = ""
-            }) {
-                Text("保存并自动同步日程")
-            }
-            TextButton(onClick = {
-                onAddCustomItem(newItem)
-                newItem = ""
-                dueDayText = ""
-            }) { Text(BookStrings.save) }
+@Composable
+private fun QuickAddTaskSection(
+    inputLabel: String,
+    newItem: String,
+    onNewItemChange: (String) -> Unit,
+    dueDayText: String,
+    onDueDayChange: (String) -> Unit,
+    onSaveWithDeadline: () -> Unit,
+    onSaveOnly: () -> Unit,
+) {
+    PaperNoteCard {
+        Text("快速新增任务", style = MaterialTheme.typography.titleMedium, color = BoardTitleColor)
+        OutlinedTextField(
+            value = newItem,
+            onValueChange = onNewItemChange,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            label = { Text(inputLabel) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        )
+        OutlinedTextField(
+            value = dueDayText,
+            onValueChange = onDueDayChange,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            label = { Text("截止日（可选）") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = onSaveWithDeadline) { Text("保存并进日程") }
+            TextButton(onClick = onSaveOnly) { Text("仅保存") }
         }
     }
 }
