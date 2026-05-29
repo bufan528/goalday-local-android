@@ -269,7 +269,16 @@ private fun BookDetailView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("18周", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            Text("完成", color = Color(0xFF2B2B2B), modifier = Modifier.clickable(onClick = onBackToLibrary))
+            Text(
+                "完成",
+                color = Color.White,
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0xFF222222))
+                    .clickable(onClick = onBackToLibrary)
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+            )
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -293,6 +302,9 @@ private fun BookDetailView(
                         if (firstIndex >= 0) viewModel.setPage(firstIndex)
                     },
                 )
+                if (item != BookSegment.entries.last()) {
+                    Text("｜", color = Color(0xFFD2CBC1))
+                }
             }
             Spacer(Modifier.weight(1f))
             Row(

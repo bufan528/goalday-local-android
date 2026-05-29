@@ -729,6 +729,18 @@ private fun TodayBoardSection(
                 Text("清空今日计划区")
             }
         }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0xFFEFA5B8))
+                    .border(1.dp, Color(0xFFD8859C), RoundedCornerShape(99.dp)),
+            )
+        }
     }
 }
 
