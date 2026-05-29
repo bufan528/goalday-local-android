@@ -707,8 +707,13 @@ private fun SourcePoolSection(
         }
         items.forEach { item ->
             var dragOffsetX by remember(item) { mutableStateOf(0f) }
+            val animatedOffsetX by animateFloatAsState(
+                targetValue = dragOffsetX,
+                animationSpec = spring(dampingRatio = 0.78f, stiffness = 420f),
+                label = "animatedOffsetX",
+            )
             val rowAlpha by animateFloatAsState(
-                targetValue = if (dragOffsetX <= -150f) 0.82f else 1f,
+                targetValue = if (dragOffsetX <= -165f) 0.82f else 1f,
                 label = "rowAlpha",
             )
             val rowScale by animateFloatAsState(
@@ -724,7 +729,7 @@ private fun SourcePoolSection(
             RowWithDragFeedback(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .offset { IntOffset(dragOffsetX.roundToInt(), 0) }
+                    .offset { IntOffset(animatedOffsetX.roundToInt(), 0) }
                     .alpha(rowAlpha)
                     .graphicsLayer {
                         scaleX = rowScale
@@ -738,8 +743,8 @@ private fun SourcePoolSection(
                             },
                             onDragEnd = {
                                 when {
-                                    dragOffsetX <= -150f -> onMoveItemToCompleted(item)
-                                    dragOffsetX <= -70f -> onMoveItemToToday(item)
+                                    dragOffsetX <= -165f -> onMoveItemToCompleted(item)
+                                    dragOffsetX <= -82f -> onMoveItemToToday(item)
                                 }
                                 dragOffsetX = 0f
                                 onDragPreviewTargetChange(DragTarget.NONE)
@@ -754,8 +759,8 @@ private fun SourcePoolSection(
                             dragOffsetX = applyDragResistance(proposed).coerceIn(-220f, 0f)
                             onDragPreviewTargetChange(
                                 when {
-                                    dragOffsetX <= -150f -> DragTarget.DONE
-                                    dragOffsetX <= -70f -> DragTarget.TODAY
+                                    dragOffsetX <= -165f -> DragTarget.DONE
+                                    dragOffsetX <= -82f -> DragTarget.TODAY
                                     else -> DragTarget.NONE
                                 },
                             )
@@ -765,7 +770,7 @@ private fun SourcePoolSection(
                     Brush.horizontalGradient(
                         listOf(
                             Color.Transparent,
-                            if (dragOffsetX <= -150f) Color(0x3379A16E) else Color(0x33D9A97E),
+                            if (dragOffsetX <= -165f) Color(0x3379A16E) else Color(0x33D9A97E),
                         ),
                     )
                 } else {
