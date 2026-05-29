@@ -13,11 +13,11 @@ enum class TurnReleaseResult {
     SnapBack,
 }
 
-private const val TURN_DISTANCE_THRESHOLD = 0.29f
-private const val TURN_FLING_THRESHOLD = 1350f
+private const val TURN_DISTANCE_THRESHOLD = 0.42f
+private const val TURN_FLING_THRESHOLD = 1650f
 private const val BOUNDARY_RESISTANCE_FACTOR = 0.22f
 private const val OPPOSING_VELOCITY_THRESHOLD = 600f
-private const val EDGE_TAP_START_PROGRESS = 0.28f
+private const val EDGE_TAP_START_PROGRESS = 0.22f
 
 fun resolvePageTurnRelease(
     direction: TurnDirection,
@@ -69,12 +69,17 @@ fun initialEdgeTapProgress(): Float = EDGE_TAP_START_PROGRESS
 
 fun updatedTurnProgress(
     currentProgress: Float,
+    direction: TurnDirection,
     dragAmountPx: Float,
     pageWidthPx: Float,
     canTurn: Boolean,
 ): Float {
     val safeWidth = pageWidthPx.coerceAtLeast(1f)
-    val delta = abs(dragAmountPx) / safeWidth
+    val directionalDelta = when (direction) {
+        TurnDirection.NEXT -> (-dragAmountPx) / safeWidth
+        TurnDirection.PREVIOUS -> dragAmountPx / safeWidth
+    }
+    val delta = directionalDelta.coerceAtLeast(0f)
     val raw = currentProgress + delta
     return applyBoundaryResistance(raw, canTurn)
 }

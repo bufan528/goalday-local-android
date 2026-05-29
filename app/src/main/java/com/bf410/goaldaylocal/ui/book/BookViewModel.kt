@@ -16,7 +16,7 @@ import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
-import java.time.LocalDate
+import java.time.YearMonth
 
 class BookViewModel(
     private val store: LocalStateStore,
@@ -125,12 +125,16 @@ class BookViewModel(
     }
 
     fun addItemToSchedule(item: String, day: Int) {
-        val current = LocalDate.now()
+        val title = item.trim()
+        if (title.isBlank()) return
+        val year = store.calendarAnchorYear()
+        val month = store.calendarAnchorMonth().coerceIn(1, 12)
+        val maxDay = YearMonth.of(year, month).lengthOfMonth()
         store.addScheduleEntry(
-            title = item,
-            year = current.year,
-            month = current.monthValue,
-            day = day.coerceIn(1, current.lengthOfMonth()),
+            title = title,
+            year = year,
+            month = month,
+            day = day.coerceIn(1, maxDay),
             note = currentBook().title,
         )
     }

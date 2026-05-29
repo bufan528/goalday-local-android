@@ -1,2 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<full-backup-content />
+<full-backup-content>
+    <include domain="file" path="mmkv/." />
+    <include domain="external" path="backups/." />
+</full-backup-content>

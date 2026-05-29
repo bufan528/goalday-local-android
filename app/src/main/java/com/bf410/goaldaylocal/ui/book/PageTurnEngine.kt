@@ -29,6 +29,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase
@@ -71,11 +72,6 @@ fun PageTurnEngine(
     val visualProgress = visualTurnProgress(dragProgress)
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
-    val turnRotation = when (direction) {
-        TurnDirection.NEXT -> -108f * visualProgress
-        TurnDirection.PREVIOUS -> 108f * visualProgress
-        null -> 0f
-    }
     val turnShadowWidth = (18f + visualProgress * visualProgress * 92f).dp
 
     fun clearState() {
@@ -138,12 +134,13 @@ fun PageTurnEngine(
                         onDragStart = {
                             lastVelocityPxPerSecond = 0f
                             lastEventTimeMs = 0L
+                            direction = null
                         },
                         onHorizontalDrag = { change, dragAmount ->
-                            val resolvedDirection = when {
-                                dragAmount < 0f -> TurnDirection.NEXT
-                                dragAmount > 0f -> TurnDirection.PREVIOUS
-                                else -> direction
+                            val resolvedDirection = direction ?: when {
+                                dragAmount <= -0.6f -> TurnDirection.NEXT
+                                dragAmount >= 0.6f -> TurnDirection.PREVIOUS
+                                else -> null
                             } ?: return@detectHorizontalDragGestures
 
                             direction = resolvedDirection
@@ -155,6 +152,7 @@ fun PageTurnEngine(
                             }
                             val adjustedProgress = updatedTurnProgress(
                                 currentProgress = progress.value,
+                                direction = resolvedDirection,
                                 dragAmountPx = dragAmount,
                                 pageWidthPx = pageWidthPx,
                                 canTurn = canTurn,
@@ -162,7 +160,11 @@ fun PageTurnEngine(
 
                             val nowMs = change.uptimeMillis
                             val deltaMs = (nowMs - lastEventTimeMs).coerceAtLeast(1L)
-                            lastVelocityPxPerSecond = (dragAmount / deltaMs) * 1000f
+                            lastVelocityPxPerSecond = if (abs(dragAmount) < 0.3f) {
+                                0f
+                            } else {
+                                (dragAmount / deltaMs) * 1000f
+                            }
                             lastEventTimeMs = nowMs
 
                             scope.launch { progress.snapTo(adjustedProgress) }
@@ -173,7 +175,7 @@ fun PageTurnEngine(
                             settle(
                                 resolvePageTurnRelease(
                                     direction = activeDirection,
-                                    progress = dragProgress,
+                                    progress = progress.value.coerceIn(0f, 1f),
                                     velocity = lastVelocityPxPerSecond,
                                     hasPreviousPage = canTurnPrevious,
                                     hasNextPage = canTurnNext,
