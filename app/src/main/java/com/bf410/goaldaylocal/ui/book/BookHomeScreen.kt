@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -57,6 +58,8 @@ fun BookHomeScreen(
     var showPageDialog by remember { mutableStateOf(false) }
     var showRenamePageDialog by remember { mutableStateOf(false) }
     var showEditBookDialog by remember { mutableStateOf(false) }
+    var showInspiration by remember { mutableStateOf(false) }
+    var selectedTemplateIndex by remember { mutableStateOf(0) }
 
     if (uiState.inLibraryMode) {
         LibraryView(
@@ -70,18 +73,32 @@ fun BookHomeScreen(
         val currentPage = book.pages[uiState.selectedPageIndex]
         val previousPage = book.pages.getOrNull(uiState.selectedPageIndex - 1)
         val nextPage = book.pages.getOrNull(uiState.selectedPageIndex + 1)
-        BookDetailView(
-            viewModel = viewModel,
-            book = book,
-            currentPage = currentPage,
-            previousPage = previousPage,
-            nextPage = nextPage,
-            uiState = uiState,
-            onBackToLibrary = viewModel::openLibrary,
-            onShowAddPage = { showPageDialog = true },
-            onShowRenamePage = { showRenamePageDialog = true },
-            onShowEditBook = { showEditBookDialog = true },
-        )
+        if (showInspiration) {
+            InspirationCenterView(
+                templates = InspirationTemplates.all,
+                selectedIndex = selectedTemplateIndex,
+                onSelect = { selectedTemplateIndex = it },
+                onBack = { showInspiration = false },
+                onApply = { items ->
+                    viewModel.applyInspirationTemplate(items)
+                    showInspiration = false
+                },
+            )
+        } else {
+            BookDetailView(
+                viewModel = viewModel,
+                book = book,
+                currentPage = currentPage,
+                previousPage = previousPage,
+                nextPage = nextPage,
+                uiState = uiState,
+                onBackToLibrary = viewModel::openLibrary,
+                onShowAddPage = { showPageDialog = true },
+                onShowRenamePage = { showRenamePageDialog = true },
+                onShowEditBook = { showEditBookDialog = true },
+                onShowInspiration = { showInspiration = true },
+            )
+        }
     }
 
     if (showCreateDialog) {
@@ -217,6 +234,7 @@ private fun BookDetailView(
     onShowAddPage: () -> Unit,
     onShowRenamePage: () -> Unit,
     onShowEditBook: () -> Unit,
+    onShowInspiration: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -239,6 +257,7 @@ private fun BookDetailView(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
             ) {
+                ActionChip(label = "灵感中心", color = Color(0xFF8F684F), onClick = onShowInspiration)
                 if (book.id.startsWith("custom_")) {
                     ActionChip(label = BookStrings.editBook, color = Color(0xFF8F684F), onClick = onShowEditBook)
                     ActionChip(label = BookStrings.addPage, color = Color(0xFF8F684F), onClick = onShowAddPage)
@@ -304,6 +323,72 @@ private fun BookDetailView(
             onFlipNext = { if (uiState.selectedPageIndex < book.pages.lastIndex) viewModel.setPage(uiState.selectedPageIndex + 1) },
             onFlipPrevious = { if (uiState.selectedPageIndex > 0) viewModel.setPage(uiState.selectedPageIndex - 1) },
         )
+    }
+}
+
+@Composable
+private fun InspirationCenterView(
+    templates: List<InspirationTemplate>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    onBack: () -> Unit,
+    onApply: (List<String>) -> Unit,
+) {
+    val selected = templates[selectedIndex.coerceIn(0, templates.lastIndex)]
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("灵感中心", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+            Text("返回", color = Color(0xFF8F684F), modifier = Modifier.clickable(onClick = onBack))
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                templates.forEachIndexed { index, item ->
+                    Column(
+                        modifier = Modifier
+                            .width(170.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(if (index == selectedIndex) Color(0xFFF4ECE2) else Color(0x66FFFFFF))
+                            .clickable { onSelect(index) }
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(item.title, color = Color(0xFF2F261D), style = MaterialTheme.typography.titleMedium)
+                        Text(item.subtitle, color = Color(0xFF6F675D), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0x66FFFFFF))
+                .padding(14.dp),
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(selected.title, style = MaterialTheme.typography.titleLarge, color = Color(0xFF2F261D))
+                selected.items.forEach { item ->
+                    Text("□ $item", color = Color(0xFF302A24))
+                }
+                Button(onClick = { onApply(selected.items) }) {
+                    Text("应用到当前页")
+                }
+            }
+        }
     }
 }
 

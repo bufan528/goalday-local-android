@@ -118,6 +118,13 @@ class BookViewModel(
         addItemToSchedule(text, resolvedDay)
     }
 
+    fun applyInspirationTemplate(items: List<String>) {
+        if (!supportsCustomItems()) return
+        val merged = (_uiState.value.customPageItems + items.map(String::trim).filter(String::isNotBlank)).distinct()
+        store.saveCustomPageItems(currentBook().id, currentPage().title, merged)
+        _uiState.update { it.copy(customPageItems = merged) }
+    }
+
     fun removeCustomPageItem(item: String) {
         if (!supportsCustomItems()) return
         val updated = _uiState.value.customPageItems.filterNot { it == item }
