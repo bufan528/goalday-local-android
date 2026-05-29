@@ -613,69 +613,79 @@ private fun TodayBoardSection(
             Text("从右侧清单拖入（点击）到今日执行或完成区。", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
         }
-        Text(
-            "今日计划",
-            color = Color(0xFF5E4837),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(todayHeaderColor)
-                .border(
-                    width = 1.dp,
-                    color = Color(0xCCB77A5A).copy(alpha = todayBorderAlpha),
-                    shape = RoundedCornerShape(10.dp),
-                )
-                .padding(horizontal = 6.dp, vertical = 4.dp),
-        )
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.animateContentSize(),
-        ) {
-            todayPlanItems.forEach { item ->
-                Text(
-                    text = "• $item",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                    .shadow(2.dp, RoundedCornerShape(12.dp))
-                    .clip(RoundedCornerShape(12.dp))
-                        .background(BoardTonePlan)
-                    .clickable { onMoveItemToCompleted(item) }
-                    .padding(horizontal = 12.dp, vertical = 9.dp),
-            )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.weight(0.28f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("日期", color = Color(0xFF7E7568), style = MaterialTheme.typography.labelMedium)
+                listOf("今", "明", "后").forEach { dayMark ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0x0F8F684F))
+                            .padding(horizontal = 6.dp, vertical = 8.dp),
+                    ) { Text(dayMark, color = Color(0xFF7A6A5A), style = MaterialTheme.typography.labelLarge) }
+                }
             }
-        }
-        Text(
-            "今日完成",
-            color = Color(0xFF5E4837),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(doneHeaderColor)
-                .border(
-                    width = 1.dp,
-                    color = Color(0xCC79A16E).copy(alpha = doneBorderAlpha),
-                    shape = RoundedCornerShape(10.dp),
-                )
-                .padding(horizontal = 6.dp, vertical = 4.dp),
-        )
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.animateContentSize(),
-        ) {
-            todayCompletedItems.forEach { item ->
+            Column(modifier = Modifier.weight(0.72f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = item,
-                    style = completedTextStyle(completed = true),
-                    color = Color(0xFF8B847D),
+                    "To do",
+                    color = Color(0xFF5E4837),
                     modifier = Modifier
                         .fillMaxWidth()
-                    .shadow(2.dp, RoundedCornerShape(12.dp))
-                    .clip(RoundedCornerShape(12.dp))
-                        .background(BoardToneDone)
-                    .clickable { onRestoreItemFromCompleted(item) }
-                    .padding(horizontal = 12.dp, vertical = 9.dp),
-            )
-        }
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(todayHeaderColor)
+                        .border(
+                            width = 1.dp,
+                            color = Color(0xCCB77A5A).copy(alpha = todayBorderAlpha),
+                            shape = RoundedCornerShape(10.dp),
+                        )
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
+                    todayPlanItems.forEach { item ->
+                        Text(
+                            text = "• $item",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .shadow(2.dp, RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(BoardTonePlan)
+                                .clickable { onMoveItemToCompleted(item) }
+                                .padding(horizontal = 12.dp, vertical = 9.dp),
+                        )
+                    }
+                }
+                Text(
+                    "完成",
+                    color = Color(0xFF5E4837),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(doneHeaderColor)
+                        .border(
+                            width = 1.dp,
+                            color = Color(0xCC79A16E).copy(alpha = doneBorderAlpha),
+                            shape = RoundedCornerShape(10.dp),
+                        )
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
+                    todayCompletedItems.forEach { item ->
+                        Text(
+                            text = item,
+                            style = completedTextStyle(completed = true),
+                            color = Color(0xFF8B847D),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .shadow(2.dp, RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(BoardToneDone)
+                                .clickable { onRestoreItemFromCompleted(item) }
+                                .padding(horizontal = 12.dp, vertical = 9.dp),
+                        )
+                    }
+                }
+            }
         }
         if (todayPlanItems.isNotEmpty()) {
             TextButton(onClick = { todayPlanItems.forEach(onRestoreItemFromToday) }) {
