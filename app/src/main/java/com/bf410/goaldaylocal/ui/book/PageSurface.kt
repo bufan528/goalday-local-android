@@ -582,7 +582,7 @@ private fun TodayBoardSection(
         label = "doneBorderAlpha",
     )
     PaperNoteCard(modifier = modifier) {
-        Text("今日执行看板", style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
+        Text("今日执行看板", style = MaterialTheme.typography.titleMedium, color = Color(0xFF5E4837))
         Text("长按右侧任务拖到计划/完成区", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BoardStatChip(label = "计划 ${todayPlanItems.size}", bg = Color(0x22D9A97E))
@@ -615,12 +615,12 @@ private fun TodayBoardSection(
                     text = "• $item",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(2.dp, RoundedCornerShape(12.dp))
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0x22B88A58))
-                        .clickable { onMoveItemToCompleted(item) }
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                )
+                    .shadow(2.dp, RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0x22B88A58))
+                    .clickable { onMoveItemToCompleted(item) }
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
+            )
             }
         }
         Text(
@@ -648,13 +648,13 @@ private fun TodayBoardSection(
                     color = Color(0xFF8B847D),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(2.dp, RoundedCornerShape(12.dp))
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0x22BBD1AD))
-                        .clickable { onRestoreItemFromCompleted(item) }
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                )
-            }
+                    .shadow(2.dp, RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0x22BBD1AD))
+                    .clickable { onRestoreItemFromCompleted(item) }
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
+            )
+        }
         }
         if (todayPlanItems.isNotEmpty()) {
             TextButton(onClick = { todayPlanItems.forEach(onRestoreItemFromToday) }) {
@@ -678,7 +678,7 @@ private fun SourcePoolSection(
     modifier: Modifier = Modifier,
 ) {
     PaperNoteCard(modifier = modifier) {
-        Text("待办来源池", style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
+        Text("待办来源池", style = MaterialTheme.typography.titleMedium, color = Color(0xFF5E4837))
         val hintText = when (dragPreviewTarget) {
             DragTarget.TODAY -> "松手将进入今日计划"
             DragTarget.DONE -> "松手将直接标记完成"
@@ -767,7 +767,7 @@ private fun SourcePoolSection(
                 },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+                ) {
                 Box(
                     modifier = Modifier
                         .size(14.dp)
@@ -783,7 +783,7 @@ private fun SourcePoolSection(
                         .clip(RoundedCornerShape(99.dp))
                         .background(Color(0x1A8F684F))
                         .clickable { onMoveItemToToday(item) }
-                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                        .padding(horizontal = 9.dp, vertical = 5.dp),
                 )
                 Text(
                     "完成",
@@ -792,7 +792,7 @@ private fun SourcePoolSection(
                         .clip(RoundedCornerShape(99.dp))
                         .background(Color(0x1A6A9F68))
                         .clickable { onMoveItemToCompleted(item) }
-                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                        .padding(horizontal = 9.dp, vertical = 5.dp),
                 )
             }
         }
@@ -811,7 +811,7 @@ private fun BoardStatChip(
         modifier = Modifier
             .clip(RoundedCornerShape(99.dp))
             .background(bg)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = 11.dp, vertical = 6.dp),
     )
 }
 
@@ -825,9 +825,10 @@ private fun RowWithDragFeedback(
 ) {
     Row(
         modifier = modifier
+            .shadow(1.dp, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
             .background(background)
-            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .padding(horizontal = 5.dp, vertical = 3.dp)
             .animateContentSize(),
         verticalAlignment = verticalAlignment,
         horizontalArrangement = horizontalArrangement,
@@ -921,9 +922,9 @@ private fun PaperNoteCard(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(22.dp))
             .background(Brush.verticalGradient(listOf(Color(0xFFFFFCF6), Color(0xFFFAF2E8), Color(0xFFF5E7D6))))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 16.dp, vertical = 13.dp),
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x14A17856)))
         content()
