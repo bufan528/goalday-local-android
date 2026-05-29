@@ -110,6 +110,12 @@ class BookViewModel(
         _uiState.update { it.copy(customPageItems = updated) }
     }
 
+    fun addCustomPageItemWithDeadline(text: String, day: Int?) {
+        addCustomPageItem(text)
+        val resolvedDay = day ?: return
+        addItemToSchedule(text, resolvedDay)
+    }
+
     fun removeCustomPageItem(item: String) {
         if (!supportsCustomItems()) return
         val updated = _uiState.value.customPageItems.filterNot { it == item }

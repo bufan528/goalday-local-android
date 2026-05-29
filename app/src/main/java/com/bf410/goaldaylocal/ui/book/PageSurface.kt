@@ -292,6 +292,7 @@ fun ActivePageLayer(
     onToggleChecked: (String, String) -> Unit,
     onDiaryChange: (String) -> Unit,
     onAddCustomItem: (String) -> Unit,
+    onAddCustomItemWithDeadline: (String, Int?) -> Unit,
     onRemoveCustomItem: (String) -> Unit,
     onRenameCustomItem: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
@@ -315,9 +316,9 @@ fun ActivePageLayer(
         onSavedClick = onToggleSaved,
     ) {
         when (page) {
-            is TargetPage -> EditableBulletPage(page.title, page.items, customPageItems, tint, BookStrings.addTarget, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
-            is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), BookStrings.addSchedule, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
-            is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), BookStrings.addPlan, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
+            is TargetPage -> EditableBulletPage(page.title, page.items, customPageItems, tint, BookStrings.addTarget, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
+            is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), BookStrings.addSchedule, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
+            is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), BookStrings.addPlan, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
             is DiaryPage -> DiarySection(page.title, page.prompt, tint, diaryDraft, pendingCommand, onCommand, onDiaryChange, contentMode, onContentModeChange)
         }
         Spacer(Modifier.height(24.dp))
@@ -343,6 +344,7 @@ private fun EditableBulletPage(
     isChecked: (String, String) -> Boolean,
     onToggleChecked: (String, String) -> Unit,
     onAddCustomItem: (String) -> Unit,
+    onAddCustomItemWithDeadline: (String, Int?) -> Unit,
     onRemoveCustomItem: (String) -> Unit,
     onRenameCustomItem: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
@@ -358,6 +360,7 @@ private fun EditableBulletPage(
     onContentModeChange: (PageContentMode) -> Unit,
 ) {
     var newItem by remember(pageTitle) { mutableStateOf("") }
+    var dueDayText by remember(pageTitle) { mutableStateOf("") }
     var editedBaseItems by remember(pageTitle, baseItems) { mutableStateOf(baseItems) }
     val stagedItems = remember(todayPlanItems, todayCompletedItems) { (todayPlanItems + todayCompletedItems).toSet() }
     val sourceBaseItems = remember(editedBaseItems, stagedItems) { editedBaseItems.filterNot { it in stagedItems } }
@@ -437,12 +440,28 @@ private fun EditableBulletPage(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             )
+            OutlinedTextField(
+                value = dueDayText,
+                onValueChange = { dueDayText = it.filter(Char::isDigit).take(2) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                label = { Text("截止日（可选，1-31）") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            )
+            TextButton(onClick = {
+                val parsedDay = dueDayText.toIntOrNull()
+                onAddCustomItemWithDeadline(newItem, parsedDay)
+                newItem = ""
+                dueDayText = ""
+            }) {
+                Text("保存并自动同步日程")
+            }
             TextButton(onClick = {
                 onAddCustomItem(newItem)
                 newItem = ""
-            }) {
-                Text(BookStrings.save)
-            }
+                dueDayText = ""
+            }) { Text(BookStrings.save) }
         }
     }
 }

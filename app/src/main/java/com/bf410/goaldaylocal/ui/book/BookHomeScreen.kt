@@ -291,6 +291,7 @@ private fun BookDetailView(
             onToggleChecked = { pageTitle, item -> viewModel.toggleChecked(pageTitle, item) },
             onDiaryChange = viewModel::updateDiaryDraft,
             onAddCustomItem = viewModel::addCustomPageItem,
+            onAddCustomItemWithDeadline = viewModel::addCustomPageItemWithDeadline,
             onRemoveCustomItem = viewModel::removeCustomPageItem,
             onRenameCustomItem = viewModel::renameCustomPageItem,
             onAddToSchedule = viewModel::addItemToSchedule,
