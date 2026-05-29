@@ -31,6 +31,9 @@ class BookViewModel(
             savedBookIds = store.savedBookIds(),
             diaryDraft = "",
             customPageItems = emptyList(),
+            weeklyTheme = "",
+            todayPlanItems = emptyList(),
+            todayCompletedItems = emptyList(),
             customBookCount = store.customBooks().size,
             inLibraryMode = true,
         ),
@@ -139,6 +142,48 @@ class BookViewModel(
         )
     }
 
+    fun updateWeeklyTheme(text: String) {
+        val book = currentBook()
+        store.setWeeklyTheme(book.id, text)
+        _uiState.update { it.copy(weeklyTheme = text) }
+    }
+
+    fun moveItemToToday(item: String) {
+        val page = currentPage()
+        val book = currentBook()
+        val nextPlan = (_uiState.value.todayPlanItems + item).distinct()
+        val nextDone = _uiState.value.todayCompletedItems.filterNot { it == item }
+        store.saveTodayPlanItems(book.id, page.title, nextPlan)
+        store.saveTodayCompletedItems(book.id, page.title, nextDone)
+        _uiState.update { it.copy(todayPlanItems = nextPlan, todayCompletedItems = nextDone) }
+    }
+
+    fun moveItemToCompleted(item: String) {
+        val page = currentPage()
+        val book = currentBook()
+        val nextDone = (_uiState.value.todayCompletedItems + item).distinct()
+        val nextPlan = _uiState.value.todayPlanItems.filterNot { it == item }
+        store.saveTodayCompletedItems(book.id, page.title, nextDone)
+        store.saveTodayPlanItems(book.id, page.title, nextPlan)
+        _uiState.update { it.copy(todayCompletedItems = nextDone, todayPlanItems = nextPlan) }
+    }
+
+    fun restoreItemFromToday(item: String) {
+        val page = currentPage()
+        val book = currentBook()
+        val updated = _uiState.value.todayPlanItems.filterNot { it == item }
+        store.saveTodayPlanItems(book.id, page.title, updated)
+        _uiState.update { it.copy(todayPlanItems = updated) }
+    }
+
+    fun restoreItemFromCompleted(item: String) {
+        val page = currentPage()
+        val book = currentBook()
+        val updated = _uiState.value.todayCompletedItems.filterNot { it == item }
+        store.saveTodayCompletedItems(book.id, page.title, updated)
+        _uiState.update { it.copy(todayCompletedItems = updated) }
+    }
+
     fun createCustomBook(title: String, subtitle: String, color: Color) {
         val newBook = store.addCustomBook(title.trim(), subtitle.trim(), color)
         refreshBooks(selectBookId = newBook.id, openBook = true)
@@ -244,6 +289,9 @@ class BookViewModel(
                     it.copy(
                         diaryDraft = store.diaryText(book.id, page.title),
                         customPageItems = emptyList(),
+                        weeklyTheme = store.weeklyTheme(book.id),
+                        todayPlanItems = emptyList(),
+                        todayCompletedItems = emptyList(),
                     )
                 }
             }
@@ -252,6 +300,9 @@ class BookViewModel(
                     it.copy(
                         diaryDraft = "",
                         customPageItems = store.customPageItems(book.id, page.title),
+                        weeklyTheme = store.weeklyTheme(book.id),
+                        todayPlanItems = store.todayPlanItems(book.id, page.title),
+                        todayCompletedItems = store.todayCompletedItems(book.id, page.title),
                     )
                 }
             }

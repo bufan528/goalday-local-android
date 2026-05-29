@@ -11,6 +11,9 @@ data class BookUiState(
     val savedBookIds: Set<String>,
     val diaryDraft: String,
     val customPageItems: List<String>,
+    val weeklyTheme: String,
+    val todayPlanItems: List<String>,
+    val todayCompletedItems: List<String>,
     val customBookCount: Int,
     val inLibraryMode: Boolean,
 )

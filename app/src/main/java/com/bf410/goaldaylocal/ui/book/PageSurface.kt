@@ -2,6 +2,7 @@ package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -266,6 +267,9 @@ fun ActivePageLayer(
     isSaved: Boolean,
     diaryDraft: String,
     customPageItems: List<String>,
+    weeklyTheme: String,
+    todayPlanItems: List<String>,
+    todayCompletedItems: List<String>,
     onToggleSaved: () -> Unit,
     isChecked: (String, String) -> Boolean,
     onToggleChecked: (String, String) -> Unit,
@@ -274,6 +278,11 @@ fun ActivePageLayer(
     onRemoveCustomItem: (String) -> Unit,
     onRenameCustomItem: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
+    onWeeklyThemeChange: (String) -> Unit,
+    onMoveItemToToday: (String) -> Unit,
+    onMoveItemToCompleted: (String) -> Unit,
+    onRestoreItemFromToday: (String) -> Unit,
+    onRestoreItemFromCompleted: (String) -> Unit,
     pendingCommand: RichEditorCommand?,
     onCommand: (RichEditorCommand) -> Unit,
     contentMode: PageContentMode,
@@ -289,9 +298,9 @@ fun ActivePageLayer(
         onSavedClick = onToggleSaved,
     ) {
         when (page) {
-            is TargetPage -> EditableBulletPage(page.title, page.items, customPageItems, tint, BookStrings.addTarget, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, contentMode, onContentModeChange)
-            is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), BookStrings.addSchedule, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, contentMode, onContentModeChange)
-            is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), BookStrings.addPlan, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, contentMode, onContentModeChange)
+            is TargetPage -> EditableBulletPage(page.title, page.items, customPageItems, tint, BookStrings.addTarget, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
+            is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), BookStrings.addSchedule, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
+            is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), BookStrings.addPlan, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
             is DiaryPage -> DiarySection(page.title, page.prompt, tint, diaryDraft, pendingCommand, onCommand, onDiaryChange, contentMode, onContentModeChange)
         }
         Spacer(Modifier.height(24.dp))
@@ -320,14 +329,34 @@ private fun EditableBulletPage(
     onRemoveCustomItem: (String) -> Unit,
     onRenameCustomItem: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
+    weeklyTheme: String,
+    todayPlanItems: List<String>,
+    todayCompletedItems: List<String>,
+    onWeeklyThemeChange: (String) -> Unit,
+    onMoveItemToToday: (String) -> Unit,
+    onMoveItemToCompleted: (String) -> Unit,
+    onRestoreItemFromToday: (String) -> Unit,
+    onRestoreItemFromCompleted: (String) -> Unit,
     contentMode: PageContentMode,
     onContentModeChange: (PageContentMode) -> Unit,
 ) {
     var newItem by remember(pageTitle) { mutableStateOf("") }
     var editedBaseItems by remember(pageTitle, baseItems) { mutableStateOf(baseItems) }
+    val stagedItems = remember(todayPlanItems, todayCompletedItems) { (todayPlanItems + todayCompletedItems).toSet() }
+    val sourceBaseItems = remember(editedBaseItems, stagedItems) { editedBaseItems.filterNot { it in stagedItems } }
+    val sourceCustomItems = remember(customItems, stagedItems) { customItems.filterNot { it in stagedItems } }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        editedBaseItems.forEach { item ->
+        WeekThemeSection(theme = weeklyTheme, onThemeChange = onWeeklyThemeChange)
+        TodayBoardSection(
+            todayPlanItems = todayPlanItems,
+            todayCompletedItems = todayCompletedItems,
+            onMoveItemToCompleted = onMoveItemToCompleted,
+            onRestoreItemFromToday = onRestoreItemFromToday,
+            onRestoreItemFromCompleted = onRestoreItemFromCompleted,
+        )
+
+        sourceBaseItems.forEach { item ->
             ActionBulletRow(
                 pageTitle = pageTitle,
                 item = item,
@@ -343,11 +372,13 @@ private fun EditableBulletPage(
                 onRenameDisplayedItem = { oldItem, replacement ->
                     editedBaseItems = renameDisplayedChecklistItem(editedBaseItems, oldItem, replacement)
                 },
+                onMoveItemToToday = onMoveItemToToday,
+                onMoveItemToCompleted = onMoveItemToCompleted,
             )
         }
-        if (customItems.isNotEmpty()) {
+        if (sourceCustomItems.isNotEmpty()) {
             Text(BookStrings.myContent, style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
-            customItems.forEach { item ->
+            sourceCustomItems.forEach { item ->
                 ActionBulletRow(
                     pageTitle = pageTitle,
                     item = item,
@@ -361,6 +392,8 @@ private fun EditableBulletPage(
                     contentMode = contentMode,
                     onContentModeChange = onContentModeChange,
                     onRenameDisplayedItem = { _, _ -> },
+                    onMoveItemToToday = onMoveItemToToday,
+                    onMoveItemToCompleted = onMoveItemToCompleted,
                 )
             }
         }
@@ -399,6 +432,8 @@ private fun ActionBulletRow(
     contentMode: PageContentMode,
     onContentModeChange: (PageContentMode) -> Unit,
     onRenameDisplayedItem: (String, String) -> Unit,
+    onMoveItemToToday: (String) -> Unit,
+    onMoveItemToCompleted: (String) -> Unit,
 ) {
     val activeEdit = contentMode as? PageContentMode.EditingChecklistItem
     val isEditingThisRow = activeEdit?.title == pageTitle && activeEdit.item == item
@@ -458,13 +493,26 @@ private fun ActionBulletRow(
                     )
                 }
                 Text(
-                    text = BookStrings.addToCalendar,
+                    text = "拖入今日",
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF8F684F),
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
                         .background(Color(0x1A8F684F))
-                        .clickable { onAddToSchedule(item, LocalDate.now().dayOfMonth) }
+                        .clickable { onMoveItemToToday(item) }
+                        .padding(horizontal = 8.dp, vertical = 7.dp),
+                )
+                Text(
+                    text = "拖入完成",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFF8F684F),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x1A8F684F))
+                        .clickable {
+                            onMoveItemToCompleted(item)
+                            onAddToSchedule(item, LocalDate.now().dayOfMonth)
+                        }
                         .padding(horizontal = 8.dp, vertical = 7.dp),
                 )
                 Text(
@@ -475,6 +523,90 @@ private fun ActionBulletRow(
                         .clickable { onContentModeChange(PageContentMode.EditingChecklistItem(pageTitle, item)) }
                         .padding(top = 7.dp),
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WeekThemeSection(
+    theme: String,
+    onThemeChange: (String) -> Unit,
+) {
+    var draft by remember(theme) { mutableStateOf(theme) }
+    PaperNoteCard {
+        Text("本周重点目标/主题", style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
+        OutlinedTextField(
+            value = draft,
+            onValueChange = { draft = it },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            label = { Text("例如：稳定作息 + 每天推进主任务") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        )
+        TextButton(onClick = { onThemeChange(draft.trim()) }) { Text("保存本周主题") }
+    }
+}
+
+@Composable
+private fun TodayBoardSection(
+    todayPlanItems: List<String>,
+    todayCompletedItems: List<String>,
+    onMoveItemToCompleted: (String) -> Unit,
+    onRestoreItemFromToday: (String) -> Unit,
+    onRestoreItemFromCompleted: (String) -> Unit,
+) {
+    PaperNoteCard {
+        Text("今日执行看板", style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
+        if (todayPlanItems.isEmpty() && todayCompletedItems.isEmpty()) {
+            Text("从右侧清单拖入（点击）到今日执行或完成区。", color = Color(0xFF7B6B5A))
+            return@PaperNoteCard
+        }
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.width(220.dp)) {
+                Text("今日计划", color = Color(0xFF5E4837))
+                todayPlanItems.forEach { item ->
+                    Text(
+                        text = item,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0x22B88A58))
+                            .clickable { onMoveItemToCompleted(item) }
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                    )
+                }
+                if (todayPlanItems.isNotEmpty()) {
+                    Text("点击条目可转入完成区", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7B6B5A))
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.width(220.dp)) {
+                Text("今日完成", color = Color(0xFF5E4837))
+                todayCompletedItems.forEach { item ->
+                    Text(
+                        text = item,
+                        style = completedTextStyle(completed = true),
+                        color = Color(0xFF8B847D),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0x22BBD1AD))
+                            .clickable { onRestoreItemFromCompleted(item) }
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                    )
+                }
+                if (todayCompletedItems.isNotEmpty()) {
+                    Text("点击条目可退回右侧来源池", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7B6B5A))
+                }
+            }
+        }
+        if (todayPlanItems.isNotEmpty()) {
+            TextButton(onClick = { todayPlanItems.forEach(onRestoreItemFromToday) }) {
+                Text("清空今日计划区")
             }
         }
     }

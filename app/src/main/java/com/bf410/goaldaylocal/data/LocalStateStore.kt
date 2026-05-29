@@ -126,6 +126,27 @@ class LocalStateStore(
         mmkv.encode(pageItemsKey(bookId, pageTitle), array.toString())
     }
 
+    fun weeklyTheme(bookId: String): String =
+        mmkv.decodeString(weeklyThemeKey(bookId), "") ?: ""
+
+    fun setWeeklyTheme(bookId: String, text: String) {
+        mmkv.encode(weeklyThemeKey(bookId), text)
+    }
+
+    fun todayPlanItems(bookId: String, pageTitle: String): List<String> =
+        decodeStringList(todayPlanKey(bookId, pageTitle))
+
+    fun saveTodayPlanItems(bookId: String, pageTitle: String, items: List<String>) {
+        encodeStringList(todayPlanKey(bookId, pageTitle), items)
+    }
+
+    fun todayCompletedItems(bookId: String, pageTitle: String): List<String> =
+        decodeStringList(todayDoneKey(bookId, pageTitle))
+
+    fun saveTodayCompletedItems(bookId: String, pageTitle: String, items: List<String>) {
+        encodeStringList(todayDoneKey(bookId, pageTitle), items)
+    }
+
     fun customBooks(): List<TopicBook> {
         val raw = mmkv.decodeString(KEY_CUSTOM_BOOKS, "[]") ?: "[]"
         val array = JSONArray(raw)
@@ -197,6 +218,28 @@ class LocalStateStore(
 
     private fun pageItemsKey(bookId: String, pageTitle: String): String =
         "page_items_${bookId}_${pageTitle.hashCode()}"
+
+    private fun weeklyThemeKey(bookId: String): String = "week_theme_$bookId"
+
+    private fun todayPlanKey(bookId: String, pageTitle: String): String =
+        "today_plan_${bookId}_${pageTitle.hashCode()}"
+
+    private fun todayDoneKey(bookId: String, pageTitle: String): String =
+        "today_done_${bookId}_${pageTitle.hashCode()}"
+
+    private fun decodeStringList(key: String): List<String> {
+        val raw = mmkv.decodeString(key, "[]") ?: "[]"
+        val array = JSONArray(raw)
+        return buildList {
+            repeat(array.length()) { index -> add(array.getString(index)) }
+        }
+    }
+
+    private fun encodeStringList(key: String, items: List<String>) {
+        val array = JSONArray()
+        items.forEach(array::put)
+        mmkv.encode(key, array.toString())
+    }
 
     private fun encodePages(pages: List<BookPage>): JSONArray {
         val array = JSONArray()
