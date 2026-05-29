@@ -62,6 +62,11 @@ import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+private val BoardTonePlan = Color(0x22D9A97E)
+private val BoardToneDone = Color(0x22A5C49D)
+private val BoardTitleColor = Color(0xFF5E4837)
+private val BoardHintColor = Color(0xFF8B7A68)
+
 @Composable
 fun BoxScope.SpineLayer(
     visualProgress: Float,
@@ -585,8 +590,8 @@ private fun TodayBoardSection(
         Text("今日执行看板", style = MaterialTheme.typography.titleMedium, color = Color(0xFF5E4837))
         Text("长按右侧任务拖到计划/完成区", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            BoardStatChip(label = "计划 ${todayPlanItems.size}", bg = Color(0x22D9A97E))
-            BoardStatChip(label = "完成 ${todayCompletedItems.size}", bg = Color(0x22A5C49D))
+            BoardStatChip(label = "计划 ${todayPlanItems.size}", bg = BoardTonePlan)
+            BoardStatChip(label = "完成 ${todayCompletedItems.size}", bg = BoardToneDone)
         }
         if (todayPlanItems.isEmpty() && todayCompletedItems.isEmpty()) {
             Text("从右侧清单拖入（点击）到今日执行或完成区。", color = Color(0xFF7B6B5A))
@@ -617,7 +622,7 @@ private fun TodayBoardSection(
                         .fillMaxWidth()
                     .shadow(2.dp, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0x22B88A58))
+                        .background(BoardTonePlan)
                     .clickable { onMoveItemToCompleted(item) }
                     .padding(horizontal = 12.dp, vertical = 9.dp),
             )
@@ -650,7 +655,7 @@ private fun TodayBoardSection(
                         .fillMaxWidth()
                     .shadow(2.dp, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0x22BBD1AD))
+                        .background(BoardToneDone)
                     .clickable { onRestoreItemFromCompleted(item) }
                     .padding(horizontal = 12.dp, vertical = 9.dp),
             )
@@ -678,13 +683,13 @@ private fun SourcePoolSection(
     modifier: Modifier = Modifier,
 ) {
     PaperNoteCard(modifier = modifier) {
-        Text("待办来源池", style = MaterialTheme.typography.titleMedium, color = Color(0xFF5E4837))
+        Text("待办来源池", style = MaterialTheme.typography.titleMedium, color = BoardTitleColor)
         val hintText = when (dragPreviewTarget) {
             DragTarget.TODAY -> "松手将进入今日计划"
             DragTarget.DONE -> "松手将直接标记完成"
             DragTarget.NONE -> "左滑到计划，继续左滑到完成"
         }
-        Text(hintText, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
+        Text(hintText, style = MaterialTheme.typography.labelSmall, color = BoardHintColor)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -745,7 +750,8 @@ private fun SourcePoolSection(
                             },
                         ) { change, dragAmount ->
                             change.consume()
-                            dragOffsetX = (dragOffsetX + dragAmount.x).coerceIn(-220f, 0f)
+                            val proposed = dragOffsetX + dragAmount.x
+                            dragOffsetX = applyDragResistance(proposed).coerceIn(-220f, 0f)
                             onDragPreviewTargetChange(
                                 when {
                                     dragOffsetX <= -150f -> DragTarget.DONE
@@ -813,6 +819,15 @@ private fun BoardStatChip(
             .background(bg)
             .padding(horizontal = 11.dp, vertical = 6.dp),
     )
+}
+
+private fun applyDragResistance(offset: Float): Float {
+    if (offset >= 0f) return offset
+    return when {
+        offset > -70f -> offset
+        offset > -150f -> -70f + (offset + 70f) * 0.72f
+        else -> -127.6f + (offset + 150f) * 0.56f
+    }
 }
 
 @Composable
