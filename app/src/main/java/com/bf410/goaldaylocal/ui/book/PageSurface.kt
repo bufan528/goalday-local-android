@@ -387,6 +387,7 @@ private fun EditableBulletPage(
                     onMoveItemToCompleted(it)
                     onAddToSchedule(it, LocalDate.now().dayOfMonth)
                 },
+                dragPreviewTarget = dragPreviewTarget,
                 onDragPreviewTargetChange = { dragPreviewTarget = it },
                 modifier = Modifier.weight(1f),
             )
@@ -581,6 +582,10 @@ private fun TodayBoardSection(
     PaperNoteCard(modifier = modifier) {
         Text("今日执行看板", style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
         Text("长按右侧任务拖到计划/完成区", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            BoardStatChip(label = "计划 ${todayPlanItems.size}", bg = Color(0x22D9A97E))
+            BoardStatChip(label = "完成 ${todayCompletedItems.size}", bg = Color(0x22A5C49D))
+        }
         if (todayPlanItems.isEmpty() && todayCompletedItems.isEmpty()) {
             Text("从右侧清单拖入（点击）到今日执行或完成区。", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
@@ -656,6 +661,7 @@ private fun SourcePoolSection(
     onToggleChecked: (String, String) -> Unit,
     onMoveItemToToday: (String) -> Unit,
     onMoveItemToCompleted: (String) -> Unit,
+    dragPreviewTarget: DragTarget,
     onDragPreviewTargetChange: (DragTarget) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -667,6 +673,17 @@ private fun SourcePoolSection(
             DragTarget.NONE -> "左滑到计划，继续左滑到完成"
         }
         Text(hintText, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0x00D9A97E), Color(0x55D9A97E), Color(0x66A5C49D)),
+                    ),
+                ),
+        )
         if (items.isEmpty()) {
             Text("来源池已清空", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
@@ -753,6 +770,22 @@ private fun SourcePoolSection(
             }
         }
     }
+}
+
+@Composable
+private fun BoardStatChip(
+    label: String,
+    bg: Color,
+) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelMedium,
+        color = Color(0xFF5E4837),
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(bg)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+    )
 }
 
 @Composable
