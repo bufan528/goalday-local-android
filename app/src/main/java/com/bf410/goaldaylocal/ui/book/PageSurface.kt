@@ -2,7 +2,6 @@ package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -345,16 +345,36 @@ private fun EditableBulletPage(
     val stagedItems = remember(todayPlanItems, todayCompletedItems) { (todayPlanItems + todayCompletedItems).toSet() }
     val sourceBaseItems = remember(editedBaseItems, stagedItems) { editedBaseItems.filterNot { it in stagedItems } }
     val sourceCustomItems = remember(customItems, stagedItems) { customItems.filterNot { it in stagedItems } }
+    val sourceItems = sourceBaseItems + sourceCustomItems
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         WeekThemeSection(theme = weeklyTheme, onThemeChange = onWeeklyThemeChange)
-        TodayBoardSection(
-            todayPlanItems = todayPlanItems,
-            todayCompletedItems = todayCompletedItems,
-            onMoveItemToCompleted = onMoveItemToCompleted,
-            onRestoreItemFromToday = onRestoreItemFromToday,
-            onRestoreItemFromCompleted = onRestoreItemFromCompleted,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            TodayBoardSection(
+                todayPlanItems = todayPlanItems,
+                todayCompletedItems = todayCompletedItems,
+                onMoveItemToCompleted = onMoveItemToCompleted,
+                onRestoreItemFromToday = onRestoreItemFromToday,
+                onRestoreItemFromCompleted = onRestoreItemFromCompleted,
+                modifier = Modifier.weight(1f),
+            )
+            SourcePoolSection(
+                items = sourceItems,
+                pageTitle = pageTitle,
+                tint = tint,
+                isChecked = isChecked,
+                onToggleChecked = onToggleChecked,
+                onMoveItemToToday = onMoveItemToToday,
+                onMoveItemToCompleted = {
+                    onMoveItemToCompleted(it)
+                    onAddToSchedule(it, LocalDate.now().dayOfMonth)
+                },
+                modifier = Modifier.weight(1f),
+            )
+        }
 
         sourceBaseItems.forEach { item ->
             ActionBulletRow(
@@ -364,7 +384,6 @@ private fun EditableBulletPage(
                 checked = isChecked(pageTitle, item),
                 removable = false,
                 onToggleChecked = onToggleChecked,
-                onAddToSchedule = onAddToSchedule,
                 onRemoveCustomItem = onRemoveCustomItem,
                 onRenameCustomItem = onRenameCustomItem,
                 contentMode = contentMode,
@@ -372,30 +391,22 @@ private fun EditableBulletPage(
                 onRenameDisplayedItem = { oldItem, replacement ->
                     editedBaseItems = renameDisplayedChecklistItem(editedBaseItems, oldItem, replacement)
                 },
-                onMoveItemToToday = onMoveItemToToday,
-                onMoveItemToCompleted = onMoveItemToCompleted,
             )
         }
-        if (sourceCustomItems.isNotEmpty()) {
-            Text(BookStrings.myContent, style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
-            sourceCustomItems.forEach { item ->
-                ActionBulletRow(
-                    pageTitle = pageTitle,
-                    item = item,
-                    tint = tint,
-                    checked = isChecked(pageTitle, item),
-                    removable = true,
-                    onToggleChecked = onToggleChecked,
-                    onAddToSchedule = onAddToSchedule,
-                    onRemoveCustomItem = onRemoveCustomItem,
-                    onRenameCustomItem = onRenameCustomItem,
-                    contentMode = contentMode,
-                    onContentModeChange = onContentModeChange,
-                    onRenameDisplayedItem = { _, _ -> },
-                    onMoveItemToToday = onMoveItemToToday,
-                    onMoveItemToCompleted = onMoveItemToCompleted,
-                )
-            }
+        sourceCustomItems.forEach { item ->
+            ActionBulletRow(
+                pageTitle = pageTitle,
+                item = item,
+                tint = tint,
+                checked = isChecked(pageTitle, item),
+                removable = true,
+                onToggleChecked = onToggleChecked,
+                onRemoveCustomItem = onRemoveCustomItem,
+                onRenameCustomItem = onRenameCustomItem,
+                contentMode = contentMode,
+                onContentModeChange = onContentModeChange,
+                onRenameDisplayedItem = { _, _ -> },
+            )
         }
         PaperNoteCard {
             Text(BookStrings.editHint, style = MaterialTheme.typography.bodySmall, color = Color(0xFF7B6B5A))
@@ -426,14 +437,11 @@ private fun ActionBulletRow(
     checked: Boolean,
     removable: Boolean,
     onToggleChecked: (String, String) -> Unit,
-    onAddToSchedule: (String, Int) -> Unit,
     onRemoveCustomItem: (String) -> Unit,
     onRenameCustomItem: (String, String) -> Unit,
     contentMode: PageContentMode,
     onContentModeChange: (PageContentMode) -> Unit,
     onRenameDisplayedItem: (String, String) -> Unit,
-    onMoveItemToToday: (String) -> Unit,
-    onMoveItemToCompleted: (String) -> Unit,
 ) {
     val activeEdit = contentMode as? PageContentMode.EditingChecklistItem
     val isEditingThisRow = activeEdit?.title == pageTitle && activeEdit.item == item
@@ -493,29 +501,6 @@ private fun ActionBulletRow(
                     )
                 }
                 Text(
-                    text = "拖入今日",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF8F684F),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x1A8F684F))
-                        .clickable { onMoveItemToToday(item) }
-                        .padding(horizontal = 8.dp, vertical = 7.dp),
-                )
-                Text(
-                    text = "拖入完成",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF8F684F),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x1A8F684F))
-                        .clickable {
-                            onMoveItemToCompleted(item)
-                            onAddToSchedule(item, LocalDate.now().dayOfMonth)
-                        }
-                        .padding(horizontal = 8.dp, vertical = 7.dp),
-                )
-                Text(
                     text = BookStrings.edit,
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF8F684F),
@@ -556,57 +541,97 @@ private fun TodayBoardSection(
     onMoveItemToCompleted: (String) -> Unit,
     onRestoreItemFromToday: (String) -> Unit,
     onRestoreItemFromCompleted: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    PaperNoteCard {
+    PaperNoteCard(modifier = modifier) {
         Text("今日执行看板", style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
         if (todayPlanItems.isEmpty() && todayCompletedItems.isEmpty()) {
             Text("从右侧清单拖入（点击）到今日执行或完成区。", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
         }
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.width(220.dp)) {
-                Text("今日计划", color = Color(0xFF5E4837))
-                todayPlanItems.forEach { item ->
-                    Text(
-                        text = item,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0x22B88A58))
-                            .clickable { onMoveItemToCompleted(item) }
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
-                    )
-                }
-                if (todayPlanItems.isNotEmpty()) {
-                    Text("点击条目可转入完成区", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7B6B5A))
-                }
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.width(220.dp)) {
-                Text("今日完成", color = Color(0xFF5E4837))
-                todayCompletedItems.forEach { item ->
-                    Text(
-                        text = item,
-                        style = completedTextStyle(completed = true),
-                        color = Color(0xFF8B847D),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0x22BBD1AD))
-                            .clickable { onRestoreItemFromCompleted(item) }
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
-                    )
-                }
-                if (todayCompletedItems.isNotEmpty()) {
-                    Text("点击条目可退回右侧来源池", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7B6B5A))
-                }
-            }
+        Text("今日计划", color = Color(0xFF5E4837))
+        todayPlanItems.forEach { item ->
+            Text(
+                text = "• $item",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0x22B88A58))
+                    .clickable { onMoveItemToCompleted(item) }
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+            )
+        }
+        Text("今日完成", color = Color(0xFF5E4837))
+        todayCompletedItems.forEach { item ->
+            Text(
+                text = item,
+                style = completedTextStyle(completed = true),
+                color = Color(0xFF8B847D),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0x22BBD1AD))
+                    .clickable { onRestoreItemFromCompleted(item) }
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+            )
         }
         if (todayPlanItems.isNotEmpty()) {
             TextButton(onClick = { todayPlanItems.forEach(onRestoreItemFromToday) }) {
                 Text("清空今日计划区")
+            }
+        }
+    }
+}
+
+@Composable
+private fun SourcePoolSection(
+    items: List<String>,
+    pageTitle: String,
+    tint: Color,
+    isChecked: (String, String) -> Boolean,
+    onToggleChecked: (String, String) -> Unit,
+    onMoveItemToToday: (String) -> Unit,
+    onMoveItemToCompleted: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    PaperNoteCard(modifier = modifier) {
+        Text("待办来源池", style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
+        if (items.isEmpty()) {
+            Text("来源池已清空", color = Color(0xFF7B6B5A))
+            return@PaperNoteCard
+        }
+        items.forEach { item ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(14.dp)
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(if (isChecked(pageTitle, item)) tint else Color(0xFFE5DBCD))
+                        .clickable { onToggleChecked(pageTitle, item) },
+                )
+                Text(item, modifier = Modifier.weight(1f))
+                Text(
+                    "今日",
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x1A8F684F))
+                        .clickable { onMoveItemToToday(item) }
+                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                )
+                Text(
+                    "完成",
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x1A6A9F68))
+                        .clickable { onMoveItemToCompleted(item) }
+                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                )
             }
         }
     }
