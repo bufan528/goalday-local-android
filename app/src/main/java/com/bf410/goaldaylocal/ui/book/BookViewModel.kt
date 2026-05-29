@@ -16,6 +16,7 @@ import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import java.time.LocalDate
 import java.time.YearMonth
 
 class BookViewModel(
@@ -161,11 +162,15 @@ class BookViewModel(
     fun moveItemToCompleted(item: String) {
         val page = currentPage()
         val book = currentBook()
+        val alreadyDone = item in _uiState.value.todayCompletedItems
         val nextDone = (_uiState.value.todayCompletedItems + item).distinct()
         val nextPlan = _uiState.value.todayPlanItems.filterNot { it == item }
         store.saveTodayCompletedItems(book.id, page.title, nextDone)
         store.saveTodayPlanItems(book.id, page.title, nextPlan)
         _uiState.update { it.copy(todayCompletedItems = nextDone, todayPlanItems = nextPlan) }
+        if (!alreadyDone) {
+            addItemToSchedule(item, LocalDate.now().dayOfMonth)
+        }
     }
 
     fun restoreItemFromToday(item: String) {

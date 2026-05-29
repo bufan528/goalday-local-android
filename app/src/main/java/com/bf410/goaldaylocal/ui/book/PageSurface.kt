@@ -58,7 +58,6 @@ import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.PlanPage
 import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetPage
-import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -390,10 +389,7 @@ private fun EditableBulletPage(
                 isChecked = isChecked,
                 onToggleChecked = onToggleChecked,
                 onMoveItemToToday = onMoveItemToToday,
-                onMoveItemToCompleted = {
-                    onMoveItemToCompleted(it)
-                    onAddToSchedule(it, LocalDate.now().dayOfMonth)
-                },
+                onMoveItemToCompleted = onMoveItemToCompleted,
                 dragPreviewTarget = dragPreviewTarget,
                 onDragPreviewTargetChange = { dragPreviewTarget = it },
                 modifier = Modifier.weight(1f),
