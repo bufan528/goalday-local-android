@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
+private const val EDGE_GESTURE_RATIO = 0.22f
+
 sealed interface TurnPhase {
     data object Idle : TurnPhase
     data object DraggingNext : TurnPhase
@@ -56,8 +58,8 @@ fun PageTurnEngine(
         content: @Composable BoxScope.() -> Unit,
     ) -> Unit,
     destination: @Composable BoxScope.(Float, TurnDirection?) -> Unit,
-    pageBack: @Composable BoxScope.(Float, TurnDirection?) -> Unit,
-    activePage: @Composable BoxScope.(Float, TurnDirection?) -> Unit,
+    pageBack: @Composable BoxScope.(Float, TurnDirection?, Float) -> Unit,
+    activePage: @Composable BoxScope.(Float, TurnDirection?, Float) -> Unit,
     spine: @Composable BoxScope.(Float, Boolean) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -65,6 +67,9 @@ fun PageTurnEngine(
     var direction by remember { mutableStateOf<TurnDirection?>(null) }
     var phase by remember { mutableStateOf<TurnPhase>(TurnPhase.Idle) }
     var pageWidthPx by remember { mutableFloatStateOf(1f) }
+    var pageHeightPx by remember { mutableFloatStateOf(1f) }
+    var dragStartX by remember { mutableFloatStateOf(0f) }
+    var turnAnchorY by remember { mutableFloatStateOf(0.5f) }
     var lastVelocityPxPerSecond by remember { mutableFloatStateOf(0f) }
     var lastEventTimeMs by remember { mutableStateOf(0L) }
 
@@ -77,6 +82,7 @@ fun PageTurnEngine(
     fun clearState() {
         direction = null
         phase = TurnPhase.Idle
+        turnAnchorY = 0.5f
         lastVelocityPxPerSecond = 0f
         lastEventTimeMs = 0L
     }
@@ -106,6 +112,7 @@ fun PageTurnEngine(
 
     fun beginTapTurn(targetDirection: TurnDirection) {
         direction = targetDirection
+        turnAnchorY = 0.5f
         phase = if (targetDirection == TurnDirection.NEXT) TurnPhase.DraggingNext else TurnPhase.DraggingPrevious
         scope.launch { progress.snapTo(initialEdgeTapProgress()) }
         settle(
@@ -127,19 +134,27 @@ fun PageTurnEngine(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .onSizeChanged { pageWidthPx = it.width.toFloat().coerceAtLeast(1f) }
+                .onSizeChanged {
+                    pageWidthPx = it.width.toFloat().coerceAtLeast(1f)
+                    pageHeightPx = it.height.toFloat().coerceAtLeast(1f)
+                }
                 .pointerInput(canTurnNext, canTurnPrevious, pageWidthPx, turnEnabled) {
                     if (!turnEnabled) return@pointerInput
                     detectHorizontalDragGestures(
-                        onDragStart = {
+                        onDragStart = { startOffset ->
                             lastVelocityPxPerSecond = 0f
                             lastEventTimeMs = 0L
                             direction = null
+                            dragStartX = startOffset.x
+                            turnAnchorY = (startOffset.y / pageHeightPx).coerceIn(0.12f, 0.88f)
                         },
                         onHorizontalDrag = { change, dragAmount ->
+                            val edgeZonePx = pageWidthPx * EDGE_GESTURE_RATIO
+                            val canStartNextFromEdge = dragStartX >= pageWidthPx - edgeZonePx
+                            val canStartPreviousFromEdge = dragStartX <= edgeZonePx
                             val resolvedDirection = direction ?: when {
-                                dragAmount <= -0.6f -> TurnDirection.NEXT
-                                dragAmount >= 0.6f -> TurnDirection.PREVIOUS
+                                dragAmount <= -0.6f && canStartNextFromEdge -> TurnDirection.NEXT
+                                dragAmount >= 0.6f && canStartPreviousFromEdge -> TurnDirection.PREVIOUS
                                 else -> null
                             } ?: return@detectHorizontalDragGestures
 
@@ -189,10 +204,10 @@ fun PageTurnEngine(
             destination(dragProgress, direction)
 
             if (direction != null && dragProgress > 0.01f) {
-                pageBack(visualProgress, direction)
+                pageBack(visualProgress, direction, turnAnchorY)
             }
 
-            activePage(visualProgress, direction)
+            activePage(visualProgress, direction, turnAnchorY)
 
             if (direction != null && dragProgress > 0.01f) {
                 Box(
@@ -250,6 +265,7 @@ fun PageTurnEngine(
 fun Modifier.turningPageTransform(
     direction: TurnDirection?,
     visualProgress: Float,
+    anchorY: Float,
 ): Modifier = graphicsLayer {
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
@@ -264,6 +280,9 @@ fun Modifier.turningPageTransform(
         draggingToPrevious -> visualProgress * 22f + visualProgress * visualProgress * 42f
         else -> 0f
     }
+    val yOffsetFactor = (anchorY - 0.5f) * 2f
+    translationY = yOffsetFactor * visualProgress * 12f
+    rotationX = -yOffsetFactor * visualProgress * 8.5f
     cameraDistance = 30f * density
     shadowElevation = 24f
 }
@@ -271,6 +290,7 @@ fun Modifier.turningPageTransform(
 fun Modifier.pageBackTransform(
     direction: TurnDirection?,
     visualProgress: Float,
+    anchorY: Float,
 ): Modifier = graphicsLayer {
     transformOrigin = if (direction == TurnDirection.NEXT) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
     rotationY = when (direction) {
@@ -278,5 +298,8 @@ fun Modifier.pageBackTransform(
         TurnDirection.PREVIOUS -> 108f * visualProgress * 0.92f
         null -> 0f
     }
+    val yOffsetFactor = (anchorY - 0.5f) * 2f
+    translationY = yOffsetFactor * visualProgress * 7f
+    rotationX = -yOffsetFactor * visualProgress * 5f
     cameraDistance = 30f * density
 }

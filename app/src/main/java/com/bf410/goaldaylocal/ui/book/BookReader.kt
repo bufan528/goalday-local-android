@@ -87,23 +87,23 @@ fun BookReader(
                 direction = direction,
             )
         },
-        pageBack = { progress, direction ->
+        pageBack = { progress, direction, anchorY ->
             PageBackLayer(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 28.dp, vertical = 26.dp)
-                    .pageBackTransform(direction, progress),
+                    .pageBackTransform(direction, progress, anchorY),
                 tint = tint,
                 progress = progress,
                 direction = direction,
             )
         },
-        activePage = { progress, direction ->
+        activePage = { progress, direction, anchorY ->
             ActivePageLayer(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 28.dp, vertical = 26.dp)
-                    .turningPageTransform(direction, progress),
+                    .turningPageTransform(direction, progress, anchorY),
                 page = page,
                 pageIndex = pageIndex,
                 pageCount = pageCount,
