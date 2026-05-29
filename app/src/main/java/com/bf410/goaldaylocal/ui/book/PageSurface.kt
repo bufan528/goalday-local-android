@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.border
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -36,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -556,6 +560,24 @@ private fun TodayBoardSection(
     dragPreviewTarget: DragTarget,
     modifier: Modifier = Modifier,
 ) {
+    val todayHeaderColor by animateColorAsState(
+        targetValue = if (dragPreviewTarget == DragTarget.TODAY) Color(0x44D9A97E) else Color(0x14A17856),
+        label = "todayHeaderColor",
+    )
+    val doneHeaderColor by animateColorAsState(
+        targetValue = if (dragPreviewTarget == DragTarget.DONE) Color(0x44A5C49D) else Color(0x14A17856),
+        label = "doneHeaderColor",
+    )
+    val todayBorderAlpha by animateFloatAsState(
+        targetValue = if (dragPreviewTarget == DragTarget.TODAY) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.75f, stiffness = 500f),
+        label = "todayBorderAlpha",
+    )
+    val doneBorderAlpha by animateFloatAsState(
+        targetValue = if (dragPreviewTarget == DragTarget.DONE) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.75f, stiffness = 500f),
+        label = "doneBorderAlpha",
+    )
     PaperNoteCard(modifier = modifier) {
         Text("今日执行看板", style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
         Text("长按右侧任务拖到计划/完成区", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
@@ -569,10 +591,10 @@ private fun TodayBoardSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(if (dragPreviewTarget == DragTarget.TODAY) Color(0x44D9A97E) else Color(0x14A17856))
+                .background(todayHeaderColor)
                 .border(
-                    width = if (dragPreviewTarget == DragTarget.TODAY) 1.dp else 0.dp,
-                    color = Color(0xCCB77A5A),
+                    width = 1.dp,
+                    color = Color(0xCCB77A5A).copy(alpha = todayBorderAlpha),
                     shape = RoundedCornerShape(10.dp),
                 )
                 .padding(horizontal = 6.dp, vertical = 4.dp),
@@ -595,10 +617,10 @@ private fun TodayBoardSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(if (dragPreviewTarget == DragTarget.DONE) Color(0x44A5C49D) else Color(0x14A17856))
+                .background(doneHeaderColor)
                 .border(
-                    width = if (dragPreviewTarget == DragTarget.DONE) 1.dp else 0.dp,
-                    color = Color(0xCC79A16E),
+                    width = 1.dp,
+                    color = Color(0xCC79A16E).copy(alpha = doneBorderAlpha),
                     shape = RoundedCornerShape(10.dp),
                 )
                 .padding(horizontal = 6.dp, vertical = 4.dp),
@@ -639,17 +661,27 @@ private fun SourcePoolSection(
 ) {
     PaperNoteCard(modifier = modifier) {
         Text("待办来源池", style = MaterialTheme.typography.titleSmall, color = Color(0xFF5E4837))
-        Text("左滑到计划，继续左滑到完成", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
+        val hintText = when (dragPreviewTarget) {
+            DragTarget.TODAY -> "松手将进入今日计划"
+            DragTarget.DONE -> "松手将直接标记完成"
+            DragTarget.NONE -> "左滑到计划，继续左滑到完成"
+        }
+        Text(hintText, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
         if (items.isEmpty()) {
             Text("来源池已清空", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
         }
         items.forEach { item ->
             var dragOffsetX by remember(item) { mutableStateOf(0f) }
+            val rowAlpha by animateFloatAsState(
+                targetValue = if (dragOffsetX <= -150f) 0.82f else 1f,
+                label = "rowAlpha",
+            )
             RowWithDragFeedback(
                 modifier = Modifier
                     .fillMaxWidth()
                     .offset { IntOffset(dragOffsetX.roundToInt(), 0) }
+                    .alpha(rowAlpha)
                     .pointerInput(item) {
                         detectDragGesturesAfterLongPress(
                             onDragStart = {
