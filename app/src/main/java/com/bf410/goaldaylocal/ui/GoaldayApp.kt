@@ -4,15 +4,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -34,9 +36,18 @@ private enum class RootTab(val label: String) {
 
 @Composable
 fun GoaldayApp() {
-    var tab by remember { mutableStateOf(RootTab.BOOK) }
+    var tab by rememberSaveable { mutableStateOf(RootTab.BOOK) }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
+    val bookUiState by bookViewModel.uiState.collectAsState()
+
+    val canGoBackInsideApp = !bookUiState.inLibraryMode || tab != RootTab.BOOK
+    BackHandler(enabled = canGoBackInsideApp) {
+        when {
+            !bookUiState.inLibraryMode -> bookViewModel.openLibrary()
+            tab != RootTab.BOOK -> tab = RootTab.BOOK
+        }
+    }
 
     MaterialTheme {
         Scaffold(
