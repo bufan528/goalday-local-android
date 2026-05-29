@@ -397,6 +397,9 @@ private fun InspirationCenterView(
     onApply: (List<String>) -> Unit,
 ) {
     val selected = templates[selectedIndex.coerceIn(0, templates.lastIndex)]
+    var checkedStates by remember(selected.title) { mutableStateOf(List(selected.items.size) { true }) }
+    var editableItems by remember(selected.title) { mutableStateOf(selected.items) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -409,7 +412,23 @@ private fun InspirationCenterView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("灵感中心", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-            Text("返回", color = Color(0xFF8F684F), modifier = Modifier.clickable(onClick = onBack))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("返回", color = Color(0xFF8F684F), modifier = Modifier.clickable(onClick = onBack))
+                Text(
+                    "完成",
+                    color = Color.White,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0xFF222222))
+                        .clickable {
+                            val picked = editableItems.filterIndexed { index, _ ->
+                                checkedStates.getOrNull(index) == true
+                            }
+                            onApply(picked)
+                        }
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                )
+            }
         }
         Column(
             modifier = Modifier
@@ -443,10 +462,37 @@ private fun InspirationCenterView(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(selected.title, style = MaterialTheme.typography.titleLarge, color = Color(0xFF2F261D))
-                selected.items.forEach { item ->
-                    Text("□ $item", color = Color(0xFF302A24))
+                editableItems.forEachIndexed { index, item ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(if (checkedStates.getOrNull(index) == true) Color(0xFF96C08B) else Color(0xFFF1ECE4))
+                                .clickable {
+                                    checkedStates = checkedStates.toMutableList().also { list ->
+                                        list[index] = !list[index]
+                                    }
+                                },
+                        )
+                        OutlinedTextField(
+                            value = item,
+                            onValueChange = { value ->
+                                editableItems = editableItems.toMutableList().also { list -> list[index] = value }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                        )
+                    }
                 }
-                Button(onClick = { onApply(selected.items) }) {
+                Button(onClick = {
+                    val picked = editableItems.filterIndexed { index, _ -> checkedStates.getOrNull(index) == true }
+                    onApply(picked)
+                }) {
                     Text("应用到当前页")
                 }
             }
