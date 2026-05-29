@@ -118,31 +118,17 @@ fun PageSurface(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(28.dp, 28.dp, 32.dp, 32.dp))
-            .background(Brush.horizontalGradient(listOf(Color(0xFFFFFEFA), Color(0xFFF8F1E7), Color(0xFFEEDBC5))))
-            .padding(horizontal = 30.dp, vertical = 28.dp),
+            .background(Color(0xFFFFFDFC))
+            .padding(horizontal = 22.dp, vertical = 20.dp),
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color(0x14FFFFFF),
-                            Color.Transparent,
-                            Color(0x0F9D7456),
-                        ),
-                    ),
-                ),
-        )
-
-        Box(
-            modifier = Modifier
                 .align(Alignment.CenterStart)
-                .width(10.dp)
+                .width(4.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
-                        listOf(Color(0x18000000), Color.Transparent),
+                        listOf(Color(0x12000000), Color.Transparent),
                     ),
                 ),
         )
@@ -159,9 +145,9 @@ fun PageSurface(
                 savedText = pageNumber,
                 onSavedClick = onSavedClick,
             )
-            Spacer(Modifier.height(16.dp))
-            Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Color(0xFF2B241D))
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(10.dp))
+            Text(text = title, style = MaterialTheme.typography.titleLarge, color = Color(0xFF26211C))
+            Spacer(Modifier.height(12.dp))
             body()
         }
     }
@@ -803,18 +789,19 @@ private fun SourcePoolSection(
                 ) {
                 Box(
                     modifier = Modifier
-                        .size(14.dp)
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(if (isChecked(pageTitle, item)) tint else Color(0xFFE5DBCD))
+                        .size(16.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(if (isChecked(pageTitle, item)) tint.copy(alpha = 0.82f) else Color(0xFFF1ECE4))
+                        .border(1.dp, Color(0xFFD5CEC2), RoundedCornerShape(4.dp))
                         .clickable { onToggleChecked(pageTitle, item) },
                 )
-                Text(item, modifier = Modifier.weight(1f))
+                Text(item, color = Color(0xFF27231E), modifier = Modifier.weight(1f))
                 Text(
                     "今日",
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x1A8F684F))
+                        .background(Color(0x148F684F))
                         .clickable(enabled = !isDragging) { onMoveItemToToday(item) }
                         .padding(horizontal = 9.dp, vertical = 5.dp),
                 )
@@ -823,7 +810,7 @@ private fun SourcePoolSection(
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x1A6A9F68))
+                        .background(Color(0x146A9F68))
                         .clickable(enabled = !isDragging) { onMoveItemToCompleted(item) }
                         .padding(horizontal = 9.dp, vertical = 5.dp),
                 )
@@ -965,12 +952,13 @@ private fun PaperNoteCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(22.dp))
-            .background(Brush.verticalGradient(listOf(Color(0xFFFFFCF6), Color(0xFFFAF2E8), Color(0xFFF5E7D6))))
-            .padding(horizontal = 16.dp, vertical = 13.dp),
+            .background(Color.White)
+            .border(1.dp, Color(0xFFE9E3DA), RoundedCornerShape(22.dp))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x14A17856)))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x10A17856)))
         content()
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x0EA17856)))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x08A17856)))
     }
 }
 
