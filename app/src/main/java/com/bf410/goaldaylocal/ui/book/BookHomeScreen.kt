@@ -47,6 +47,7 @@ import com.bf410.goaldaylocal.data.PlanPage
 import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
+import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 
 private val bookPalette = listOf(
     Color(0xFFF2C0A5),
@@ -347,39 +348,18 @@ private fun BookDetailView(
             .fillMaxSize()
             .padding(top = 8.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (handbookMode) {
-                    Text("手账本", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
-                } else {
-                    Text("14周", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7E776E))
-                    Text("|", style = MaterialTheme.typography.labelMedium, color = Color(0xFFD2CBC1))
-                    Text("Goalday", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
-                }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        GoaldayTopBar(
+            leftTitle = if (handbookMode) "手账本" else "14周",
+            onRightPrimaryClick = onBackToLibrary,
+            rightSecondary = {
                 if (!handbookMode && forcedSegment != BookSegment.DIARY) {
                     Text("＋灵感", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onShowInspiration))
                 }
                 if (!handbookMode && book.id.startsWith("custom_")) {
                     Text("⚙管理", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onToggleManagePanel))
                 }
-                Text(
-                    "完成",
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0xFF222222))
-                        .clickable(onClick = onBackToLibrary)
-                        .padding(horizontal = 9.dp, vertical = 4.dp),
-                )
-            }
-        }
+            },
+        )
         if (!handbookMode) {
             Row(
                 modifier = Modifier

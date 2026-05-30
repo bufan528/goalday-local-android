@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.ui.replica.BoardTask
 import com.bf410.goaldaylocal.ui.replica.DualLaneExecutionBoard
+import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -63,27 +64,9 @@ fun CalendarScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("14周", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7E776E))
-                Text("|", style = MaterialTheme.typography.labelMedium, color = Color(0xFFD2CBC1))
-                Text("Goalday", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
-            }
-            Text(
-                "完成",
-                color = Color.White,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0xFF222222))
-                    .clickable { viewModel.backToToday() }
-                    .padding(horizontal = 9.dp, vertical = 4.dp),
-            )
-        }
+        GoaldayTopBar(
+            onRightPrimaryClick = { viewModel.backToToday() },
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
