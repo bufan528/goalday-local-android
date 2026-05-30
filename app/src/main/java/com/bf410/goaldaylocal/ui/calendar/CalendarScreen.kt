@@ -1,6 +1,7 @@
 package com.bf410.goaldaylocal.ui.calendar
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -72,7 +73,7 @@ fun CalendarScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("${uiState.year}年${uiState.month}月", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Text("${uiState.year}年${uiState.month}月", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = Color(0xFF2E2A26))
             Text(
                 "回到今天",
                 style = MaterialTheme.typography.labelSmall,
@@ -85,7 +86,7 @@ fun CalendarScreen(
         }
 
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text("‹ 上个月", modifier = Modifier.clickable(onClick = viewModel::previousMonth), color = Color(0xFF7E776E))
+            Text("‹ 上个月", modifier = Modifier.clickable(onClick = viewModel::previousMonth), color = Color(0xFF888177))
             Text(
                 "新增日程",
                 modifier = Modifier.clickable {
@@ -94,7 +95,7 @@ fun CalendarScreen(
                 },
                 color = Color(0xFF2D2A26),
             )
-            Text("下个月 ›", modifier = Modifier.clickable(onClick = viewModel::nextMonth), color = Color(0xFF7E776E))
+            Text("下个月 ›", modifier = Modifier.clickable(onClick = viewModel::nextMonth), color = Color(0xFF888177))
         }
 
         Box(
@@ -165,8 +166,8 @@ fun CalendarScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFFFFFFF), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 10.dp, vertical = 9.dp),
+                            .background(Color(0xFFF8F8F6), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 10.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -176,11 +177,12 @@ fun CalendarScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(15.dp)
+                                    .size(16.dp)
                                     .background(
-                                        if (entry.completed) Color(0xFF7FA579) else Color(0xFFE5DBCD),
-                                        RoundedCornerShape(99.dp),
+                                        if (entry.completed) Color(0xFFD8D1C8) else Color(0xFFF4F2EE),
+                                        RoundedCornerShape(4.dp),
                                     )
+                                    .border(1.dp, Color(0xFFBEB8AF), RoundedCornerShape(4.dp))
                                     .clickable { viewModel.toggleScheduleCompleted(entry.id) },
                             )
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

@@ -82,34 +82,33 @@ fun BookHomeScreen(
     var showInspiration by remember(entryMode) { mutableStateOf(entryMode == BookEntryMode.INSPIRATION) }
     var selectedTemplateIndex by remember { mutableStateOf(0) }
 
-    if (uiState.inLibraryMode) {
-        LibraryView(
-            books = uiState.books,
-            customBookCount = uiState.customBookCount,
-            onOpenBook = viewModel::openBook,
-            onCreateBook = { showCreateDialog = true },
-        )
-    } else {
-        val book = uiState.books[uiState.selectedBookIndex]
-        val currentPage = book.pages[uiState.selectedPageIndex]
-        val previousPage = book.pages.getOrNull(uiState.selectedPageIndex - 1)
-        val nextPage = book.pages.getOrNull(uiState.selectedPageIndex + 1)
-        if (showInspiration) {
+    val hasBooks = uiState.books.isNotEmpty()
+    val safeBookIndex = uiState.selectedBookIndex.coerceIn(0, (uiState.books.lastIndex).coerceAtLeast(0))
+
+    when (entryMode) {
+        BookEntryMode.INSPIRATION -> {
             InspirationCenterView(
                 templates = InspirationTemplates.all,
                 selectedIndex = selectedTemplateIndex,
                 onSelect = { selectedTemplateIndex = it },
-                onBack = { showInspiration = false },
+                onBack = { },
                 onApply = { items, pushToToday, clearSource ->
                     viewModel.applyInspirationTemplate(
                         items = items,
                         pushToToday = pushToToday,
                         clearSourceAfterApply = clearSource,
                     )
-                    showInspiration = false
                 },
             )
-        } else {
+        }
+
+        BookEntryMode.HANDBOOK -> {
+            if (!hasBooks) return
+            val book = uiState.books[safeBookIndex]
+            val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
+            val currentPage = book.pages[clampedPageIndex]
+            val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
+            val nextPage = book.pages.getOrNull(clampedPageIndex + 1)
             BookDetailView(
                 viewModel = viewModel,
                 book = book,
@@ -117,19 +116,66 @@ fun BookHomeScreen(
                 previousPage = previousPage,
                 nextPage = nextPage,
                 uiState = uiState,
-                onBackToLibrary = viewModel::openLibrary,
+                onBackToLibrary = { },
                 onShowAddPage = { showPageDialog = true },
                 onShowRenamePage = { showRenamePageDialog = true },
                 onShowEditBook = { showEditBookDialog = true },
-                onToggleManagePanel = { showManagePanel = !showManagePanel },
-                showManagePanel = showManagePanel,
-                forcedSegment = when (entryMode) {
-                    BookEntryMode.PLANNER -> BookSegment.WEEK
-                    BookEntryMode.HANDBOOK -> BookSegment.DIARY
-                    BookEntryMode.INSPIRATION -> null
-                },
-                onShowInspiration = { showInspiration = true },
+                onToggleManagePanel = { },
+                showManagePanel = false,
+                forcedSegment = BookSegment.DIARY,
+                onShowInspiration = { },
             )
+        }
+
+        BookEntryMode.PLANNER -> {
+            if (uiState.inLibraryMode) {
+                LibraryView(
+                    books = uiState.books,
+                    customBookCount = uiState.customBookCount,
+                    onOpenBook = viewModel::openBook,
+                    onCreateBook = { showCreateDialog = true },
+                )
+            } else {
+                if (!hasBooks) return
+                val book = uiState.books[safeBookIndex]
+                val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
+                val currentPage = book.pages[clampedPageIndex]
+                val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
+                val nextPage = book.pages.getOrNull(clampedPageIndex + 1)
+                if (showInspiration) {
+                    InspirationCenterView(
+                        templates = InspirationTemplates.all,
+                        selectedIndex = selectedTemplateIndex,
+                        onSelect = { selectedTemplateIndex = it },
+                        onBack = { showInspiration = false },
+                        onApply = { items, pushToToday, clearSource ->
+                            viewModel.applyInspirationTemplate(
+                                items = items,
+                                pushToToday = pushToToday,
+                                clearSourceAfterApply = clearSource,
+                            )
+                            showInspiration = false
+                        },
+                    )
+                } else {
+                    BookDetailView(
+                        viewModel = viewModel,
+                        book = book,
+                        currentPage = currentPage,
+                        previousPage = previousPage,
+                        nextPage = nextPage,
+                        uiState = uiState,
+                        onBackToLibrary = viewModel::openLibrary,
+                        onShowAddPage = { showPageDialog = true },
+                        onShowRenamePage = { showRenamePageDialog = true },
+                        onShowEditBook = { showEditBookDialog = true },
+                        onToggleManagePanel = { showManagePanel = !showManagePanel },
+                        showManagePanel = showManagePanel,
+                        forcedSegment = BookSegment.WEEK,
+                        onShowInspiration = { showInspiration = true },
+                    )
+                }
+            }
         }
     }
 
