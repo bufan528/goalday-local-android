@@ -13,11 +13,11 @@ enum class TurnReleaseResult {
     SnapBack,
 }
 
-private const val TURN_DISTANCE_THRESHOLD = 0.42f
-private const val TURN_FLING_THRESHOLD = 1650f
+private const val TURN_DISTANCE_THRESHOLD = 0.34f
+private const val TURN_FLING_THRESHOLD = 1380f
 private const val BOUNDARY_RESISTANCE_FACTOR = 0.22f
 private const val OPPOSING_VELOCITY_THRESHOLD = 600f
-private const val EDGE_TAP_START_PROGRESS = 0.22f
+private const val EDGE_TAP_START_PROGRESS = 0.30f
 
 fun resolvePageTurnRelease(
     direction: TurnDirection,

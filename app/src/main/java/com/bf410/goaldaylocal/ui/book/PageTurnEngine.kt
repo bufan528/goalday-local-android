@@ -92,17 +92,17 @@ fun PageTurnEngine(
             when (result) {
                 TurnReleaseResult.CompleteNext -> {
                     phase = TurnPhase.SettlingForward
-                    progress.animateTo(1f, animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing))
+                    progress.animateTo(1f, animationSpec = tween(durationMillis = 210, easing = FastOutSlowInEasing))
                     onFlipNext()
                 }
                 TurnReleaseResult.CompletePrevious -> {
                     phase = TurnPhase.SettlingForward
-                    progress.animateTo(1f, animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing))
+                    progress.animateTo(1f, animationSpec = tween(durationMillis = 210, easing = FastOutSlowInEasing))
                     onFlipPrevious()
                 }
                 TurnReleaseResult.SnapBack -> {
                     phase = TurnPhase.SettlingBack
-                    progress.animateTo(0f, animationSpec = tween(durationMillis = 280, easing = LinearOutSlowInEasing))
+                    progress.animateTo(0f, animationSpec = tween(durationMillis = 220, easing = LinearOutSlowInEasing))
                 }
             }
             progress.snapTo(0f)

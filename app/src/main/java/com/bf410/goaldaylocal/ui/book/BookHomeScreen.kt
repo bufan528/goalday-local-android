@@ -616,14 +616,17 @@ private fun ActionChip(
     color: Color,
     onClick: () -> Unit,
 ) {
+    val isDanger = color == Color(0xFF9C5A52)
+    val textColor = if (isDanger) Color(0xFF7A2F2F) else Color(0xFF2D2A26)
+    val bgColor = if (isDanger) Color(0x14D17878) else Color(0x12000000)
     Text(
         text = label,
-        color = color,
+        color = textColor,
         modifier = Modifier
             .clip(RoundedCornerShape(99.dp))
-            .background(color.copy(alpha = 0.10f))
+            .background(bgColor)
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = 10.dp, vertical = 5.dp),
     )
 }
 
