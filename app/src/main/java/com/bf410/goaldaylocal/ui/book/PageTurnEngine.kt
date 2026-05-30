@@ -80,6 +80,7 @@ fun PageTurnEngine(
     val visualProgress = visualTurnProgress(dragProgress, profile)
     val commitProgress = ((visualProgress - 0.22f) / 0.78f).coerceIn(0f, 1f)
     val latePhase = commitProgress * commitProgress
+    val earlyPhase = (1f - commitProgress).coerceIn(0f, 1f)
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     val turnShadowWidth = if (profile == TurnProfile.HANDBOOK) {
@@ -307,7 +308,7 @@ fun PageTurnEngine(
                             Brush.radialGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = (0.02f + latePhase * 0.22f).coerceAtMost(0.24f)),
+                                    Color.Black.copy(alpha = (0.015f + earlyPhase * 0.04f + latePhase * 0.2f).coerceAtMost(0.24f)),
                                 ),
                                 radius = 2200f,
                             ),
@@ -392,8 +393,8 @@ fun PageTurnEngine(
                         .background(
                             Brush.radialGradient(
                                 colors = listOf(
-                                    Color.White.copy(alpha = (0.04f + visualProgress * 0.14f).coerceAtMost(0.2f)),
-                                    Color.Black.copy(alpha = (0.02f + visualProgress * 0.10f).coerceAtMost(0.12f)),
+                                    Color.White.copy(alpha = (0.03f + latePhase * 0.18f).coerceAtMost(0.22f)),
+                                    Color.Black.copy(alpha = (0.015f + latePhase * 0.12f).coerceAtMost(0.14f)),
                                     Color.Transparent,
                                 ),
                                 radius = 120f,
@@ -443,6 +444,9 @@ fun Modifier.turningPageTransform(
     rotationX = -yOffsetFactor * progressCurve * 9.2f
     cameraDistance = if (profile == TurnProfile.HANDBOOK) 38f * density else 34f * density
     shadowElevation = if (profile == TurnProfile.HANDBOOK) 32f else 28f
+    val subtleDepthScale = if (profile == TurnProfile.HANDBOOK) 1f - visualProgress * 0.022f else 1f - visualProgress * 0.015f
+    scaleY = subtleDepthScale.coerceIn(0.965f, 1f)
+    alpha = (1f - visualProgress * 0.08f).coerceIn(0.9f, 1f)
 }
 
 fun Modifier.pageBackTransform(
@@ -469,4 +473,6 @@ fun Modifier.pageBackTransform(
     translationY = yOffsetFactor * progressCurve * 7.2f
     rotationX = -yOffsetFactor * progressCurve * 5.4f
     cameraDistance = if (profile == TurnProfile.HANDBOOK) 38f * density else 34f * density
+    val subtleBackScale = if (profile == TurnProfile.HANDBOOK) 1f - visualProgress * 0.018f else 1f - visualProgress * 0.012f
+    scaleY = subtleBackScale.coerceIn(0.972f, 1f)
 }

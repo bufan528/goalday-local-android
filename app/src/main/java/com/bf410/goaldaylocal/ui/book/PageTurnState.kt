@@ -18,10 +18,10 @@ enum class TurnProfile {
     HANDBOOK,
 }
 
-private const val TURN_DISTANCE_THRESHOLD = 0.3f
-private const val TURN_FLING_THRESHOLD = 860f
+private const val TURN_DISTANCE_THRESHOLD = 0.28f
+private const val TURN_FLING_THRESHOLD = 820f
 private const val BOUNDARY_RESISTANCE_FACTOR = 0.22f
-private const val OPPOSING_VELOCITY_THRESHOLD = 520f
+private const val OPPOSING_VELOCITY_THRESHOLD = 500f
 private const val EDGE_TAP_START_PROGRESS = 0.3f
 
 fun resolvePageTurnRelease(
@@ -40,10 +40,11 @@ fun resolvePageTurnRelease(
         return TurnReleaseResult.SnapBack
     }
 
-    val distanceThreshold = if (profile == TurnProfile.HANDBOOK) 0.26f else TURN_DISTANCE_THRESHOLD
-    val flingThreshold = if (profile == TurnProfile.HANDBOOK) 620f else TURN_FLING_THRESHOLD
-    val opposingThreshold = if (profile == TurnProfile.HANDBOOK) 360f else OPPOSING_VELOCITY_THRESHOLD
+    val distanceThreshold = if (profile == TurnProfile.HANDBOOK) 0.23f else TURN_DISTANCE_THRESHOLD
+    val flingThreshold = if (profile == TurnProfile.HANDBOOK) 560f else TURN_FLING_THRESHOLD
+    val opposingThreshold = if (profile == TurnProfile.HANDBOOK) 340f else OPPOSING_VELOCITY_THRESHOLD
     val progressPasses = progress >= distanceThreshold
+    val nearCommitProgress = if (profile == TurnProfile.HANDBOOK) progress >= 0.17f else progress >= 0.2f
     val velocityPasses = when (direction) {
         TurnDirection.NEXT -> velocity <= -flingThreshold
         TurnDirection.PREVIOUS -> velocity >= flingThreshold
@@ -55,7 +56,7 @@ fun resolvePageTurnRelease(
 
     return when {
         opposingVelocity -> TurnReleaseResult.SnapBack
-        progressPasses || velocityPasses -> {
+        progressPasses || velocityPasses || (nearCommitProgress && !opposingVelocity) -> {
             when (direction) {
                 TurnDirection.NEXT -> TurnReleaseResult.CompleteNext
                 TurnDirection.PREVIOUS -> TurnReleaseResult.CompletePrevious
