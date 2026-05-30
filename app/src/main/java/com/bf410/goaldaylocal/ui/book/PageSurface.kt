@@ -791,7 +791,7 @@ private fun TodayBoardSection(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Done",
+                    "Done  ${todayCompletedItems.size}",
                     color = Color(0xFF5E4837),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
@@ -832,7 +832,7 @@ private fun TodayBoardSection(
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "To do",
+                    "To do  ${todayPlanItems.size}",
                     color = Color(0xFF5E4837),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
@@ -878,16 +878,25 @@ private fun TodayBoardSection(
             }
         }
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(99.dp))
+                .background(Color(0x08A17856))
+                .padding(horizontal = 8.dp, vertical = 5.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0xFFEFA5B8))
-                    .border(1.dp, Color(0xFFD8859C), RoundedCornerShape(99.dp)),
-            )
+            listOf("◷", "↻", "✎", "☺", "☁").forEach { icon ->
+                Text(
+                    text = icon,
+                    color = Color(0xFF8F857A),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x12FFFFFF))
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                )
+            }
         }
     }
 }
