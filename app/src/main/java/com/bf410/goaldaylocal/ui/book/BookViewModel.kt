@@ -23,6 +23,11 @@ import java.time.YearMonth
 class BookViewModel(
     private val store: LocalStateStore,
 ) : ViewModel() {
+    private data class ScheduleImport(
+        val todo: List<String>,
+        val done: List<String>,
+    )
+
     private fun allBooks(): List<TopicBook> = SampleLibrary.books + store.customBooks()
 
     private val _uiState = MutableStateFlow(
@@ -434,6 +439,7 @@ class BookViewModel(
 
     private fun syncEditableContent() {
         val book = currentBook()
+        val imported = importTodayFromSchedule()
         when (val page = currentPage()) {
             is DiaryPage -> {
                 _uiState.update {
@@ -441,8 +447,8 @@ class BookViewModel(
                         diaryDraft = store.diaryText(book.id, page.title),
                         customPageItems = emptyList(),
                         weeklyTheme = store.weeklyTheme(book.id),
-                        todayPlanItems = emptyList(),
-                        todayCompletedItems = emptyList(),
+                        todayPlanItems = imported.todo,
+                        todayCompletedItems = imported.done,
                         schedulePreviewEntries = monthEntriesForAnchor(),
                     )
                 }
@@ -453,13 +459,25 @@ class BookViewModel(
                         diaryDraft = "",
                         customPageItems = store.customPageItems(book.id, page.title),
                         weeklyTheme = store.weeklyTheme(book.id),
-                        todayPlanItems = store.todayPlanItems(book.id, page.title),
-                        todayCompletedItems = store.todayCompletedItems(book.id, page.title),
+                        todayPlanItems = imported.todo,
+                        todayCompletedItems = imported.done,
                         schedulePreviewEntries = monthEntriesForAnchor(),
                     )
                 }
             }
         }
+    }
+
+    private fun importTodayFromSchedule(): ScheduleImport {
+        val year = store.calendarAnchorYear()
+        val month = store.calendarAnchorMonth().coerceIn(1, 12)
+        val day = LocalDate.now().dayOfMonth
+        val entries = store.scheduleEntries()
+            .filter { it.year == year && it.month == month && it.day == day }
+            .sortedBy { it.title }
+        val todo = entries.filterNot { it.completed }.map { it.title }.distinct()
+        val done = entries.filter { it.completed }.map { it.title }.distinct()
+        return ScheduleImport(todo = todo, done = done)
     }
 
     private fun monthEntriesForAnchor(): List<ScheduleEntry> {

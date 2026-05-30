@@ -46,7 +46,7 @@ private enum class RootTab(val label: String, val icon: String) {
 
 @Composable
 fun GoaldayApp() {
-    var tab by rememberSaveable { mutableStateOf(RootTab.HOME) }
+    var tab by rememberSaveable { mutableStateOf(RootTab.HANDBOOK) }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()
