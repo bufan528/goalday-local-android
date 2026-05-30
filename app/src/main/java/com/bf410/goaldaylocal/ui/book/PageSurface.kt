@@ -679,10 +679,10 @@ private fun HandbookReplicaPage(
     val alpha = (1f - turnProgress * 0.10f).coerceIn(0.9f, 1f)
     val leftLines = (todayCompletedItems + schedulePreviewEntries.filter { it.completed }.map { it.title })
         .distinct()
-        .take(8)
+        .take(11)
     val rightLines = (todayPlanItems + schedulePreviewEntries.filterNot { it.completed }.map { it.title })
         .distinct()
-        .take(8)
+        .take(11)
 
     Box(
         modifier = modifier
@@ -698,11 +698,11 @@ private fun HandbookReplicaPage(
         Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text("${pageIndex + 1}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
                 leftLines.forEach { line ->
-                    Text("• $line", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925))
+                    Text("• $line", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925), maxLines = 1)
                 }
                 if (leftLines.isEmpty()) {
                     Text("• 记录今日完成", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925))
@@ -713,11 +713,11 @@ private fun HandbookReplicaPage(
             }
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text("${pageIndex + 2}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
                 rightLines.forEach { line ->
-                    Text("• $line", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925))
+                    Text("• $line", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925), maxLines = 1)
                 }
                 if (rightLines.isEmpty()) {
                     Text("• 写下明日计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925))
@@ -757,7 +757,7 @@ private fun ColorTagCard(color: Color, text: String) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(5.dp))
             .background(color)
-            .padding(horizontal = 6.dp, vertical = 5.dp),
+            .padding(horizontal = 6.dp, vertical = 4.dp),
     ) {
         Text(text, color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
@@ -770,7 +770,7 @@ private fun MiniPhotoRow() {
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(24.dp)
+                    .height(20.dp)
                     .clip(RoundedCornerShape(3.dp))
                     .background(
                         when (it) {
