@@ -78,12 +78,14 @@ fun PageTurnEngine(
 
     val dragProgress = progress.value.coerceIn(0f, 1f)
     val visualProgress = visualTurnProgress(dragProgress, profile)
+    val commitProgress = ((visualProgress - 0.22f) / 0.78f).coerceIn(0f, 1f)
+    val latePhase = commitProgress * commitProgress
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     val turnShadowWidth = if (profile == TurnProfile.HANDBOOK) {
-        (22f + visualProgress * visualProgress * 108f).dp
+        (16f + latePhase * 132f).dp
     } else {
-        (18f + visualProgress * visualProgress * 92f).dp
+        (14f + latePhase * 104f).dp
     }
 
     fun clearState() {
@@ -249,9 +251,9 @@ fun PageTurnEngine(
                             .background(
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color.Black.copy(alpha = (0.04f + visualProgress * 0.14f).coerceAtMost(0.22f)),
-                                        Color.White.copy(alpha = (0.05f + visualProgress * 0.16f).coerceAtMost(0.24f)),
-                                        Color.Black.copy(alpha = (0.04f + visualProgress * 0.14f).coerceAtMost(0.22f)),
+                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.2f).coerceAtMost(0.26f)),
+                                        Color.White.copy(alpha = (0.04f + latePhase * 0.22f).coerceAtMost(0.28f)),
+                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.2f).coerceAtMost(0.26f)),
                                     ),
                                 ),
                             ),
@@ -263,21 +265,21 @@ fun PageTurnEngine(
                         Box(
                             modifier = Modifier
                                 .align(if (draggingToNext) Alignment.CenterStart else Alignment.CenterEnd)
-                                .width((2f + visualProgress * (5f + depth * 8f)).dp)
+                                .width((2f + latePhase * (4f + depth * 11f)).dp)
                                 .fillMaxHeight()
                                 .background(
                                     Brush.horizontalGradient(
                                         if (draggingToNext) {
                                             listOf(
-                                                Color.Black.copy(alpha = (0.03f + visualProgress * 0.08f) * depth),
-                                                Color(0x33B79678).copy(alpha = (0.03f + visualProgress * 0.06f) * depth),
+                                                Color.Black.copy(alpha = (0.02f + latePhase * 0.11f) * depth),
+                                                Color(0x33B79678).copy(alpha = (0.02f + latePhase * 0.09f) * depth),
                                                 Color.Transparent,
                                             )
                                         } else {
                                             listOf(
                                                 Color.Transparent,
-                                                Color(0x33B79678).copy(alpha = (0.03f + visualProgress * 0.06f) * depth),
-                                                Color.Black.copy(alpha = (0.03f + visualProgress * 0.08f) * depth),
+                                                Color(0x33B79678).copy(alpha = (0.02f + latePhase * 0.09f) * depth),
+                                                Color.Black.copy(alpha = (0.02f + latePhase * 0.11f) * depth),
                                             )
                                         },
                                     ),
@@ -292,7 +294,7 @@ fun PageTurnEngine(
                             Brush.radialGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = (0.03f + visualProgress * visualProgress * 0.18f).coerceAtMost(0.19f)),
+                                    Color.Black.copy(alpha = (0.02f + latePhase * 0.22f).coerceAtMost(0.24f)),
                                 ),
                                 radius = 2200f,
                             ),
@@ -308,7 +310,7 @@ fun PageTurnEngine(
                             if (draggingToNext) {
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color.Black.copy(alpha = (0.08f + visualProgress * visualProgress * 0.28f).coerceAtMost(0.42f)),
+                                        Color.Black.copy(alpha = (0.05f + latePhase * 0.34f).coerceAtMost(0.45f)),
                                         Color(0x22000000),
                                         Color.Transparent,
                                     ),
@@ -318,7 +320,7 @@ fun PageTurnEngine(
                                     listOf(
                                         Color.Transparent,
                                         Color(0x22000000),
-                                        Color.Black.copy(alpha = (0.08f + visualProgress * visualProgress * 0.28f).coerceAtMost(0.42f)),
+                                        Color.Black.copy(alpha = (0.05f + latePhase * 0.34f).coerceAtMost(0.45f)),
                                     ),
                                 )
                             },
@@ -328,19 +330,19 @@ fun PageTurnEngine(
                 Box(
                     modifier = Modifier
                         .align(if (draggingToNext) Alignment.CenterEnd else Alignment.CenterStart)
-                        .width((2f + visualProgress * 8f).dp)
+                        .width((2f + latePhase * 10f).dp)
                         .fillMaxHeight()
                         .background(
                             Brush.horizontalGradient(
                                 if (draggingToNext) {
                                     listOf(
-                                        Color.White.copy(alpha = (0.10f + visualProgress * 0.22f).coerceAtMost(0.28f)),
-                                        Color.Black.copy(alpha = (0.06f + visualProgress * 0.16f).coerceAtMost(0.20f)),
+                                        Color.White.copy(alpha = (0.08f + latePhase * 0.26f).coerceAtMost(0.31f)),
+                                        Color.Black.copy(alpha = (0.04f + latePhase * 0.20f).coerceAtMost(0.24f)),
                                     )
                                 } else {
                                     listOf(
-                                        Color.Black.copy(alpha = (0.06f + visualProgress * 0.16f).coerceAtMost(0.20f)),
-                                        Color.White.copy(alpha = (0.10f + visualProgress * 0.22f).coerceAtMost(0.28f)),
+                                        Color.Black.copy(alpha = (0.04f + latePhase * 0.20f).coerceAtMost(0.24f)),
+                                        Color.White.copy(alpha = (0.08f + latePhase * 0.26f).coerceAtMost(0.31f)),
                                     )
                                 },
                             ),
@@ -350,19 +352,19 @@ fun PageTurnEngine(
                 Box(
                     modifier = Modifier
                         .align(if (draggingToNext) Alignment.CenterEnd else Alignment.CenterStart)
-                        .width((5f + visualProgress * 12f).dp)
+                        .width((4f + latePhase * 16f).dp)
                         .fillMaxHeight()
                         .background(
                             Brush.horizontalGradient(
                                 if (draggingToNext) {
                                     listOf(
-                                        Color.White.copy(alpha = (0.04f + visualProgress * 0.18f).coerceAtMost(0.22f)),
+                                        Color.White.copy(alpha = (0.03f + latePhase * 0.22f).coerceAtMost(0.24f)),
                                         Color.Transparent,
                                     )
                                 } else {
                                     listOf(
                                         Color.Transparent,
-                                        Color.White.copy(alpha = (0.04f + visualProgress * 0.18f).coerceAtMost(0.22f)),
+                                        Color.White.copy(alpha = (0.03f + latePhase * 0.22f).coerceAtMost(0.24f)),
                                     )
                                 },
                             ),
@@ -405,10 +407,11 @@ fun Modifier.turningPageTransform(
     } else {
         0f
     }
+    val progressCurve = (visualProgress * 0.35f) + (visualProgress * visualProgress * 0.65f)
     val maxRotation = if (profile == TurnProfile.HANDBOOK) 128f + handbookTailBoost else 118f
     rotationY = when (direction) {
-        TurnDirection.NEXT -> -maxRotation * visualProgress
-        TurnDirection.PREVIOUS -> maxRotation * visualProgress
+        TurnDirection.NEXT -> -maxRotation * progressCurve
+        TurnDirection.PREVIOUS -> maxRotation * progressCurve
         null -> 0f
     }
     val tailRetract = if (profile == TurnProfile.HANDBOOK) {
@@ -418,13 +421,13 @@ fun Modifier.turningPageTransform(
         0f
     }
     translationX = when {
-        draggingToNext -> -(visualProgress * 16f + visualProgress * visualProgress * 56f - tailRetract)
-        draggingToPrevious -> visualProgress * 16f + visualProgress * visualProgress * 56f - tailRetract
+        draggingToNext -> -(visualProgress * 12f + progressCurve * 62f - tailRetract)
+        draggingToPrevious -> visualProgress * 12f + progressCurve * 62f - tailRetract
         else -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
     translationY = yOffsetFactor * visualProgress * 12f
-    rotationX = -yOffsetFactor * visualProgress * 8.5f
+    rotationX = -yOffsetFactor * progressCurve * 9.2f
     cameraDistance = if (profile == TurnProfile.HANDBOOK) 38f * density else 34f * density
     shadowElevation = if (profile == TurnProfile.HANDBOOK) 32f else 28f
 }
@@ -442,14 +445,15 @@ fun Modifier.pageBackTransform(
     } else {
         0f
     }
+    val progressCurve = (visualProgress * 0.32f) + (visualProgress * visualProgress * 0.68f)
     val maxRotation = if (profile == TurnProfile.HANDBOOK) 128f + handbookTailBoost else 118f
     rotationY = when (direction) {
-        TurnDirection.NEXT -> -maxRotation * visualProgress * 0.91f
-        TurnDirection.PREVIOUS -> maxRotation * visualProgress * 0.91f
+        TurnDirection.NEXT -> -maxRotation * progressCurve * 0.9f
+        TurnDirection.PREVIOUS -> maxRotation * progressCurve * 0.9f
         null -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
-    translationY = yOffsetFactor * visualProgress * 7f
-    rotationX = -yOffsetFactor * visualProgress * 5f
+    translationY = yOffsetFactor * progressCurve * 7.2f
+    rotationX = -yOffsetFactor * progressCurve * 5.4f
     cameraDistance = if (profile == TurnProfile.HANDBOOK) 38f * density else 34f * density
 }
