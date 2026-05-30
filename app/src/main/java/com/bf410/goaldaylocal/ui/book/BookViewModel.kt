@@ -519,7 +519,7 @@ class BookViewModel(
         val month = store.calendarAnchorMonth().coerceIn(1, 12)
         return store.scheduleEntries()
             .filter { it.year == year && it.month == month }
-            .sortedWith(compareBy({ it.day }, { it.title }))
+            .sortedBy { it.day }
     }
 
     private data class PlanningContext(

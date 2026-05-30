@@ -114,6 +114,7 @@ fun HomeScreen(
                     calendarViewModel.updateSchedule(id, title, day, note)
                 },
                 onUpdateScheduleDay = { id, day -> calendarViewModel.moveScheduleToDay(id, day) },
+                onReorderSchedule = { id, up -> calendarViewModel.reorderScheduleInDay(id, up) },
                 onOpenInspiration = onOpenInspiration,
             )
         }
@@ -278,6 +279,7 @@ private fun ChecklistBoard(
     onToggleScheduleDone: (String) -> Unit,
     onUpdateScheduleTitle: (String, String, Int, String) -> Unit,
     onUpdateScheduleDay: (String, Int) -> Unit,
+    onReorderSchedule: (String, Boolean) -> Unit,
     onOpenInspiration: () -> Unit,
 ) {
     var focusedIndex by remember { mutableIntStateOf(0) }
@@ -380,6 +382,32 @@ private fun ChecklistBoard(
                         val today = LocalDate.now().dayOfMonth
                         scheduleEntries.firstOrNull { it.day == today && it.title == removed.text }?.let { onRemoveSchedule(it.id) }
                         focusedIndex = (focusedIndex - 1).coerceAtLeast(0)
+                    }
+                })
+                Text("↑", modifier = Modifier.clickable {
+                    if (checklistDraft.size > 1) {
+                        val idx = focusedIndex.coerceIn(0, checklistDraft.lastIndex)
+                        if (idx > 0) {
+                            val temp = checklistDraft[idx - 1]
+                            checklistDraft[idx - 1] = checklistDraft[idx]
+                            checklistDraft[idx] = temp
+                            val today = LocalDate.now().dayOfMonth
+                            scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[idx - 1].text }?.let { onReorderSchedule(it.id, true) }
+                            focusedIndex = idx - 1
+                        }
+                    }
+                })
+                Text("↓", modifier = Modifier.clickable {
+                    if (checklistDraft.size > 1) {
+                        val idx = focusedIndex.coerceIn(0, checklistDraft.lastIndex)
+                        if (idx < checklistDraft.lastIndex) {
+                            val temp = checklistDraft[idx + 1]
+                            checklistDraft[idx + 1] = checklistDraft[idx]
+                            checklistDraft[idx] = temp
+                            val today = LocalDate.now().dayOfMonth
+                            scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[idx + 1].text }?.let { onReorderSchedule(it.id, false) }
+                            focusedIndex = idx + 1
+                        }
                     }
                 })
                 Text("＋", modifier = Modifier.clickable {

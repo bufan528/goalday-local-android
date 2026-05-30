@@ -111,6 +111,28 @@ class CalendarViewModel(
         refreshEntries()
     }
 
+    fun reorderScheduleInDay(id: String, moveUp: Boolean) {
+        val all = store.scheduleEntries().toMutableList()
+        val currentIndex = all.indexOfFirst { it.id == id }
+        if (currentIndex < 0) return
+        val target = all[currentIndex]
+        val dayIndexes = all.withIndex()
+            .filter { (_, entry) ->
+                entry.year == target.year && entry.month == target.month && entry.day == target.day
+            }
+            .map { it.index }
+        val dayPos = dayIndexes.indexOf(currentIndex)
+        if (dayPos < 0) return
+        val swapPos = if (moveUp) dayPos - 1 else dayPos + 1
+        if (swapPos !in dayIndexes.indices) return
+        val swapIndex = dayIndexes[swapPos]
+        val temp = all[currentIndex]
+        all[currentIndex] = all[swapIndex]
+        all[swapIndex] = temp
+        store.saveScheduleEntries(all)
+        refreshEntries()
+    }
+
     private fun setMonth(year: Int, month: Int) {
         store.setCalendarAnchor(year, month)
         _uiState.update {
@@ -130,7 +152,7 @@ class CalendarViewModel(
     private fun monthEntries(year: Int, month: Int): List<ScheduleEntry> =
         store.scheduleEntries()
             .filter { it.year == year && it.month == month }
-            .sortedWith(compareBy({ it.day }, { it.title }))
+            .sortedBy { it.day }
 
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
