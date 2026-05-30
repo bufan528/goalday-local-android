@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -300,11 +301,11 @@ private fun ChecklistEditorBoard(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFFFFFEFC))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("‹", color = Color(0xFFD38DA4), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.clickable { onBack() })
+            Text("‹", color = Color(0xFFD38DA4), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.clickable { onBack() }.padding(horizontal = 4.dp))
             Text(
                 "Done",
                 color = Color.White,
@@ -312,8 +313,19 @@ private fun ChecklistEditorBoard(
                 modifier = Modifier
                     .background(Color(0xFF121212), RoundedCornerShape(8.dp))
                     .clickable { onDone() }
-                    .padding(horizontal = 18.dp, vertical = 6.dp),
+                    .padding(horizontal = 16.dp, vertical = 5.dp),
             )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 2.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("● 本周 Todo", color = Color(0xFF1E1D1A), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text("⋯", color = Color(0xFFB5AFAB), style = MaterialTheme.typography.titleLarge)
         }
 
         items.forEachIndexed { index, item ->
@@ -321,12 +333,12 @@ private fun ChecklistEditorBoard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 6.dp),
+                        .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("□", color = Color(0xFF2A2723), style = MaterialTheme.typography.titleMedium)
+                    Text("□", color = Color(0xFF2A2723), style = MaterialTheme.typography.titleMedium, modifier = Modifier.offset(y = (-1).dp))
                     Text(" ${index + 1}", color = Color(0xFF2A2723), style = MaterialTheme.typography.bodyMedium)
-                    Text("  $item", color = Color(0xFF2A2723), style = MaterialTheme.typography.bodyLarge)
+                    Text("  $item", color = Color(0xFF2A2723), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
                 }
                 if (index == 3 || index == items.lastIndex) {
                     Text(
@@ -334,6 +346,7 @@ private fun ChecklistEditorBoard(
                         color = Color.White,
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier
+                            .padding(start = 30.dp, top = 1.dp)
                             .background(Color(0xFFAFAFB4), RoundedCornerShape(99.dp))
                             .padding(horizontal = 10.dp, vertical = 2.dp),
                     )
@@ -341,7 +354,7 @@ private fun ChecklistEditorBoard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 4.dp)
+                        .padding(top = 3.dp)
                         .border(0.5.dp, Color(0x18000000)),
                 )
             }
