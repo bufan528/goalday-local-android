@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -54,7 +55,7 @@ fun InspirationScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         GoaldayTopBar(
             leftTitle = "灵感中心",
@@ -122,17 +123,26 @@ fun InspirationScreen(
                 .fillMaxWidth()
                 .background(Color(0xFFFFFEFC), RoundedCornerShape(10.dp))
                 .border(1.dp, Color(0x12000000), RoundedCornerShape(10.dp))
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+                .padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(if (mode == InspirationMode.SAVE.ordinal) "直接保存" else "${selected.title}", style = MaterialTheme.typography.titleSmall, color = Color(0xFF28241F), fontWeight = FontWeight.SemiBold)
             selected.items.take(if (mode == InspirationMode.FLIP.ordinal) 8 else 14).forEach { item ->
                 val checked = item in checkedItems
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (checked) "✓" else "□", color = if (checked) Color(0xFF6F8E68) else Color(0xFFB4ADA4), modifier = Modifier.clickable {
-                        if (checked) checkedItems.remove(item) else checkedItems.add(item)
-                    })
-                    Text(item, modifier = Modifier.weight(1f), color = Color(0xFF2F2A24), style = MaterialTheme.typography.bodyMedium)
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(if (checked) "✓" else "□", color = if (checked) Color(0xFF6F8E68) else Color(0xFFB4ADA4), modifier = Modifier.clickable {
+                            if (checked) checkedItems.remove(item) else checkedItems.add(item)
+                        })
+                        Text(item, modifier = Modifier.weight(1f), color = Color(0xFF2F2A24), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 3.dp)
+                            .height(1.dp)
+                            .background(Color(0x0E000000)),
+                    )
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

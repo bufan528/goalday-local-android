@@ -60,7 +60,7 @@ fun HomeScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             "为J人而生的APP",
@@ -176,8 +176,8 @@ private fun WeekBoard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(0.5.dp, Color(0x11000000))
-                    .padding(vertical = 7.dp, horizontal = 8.dp),
+                    .border(0.5.dp, Color(0x14000000))
+                    .padding(vertical = 6.dp, horizontal = 8.dp),
                 verticalAlignment = Alignment.Top,
             ) {
                 Column(modifier = Modifier.weight(0.18f)) {
@@ -187,13 +187,13 @@ private fun WeekBoard(
                 Text(
                     text = if (leftText.isBlank()) "" else leftText,
                     modifier = Modifier.weight(0.42f),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelSmall,
                     color = Color(0xFF35312C),
                 )
                 Text(
                     text = if (rightText.isBlank()) "" else rightText,
                     modifier = Modifier.weight(0.40f),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelSmall,
                     color = Color(0xFF2A2723),
                     textDecoration = TextDecoration.None,
                 )
@@ -244,12 +244,12 @@ private fun JournalQuickBoard(
             .fillMaxWidth()
             .background(Color(0xFFFFFEFC))
             .border(1.dp, Color(0x12000000))
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text("在清单中勾选一周要做的所有事", color = Color(0xFF2A2723), style = MaterialTheme.typography.titleSmall)
         done.forEachIndexed { index, entry ->
-            Text("${index + 1}  ${entry.title}", color = Color(0xFF2F2A24), style = MaterialTheme.typography.bodyMedium)
+            Text("${index + 1}  ${entry.title}", color = Color(0xFF2F2A24), style = MaterialTheme.typography.bodySmall)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             repeat(3) { idx ->
