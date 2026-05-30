@@ -749,6 +749,7 @@ private fun TodayBoardSection(
     onMoveItemToCompleted: (String) -> Unit,
     onRestoreItemFromToday: (String) -> Unit,
     onRestoreItemFromCompleted: (String) -> Unit,
+    onMoveCompletedToTodo: (String) -> Unit = onRestoreItemFromCompleted,
     dragPreviewTarget: DragTarget,
     modifier: Modifier = Modifier,
 ) {
@@ -819,7 +820,7 @@ private fun TodayBoardSection(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(7.dp))
                                 .background(BoardToneDone)
-                                .clickable { onRestoreItemFromCompleted(item) }
+                                .clickable { onMoveCompletedToTodo(item) }
                                 .padding(horizontal = 8.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -874,7 +875,7 @@ private fun TodayBoardSection(
         }
         if (todayPlanItems.isNotEmpty()) {
             TextButton(onClick = { todayPlanItems.forEach(onRestoreItemFromToday) }) {
-                Text("清空今日计划区")
+                Text("回收今日 To do 到来源池")
             }
         }
         Row(

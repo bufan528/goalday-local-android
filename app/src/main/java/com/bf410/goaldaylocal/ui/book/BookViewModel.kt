@@ -226,9 +226,11 @@ class BookViewModel(
     fun restoreItemFromCompleted(item: String) {
         val page = currentPage()
         val book = currentBook()
-        val updated = _uiState.value.todayCompletedItems.filterNot { it == item }
-        store.saveTodayCompletedItems(book.id, page.title, updated)
-        _uiState.update { it.copy(todayCompletedItems = updated) }
+        val updatedDone = _uiState.value.todayCompletedItems.filterNot { it == item }
+        val updatedTodo = (_uiState.value.todayPlanItems + item).distinct()
+        store.saveTodayCompletedItems(book.id, page.title, updatedDone)
+        store.saveTodayPlanItems(book.id, page.title, updatedTodo)
+        _uiState.update { it.copy(todayCompletedItems = updatedDone, todayPlanItems = updatedTodo) }
         removeCompletedItemFromDiary(book.id, item)
     }
 
