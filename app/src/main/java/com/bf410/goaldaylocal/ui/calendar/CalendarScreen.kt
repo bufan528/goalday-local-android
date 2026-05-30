@@ -59,6 +59,7 @@ fun CalendarScreen(
     val entryDays = uiState.entries.map { it.day }.toSet()
     selectedDay = selectedDay.coerceIn(1, maxDay)
     val selectedDayEntries = uiState.entries.filter { it.day == selectedDay }
+    val referenceMode = true
 
     Column(
         modifier = Modifier
@@ -98,7 +99,21 @@ fun CalendarScreen(
             Text("下个月 ›", modifier = Modifier.clickable(onClick = viewModel::nextMonth), color = Color(0xFF888177))
         }
 
-        Box(
+        if (referenceMode) {
+            ReferenceCalendarBoard(
+                year = uiState.year,
+                month = uiState.month,
+                maxDay = maxDay,
+                selectedDay = selectedDay,
+                entries = uiState.entries,
+                onSelectDay = { selectedDay = it.coerceIn(1, maxDay) },
+                onToggleCompleted = { id -> viewModel.toggleScheduleCompleted(id) },
+                onEdit = { editingEntry = it },
+                onDelete = { viewModel.removeSchedule(it) },
+                onAdd = { showAddDialog = true },
+            )
+        } else {
+            Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
@@ -153,7 +168,7 @@ fun CalendarScreen(
             }
         }
 
-        Column(
+            Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
@@ -232,6 +247,7 @@ fun CalendarScreen(
                     }
                 }
             }
+            }
         }
     }
 
@@ -263,6 +279,126 @@ fun CalendarScreen(
                 editingEntry = null
             },
         )
+    }
+}
+
+@Composable
+private fun ReferenceCalendarBoard(
+    year: Int,
+    month: Int,
+    maxDay: Int,
+    selectedDay: Int,
+    entries: List<ScheduleEntry>,
+    onSelectDay: (Int) -> Unit,
+    onToggleCompleted: (String) -> Unit,
+    onEdit: (ScheduleEntry) -> Unit,
+    onDelete: (String) -> Unit,
+    onAdd: () -> Unit,
+) {
+    val weekDays = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
+    val start = selectedDay.coerceIn(1, maxDay)
+    val dayNums = (0..6).map { (start + it).coerceAtMost(maxDay) }
+    val todo = entries.filter { it.day == selectedDay }
+    val stacked = (todo + entries.filter { it.day != selectedDay }).take(10)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(440.dp)
+            .background(Color(0xFFFBFAF8), RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0x14000000), RoundedCornerShape(12.dp)),
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1.1f)
+                .fillMaxSize(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF4EEEC))
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                SegText("日程", true, Modifier.weight(1f))
+                SegText("${month}月${selectedDay}日", false, Modifier.weight(1f))
+                SegText("清单", false, Modifier.weight(1f))
+            }
+            weekDays.forEachIndexed { idx, label ->
+                val day = dayNums[idx]
+                val hasEntry = entries.any { it.day == day }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .border(0.5.dp, Color(0x12000000))
+                        .clickable { onSelectDay(day) }
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Column(modifier = Modifier.width(34.dp)) {
+                        Text(day.toString(), fontWeight = if (day == selectedDay) FontWeight.SemiBold else FontWeight.Normal)
+                        Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7D766C))
+                    }
+                    Text(
+                        text = entries.firstOrNull { it.day == day }?.title ?: "",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (hasEntry) Color(0xFF2F2924) else Color(0xFFB8B1A7),
+                    )
+                }
+            }
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxSize()
+                .border(1.dp, Color(0x12000000)),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("To do  ˅", modifier = Modifier.background(Color(0xFFF8F8F6), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
+                Text("新增", modifier = Modifier.clickable(onClick = onAdd))
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                stacked.forEach { entry ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        Text(if (entry.completed) "✓" else "·", color = if (entry.completed) Color(0xFF7A9D71) else Color(0xFFD8CFC5), modifier = Modifier.clickable { onToggleCompleted(entry.id) })
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(entry.title, textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None)
+                            if (entry.note.isNotBlank()) Text(entry.note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8D857C))
+                        }
+                        Text("编", modifier = Modifier.clickable { onEdit(entry) }, color = Color(0xFF70685F))
+                        Text("删", modifier = Modifier.clickable { onDelete(entry.id) }, color = Color(0xFF9C5A52))
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Text("${year}年${month}月", modifier = Modifier.padding(12.dp), color = Color(0xFF8D867C), style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+@Composable
+private fun SegText(text: String, active: Boolean, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .background(if (active) Color.White else Color.Transparent, RoundedCornerShape(8.dp))
+            .padding(vertical = 4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, color = if (active) Color(0xFF2D2823) else Color(0xFF9D958B))
     }
 }
 

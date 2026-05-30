@@ -57,7 +57,7 @@ private val bookPalette = listOf(
 )
 
 private enum class BookSegment(val label: String) {
-    WEEK("周视图"),
+    WEEK("日程"),
     DIARY("日记"),
     LIST("清单"),
 }
@@ -352,8 +352,8 @@ private fun BookDetailView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("18周", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7E776E))
-                Text("一周图", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
+                Text("14周", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7E776E))
+                Text("计划本", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("灵感", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onShowInspiration))
