@@ -35,19 +35,20 @@ import com.bf410.goaldaylocal.ui.book.BookHomeScreen
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.calendar.CalendarScreen
 import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
+import com.bf410.goaldaylocal.ui.home.HomeScreen
 import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 
 private enum class RootTab(val label: String, val icon: String) {
-    HOME("日程", "◍"),
+    HOME("首页", "⌂"),
     CALENDAR("日历", "◌"),
-    INSPIRATION("灵感", "◎"),
-    HANDBOOK("手账", "▦"),
+    INSPIRATION("灵感", "✦"),
+    HANDBOOK("手账", "📖"),
 }
 
 @Composable
 fun GoaldayApp() {
-    var tab by rememberSaveable { mutableStateOf(RootTab.HANDBOOK) }
+    var tab by rememberSaveable { mutableStateOf(RootTab.HOME) }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()
@@ -134,7 +135,12 @@ fun GoaldayApp() {
                     label = "root-tab-switch",
                 ) { currentTab ->
                     when (currentTab) {
-                        RootTab.HOME -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.PLANNER)
+                        RootTab.HOME -> HomeScreen(
+                            calendarViewModel = calendarViewModel,
+                            onOpenCalendar = { tab = RootTab.CALENDAR },
+                            onOpenHandbook = { tab = RootTab.HANDBOOK },
+                            onOpenInspiration = { tab = RootTab.INSPIRATION },
+                        )
                         RootTab.CALENDAR -> CalendarScreen(viewModel = calendarViewModel)
                         RootTab.INSPIRATION -> InspirationScreen(viewModel = bookViewModel)
                         RootTab.HANDBOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.HANDBOOK)
