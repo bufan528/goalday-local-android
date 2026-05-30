@@ -594,9 +594,10 @@ private fun FocusTimelineSection(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0x10A17856))
-                        .padding(horizontal = 6.dp, vertical = 6.dp),
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0x06A17856))
+                        .border(1.dp, Color(0x12A17856), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 5.dp, vertical = 5.dp),
                     verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
                     Text("${entry.day}", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7E6A58))
@@ -868,10 +869,11 @@ private fun TodayBoardSection(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(7.dp))
-                                .background(BoardToneDone)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x08A5C49D))
+                                .border(1.dp, Color(0x18A5C49D), RoundedCornerShape(6.dp))
                                 .clickable { onMoveCompletedToTodo(item) }
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                                .padding(horizontal = 6.dp, vertical = 5.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
@@ -909,10 +911,11 @@ private fun TodayBoardSection(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(7.dp))
-                                .background(BoardTonePlan)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x08D9A97E))
+                                .border(1.dp, Color(0x18D9A97E), RoundedCornerShape(6.dp))
                                 .clickable { onMoveItemToCompleted(item) }
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                                .padding(horizontal = 6.dp, vertical = 5.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
@@ -1464,13 +1467,13 @@ private fun PaperNoteCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(Color(0xFFFEFEFE))
-            .border(1.dp, Color(0xFFEDE7DE), RoundedCornerShape(18.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .border(1.dp, Color(0xFFEDE7DE), RoundedCornerShape(14.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x10A17856)))
         content()
