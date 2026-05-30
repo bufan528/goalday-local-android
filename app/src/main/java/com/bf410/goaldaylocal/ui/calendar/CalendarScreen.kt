@@ -53,6 +53,12 @@ private enum class CalendarMode {
     LIST,
 }
 
+private enum class AgendaFilter {
+    ALL,
+    TODO,
+    DONE,
+}
+
 @Composable
 fun CalendarScreen(
     viewModel: CalendarViewModel,
@@ -62,6 +68,7 @@ fun CalendarScreen(
     var editingEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
     var selectedDay by remember { mutableIntStateOf(LocalDate.now().dayOfMonth) }
     var mode by remember { mutableStateOf(CalendarMode.SCHEDULE) }
+    var agendaFilter by remember { mutableStateOf(AgendaFilter.ALL) }
     val month = YearMonth.of(uiState.year, uiState.month)
     val maxDay = month.lengthOfMonth()
     selectedDay = selectedDay.coerceIn(1, maxDay)
@@ -113,7 +120,10 @@ fun CalendarScreen(
                     maxDay = maxDay,
                     selectedDay = selectedDay,
                     entries = uiState.entries,
-                    onSelectDay = { selectedDay = it.coerceIn(1, maxDay) },
+                    onSelectDay = {
+                        selectedDay = it.coerceIn(1, maxDay)
+                        mode = CalendarMode.SCHEDULE
+                    },
                 )
             }
             CalendarMode.LIST -> {
@@ -121,6 +131,8 @@ fun CalendarScreen(
                     year = uiState.year,
                     month = uiState.month,
                     entries = uiState.entries,
+                    filter = agendaFilter,
+                    onFilterChange = { agendaFilter = it },
                     onToggleCompleted = { id -> viewModel.toggleScheduleCompleted(id) },
                     onEdit = { editingEntry = it },
                     onDelete = { viewModel.removeSchedule(it) },
@@ -227,11 +239,19 @@ private fun AgendaListBoard(
     year: Int,
     month: Int,
     entries: List<ScheduleEntry>,
+    filter: AgendaFilter,
+    onFilterChange: (AgendaFilter) -> Unit,
     onToggleCompleted: (String) -> Unit,
     onEdit: (ScheduleEntry) -> Unit,
     onDelete: (String) -> Unit,
     onAdd: () -> Unit,
 ) {
+    val filtered = when (filter) {
+        AgendaFilter.ALL -> entries
+        AgendaFilter.TODO -> entries.filterNot { it.completed }
+        AgendaFilter.DONE -> entries.filter { it.completed }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -244,7 +264,12 @@ private fun AgendaListBoard(
             Text("${year}年${month}月 · 清单", style = MaterialTheme.typography.titleSmall, color = Color(0xFF2F2A24))
             Text("＋ 新增", color = Color(0xFF2F2A24), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onAdd() })
         }
-        entries.sortedBy { it.day }.forEach { entry ->
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            FilterChip(label = "全部", active = filter == AgendaFilter.ALL, onClick = { onFilterChange(AgendaFilter.ALL) })
+            FilterChip(label = "未完成", active = filter == AgendaFilter.TODO, onClick = { onFilterChange(AgendaFilter.TODO) })
+            FilterChip(label = "已完成", active = filter == AgendaFilter.DONE, onClick = { onFilterChange(AgendaFilter.DONE) })
+        }
+        filtered.sortedBy { it.day }.forEach { entry ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -268,6 +293,23 @@ private fun AgendaListBoard(
             }
         }
     }
+}
+
+@Composable
+private fun FilterChip(
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    Text(
+        text = label,
+        color = if (active) Color.White else Color(0xFF6F675D),
+        style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier
+            .background(if (active) Color(0xFF2D2A26) else Color(0x12000000), RoundedCornerShape(99.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+    )
 }
 
 @Composable
