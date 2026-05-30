@@ -712,42 +712,56 @@ private fun ReferencePlannerBoard(
     val weekday = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
     val dayNumbers = (0..6).map { LocalDate.now().plusDays(it.toLong()).dayOfMonth }
     val leftItems = doneItems.take(7)
-    val rightItems = (todayItems + sourceItems).distinct().take(10)
+    val todayPool = todayItems.distinct().take(6)
+    val sourcePool = sourceItems.filterNot { it in todayPool }.distinct().take(8)
+    val rightItems = (todayPool + sourcePool).distinct()
     var selectedItem by remember(rightItems) { mutableStateOf(rightItems.firstOrNull()) }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(404.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, Color(0x22000000), RoundedCornerShape(10.dp))
+            .height(468.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0x22000000), RoundedCornerShape(14.dp))
             .background(Color(0xFFFCFCFB)),
     ) {
         Column(
             modifier = Modifier
-                .weight(1.08f)
+                .weight(1f)
                 .fillMaxHeight(),
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF4EEE6))
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("执行", color = Color(0xFF3A332C), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                Text("Done", color = Color(0xFF8C8379), style = MaterialTheme.typography.labelSmall)
+            }
             weekday.forEachIndexed { index, label ->
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+                        .weight(1f, fill = true)
                         .border(0.6.dp, Color(0x12000000))
-                        .padding(horizontal = 6.dp, vertical = 5.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    Column(modifier = Modifier.width(30.dp)) {
-                        Text(dayNumbers[index].toString(), color = Color(0xFF26221D), fontWeight = FontWeight.SemiBold)
-                        Text(label, color = Color(0xFF777067), style = MaterialTheme.typography.labelSmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.width(30.dp)) {
+                            Text(dayNumbers[index].toString(), color = Color(0xFF26221D), fontWeight = FontWeight.SemiBold)
+                            Text(label, color = Color(0xFF777067), style = MaterialTheme.typography.labelSmall)
+                        }
+                        Text("✓", color = Color(0xFF8BA77B), style = MaterialTheme.typography.labelSmall)
                     }
                     Text(
                         text = leftItems.getOrNull(index) ?: "",
                         color = Color(0xFF3A332C),
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable(enabled = false) { },
+                        maxLines = 2,
                     )
                 }
             }
@@ -755,14 +769,14 @@ private fun ReferencePlannerBoard(
 
         Column(
             modifier = Modifier
-                .weight(1f)
+                .weight(1.06f)
                 .fillMaxHeight()
                 .border(0.8.dp, Color(0x12000000)),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -794,28 +808,27 @@ private fun ReferencePlannerBoard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(3.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                rightItems.forEach { item ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.Top,
-                    ) {
-                        Text(if (selectedItem == item) "◉" else "·", color = if (selectedItem == item) Color(0xFF8E857A) else Color(0xFFD8CFC5))
-                        Text(
-                            text = item,
-                            color = Color(0xFF2D2823),
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { selectedItem = item },
-                        )
-                        Text(
-                            "＋",
-                            color = Color(0xFF6E655B),
-                            modifier = Modifier.clickable { onMoveItemToToday(item) },
-                        )
-                    }
+                Text("今日 Todo", color = Color(0xFF6F675D), style = MaterialTheme.typography.labelSmall)
+                todayPool.forEach { item ->
+                    BoardItemRow(
+                        item = item,
+                        selected = selectedItem == item,
+                        onSelect = { selectedItem = item },
+                        onAction = { onMoveItemToCompleted(item) },
+                        actionLabel = "✓",
+                    )
+                }
+                Text("任务池", color = Color(0xFF6F675D), style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
+                sourcePool.forEach { item ->
+                    BoardItemRow(
+                        item = item,
+                        selected = selectedItem == item,
+                        onSelect = { selectedItem = item },
+                        onAction = { onMoveItemToToday(item) },
+                        actionLabel = "＋",
+                    )
                 }
             }
             Spacer(modifier = Modifier.weight(1f))
@@ -831,6 +844,40 @@ private fun ReferencePlannerBoard(
                 Text("›", color = Color(0xFF5D554D))
             }
         }
+    }
+}
+
+@Composable
+private fun BoardItemRow(
+    item: String,
+    selected: Boolean,
+    onSelect: () -> Unit,
+    onAction: () -> Unit,
+    actionLabel: String,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (selected) Color(0x14B59072) else Color.Transparent)
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(if (selected) "◉" else "·", color = if (selected) Color(0xFF8E857A) else Color(0xFFD8CFC5))
+        Text(
+            text = item,
+            color = Color(0xFF2D2823),
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onSelect() },
+            maxLines = 2,
+        )
+        Text(
+            actionLabel,
+            color = Color(0xFF6E655B),
+            modifier = Modifier.clickable { onAction() },
+        )
     }
 }
 
