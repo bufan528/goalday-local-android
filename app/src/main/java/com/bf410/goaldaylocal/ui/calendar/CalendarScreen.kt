@@ -170,6 +170,8 @@ private fun MonthGridBoard(
     entries: List<ScheduleEntry>,
     onSelectDay: (Int) -> Unit,
 ) {
+    val firstWeekOffset = YearMonth.of(year, month).atDay(1).dayOfWeek.value - 1
+    val cells = List(firstWeekOffset) { 0 } + (1..maxDay).toList()
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -185,10 +187,13 @@ private fun MonthGridBoard(
                 Text(wd, color = Color(0xFF8D857C), style = MaterialTheme.typography.labelSmall)
             }
         }
-        (0 until maxDay).chunked(7).forEach { row ->
+        cells.chunked(7).forEach { row ->
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                row.forEach { index ->
-                    val day = index + 1
+                row.forEach { day ->
+                    if (day == 0) {
+                        Spacer(modifier = Modifier.weight(1f))
+                        return@forEach
+                    }
                     val hasEntry = entries.any { it.day == day }
                     Box(
                         modifier = Modifier
