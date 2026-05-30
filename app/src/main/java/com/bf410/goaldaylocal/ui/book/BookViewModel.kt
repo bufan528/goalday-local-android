@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import java.time.LocalDate
 import java.time.YearMonth
+import java.util.UUID
 
 class BookViewModel(
     private val store: LocalStateStore,
@@ -196,47 +197,28 @@ class BookViewModel(
     }
 
     fun moveItemToToday(item: String) {
-        val page = currentPage()
-        val book = currentBook()
-        val nextPlan = (_uiState.value.todayPlanItems + item).distinct()
-        val nextDone = _uiState.value.todayCompletedItems.filterNot { it == item }
-        store.saveTodayPlanItems(book.id, page.title, nextPlan)
-        store.saveTodayCompletedItems(book.id, page.title, nextDone)
-        _uiState.update { it.copy(todayPlanItems = nextPlan, todayCompletedItems = nextDone) }
+        upsertTodayScheduleEntry(item, completed = false)
+        syncEditableContent()
     }
 
     fun moveItemToCompleted(item: String) {
-        val page = currentPage()
-        val book = currentBook()
-        val alreadyDone = item in _uiState.value.todayCompletedItems
-        val nextDone = (_uiState.value.todayCompletedItems + item).distinct()
-        val nextPlan = _uiState.value.todayPlanItems.filterNot { it == item }
-        store.saveTodayCompletedItems(book.id, page.title, nextDone)
-        store.saveTodayPlanItems(book.id, page.title, nextPlan)
-        _uiState.update { it.copy(todayCompletedItems = nextDone, todayPlanItems = nextPlan) }
-        if (!alreadyDone) {
-            addItemToSchedule(item, LocalDate.now().dayOfMonth)
-            syncCompletedItemToDiary(book.id, item)
+        val wasDone = _uiState.value.todayCompletedItems.contains(item)
+        upsertTodayScheduleEntry(item, completed = true)
+        if (!wasDone) {
+            syncCompletedItemToDiary(currentBook().id, item)
         }
+        syncEditableContent()
     }
 
     fun restoreItemFromToday(item: String) {
-        val page = currentPage()
-        val book = currentBook()
-        val updated = _uiState.value.todayPlanItems.filterNot { it == item }
-        store.saveTodayPlanItems(book.id, page.title, updated)
-        _uiState.update { it.copy(todayPlanItems = updated) }
+        removeTodayScheduleEntry(item)
+        syncEditableContent()
     }
 
     fun restoreItemFromCompleted(item: String) {
-        val page = currentPage()
-        val book = currentBook()
-        val updatedDone = _uiState.value.todayCompletedItems.filterNot { it == item }
-        val updatedTodo = (_uiState.value.todayPlanItems + item).distinct()
-        store.saveTodayCompletedItems(book.id, page.title, updatedDone)
-        store.saveTodayPlanItems(book.id, page.title, updatedTodo)
-        _uiState.update { it.copy(todayCompletedItems = updatedDone, todayPlanItems = updatedTodo) }
-        removeCompletedItemFromDiary(book.id, item)
+        upsertTodayScheduleEntry(item, completed = false)
+        removeCompletedItemFromDiary(currentBook().id, item)
+        syncEditableContent()
     }
 
     fun addQuickTodo(item: String) {
@@ -478,6 +460,48 @@ class BookViewModel(
         val todo = entries.filterNot { it.completed }.map { it.title }.distinct()
         val done = entries.filter { it.completed }.map { it.title }.distinct()
         return ScheduleImport(todo = todo, done = done)
+    }
+
+    private fun upsertTodayScheduleEntry(item: String, completed: Boolean) {
+        val normalized = item.trim()
+        if (normalized.isBlank()) return
+        val year = store.calendarAnchorYear()
+        val month = store.calendarAnchorMonth().coerceIn(1, 12)
+        val day = LocalDate.now().dayOfMonth
+        val existing = store.scheduleEntries()
+        var matched = false
+        val updated = existing.map { entry ->
+            if (!matched && entry.year == year && entry.month == month && entry.day == day && entry.title == normalized) {
+                matched = true
+                entry.copy(completed = completed)
+            } else {
+                entry
+            }
+        }.toMutableList()
+        if (!matched) {
+            updated += ScheduleEntry(
+                id = UUID.randomUUID().toString(),
+                title = normalized,
+                year = year,
+                month = month,
+                day = day,
+                note = currentBook().title,
+                completed = completed,
+            )
+        }
+        store.saveScheduleEntries(updated)
+    }
+
+    private fun removeTodayScheduleEntry(item: String) {
+        val normalized = item.trim()
+        if (normalized.isBlank()) return
+        val year = store.calendarAnchorYear()
+        val month = store.calendarAnchorMonth().coerceIn(1, 12)
+        val day = LocalDate.now().dayOfMonth
+        val updated = store.scheduleEntries().filterNot {
+            it.year == year && it.month == month && it.day == day && it.title == normalized
+        }
+        store.saveScheduleEntries(updated)
     }
 
     private fun monthEntriesForAnchor(): List<ScheduleEntry> {
