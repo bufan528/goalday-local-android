@@ -47,6 +47,7 @@ import com.bf410.goaldaylocal.data.PlanPage
 import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
+import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 
 private val bookPalette = listOf(
@@ -361,33 +362,11 @@ private fun BookDetailView(
             },
         )
         if (!handbookMode) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFF4EEEC), RoundedCornerShape(10.dp))
-                    .border(1.dp, Color(0x16000000), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                BookSegment.entries.forEach { item ->
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (item == segment) Color.White else Color.Transparent)
-                            .clickable { switchSegment(item) }
-                            .padding(vertical = 4.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = item.label,
-                            color = if (item == segment) Color(0xFF2A261F) else Color(0xFF9E978D),
-                            fontWeight = if (item == segment) FontWeight.SemiBold else FontWeight.Normal,
-                        )
-                    }
-                }
-            }
+            GoaldaySegmentBar(
+                items = BookSegment.entries.map { it.label },
+                selectedIndex = BookSegment.entries.indexOf(segment).coerceAtLeast(0),
+                onSelect = { idx -> switchSegment(BookSegment.entries[idx]) },
+            )
         }
         if (showManagePanel && book.id.startsWith("custom_")) {
             Row(

@@ -54,6 +54,7 @@ import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.ui.replica.BoardTask
 import com.bf410.goaldaylocal.ui.replica.DualLaneExecutionBoard
+import com.bf410.goaldaylocal.ui.replica.ExecutionBoardHeader
 import java.time.LocalDate
 
 @Composable
@@ -665,28 +666,9 @@ private fun EditableBulletPage(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFFF7F2EC))
-                .border(1.dp, Color(0x18000000), RoundedCornerShape(10.dp))
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = if (isSchedulePage) "日程执行板" else "任务执行板",
-                color = Color(0xFF3A332C),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = "左 Done 右 Todo",
-                color = Color(0xFF8C8379),
-                style = MaterialTheme.typography.labelSmall,
-            )
-        }
+        ExecutionBoardHeader(
+            title = if (isSchedulePage) "日程执行板" else "任务执行板",
+        )
         ReferencePlannerBoard(
             sourceItems = shownSourceItems,
             todayItems = todayPlanItems,

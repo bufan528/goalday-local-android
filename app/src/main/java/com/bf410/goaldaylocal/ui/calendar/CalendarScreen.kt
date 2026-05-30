@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.ui.replica.BoardTask
 import com.bf410.goaldaylocal.ui.replica.DualLaneExecutionBoard
+import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 import java.time.LocalDate
 import java.time.YearMonth
@@ -67,19 +68,11 @@ fun CalendarScreen(
         GoaldayTopBar(
             onRightPrimaryClick = { viewModel.backToToday() },
         )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFF4EEEC), RoundedCornerShape(10.dp))
-                .border(1.dp, Color(0x16000000), RoundedCornerShape(10.dp))
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            SegText("日程", true, Modifier.weight(1f))
-            SegText("${uiState.month}月${selectedDay}日", false, Modifier.weight(1f))
-            SegText("清单", false, Modifier.weight(1f))
-        }
+        GoaldaySegmentBar(
+            items = listOf("日程", "${uiState.month}月${selectedDay}日", "清单"),
+            selectedIndex = 0,
+            onSelect = {},
+        )
 
         ReferenceCalendarBoard(
             year = uiState.year,
@@ -189,19 +182,6 @@ private fun ReferenceCalendarBoard(
         },
     )
 }
-
-@Composable
-private fun SegText(text: String, active: Boolean, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .background(if (active) Color.White else Color.Transparent, RoundedCornerShape(8.dp))
-            .padding(vertical = 4.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, color = if (active) Color(0xFF2D2823) else Color(0xFF9D958B))
-    }
-}
-
 
 @Composable
 private fun ScheduleDialog(
