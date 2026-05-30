@@ -237,6 +237,34 @@ fun PageTurnEngine(
             activePage(visualProgress, direction, turnAnchorY)
 
             if (direction != null && dragProgress > 0.01f) {
+                if (profile == TurnProfile.HANDBOOK) {
+                    repeat(4) { layer ->
+                        val depth = (layer + 1) / 4f
+                        Box(
+                            modifier = Modifier
+                                .align(if (draggingToNext) Alignment.CenterStart else Alignment.CenterEnd)
+                                .width((2f + visualProgress * (5f + depth * 8f)).dp)
+                                .fillMaxHeight()
+                                .background(
+                                    Brush.horizontalGradient(
+                                        if (draggingToNext) {
+                                            listOf(
+                                                Color.Black.copy(alpha = (0.03f + visualProgress * 0.08f) * depth),
+                                                Color(0x33B79678).copy(alpha = (0.03f + visualProgress * 0.06f) * depth),
+                                                Color.Transparent,
+                                            )
+                                        } else {
+                                            listOf(
+                                                Color.Transparent,
+                                                Color(0x33B79678).copy(alpha = (0.03f + visualProgress * 0.06f) * depth),
+                                                Color.Black.copy(alpha = (0.03f + visualProgress * 0.08f) * depth),
+                                            )
+                                        },
+                                    ),
+                                ),
+                        )
+                    }
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
