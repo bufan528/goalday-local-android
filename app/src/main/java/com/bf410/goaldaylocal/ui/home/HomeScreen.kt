@@ -7,28 +7,31 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -40,6 +43,14 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+private enum class WeeklyMode { WEEK, DIARY, CHECKLIST }
+
+data class ChecklistDraftItem(
+    var text: String,
+    var deadline: String = "",
+    var checked: Boolean = false,
+)
+
 @Composable
 fun HomeScreen(
     calendarViewModel: CalendarViewModel,
@@ -48,11 +59,17 @@ fun HomeScreen(
     onOpenInspiration: () -> Unit,
 ) {
     val calendarState by calendarViewModel.uiState.collectAsState()
-    var mode by rememberSaveable { mutableIntStateOf(0) }
-    var checklistEditing by rememberSaveable { mutableIntStateOf(0) }
+    var mode by rememberSaveable { mutableStateOf(WeeklyMode.WEEK) }
     val weekDates = remember { buildCurrentWeek() }
+
     val checklistDraft = remember {
-        mutableStateListOf("托福单词 w117", "组会1-1", "听力真题5篇", "阅读", "投简历")
+        mutableStateListOf(
+            ChecklistDraftItem("托福单词 w117", "02-24-2026"),
+            ChecklistDraftItem("组会1-1"),
+            ChecklistDraftItem("听力真题5篇"),
+            ChecklistDraftItem("阅读", "02-26-2026"),
+            ChecklistDraftItem("投简历"),
+        )
     }
 
     Column(
@@ -60,47 +77,32 @@ fun HomeScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
             "为J人而生的APP",
             color = Color.White,
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier
-                .background(Color(0xFF111111), RoundedCornerShape(4.dp))
+                .background(Color(0xFF101010), RoundedCornerShape(4.dp))
                 .padding(horizontal = 8.dp, vertical = 3.dp),
         )
-        GoaldayTopBar(leftTitle = "Goalday", rightPrimaryText = "今天", onRightPrimaryClick = { calendarViewModel.backToToday() })
+        GoaldayTopBar(
+            leftTitle = "Goalday",
+            rightPrimaryText = "今天",
+            onRightPrimaryClick = { calendarViewModel.backToToday() },
+        )
 
         SegmentedHeader(
             items = listOf("1周", "日记", "清单"),
-            selected = mode,
-            onSelect = { mode = it },
+            selected = mode.ordinal,
+            onSelect = { mode = WeeklyMode.entries[it] },
         )
 
         when (mode) {
-            0 -> WeekBoard(
-                weekDates = weekDates,
-                entries = calendarState.entries,
-                onOpenCalendar = onOpenCalendar,
-            )
-            1 -> JournalQuickBoard(
-                entries = calendarState.entries,
-                onOpenHandbook = onOpenHandbook,
-            )
-            else -> if (checklistEditing == 1) {
-                ChecklistEditorBoard(
-                    items = checklistDraft,
-                    onBack = { checklistEditing = 0 },
-                    onDone = { checklistEditing = 0 },
-                )
-            } else {
-                ChecklistQuickBoard(
-                    entries = calendarState.entries,
-                    onOpenInspiration = onOpenInspiration,
-                    onEdit = { checklistEditing = 1 },
-                )
-            }
+            WeeklyMode.WEEK -> WeekBoard(weekDates, calendarState.entries, onOpenCalendar)
+            WeeklyMode.DIARY -> DiaryBoard(calendarState.entries, onOpenHandbook)
+            WeeklyMode.CHECKLIST -> ChecklistBoard(checklistDraft, onOpenInspiration)
         }
     }
 }
@@ -114,22 +116,19 @@ private fun SegmentedHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF0E7DE), RoundedCornerShape(0.dp))
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(0.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .background(Color(0xFFF0E8DF))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
     ) {
         items.forEachIndexed { index, label ->
             Text(
                 text = label,
-                color = if (selected == index) Color(0xFF1F1C19) else Color(0xFF9E958A),
-                fontWeight = if (selected == index) FontWeight.SemiBold else FontWeight.Normal,
-                style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 2.dp)
                     .clickable { onSelect(index) },
                 textAlign = TextAlign.Center,
+                color = if (index == selected) Color(0xFFE88FAE) else Color(0xFF9B9389),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = if (index == selected) FontWeight.SemiBold else FontWeight.Normal,
             )
         }
     }
@@ -142,123 +141,100 @@ private fun WeekBoard(
     onOpenCalendar: () -> Unit,
 ) {
     val weekEntries = entries.filter { e -> weekDates.any { it.year == e.year && it.monthValue == e.month && it.dayOfMonth == e.day } }
-    val weekTodo = weekEntries.filterNot { it.completed }.map { it.title }.distinct().take(6)
+    val weekTodo = weekEntries.filterNot { it.completed }.map { it.title }.distinct().take(8)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFFFFEFC), RoundedCornerShape(0.dp)),
+            .background(Color(0xFFFFFEFC)),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.Top,
         ) {
-            Text(
-                "",
-                modifier = Modifier.weight(0.22f),
-            )
+            Spacer(modifier = Modifier.weight(0.2f))
             Text(
                 "● 本周Todo",
-                modifier = Modifier.weight(0.80f),
-                color = Color(0xFF1F1D1A),
+                modifier = Modifier.weight(0.8f),
+                color = Color(0xFF22201C),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
             )
         }
+
         weekDates.forEach { day ->
             val dayEntries = entries
                 .filter { it.year == day.year && it.month == day.monthValue && it.day == day.dayOfMonth }
                 .sortedWith(compareBy<ScheduleEntry> { it.completed }.thenBy { it.title })
-            val leftText = dayEntries.filter { it.completed }.take(2).joinToString("\n") { "✓${it.title}" }
-            val rightText = dayEntries.filterNot { it.completed }.take(3).joinToString("\n") { "▪ ${it.title}" }
+            val doneText = dayEntries.filter { it.completed }.take(2).joinToString("\n") { "✓${it.title}" }
+            val todoText = dayEntries.filterNot { it.completed }.take(3).joinToString("\n") { "▪ ${it.title}" }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(0.5.dp, Color(0x14000000))
-                    .padding(vertical = 6.dp, horizontal = 8.dp),
+                    .border(0.5.dp, Color(0x13000000))
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.Top,
             ) {
-                Column(modifier = Modifier.weight(0.18f)) {
-                    Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.titleMedium, color = Color(0xFF25221D), fontWeight = FontWeight.SemiBold)
-                    Text(weekdayText(day.dayOfWeek), style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2924))
+                Column(modifier = Modifier.weight(0.2f)) {
+                    Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.titleMedium, color = Color(0xFF27231F), fontWeight = FontWeight.SemiBold)
+                    Text(weekdayText(day.dayOfWeek), style = MaterialTheme.typography.labelSmall, color = Color(0xFF34302C))
                 }
-                Text(
-                    text = if (leftText.isBlank()) "" else leftText,
-                    modifier = Modifier.weight(0.42f),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF35312C),
-                )
-                Text(
-                    text = if (rightText.isBlank()) "" else rightText,
-                    modifier = Modifier.weight(0.40f),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF2A2723),
-                    textDecoration = TextDecoration.None,
-                )
+                Text(doneText, modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.labelSmall, color = Color(0xFF37322D))
+                Text(todoText, modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.labelSmall, color = Color(0xFF2D2925), textDecoration = TextDecoration.None)
             }
         }
 
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
-            contentAlignment = Alignment.CenterEnd,
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                weekTodo.take(4).forEach { Text("▪ $it", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2D2925)) }
+            }
+            Text(
+                "›",
+                color = Color.White,
+                style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier
-                    .size(44.dp)
                     .background(Color(0xFFF6AFC2), RoundedCornerShape(99.dp))
-                    .clickable { onOpenCalendar() },
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text("›", color = Color.White, style = MaterialTheme.typography.headlineSmall)
-            }
-        }
-
-        if (weekTodo.isNotEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                weekTodo.forEach { item ->
-                    Text("▪ $item", color = Color(0xFF2A2723), style = MaterialTheme.typography.bodySmall)
-                }
-            }
+                    .clickable { onOpenCalendar() }
+                    .padding(horizontal = 14.dp, vertical = 2.dp),
+            )
         }
     }
 }
 
 @Composable
-private fun JournalQuickBoard(
+private fun DiaryBoard(
     entries: List<ScheduleEntry>,
     onOpenHandbook: () -> Unit,
 ) {
-    val done = entries.filter { it.completed }.take(10)
+    val done = entries.filter { it.completed }.take(12)
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFFFFFEFC))
             .border(1.dp, Color(0x12000000))
             .padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
-        Text("在清单中勾选一周要做的所有事", color = Color(0xFF2A2723), style = MaterialTheme.typography.titleSmall)
-        done.forEachIndexed { index, entry ->
-            Text("${index + 1}  ${entry.title}", color = Color(0xFF2F2A24), style = MaterialTheme.typography.bodySmall)
+        Text("日记", color = Color(0xFF22201C), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        done.forEachIndexed { idx, entry ->
+            Text("${idx + 1}. ${entry.title}", color = Color(0xFF2F2A24), style = MaterialTheme.typography.bodySmall)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            repeat(3) { idx ->
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+            repeat(3) { i ->
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(58.dp)
+                        .height(56.dp)
                         .background(
-                            when (idx) {
+                            when (i) {
                                 0 -> Color(0xFFD6D1CA)
                                 1 -> Color(0xFFD9C1B5)
                                 else -> Color(0xFFC8D3BF)
@@ -269,10 +245,11 @@ private fun JournalQuickBoard(
             }
         }
         Text(
-            "进入手账",
+            "翻页查看手账",
             color = Color.White,
+            style = MaterialTheme.typography.labelLarge,
             modifier = Modifier
-                .background(Color(0xFF212121), RoundedCornerShape(8.dp))
+                .background(Color(0xFF1E1E1E), RoundedCornerShape(7.dp))
                 .clickable { onOpenHandbook() }
                 .padding(horizontal = 12.dp, vertical = 6.dp),
         )
@@ -280,127 +257,106 @@ private fun JournalQuickBoard(
 }
 
 @Composable
-private fun ChecklistQuickBoard(
-    entries: List<ScheduleEntry>,
+private fun ChecklistBoard(
+    checklistDraft: MutableList<ChecklistDraftItem>,
     onOpenInspiration: () -> Unit,
-    onEdit: () -> Unit,
 ) {
-    val todo = entries.filterNot { it.completed }.take(12)
+    var focusedIndex by remember { mutableIntStateOf(0) }
+    var inputText by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFFFFFEFC))
             .border(1.dp, Color(0x12000000))
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text("在清单中列出这周最重要的目标/主题", color = Color(0xFF2A2723), style = MaterialTheme.typography.titleSmall)
-        todo.forEachIndexed { index, entry ->
-            Text("□ ${index + 1}  ${entry.title}", color = Color(0xFF2F2A24), style = MaterialTheme.typography.bodyMedium)
-        }
-        Text(
-            "补充灵感",
-            color = Color.White,
-            modifier = Modifier
-                .background(Color(0xFF212121), RoundedCornerShape(8.dp))
-                .clickable { onOpenInspiration() }
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-        )
-        Text(
-            "编辑清单",
-            color = Color(0xFF2F2A24),
-            modifier = Modifier
-                .clickable { onEdit() }
-                .padding(horizontal = 2.dp, vertical = 2.dp),
-        )
-    }
-}
-
-@Composable
-private fun ChecklistEditorBoard(
-    items: List<String>,
-    onBack: () -> Unit,
-    onDone: () -> Unit,
-) {
-    val dateTag = LocalDate.now().plusDays(4).format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFFFFEFC))
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("‹", color = Color(0xFFD38DA4), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.clickable { onBack() }.padding(horizontal = 4.dp))
-            Text(
-                "Done",
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier
-                    .background(Color(0xFF121212), RoundedCornerShape(8.dp))
-                    .clickable { onDone() }
-                    .padding(horizontal = 16.dp, vertical = 5.dp),
-            )
-        }
-
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 2.dp, vertical = 2.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("● 本周 Todo", color = Color(0xFF1E1D1A), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Text("⋯", color = Color(0xFFB5AFAB), style = MaterialTheme.typography.titleLarge)
+            Text("‹", color = Color(0xFFD28CA3), style = MaterialTheme.typography.headlineSmall)
+            Text("● 本周 Todo", color = Color(0xFF22201C), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text("Done", color = Color.White, modifier = Modifier.background(Color(0xFF111111), RoundedCornerShape(8.dp)).padding(horizontal = 14.dp, vertical = 5.dp))
         }
 
-        items.forEachIndexed { index, item ->
-            Column(modifier = Modifier.fillMaxWidth()) {
+        checklistDraft.forEachIndexed { index, item ->
+            Column(modifier = Modifier.fillMaxWidth().clickable { focusedIndex = index }) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("□", color = Color(0xFF2A2723), style = MaterialTheme.typography.titleMedium, modifier = Modifier.offset(y = (-1).dp))
-                    Text(" ${index + 1}", color = Color(0xFF2A2723), style = MaterialTheme.typography.bodyMedium)
-                    Text("  $item", color = Color(0xFF2A2723), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                    Text(if (item.checked) "✓" else "□", color = if (item.checked) Color(0xFF7AA071) else Color(0xFF302D28), style = MaterialTheme.typography.bodySmall)
+                    Text(" ${index + 1}", color = Color(0xFF302D28), style = MaterialTheme.typography.bodySmall)
+                    Text("  ${item.text}", color = Color(0xFF302D28), style = MaterialTheme.typography.bodyMedium)
                 }
-                if (index == 3 || index == items.lastIndex) {
+                if (item.deadline.isNotBlank()) {
                     Text(
-                        dateTag,
+                        item.deadline,
                         color = Color.White,
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier
-                            .padding(start = 30.dp, top = 1.dp)
-                            .background(Color(0xFFAFAFB4), RoundedCornerShape(99.dp))
-                            .padding(horizontal = 10.dp, vertical = 2.dp),
+                            .padding(start = 28.dp, bottom = 2.dp)
+                            .background(Color(0xFFADADB3), RoundedCornerShape(99.dp))
+                            .padding(horizontal = 9.dp, vertical = 1.dp),
                     )
                 }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 3.dp)
-                        .border(0.5.dp, Color(0x18000000)),
-                )
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x12000000)))
             }
         }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFF7F7FA), RoundedCornerShape(8.dp))
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+                .background(Color(0xFFF6F6FA), RoundedCornerShape(8.dp))
+                .padding(horizontal = 9.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(LocalDate.now().format(DateTimeFormatter.ofPattern("MMM d, yyyy")), color = Color(0xFF555555), style = MaterialTheme.typography.bodySmall)
+            Text(LocalDate.now().format(DateTimeFormatter.ofPattern("MMM d, yyyy")), style = MaterialTheme.typography.bodySmall, color = Color(0xFF575757))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("◍", color = Color(0xFF3C3C3C))
-                Text("↑", color = Color(0xFF3C3C3C))
-                Text("✓", color = Color(0xFF3C3C3C))
+                Text("🗑", modifier = Modifier.clickable {
+                    if (checklistDraft.isNotEmpty()) {
+                        checklistDraft.removeAt(focusedIndex.coerceIn(0, checklistDraft.lastIndex))
+                        focusedIndex = (focusedIndex - 1).coerceAtLeast(0)
+                    }
+                })
+                Text("＋", modifier = Modifier.clickable {
+                    val text = inputText.trim().ifBlank { "新任务" }
+                    checklistDraft.add(focusedIndex.coerceIn(0, checklistDraft.size), ChecklistDraftItem(text))
+                    inputText = ""
+                })
+                Text("✓", modifier = Modifier.clickable {
+                    if (checklistDraft.isNotEmpty()) {
+                        val i = focusedIndex.coerceIn(0, checklistDraft.lastIndex)
+                        checklistDraft[i] = checklistDraft[i].copy(checked = !checklistDraft[i].checked)
+                    }
+                })
             }
         }
+
+        BasicTextField(
+            value = inputText,
+            onValueChange = { inputText = it },
+            textStyle = TextStyle(color = Color(0xFF2C2925)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0x08000000), RoundedCornerShape(6.dp))
+                .padding(horizontal = 9.dp, vertical = 7.dp),
+            decorationBox = { inner ->
+                if (inputText.isBlank()) Text("输入任务内容，点 + 插入", color = Color(0xFF9A9188), style = MaterialTheme.typography.bodySmall)
+                inner()
+            },
+        )
+
+        Text(
+            "补充灵感",
+            color = Color(0xFFE88FAE),
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.clickable { onOpenInspiration() },
+        )
     }
 }
 
