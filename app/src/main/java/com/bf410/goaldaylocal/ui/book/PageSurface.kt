@@ -794,9 +794,9 @@ private fun ReferencePlannerBoard(
                     Text("  ˅", color = Color(0xFF9C958B), style = MaterialTheme.typography.labelMedium)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("回收", modifier = Modifier.clickable { selectedItem?.let(onRestoreItemFromDone) }, color = Color(0xFF8B7E71))
+                    Text("↺ 回收", modifier = Modifier.clickable { selectedItem?.let(onRestoreItemFromDone) }, color = Color(0xFF8B7E71), style = MaterialTheme.typography.labelSmall)
                     Text(
-                        "完成",
+                        "✓ 完成",
                         color = Color.White,
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier
@@ -819,7 +819,7 @@ private fun ReferencePlannerBoard(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.Top,
                     ) {
-                        Text("·", color = Color(0xFFD8CFC5))
+                        Text(if (selectedItem == item) "◉" else "·", color = if (selectedItem == item) Color(0xFF8E857A) else Color(0xFFD8CFC5))
                         Text(
                             text = item,
                             color = Color(0xFF2D2823),

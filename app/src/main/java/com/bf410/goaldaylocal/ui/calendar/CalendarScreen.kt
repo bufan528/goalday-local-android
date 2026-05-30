@@ -203,10 +203,10 @@ private fun ReferenceCalendarBoard(
             ) {
                 Text("To do  ˅", modifier = Modifier.background(Color(0xFFF8F8F6), RoundedCornerShape(8.dp)).padding(horizontal = 7.dp, vertical = 3.dp), style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("删", modifier = Modifier.clickable { selectedEntry?.let { onDelete(it.id) } }, color = Color(0xFF9C5A52))
-                    Text("编", modifier = Modifier.clickable { selectedEntry?.let(onEdit) }, color = Color(0xFF6F675D))
+                    Text("✎ 编辑", modifier = Modifier.clickable { selectedEntry?.let(onEdit) }, color = Color(0xFF6F675D), style = MaterialTheme.typography.labelSmall)
+                    Text("🗑 删除", modifier = Modifier.clickable { selectedEntry?.let { onDelete(it.id) } }, color = Color(0xFF9C5A52), style = MaterialTheme.typography.labelSmall)
                     Text(
-                        "完成",
+                        "✓ 完成",
                         color = Color.White,
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier
@@ -215,7 +215,7 @@ private fun ReferenceCalendarBoard(
                             .clickable { selectedEntry?.let { onToggleCompleted(it.id) } }
                             .padding(horizontal = 8.dp, vertical = 3.dp),
                     )
-                    Text("新增", modifier = Modifier.clickable(onClick = onAdd), color = Color(0xFF2F2A24))
+                    Text("＋ 新增", modifier = Modifier.clickable(onClick = onAdd), color = Color(0xFF2F2A24), style = MaterialTheme.typography.labelSmall)
                 }
             }
             Column(
@@ -229,7 +229,7 @@ private fun ReferenceCalendarBoard(
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
                         verticalAlignment = Alignment.Top,
                     ) {
-                        Text(if (entry.completed) "✓" else "·", color = if (entry.completed) Color(0xFF7A9D71) else Color(0xFFD8CFC5), modifier = Modifier.clickable { onToggleCompleted(entry.id) })
+                        Text(if (entry.completed) "✓" else if (selectedEntryId == entry.id) "◉" else "·", color = if (entry.completed) Color(0xFF7A9D71) else if (selectedEntryId == entry.id) Color(0xFF8E857A) else Color(0xFFD8CFC5), modifier = Modifier.clickable { onToggleCompleted(entry.id) })
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 entry.title,
@@ -238,8 +238,8 @@ private fun ReferenceCalendarBoard(
                             )
                             if (entry.note.isNotBlank()) Text(entry.note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8D857C))
                         }
-                        Text("编", modifier = Modifier.clickable { onEdit(entry) }, color = Color(0xFF70685F))
-                        Text("删", modifier = Modifier.clickable { onDelete(entry.id) }, color = Color(0xFF9C5A52))
+                        Text("✎", modifier = Modifier.clickable { onEdit(entry) }, color = Color(0xFF70685F))
+                        Text("🗑", modifier = Modifier.clickable { onDelete(entry.id) }, color = Color(0xFF9C5A52))
                     }
                 }
             }
