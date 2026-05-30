@@ -1,35 +1,33 @@
 package com.bf410.goaldaylocal.ui
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.activity.compose.BackHandler
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bf410.goaldaylocal.ui.book.BookEntryMode
@@ -73,48 +71,27 @@ fun GoaldayApp() {
 
     MaterialTheme {
         Scaffold(
+            containerColor = Color(0xFFF7F6F3),
             bottomBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFFFAF9F6))
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                NavigationBar(
+                    containerColor = Color(0xFFF4F1EB),
+                    tonalElevation = 0.dp,
                 ) {
                     RootTab.entries.forEach { item ->
                         val selected = tab == item
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(54.dp)
-                                .background(
-                                    if (selected) Color(0xFFF2EEE7) else Color.Transparent,
-                                    RoundedCornerShape(14.dp),
-                                )
-                                .clickable { tab = item }
-                                .padding(top = 6.dp),
-                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                        ) {
-                            Text(
-                                text = item.icon,
-                                color = if (selected) Color(0xFF2F2A25) else Color(0xFFA9A39A),
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                            )
-                            Text(
-                                text = item.label,
-                                color = if (selected) Color(0xFF2F2A25) else Color(0xFFA9A39A),
-                                style = MaterialTheme.typography.labelSmall,
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .size(width = 16.dp, height = 2.dp)
-                                    .background(
-                                        if (selected) Color(0xFFE38FA0) else Color.Transparent,
-                                        RoundedCornerShape(99.dp),
-                                    ),
-                            )
-                        }
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = { tab = item },
+                            icon = { Text(item.icon) },
+                            label = { Text(item.label) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF2F2A25),
+                                selectedTextColor = Color(0xFF2F2A25),
+                                unselectedIconColor = Color(0xFF9E978D),
+                                unselectedTextColor = Color(0xFF9E978D),
+                                indicatorColor = Color(0xFFEDE6DC),
+                            ),
+                        )
                     }
                 }
             },
@@ -122,9 +99,7 @@ fun GoaldayApp() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        Color(0xFFF7F6F3),
-                    )
+                    .background(Color(0xFFF7F6F3))
                     .padding(padding)
                     .padding(horizontal = 10.dp)
                     .pointerInput(canGoBackInsideApp, edgeWidthPx, triggerDistancePx) {
@@ -153,11 +128,17 @@ fun GoaldayApp() {
                         )
                     },
             ) {
-                when (tab) {
-                    RootTab.HOME -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.PLANNER)
-                    RootTab.CALENDAR -> CalendarScreen(viewModel = calendarViewModel)
-                    RootTab.INSPIRATION -> InspirationScreen(viewModel = bookViewModel)
-                    RootTab.HANDBOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.HANDBOOK)
+                AnimatedContent(
+                    targetState = tab,
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "root-tab-switch",
+                ) { currentTab ->
+                    when (currentTab) {
+                        RootTab.HOME -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.PLANNER)
+                        RootTab.CALENDAR -> CalendarScreen(viewModel = calendarViewModel)
+                        RootTab.INSPIRATION -> InspirationScreen(viewModel = bookViewModel)
+                        RootTab.HANDBOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.HANDBOOK)
+                    }
                 }
             }
         }
