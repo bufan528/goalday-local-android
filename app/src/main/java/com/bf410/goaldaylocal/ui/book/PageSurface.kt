@@ -1181,25 +1181,7 @@ private fun SourcePoolSection(
             DragTarget.NONE -> "直接左滑到计划，继续左滑到完成"
         }
         Text(hintText, style = MaterialTheme.typography.labelSmall, color = BoardHintColor)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .clip(RoundedCornerShape(99.dp))
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color(0x00D9A97E), Color(0x55D9A97E), Color(0x66A5C49D)),
-                    ),
-                ),
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text("轻滑", style = MaterialTheme.typography.labelSmall, color = BoardHintColor)
-            Text("到计划", style = MaterialTheme.typography.labelSmall, color = BoardHintColor)
-            Text("到完成", style = MaterialTheme.typography.labelSmall, color = BoardHintColor)
-        }
+        Text("← 左滑：今日  ·  继续左滑：完成", style = MaterialTheme.typography.labelSmall, color = BoardHintColor)
         if (items.isEmpty()) {
             Text("来源池已清空", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
@@ -1287,25 +1269,14 @@ private fun SourcePoolSection(
                         .border(1.dp, Color(0xFFD5CEC2), RoundedCornerShape(4.dp))
                         .clickable { onToggleChecked(pageTitle, item) },
                 )
-                Text(item, color = Color(0xFF27231E), modifier = Modifier.weight(1f))
                 Text(
-                    "今日",
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x148F684F))
-                        .clickable(enabled = !isDragging) { onMoveItemToToday(item) }
-                        .padding(horizontal = 9.dp, vertical = 5.dp),
+                    item,
+                    color = Color(0xFF27231E),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f),
                 )
-                Text(
-                    "完成",
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x146A9F68))
-                        .clickable(enabled = !isDragging) { onMoveItemToCompleted(item) }
-                        .padding(horizontal = 9.dp, vertical = 5.dp),
-                )
+                Text("＋", color = Color(0xFF8F684F), modifier = Modifier.clickable(enabled = !isDragging) { onMoveItemToToday(item) })
+                Text("✓", color = Color(0xFF6A9F68), modifier = Modifier.clickable(enabled = !isDragging) { onMoveItemToCompleted(item) })
             }
         }
     }
@@ -1477,10 +1448,7 @@ private fun StructuredDiaryEditor(
     onDone: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("4月4日", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E))
-            Text("周四", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8A8177))
-        }
+        Text("4月4日 · 周四", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), modifier = Modifier.align(Alignment.CenterHorizontally))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 OutlinedTextField(
@@ -1517,10 +1485,7 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
     }
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("4月4日", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E))
-                Text("周四", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8A8177))
-            }
+            Text("4月4日 · 周四", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), modifier = Modifier.align(Alignment.CenterHorizontally))
             if (moodItems.isNotEmpty()) {
                 Text(
                     moodItems.joinToString("  ") { "#$it" },
