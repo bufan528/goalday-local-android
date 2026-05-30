@@ -49,6 +49,7 @@ private enum class RootTab(val label: String, val icon: String) {
 @Composable
 fun GoaldayApp() {
     var tab by rememberSaveable { mutableStateOf(RootTab.HOME) }
+    var pendingCalendarFocusDay by rememberSaveable { mutableStateOf<Int?>(null) }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()
@@ -138,10 +139,18 @@ fun GoaldayApp() {
                         RootTab.HOME -> HomeScreen(
                             calendarViewModel = calendarViewModel,
                             onOpenCalendar = { tab = RootTab.CALENDAR },
+                            onOpenCalendarForDay = { day ->
+                                pendingCalendarFocusDay = day
+                                tab = RootTab.CALENDAR
+                            },
                             onOpenHandbook = { tab = RootTab.HANDBOOK },
                             onOpenInspiration = { tab = RootTab.INSPIRATION },
                         )
-                        RootTab.CALENDAR -> CalendarScreen(viewModel = calendarViewModel)
+                        RootTab.CALENDAR -> CalendarScreen(
+                            viewModel = calendarViewModel,
+                            focusDay = pendingCalendarFocusDay,
+                            onFocusConsumed = { pendingCalendarFocusDay = null },
+                        )
                         RootTab.INSPIRATION -> InspirationScreen(
                             viewModel = bookViewModel,
                             onOpenHandbook = { tab = RootTab.HANDBOOK },

@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -62,6 +63,8 @@ private enum class AgendaFilter {
 @Composable
 fun CalendarScreen(
     viewModel: CalendarViewModel,
+    focusDay: Int? = null,
+    onFocusConsumed: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -72,6 +75,13 @@ fun CalendarScreen(
     val month = YearMonth.of(uiState.year, uiState.month)
     val maxDay = month.lengthOfMonth()
     selectedDay = selectedDay.coerceIn(1, maxDay)
+
+    LaunchedEffect(focusDay, maxDay) {
+        val day = focusDay ?: return@LaunchedEffect
+        selectedDay = day.coerceIn(1, maxDay)
+        mode = CalendarMode.SCHEDULE
+        onFocusConsumed()
+    }
 
     Column(
         modifier = Modifier

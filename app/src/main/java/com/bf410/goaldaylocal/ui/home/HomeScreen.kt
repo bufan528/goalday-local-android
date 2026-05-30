@@ -55,6 +55,7 @@ data class ChecklistDraftItem(
 fun HomeScreen(
     calendarViewModel: CalendarViewModel,
     onOpenCalendar: () -> Unit,
+    onOpenCalendarForDay: (Int) -> Unit,
     onOpenHandbook: () -> Unit,
     onOpenInspiration: () -> Unit,
 ) {
@@ -115,6 +116,7 @@ fun HomeScreen(
                 },
                 onUpdateScheduleDay = { id, day -> calendarViewModel.moveScheduleToDay(id, day) },
                 onReorderSchedule = { id, up -> calendarViewModel.reorderScheduleInDay(id, up) },
+                onOpenCalendarForDay = onOpenCalendarForDay,
                 onOpenInspiration = onOpenInspiration,
             )
         }
@@ -280,6 +282,7 @@ private fun ChecklistBoard(
     onUpdateScheduleTitle: (String, String, Int, String) -> Unit,
     onUpdateScheduleDay: (String, Int) -> Unit,
     onReorderSchedule: (String, Boolean) -> Unit,
+    onOpenCalendarForDay: (Int) -> Unit,
     onOpenInspiration: () -> Unit,
 ) {
     var focusedIndex by remember { mutableIntStateOf(0) }
@@ -361,6 +364,17 @@ private fun ChecklistBoard(
                             .padding(horizontal = 9.dp, vertical = 1.dp),
                     )
                 }
+                Text(
+                    "查看日历",
+                    color = Color(0xFFE88FAE),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .padding(start = 28.dp, bottom = 2.dp)
+                        .clickable {
+                            val targetDay = if (item.deadline.isNotBlank()) parseDeadlineDay(item.deadline) else LocalDate.now().dayOfMonth
+                            onOpenCalendarForDay(targetDay)
+                        },
+                )
                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x12000000)))
             }
         }
