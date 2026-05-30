@@ -1,5 +1,6 @@
 package com.bf410.goaldaylocal.ui.home
 
+import android.app.DatePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -296,6 +298,7 @@ private fun ChecklistBoard(
     var actionHint by remember { mutableStateOf("") }
     val rowEditorFocus = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
 
     LaunchedEffect(editingIndex) {
         if (editingIndex >= 0) {
@@ -380,13 +383,52 @@ private fun ChecklistBoard(
                             .padding(start = 28.dp, bottom = 2.dp)
                             .background(Color(0xFFADADB3), RoundedCornerShape(99.dp))
                             .clickable {
-                                val nextDate = nextDeadlineDate(item.deadline)
-                                checklistDraft[index] = checklistDraft[index].copy(deadline = nextDate)
-                                val today = LocalDate.now().dayOfMonth
-                                scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[index].text }?.let { entry ->
-                                    val day = parseDeadlineDay(nextDate).coerceAtLeast(1)
-                                    onUpdateScheduleDay(entry.id, day)
-                                }
+                                val initial = parseDeadlineDate(item.deadline) ?: LocalDate.now()
+                                DatePickerDialog(
+                                    context,
+                                    { _, year, month, dayOfMonth ->
+                                        val selected = LocalDate.of(year, month + 1, dayOfMonth)
+                                        val nextDate = selected.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
+                                        checklistDraft[index] = checklistDraft[index].copy(deadline = nextDate)
+                                        val today = LocalDate.now().dayOfMonth
+                                        scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[index].text }?.let { entry ->
+                                            onUpdateScheduleDay(entry.id, dayOfMonth.coerceAtLeast(1))
+                                        }
+                                        actionHint = "截止日已更新"
+                                    },
+                                    initial.year,
+                                    initial.monthValue - 1,
+                                    initial.dayOfMonth,
+                                ).show()
+                            }
+                            .padding(horizontal = 9.dp, vertical = 1.dp),
+                    )
+                } else {
+                    Text(
+                        "添加截止日",
+                        color = Color(0xFF8A8580),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier
+                            .padding(start = 28.dp, bottom = 2.dp)
+                            .background(Color(0x11000000), RoundedCornerShape(99.dp))
+                            .clickable {
+                                val initial = LocalDate.now().plusDays(3)
+                                DatePickerDialog(
+                                    context,
+                                    { _, year, month, dayOfMonth ->
+                                        val selected = LocalDate.of(year, month + 1, dayOfMonth)
+                                        val nextDate = selected.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
+                                        checklistDraft[index] = checklistDraft[index].copy(deadline = nextDate)
+                                        val today = LocalDate.now().dayOfMonth
+                                        scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[index].text }?.let { entry ->
+                                            onUpdateScheduleDay(entry.id, dayOfMonth.coerceAtLeast(1))
+                                        }
+                                        actionHint = "已添加截止日"
+                                    },
+                                    initial.year,
+                                    initial.monthValue - 1,
+                                    initial.dayOfMonth,
+                                ).show()
                             }
                             .padding(horizontal = 9.dp, vertical = 1.dp),
                     )
@@ -542,13 +584,11 @@ private fun weekdayText(dayOfWeek: DayOfWeek): String = when (dayOfWeek) {
     DayOfWeek.SUNDAY -> "周日"
 }
 
-private fun nextDeadlineDate(current: String): String {
+private fun parseDeadlineDate(current: String): LocalDate? {
     val formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy")
-    val parsed = runCatching { LocalDate.parse(current, formatter) }.getOrNull() ?: LocalDate.now()
-    return parsed.plusDays(1).format(formatter)
+    return runCatching { LocalDate.parse(current, formatter) }.getOrNull()
 }
 
 private fun parseDeadlineDay(current: String): Int {
-    val formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy")
-    return runCatching { LocalDate.parse(current, formatter).dayOfMonth }.getOrDefault(LocalDate.now().dayOfMonth)
+    return parseDeadlineDate(current)?.dayOfMonth ?: LocalDate.now().dayOfMonth
 }
