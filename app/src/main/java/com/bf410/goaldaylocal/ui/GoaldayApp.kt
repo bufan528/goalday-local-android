@@ -36,10 +36,10 @@ import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
 
 private enum class RootTab(val label: String, val icon: String) {
-    PLANNER("周计划", "✓"),
-    CALENDAR("日历", "◷"),
+    PLANNER("计划", "◉"),
+    CALENDAR("日历", "◌"),
     INSPIRATION("灵感", "✦"),
-    HANDBOOK("手账", "📖"),
+    HANDBOOK("手账", "⌘"),
 }
 
 @Composable
@@ -71,7 +71,7 @@ fun GoaldayApp() {
         Scaffold(
             bottomBar = {
                 NavigationBar(
-                    containerColor = Color(0xFFF8F4EE),
+                    containerColor = Color(0xFFFBF8F3),
                     tonalElevation = 0.dp,
                 ) {
                     RootTab.entries.forEach { item ->
@@ -82,14 +82,14 @@ fun GoaldayApp() {
                             icon = {
                                 Text(
                                     item.icon,
-                                    color = if (selected) Color(0xFF2D2A26) else Color(0xFF9A9389),
+                                    color = if (selected) Color(0xFF26221E) else Color(0xFFB2AAA0),
                                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                                 )
                             },
                             label = {
                                 Text(
                                     item.label,
-                                    color = if (selected) Color(0xFF2D2A26) else Color(0xFF9A9389),
+                                    color = if (selected) Color(0xFF26221E) else Color(0xFFB2AAA0),
                                 )
                             },
                             alwaysShowLabel = true,
