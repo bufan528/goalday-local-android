@@ -28,18 +28,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.bf410.goaldaylocal.ui.book.BookStrings
 import com.bf410.goaldaylocal.ui.book.BookEntryMode
 import com.bf410.goaldaylocal.ui.book.BookHomeScreen
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.calendar.CalendarScreen
 import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
-import com.bf410.goaldaylocal.ui.home.HomeScreen
 import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
 
 private enum class RootTab(val label: String, val icon: String) {
@@ -157,12 +154,7 @@ fun GoaldayApp() {
                     },
             ) {
                 when (tab) {
-                    RootTab.HOME -> HomeScreen(
-                        viewModel = bookViewModel,
-                        onOpenCalendar = { tab = RootTab.CALENDAR },
-                        onOpenInspiration = { tab = RootTab.INSPIRATION },
-                        onOpenHandbook = { tab = RootTab.HANDBOOK },
-                    )
+                    RootTab.HOME -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.PLANNER)
                     RootTab.CALENDAR -> CalendarScreen(viewModel = calendarViewModel)
                     RootTab.INSPIRATION -> InspirationScreen(viewModel = bookViewModel)
                     RootTab.HANDBOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.HANDBOOK)
