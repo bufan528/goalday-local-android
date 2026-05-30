@@ -55,6 +55,7 @@ import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.ui.replica.BoardTask
 import com.bf410.goaldaylocal.ui.replica.DualLaneExecutionBoard
 import com.bf410.goaldaylocal.ui.replica.ExecutionBoardHeader
+import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import java.time.LocalDate
 
 @Composable
@@ -132,13 +133,29 @@ fun PageSurface(
                 Brush.verticalGradient(
                     listOf(
                         Color(0xFFFFFDF9),
-                        Color(0xFFFFFAF3),
-                        Color(0xFFFFF7EE),
+                        Color(0xFFFFFBF6),
+                        Color(0xFFFFF8EF),
                     ),
                 ),
             )
             .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .alpha(0.08f)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.Transparent,
+                            GoaldayDesign.Accent.copy(alpha = 0.06f),
+                            Color.Transparent,
+                            GoaldayDesign.Accent.copy(alpha = 0.05f),
+                            Color.Transparent,
+                        ),
+                    ),
+                ),
+        )
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
@@ -243,12 +260,12 @@ fun PageSurface(
                 .padding(start = 14.dp, top = 10.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            repeat(6) {
+            repeat(8) {
                 Box(
                     modifier = Modifier
-                        .width(5.dp)
+                        .width(6.dp)
                         .height(1.dp)
-                        .background(Color(0x2395785E)),
+                        .background(Color(0x2A95785E)),
                 )
             }
         }
@@ -287,6 +304,18 @@ fun PageSurface(
             Spacer(Modifier.height(8.dp))
             body()
         }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(10.dp)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Transparent, Color(0x1A000000)),
+                    ),
+                ),
+        )
     }
 }
 
