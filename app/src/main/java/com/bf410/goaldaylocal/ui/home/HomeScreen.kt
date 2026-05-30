@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -31,6 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -289,6 +292,13 @@ private fun ChecklistBoard(
     var inputText by remember { mutableStateOf("") }
     var editingIndex by remember { mutableIntStateOf(-1) }
     var editingText by remember { mutableStateOf("") }
+    val rowEditorFocus = remember { FocusRequester() }
+
+    LaunchedEffect(editingIndex) {
+        if (editingIndex >= 0) {
+            rowEditorFocus.requestFocus()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -323,6 +333,7 @@ private fun ChecklistBoard(
                             textStyle = TextStyle(color = Color(0xFF302D28)),
                             modifier = Modifier
                                 .weight(1f)
+                                .focusRequester(rowEditorFocus)
                                 .background(Color(0x0A000000), RoundedCornerShape(4.dp))
                                 .padding(horizontal = 5.dp, vertical = 2.dp),
                         )
@@ -427,8 +438,12 @@ private fun ChecklistBoard(
                 Text("＋", modifier = Modifier.clickable {
                     val text = inputText.trim().ifBlank { "新任务" }
                     val deadline = LocalDate.now().plusDays(3).format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
-                    checklistDraft.add(focusedIndex.coerceIn(0, checklistDraft.size), ChecklistDraftItem(text, deadline = deadline))
+                    val insertIndex = focusedIndex.coerceIn(0, checklistDraft.size)
+                    checklistDraft.add(insertIndex, ChecklistDraftItem(text, deadline = deadline))
                     onAddSchedule(text)
+                    editingIndex = insertIndex
+                    editingText = text
+                    focusedIndex = insertIndex
                     inputText = ""
                 })
                 Text("✓", modifier = Modifier.clickable {
@@ -475,6 +490,9 @@ private fun ChecklistBoard(
                     val deadline = LocalDate.now().plusDays(3).format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
                     checklistDraft.add(0, ChecklistDraftItem(text, deadline = deadline))
                     onAddSchedule(text)
+                    editingIndex = 0
+                    editingText = text
+                    focusedIndex = 0
                     inputText = ""
                 }
                 .padding(horizontal = 10.dp, vertical = 5.dp),
