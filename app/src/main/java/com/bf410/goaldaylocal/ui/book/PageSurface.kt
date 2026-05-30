@@ -1148,6 +1148,24 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
     NotebookSpread {
         Row(
             modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            DiarySticker("05/30 Sat")
+            val completedCount = listOf(state.todayDone, state.workTasks, state.smallJoy, state.canImprove)
+                .count { it.isNotBlank() }
+            Text(
+                text = "打卡 $completedCount/4",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF6B5B4C),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0x1FD8B893))
+                    .padding(horizontal = 9.dp, vertical = 4.dp),
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Column(
@@ -1202,9 +1220,14 @@ private fun DiaryBlock(title: String, content: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(0x0EF4DABB))
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0x1AF4DABB), Color(0x0EF4DABB), Color(0x14F6E8D3)),
+                ),
+            )
+            .border(1.dp, Color(0x22C8AF91), RoundedCornerShape(12.dp))
+            .padding(horizontal = 9.dp, vertical = 7.dp),
     ) {
         Text(content, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF342C24))
     }
@@ -1213,12 +1236,16 @@ private fun DiaryBlock(title: String, content: String) {
 @Composable
 private fun NotebookSpread(content: @Composable ColumnScope.() -> Unit) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFFFFFEFB))
-            .border(1.dp, Color(0xFFE8DFD3), RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(18.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(Color(0xFFFFFEFB), Color(0xFFFFFCF7), Color(0xFFFEF8EF)),
+                ),
+            )
+            .border(1.dp, Color(0xFFE8DFD3), RoundedCornerShape(18.dp))
             .padding(12.dp),
     ) {
         Box(
@@ -1226,6 +1253,12 @@ private fun NotebookSpread(content: @Composable ColumnScope.() -> Unit) {
                 .fillMaxWidth()
                 .height(2.dp)
                 .background(Brush.horizontalGradient(listOf(Color(0x22C6B8A5), Color.Transparent, Color(0x22C6B8A5)))),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Brush.horizontalGradient(listOf(Color.Transparent, Color(0x18BFA991), Color.Transparent))),
         )
         content()
     }
