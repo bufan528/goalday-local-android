@@ -67,6 +67,18 @@ fun BookShell(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
+                    .height(14.dp)
+                    .padding(horizontal = 18.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0x55EBD8C6), Color(0x88FFF8EE), Color(0x55EBD8C6)),
+                        ),
+                    ),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
                     .height(8.dp)
                     .padding(horizontal = 24.dp)
                     .clip(RoundedCornerShape(99.dp))
@@ -121,6 +133,17 @@ fun BookShell(
                         ),
                     ),
             )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .width(12.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0x44E2C9B2), Color(0x88FFF7EC)),
+                        ),
+                    ),
+            )
         }
         Box(
             modifier = Modifier
@@ -163,6 +186,20 @@ fun BookShell(
                         .background(
                             Brush.horizontalGradient(
                                 listOf(Color(0x30A07D5E), Color(0x80FFF8EE)),
+                            ),
+                        ),
+                )
+            }
+            repeat(3) { layer ->
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(start = (16 + layer).dp, end = (16 + layer).dp, bottom = (2 + layer).dp)
+                        .height((2 + layer).dp)
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0x33A07D5E), Color(0x66FFF8EE), Color(0x33A07D5E)),
                             ),
                         ),
                 )

@@ -81,7 +81,11 @@ fun PageTurnEngine(
     val visualProgress = visualTurnProgress(dragProgress, profile)
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
-    val turnShadowWidth = (18f + visualProgress * visualProgress * 92f).dp
+    val turnShadowWidth = if (profile == TurnProfile.HANDBOOK) {
+        (22f + visualProgress * visualProgress * 108f).dp
+    } else {
+        (18f + visualProgress * visualProgress * 92f).dp
+    }
 
     fun clearState() {
         direction = null
