@@ -47,6 +47,12 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 import java.time.LocalDate
 import java.time.YearMonth
 
+private enum class CalendarMode {
+    SCHEDULE,
+    DATE,
+    LIST,
+}
+
 @Composable
 fun CalendarScreen(
     viewModel: CalendarViewModel,
@@ -55,6 +61,7 @@ fun CalendarScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var editingEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
     var selectedDay by remember { mutableIntStateOf(LocalDate.now().dayOfMonth) }
+    var mode by remember { mutableStateOf(CalendarMode.SCHEDULE) }
     val month = YearMonth.of(uiState.year, uiState.month)
     val maxDay = month.lengthOfMonth()
     selectedDay = selectedDay.coerceIn(1, maxDay)
@@ -70,22 +77,57 @@ fun CalendarScreen(
         )
         GoaldaySegmentBar(
             items = listOf("日程", "${uiState.month}月${selectedDay}日", "清单"),
-            selectedIndex = 0,
-            onSelect = {},
+            selectedIndex = when (mode) {
+                CalendarMode.SCHEDULE -> 0
+                CalendarMode.DATE -> 1
+                CalendarMode.LIST -> 2
+            },
+            onSelect = { index ->
+                mode = when (index) {
+                    0 -> CalendarMode.SCHEDULE
+                    1 -> CalendarMode.DATE
+                    else -> CalendarMode.LIST
+                }
+            },
         )
 
-        ReferenceCalendarBoard(
-            year = uiState.year,
-            month = uiState.month,
-            maxDay = maxDay,
-            selectedDay = selectedDay,
-            entries = uiState.entries,
-            onSelectDay = { selectedDay = it.coerceIn(1, maxDay) },
-            onToggleCompleted = { id -> viewModel.toggleScheduleCompleted(id) },
-            onEdit = { editingEntry = it },
-            onDelete = { viewModel.removeSchedule(it) },
-            onAdd = { showAddDialog = true },
-        )
+        when (mode) {
+            CalendarMode.SCHEDULE -> {
+                ReferenceCalendarBoard(
+                    year = uiState.year,
+                    month = uiState.month,
+                    maxDay = maxDay,
+                    selectedDay = selectedDay,
+                    entries = uiState.entries,
+                    onSelectDay = { selectedDay = it.coerceIn(1, maxDay) },
+                    onToggleCompleted = { id -> viewModel.toggleScheduleCompleted(id) },
+                    onEdit = { editingEntry = it },
+                    onDelete = { viewModel.removeSchedule(it) },
+                    onAdd = { showAddDialog = true },
+                )
+            }
+            CalendarMode.DATE -> {
+                MonthGridBoard(
+                    year = uiState.year,
+                    month = uiState.month,
+                    maxDay = maxDay,
+                    selectedDay = selectedDay,
+                    entries = uiState.entries,
+                    onSelectDay = { selectedDay = it.coerceIn(1, maxDay) },
+                )
+            }
+            CalendarMode.LIST -> {
+                AgendaListBoard(
+                    year = uiState.year,
+                    month = uiState.month,
+                    entries = uiState.entries,
+                    onToggleCompleted = { id -> viewModel.toggleScheduleCompleted(id) },
+                    onEdit = { editingEntry = it },
+                    onDelete = { viewModel.removeSchedule(it) },
+                    onAdd = { showAddDialog = true },
+                )
+            }
+        }
     }
 
     if (showAddDialog) {
@@ -116,6 +158,110 @@ fun CalendarScreen(
                 editingEntry = null
             },
         )
+    }
+}
+
+@Composable
+private fun MonthGridBoard(
+    year: Int,
+    month: Int,
+    maxDay: Int,
+    selectedDay: Int,
+    entries: List<ScheduleEntry>,
+    onSelectDay: (Int) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFBFAF8), RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text("${year}年${month}月", style = MaterialTheme.typography.titleSmall, color = Color(0xFF2F2A24))
+        val weekdays = listOf("一", "二", "三", "四", "五", "六", "日")
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            weekdays.forEach { wd ->
+                Text(wd, color = Color(0xFF8D857C), style = MaterialTheme.typography.labelSmall)
+            }
+        }
+        (0 until maxDay).chunked(7).forEach { row ->
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                row.forEach { index ->
+                    val day = index + 1
+                    val hasEntry = entries.any { it.day == day }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                if (day == selectedDay) Color(0xFFF2EADF) else Color(0xFFF8F6F2),
+                                RoundedCornerShape(8.dp),
+                            )
+                            .border(
+                                1.dp,
+                                if (day == selectedDay) Color(0xFFBDA17F) else Color(0x12000000),
+                                RoundedCornerShape(8.dp),
+                            )
+                            .clickable { onSelectDay(day) }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(if (hasEntry) "$day •" else day.toString(), color = Color(0xFF3A332C), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                repeat(7 - row.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AgendaListBoard(
+    year: Int,
+    month: Int,
+    entries: List<ScheduleEntry>,
+    onToggleCompleted: (String) -> Unit,
+    onEdit: (ScheduleEntry) -> Unit,
+    onDelete: (String) -> Unit,
+    onAdd: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFBFAF8), RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("${year}年${month}月 · 清单", style = MaterialTheme.typography.titleSmall, color = Color(0xFF2F2A24))
+            Text("＋ 新增", color = Color(0xFF2F2A24), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onAdd() })
+        }
+        entries.sortedBy { it.day }.forEach { entry ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(10.dp))
+                    .border(1.dp, Color(0x12000000), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Text(if (entry.completed) "✓" else "·", color = if (entry.completed) Color(0xFF7A9D71) else Color(0xFFC7BEB4), modifier = Modifier.clickable { onToggleCompleted(entry.id) })
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "${entry.day}日  ${entry.title}",
+                        color = Color(0xFF2D2823),
+                        textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                    )
+                    if (entry.note.isNotBlank()) Text(entry.note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8D857C))
+                }
+                Text("✎", color = Color(0xFF70685F), modifier = Modifier.clickable { onEdit(entry) })
+                Text("🗑", color = Color(0xFF9C5A52), modifier = Modifier.clickable { onDelete(entry.id) })
+            }
+        }
     }
 }
 
