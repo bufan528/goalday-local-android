@@ -280,6 +280,10 @@ private fun ScheduleDialog(
     var draftTitle by remember(initialTitle) { mutableStateOf(initialTitle) }
     var draftDay by remember(initialDay) { mutableStateOf(initialDay.toString()) }
     var draftNote by remember(initialNote) { mutableStateOf(initialNote) }
+    val quickDays = remember(maxDay, initialDay) {
+        listOf(initialDay, (initialDay + 1).coerceAtMost(maxDay), (initialDay + 2).coerceAtMost(maxDay), maxDay)
+            .distinct()
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -302,13 +306,29 @@ private fun ScheduleDialog(
         },
         title = { Text(title) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = draftTitle,
                     onValueChange = { draftTitle = it },
-                    label = { Text("标题") },
+                    label = { Text("任务标题") },
                     singleLine = true,
                 )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    quickDays.forEach { day ->
+                        Text(
+                            text = "${day}日",
+                            color = if (draftDay == day.toString()) Color.White else Color(0xFF6F675D),
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier
+                                .background(
+                                    if (draftDay == day.toString()) Color(0xFF2D2A26) else Color(0x12000000),
+                                    RoundedCornerShape(99.dp),
+                                )
+                                .clickable { draftDay = day.toString() }
+                                .padding(horizontal = 10.dp, vertical = 5.dp),
+                        )
+                    }
+                }
                 OutlinedTextField(
                     value = draftDay,
                     onValueChange = { draftDay = it.filter(Char::isDigit) },
@@ -319,7 +339,7 @@ private fun ScheduleDialog(
                 OutlinedTextField(
                     value = draftNote,
                     onValueChange = { draftNote = it },
-                    label = { Text("备注") },
+                    label = { Text("备注（可选）") },
                 )
             }
         },
