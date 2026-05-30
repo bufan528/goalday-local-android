@@ -54,6 +54,8 @@ fun BookReader(
     var contentMode by remember(pageIndex, bookId) { mutableStateOf<PageContentMode>(PageContentMode.Browsing) }
     val turnEnabled = canTurnPage(contentMode)
     val turnProfile = if (page is DiaryPage) TurnProfile.HANDBOOK else TurnProfile.DEFAULT
+    val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 24.dp else 28.dp
+    val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 22.dp else 26.dp
 
     PageTurnEngine(
         canTurnPrevious = previousPage != null,
@@ -77,7 +79,7 @@ fun BookReader(
             DestinationPageLayer(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 28.dp, vertical = 26.dp),
+                    .padding(horizontal = pagePaddingH, vertical = pagePaddingV),
                 bookTitle = bookTitle,
                 subtitle = subtitle,
                 page = when (direction) {
@@ -96,7 +98,7 @@ fun BookReader(
             PageBackLayer(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 28.dp, vertical = 26.dp)
+                    .padding(horizontal = pagePaddingH, vertical = pagePaddingV)
                     .pageBackTransform(direction, progress, anchorY, turnProfile),
                 tint = tint,
                 progress = progress,
@@ -107,7 +109,7 @@ fun BookReader(
             ActivePageLayer(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 28.dp, vertical = 26.dp)
+                    .padding(horizontal = pagePaddingH, vertical = pagePaddingV)
                     .turningPageTransform(direction, progress, anchorY, turnProfile),
                 page = page,
                 pageIndex = pageIndex,

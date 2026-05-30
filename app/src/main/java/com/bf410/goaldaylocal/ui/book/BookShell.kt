@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +67,19 @@ fun BookShell(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
+                    .height(8.dp)
+                    .padding(horizontal = 24.dp)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0x66EFE3D6), Color(0x99FFF8EE), Color(0x66EFE3D6)),
+                        ),
+                    ),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
                     .height(28.dp)
                     .background(
                         Brush.verticalGradient(
@@ -95,6 +109,18 @@ fun BookShell(
                         ),
                     ),
             )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(10.dp)
+                    .padding(horizontal = 20.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0x338A6547), Color(0x66FFF7ED), Color(0x338A6547)),
+                        ),
+                    ),
+            )
         }
         Box(
             modifier = Modifier
@@ -115,8 +141,33 @@ fun BookShell(
                 .fillMaxSize()
                 .padding(horizontal = if (shellStyle == ShellStyle.BOOK) 10.dp else 8.dp, vertical = if (shellStyle == ShellStyle.BOOK) 12.dp else 10.dp)
                 .clip(innerShape)
-                .background(Color(0xFFFFFFFF)),
+                .background(Color(0xFFFFFFFF))
+                .then(
+                    if (shellStyle == ShellStyle.BOOK) {
+                        Modifier.border(1.dp, Color(0x22AA8B70), innerShape)
+                    } else {
+                        Modifier
+                    },
+                ),
         )
+
+        if (shellStyle == ShellStyle.BOOK) {
+            repeat(4) { layer ->
+                val offset = 2 + layer
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(top = (18 + layer).dp, bottom = (20 + layer).dp, end = (offset).dp)
+                        .width((3 + layer).dp)
+                        .fillMaxHeight()
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0x30A07D5E), Color(0x80FFF8EE)),
+                            ),
+                        ),
+                )
+            }
+        }
 
         Box(
             modifier = Modifier
