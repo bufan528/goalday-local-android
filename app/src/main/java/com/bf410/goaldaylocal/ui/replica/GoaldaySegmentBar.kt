@@ -25,7 +25,7 @@ fun GoaldaySegmentBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF4EEEC), RoundedCornerShape(10.dp))
+            .background(GoaldayDesign.SurfaceSoft, RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 10.dp, vertical = 9.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -36,7 +36,7 @@ fun GoaldaySegmentBar(
                     .weight(1f)
                     .background(
                         if (index == selectedIndex) Color.White else Color.Transparent,
-                        RoundedCornerShape(8.dp),
+                        RoundedCornerShape(GoaldayDesign.RadiusS),
                     )
                     .clickable { onSelect(index) }
                     .padding(vertical = 6.dp),
@@ -44,7 +44,7 @@ fun GoaldaySegmentBar(
             ) {
                 Text(
                     text = label,
-                    color = if (index == selectedIndex) Color(0xFF2A261F) else Color(0xFF9E978D),
+                    color = if (index == selectedIndex) GoaldayDesign.InkPrimary else GoaldayDesign.InkMuted,
                     fontWeight = if (index == selectedIndex) FontWeight.SemiBold else FontWeight.Normal,
                 )
             }

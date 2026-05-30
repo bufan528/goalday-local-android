@@ -36,6 +36,7 @@ import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.calendar.CalendarScreen
 import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
+import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 
 private enum class RootTab(val label: String, val icon: String) {
     HOME("日程", "◍"),
@@ -71,10 +72,10 @@ fun GoaldayApp() {
 
     MaterialTheme {
         Scaffold(
-            containerColor = Color(0xFFF7F6F3),
+            containerColor = GoaldayDesign.AppBg,
             bottomBar = {
                 NavigationBar(
-                    containerColor = Color(0xFFF1ECE4),
+                    containerColor = GoaldayDesign.SurfaceSoft,
                     tonalElevation = 0.dp,
                 ) {
                     RootTab.entries.forEach { item ->
@@ -85,11 +86,11 @@ fun GoaldayApp() {
                             icon = { Text(item.icon) },
                             label = { Text(item.label) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF2B241D),
-                                selectedTextColor = Color(0xFF2B241D),
-                                unselectedIconColor = Color(0xFF938A7F),
-                                unselectedTextColor = Color(0xFF938A7F),
-                                indicatorColor = Color(0xFFE7DDCF),
+                                selectedIconColor = GoaldayDesign.InkPrimary,
+                                selectedTextColor = GoaldayDesign.InkPrimary,
+                                unselectedIconColor = GoaldayDesign.InkMuted,
+                                unselectedTextColor = GoaldayDesign.InkMuted,
+                                indicatorColor = GoaldayDesign.AccentSoft,
                             ),
                         )
                     }
@@ -99,7 +100,7 @@ fun GoaldayApp() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF7F6F3))
+                    .background(GoaldayDesign.AppBg)
                     .padding(padding)
                     .pointerInput(canGoBackInsideApp, edgeWidthPx, triggerDistancePx) {
                         if (!canGoBackInsideApp) return@pointerInput

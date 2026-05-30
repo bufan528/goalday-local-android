@@ -23,20 +23,20 @@ fun ExecutionBoardHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF7F2EC), RoundedCornerShape(10.dp))
+            .background(GoaldayDesign.AccentSoft, RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 10.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = title,
-            color = Color(0xFF3A332C),
+            color = GoaldayDesign.InkPrimary,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
         )
         Text(
             text = subtitle,
-            color = Color(0xFF8C8379),
+            color = GoaldayDesign.InkSecondary,
             style = MaterialTheme.typography.labelSmall,
         )
     }

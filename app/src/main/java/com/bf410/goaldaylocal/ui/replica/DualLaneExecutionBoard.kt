@@ -54,8 +54,8 @@ fun DualLaneExecutionBoard(
         modifier = modifier
             .fillMaxWidth()
             .height(472.dp)
-            .background(Color(0xFFFBFAF8), RoundedCornerShape(14.dp))
-            .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp)),
+            .background(GoaldayDesign.Surface, RoundedCornerShape(GoaldayDesign.RadiusL))
+            .border(1.dp, Color(0x14000000), RoundedCornerShape(GoaldayDesign.RadiusL)),
     ) {
         Column(
             modifier = Modifier
@@ -65,13 +65,13 @@ fun DualLaneExecutionBoard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFF4EEE6))
+                    .background(GoaldayDesign.SurfaceSoft)
                     .padding(horizontal = 8.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(leftHeader, color = Color(0xFF3A332C), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                Text("Done", color = Color(0xFF8C8379), style = MaterialTheme.typography.labelSmall)
+                Text(leftHeader, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                Text("Done", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
             }
             dayLabels.take(7).forEachIndexed { index, day ->
                 val dayTask = leftTimelineTasks.getOrNull(index).orEmpty()
@@ -86,12 +86,12 @@ fun DualLaneExecutionBoard(
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(modifier = Modifier.width(30.dp)) {
-                            Text(day.first, fontWeight = FontWeight.SemiBold, color = Color(0xFF26221D))
-                            Text(day.second, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7D766C))
+                            Text(day.first, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.InkPrimary)
+                            Text(day.second, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
                         }
-                        Text("✓", color = if (dayTask.isNotBlank()) Color(0xFF8BA77B) else Color(0xFFE0D7CD), style = MaterialTheme.typography.labelSmall)
+                        Text("✓", color = if (dayTask.isNotBlank()) GoaldayDesign.Positive else Color(0xFFE0D7CD), style = MaterialTheme.typography.labelSmall)
                     }
-                    Text(dayTask, style = MaterialTheme.typography.bodySmall, color = if (dayTask.isBlank()) Color(0xFFB8B1A7) else Color(0xFF2F2924), maxLines = 2)
+                    Text(dayTask, style = MaterialTheme.typography.bodySmall, color = if (dayTask.isBlank()) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary, maxLines = 2)
                 }
             }
         }
@@ -112,7 +112,7 @@ fun DualLaneExecutionBoard(
                 Text(
                     rightHeader,
                     modifier = Modifier
-                        .background(Color(0xFFF8F8F6), RoundedCornerShape(8.dp))
+                        .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = 7.dp, vertical = 3.dp),
                     style = MaterialTheme.typography.labelMedium,
                 )
@@ -125,15 +125,15 @@ fun DualLaneExecutionBoard(
                     .padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text("今日 Todo", color = Color(0xFF6F675D), style = MaterialTheme.typography.labelSmall)
+                Text("今日 Todo", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                 todayTasks.forEach { task ->
                     BoardRow(task = task, selected = selectedTaskId == task.id, actionLabel = "✓", onSelect = { onSelectTask(task.id) }, onAction = { onActionDone(task) })
                 }
-                Text("任务池", color = Color(0xFF6F675D), style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
+                Text("任务池", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
                 poolTasks.forEach { task ->
                     BoardRow(task = task, selected = selectedTaskId == task.id, actionLabel = "＋", onSelect = { onSelectTask(task.id) }, onAction = { onActionAdd(task) })
                 }
-                Text("已完成", color = Color(0xFF7A9D71), style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
+                Text("已完成", color = GoaldayDesign.Positive, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
                 donePreviewTasks.forEach { task ->
                     BoardRow(task = task, selected = selectedTaskId == task.id, actionLabel = "↺", onSelect = { onSelectTask(task.id) }, onAction = { onActionRestore(task) }, completed = true)
                 }
@@ -155,14 +155,14 @@ private fun BoardRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (selected) Color(0x14B59072) else Color.Transparent, RoundedCornerShape(8.dp))
+            .background(if (selected) Color(0x18B08963) else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
             .padding(horizontal = 6.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Text(
             if (selected) "◉" else if (completed) "✓" else "·",
-            color = if (completed) Color(0xFF7A9D71) else if (selected) Color(0xFF8E857A) else Color(0xFFD8CFC5),
+            color = if (completed) GoaldayDesign.Positive else if (selected) GoaldayDesign.InkSecondary else Color(0xFFD8CFC5),
         )
         Column(
             modifier = Modifier
@@ -171,14 +171,14 @@ private fun BoardRow(
         ) {
             Text(
                 task.title,
-                color = Color(0xFF2D2823),
+                color = GoaldayDesign.InkPrimary,
                 textDecoration = if (completed || task.completed) TextDecoration.LineThrough else TextDecoration.None,
                 maxLines = 2,
             )
             if (task.subtitle.isNotBlank()) {
-                Text(task.subtitle, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8D857C), maxLines = 1)
+                Text(task.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, maxLines = 1)
             }
         }
-        Text(actionLabel, color = Color(0xFF6E655B), modifier = Modifier.clickable { onAction() })
+        Text(actionLabel, color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable { onAction() })
     }
 }
