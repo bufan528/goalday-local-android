@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,6 +36,7 @@ import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun HomeScreen(
@@ -45,7 +47,11 @@ fun HomeScreen(
 ) {
     val calendarState by calendarViewModel.uiState.collectAsState()
     var mode by rememberSaveable { mutableIntStateOf(0) }
+    var checklistEditing by rememberSaveable { mutableIntStateOf(0) }
     val weekDates = remember { buildCurrentWeek() }
+    val checklistDraft = remember {
+        mutableStateListOf("托福单词 w117", "组会1-1", "听力真题5篇", "阅读", "投简历")
+    }
 
     Column(
         modifier = Modifier
@@ -72,10 +78,19 @@ fun HomeScreen(
                 entries = calendarState.entries,
                 onOpenHandbook = onOpenHandbook,
             )
-            else -> ChecklistQuickBoard(
-                entries = calendarState.entries,
-                onOpenInspiration = onOpenInspiration,
-            )
+            else -> if (checklistEditing == 1) {
+                ChecklistEditorBoard(
+                    items = checklistDraft,
+                    onBack = { checklistEditing = 0 },
+                    onDone = { checklistEditing = 0 },
+                )
+            } else {
+                ChecklistQuickBoard(
+                    entries = calendarState.entries,
+                    onOpenInspiration = onOpenInspiration,
+                    onEdit = { checklistEditing = 1 },
+                )
+            }
         }
     }
 }
@@ -241,6 +256,7 @@ private fun JournalQuickBoard(
 private fun ChecklistQuickBoard(
     entries: List<ScheduleEntry>,
     onOpenInspiration: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     val todo = entries.filterNot { it.completed }.take(12)
     Column(
@@ -263,6 +279,89 @@ private fun ChecklistQuickBoard(
                 .clickable { onOpenInspiration() }
                 .padding(horizontal = 12.dp, vertical = 6.dp),
         )
+        Text(
+            "编辑清单",
+            color = Color(0xFF2F2A24),
+            modifier = Modifier
+                .clickable { onEdit() }
+                .padding(horizontal = 2.dp, vertical = 2.dp),
+        )
+    }
+}
+
+@Composable
+private fun ChecklistEditorBoard(
+    items: List<String>,
+    onBack: () -> Unit,
+    onDone: () -> Unit,
+) {
+    val dateTag = LocalDate.now().plusDays(4).format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFFEFC))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("‹", color = Color(0xFFD38DA4), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.clickable { onBack() })
+            Text(
+                "Done",
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier
+                    .background(Color(0xFF121212), RoundedCornerShape(8.dp))
+                    .clickable { onDone() }
+                    .padding(horizontal = 18.dp, vertical = 6.dp),
+            )
+        }
+
+        items.forEachIndexed { index, item ->
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("□", color = Color(0xFF2A2723), style = MaterialTheme.typography.titleMedium)
+                    Text(" ${index + 1}", color = Color(0xFF2A2723), style = MaterialTheme.typography.bodyMedium)
+                    Text("  $item", color = Color(0xFF2A2723), style = MaterialTheme.typography.bodyLarge)
+                }
+                if (index == 3 || index == items.lastIndex) {
+                    Text(
+                        dateTag,
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier
+                            .background(Color(0xFFAFAFB4), RoundedCornerShape(99.dp))
+                            .padding(horizontal = 10.dp, vertical = 2.dp),
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                        .border(0.5.dp, Color(0x18000000)),
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF7F7FA), RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(LocalDate.now().format(DateTimeFormatter.ofPattern("MMM d, yyyy")), color = Color(0xFF555555), style = MaterialTheme.typography.bodySmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("◍", color = Color(0xFF3C3C3C))
+                Text("↑", color = Color(0xFF3C3C3C))
+                Text("✓", color = Color(0xFF3C3C3C))
+            }
+        }
     }
 }
 
