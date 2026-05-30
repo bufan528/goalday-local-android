@@ -1058,8 +1058,8 @@ private fun DiarySection(
     val editingDiary = contentMode as? PageContentMode.EditingDiary
     var structured by remember(title, diaryDraft) { mutableStateOf(StructuredDiary.fromRaw(diaryDraft)) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text(text = prompt, style = MaterialTheme.typography.titleSmall, color = Color(0xFF342C24))
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = prompt, style = MaterialTheme.typography.labelMedium, color = Color(0xFF6E665D))
         if (editingDiary?.title == title) {
             StructuredDiaryEditor(
                 state = structured,
@@ -1078,11 +1078,7 @@ private fun DiarySection(
                 StructuredDiaryPreview(state = StructuredDiary.fromRaw(diaryDraft))
             }
         }
-        Text(
-            text = BookStrings.diaryLocalOnly,
-            style = MaterialTheme.typography.bodySmall,
-            color = tint.copy(alpha = 0.72f),
-        )
+        Text(text = BookStrings.diaryLocalOnly, style = MaterialTheme.typography.labelSmall, color = tint.copy(alpha = 0.62f))
     }
 }
 
@@ -1139,13 +1135,13 @@ private fun StructuredDiaryEditor(
     onStateChange: (StructuredDiary) -> Unit,
     onDone: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("4月4日", style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E))
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("4月4日", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E))
         OutlinedTextField(
             value = state.moodTags,
             onValueChange = { onStateChange(state.copy(moodTags = it)) },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
+            shape = RoundedCornerShape(8.dp),
             label = { Text("心情标签（空格/逗号分隔）") },
             singleLine = true,
         )
@@ -1163,8 +1159,8 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
     val moodItems = remember(state.moodTags) {
         state.moodTags.split(',', '，', ' ').map(String::trim).filter(String::isNotBlank).take(6)
     }
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("4月4日", style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E))
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("4月4日", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E))
         if (moodItems.isNotEmpty()) {
             Text(
                 moodItems.joinToString("  ") { "#$it" },
@@ -1178,17 +1174,17 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
         DiaryLine("📝 可改进", state.canImprove)
         val photos = state.photoNotes.lines().map(String::trim).filter(String::isNotBlank)
         if (photos.isNotEmpty()) {
-            Text("📷 图片", style = MaterialTheme.typography.labelMedium, color = Color(0xFF5A4A3B))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            Text("📷 图片", style = MaterialTheme.typography.labelSmall, color = Color(0xFF5A4A3B))
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
                 photos.take(3).forEach { note ->
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .height(72.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFFF0ECE5))
-                            .border(1.dp, Color(0xFFE1D8CC), RoundedCornerShape(8.dp))
-                            .padding(6.dp),
+                            .height(62.dp)
+                            .clip(RoundedCornerShape(7.dp))
+                            .background(Color(0xFFF2EFE9))
+                            .border(1.dp, Color(0xFFE6DED2), RoundedCornerShape(7.dp))
+                            .padding(5.dp),
                     ) {
                         Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258))
                     }
@@ -1233,14 +1229,14 @@ private fun DiaryEditField(
     value: String,
     onValueChange: (String) -> Unit,
 ) {
-    Text(label, style = MaterialTheme.typography.labelMedium, color = Color(0xFF5A4A3B))
+    Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF5A4A3B))
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = Modifier.fillMaxWidth(),
-        minLines = 2,
-        maxLines = 4,
-        shape = RoundedCornerShape(10.dp),
+        minLines = 1,
+        maxLines = 3,
+        shape = RoundedCornerShape(8.dp),
     )
 }
 
