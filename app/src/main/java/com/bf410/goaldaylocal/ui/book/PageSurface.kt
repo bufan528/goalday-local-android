@@ -123,7 +123,7 @@ fun PageSurface(
         modifier = modifier
             .clip(RoundedCornerShape(28.dp, 28.dp, 32.dp, 32.dp))
             .background(Color(0xFFFFFDFC))
-            .padding(horizontal = 22.dp, vertical = 20.dp),
+            .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
         Box(
             modifier = Modifier
@@ -202,9 +202,9 @@ fun PageSurface(
                 savedText = pageNumber,
                 onSavedClick = onSavedClick,
             )
-            Spacer(Modifier.height(10.dp))
-            Text(text = title, style = MaterialTheme.typography.titleLarge, color = Color(0xFF26211C))
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(6.dp))
+            Text(text = title, style = MaterialTheme.typography.titleMedium, color = Color(0xFF26211C))
+            Spacer(Modifier.height(8.dp))
             body()
         }
     }
@@ -738,10 +738,10 @@ private fun TodayBoardSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("6", style = MaterialTheme.typography.titleLarge, color = Color(0xFF3A342E))
-            Text("To do", style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E))
+            Text("6", style = MaterialTheme.typography.titleMedium, color = Color(0xFF3A342E))
+            Text("To do", style = MaterialTheme.typography.labelMedium, color = Color(0xFF3A342E))
         }
-        Text("左侧时间栏 · 右侧任务栏", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
+        Text("左侧时间栏 · 右侧任务栏", style = MaterialTheme.typography.labelSmall, color = Color(0xFF948778))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BoardStatChip(label = "计划 ${todayPlanItems.size}", bg = BoardTonePlan)
             BoardStatChip(label = "完成 ${todayCompletedItems.size}", bg = BoardToneDone)
@@ -755,12 +755,13 @@ private fun TodayBoardSection(
                 Text(
                     "Done",
                     color = Color(0xFF5E4837),
+                    style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
                         .background(doneHeaderColor)
                         .border(1.dp, Color(0xCC79A16E).copy(alpha = doneBorderAlpha), RoundedCornerShape(10.dp))
-                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                        .padding(horizontal = 6.dp, vertical = 3.dp),
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
                     todayCompletedItems.forEach { item ->
@@ -784,12 +785,13 @@ private fun TodayBoardSection(
                 Text(
                     "To do",
                     color = Color(0xFF5E4837),
+                    style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
                         .background(todayHeaderColor)
                         .border(1.dp, Color(0xCCB77A5A).copy(alpha = todayBorderAlpha), RoundedCornerShape(10.dp))
-                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                        .padding(horizontal = 6.dp, vertical = 3.dp),
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
                     todayPlanItems.forEach { item ->
@@ -1055,8 +1057,8 @@ private fun DiarySection(
     val editingDiary = contentMode as? PageContentMode.EditingDiary
     var structured by remember(title, diaryDraft) { mutableStateOf(StructuredDiary.fromRaw(diaryDraft)) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = prompt, style = MaterialTheme.typography.labelMedium, color = Color(0xFF6E665D))
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(text = prompt, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6E665D))
         if (editingDiary?.title == title) {
             StructuredDiaryEditor(
                 state = structured,
