@@ -2,7 +2,7 @@ package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.border
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -64,6 +64,8 @@ private val BoardTonePlan = Color(0x22D9A97E)
 private val BoardToneDone = Color(0x22A5C49D)
 private val BoardTitleColor = Color(0xFF5E4837)
 private val BoardHintColor = Color(0xFF8B7A68)
+private const val TODAY_SWIPE_THRESHOLD = -88f
+private const val DONE_SWIPE_THRESHOLD = -170f
 
 @Composable
 fun BoxScope.SpineLayer(
@@ -762,7 +764,7 @@ private fun SourcePoolSection(
         val hintText = when (dragPreviewTarget) {
             DragTarget.TODAY -> "松手将进入今日计划"
             DragTarget.DONE -> "松手将直接标记完成"
-            DragTarget.NONE -> "左滑到计划，继续左滑到完成"
+            DragTarget.NONE -> "直接左滑到计划，继续左滑到完成"
         }
         Text(hintText, style = MaterialTheme.typography.labelSmall, color = BoardHintColor)
         Box(
@@ -821,14 +823,14 @@ private fun SourcePoolSection(
                         translationY = rowLift
                     }
                     .pointerInput(item) {
-                        detectDragGesturesAfterLongPress(
+                        detectHorizontalDragGestures(
                             onDragStart = {
-                                onDragPreviewTargetChange(DragTarget.TODAY)
+                                onDragPreviewTargetChange(DragTarget.NONE)
                             },
                             onDragEnd = {
                                 when {
-                                    dragOffsetX <= -165f -> onMoveItemToCompleted(item)
-                                    dragOffsetX <= -82f -> onMoveItemToToday(item)
+                                    dragOffsetX <= DONE_SWIPE_THRESHOLD -> onMoveItemToCompleted(item)
+                                    dragOffsetX <= TODAY_SWIPE_THRESHOLD -> onMoveItemToToday(item)
                                 }
                                 dragOffsetX = 0f
                                 onDragPreviewTargetChange(DragTarget.NONE)
@@ -839,12 +841,12 @@ private fun SourcePoolSection(
                             },
                         ) { change, dragAmount ->
                             change.consume()
-                            val proposed = dragOffsetX + dragAmount.x
+                            val proposed = dragOffsetX + dragAmount
                             dragOffsetX = applyDragResistance(proposed).coerceIn(-220f, 0f)
                             onDragPreviewTargetChange(
                                 when {
-                                    dragOffsetX <= -165f -> DragTarget.DONE
-                                    dragOffsetX <= -82f -> DragTarget.TODAY
+                                    dragOffsetX <= DONE_SWIPE_THRESHOLD -> DragTarget.DONE
+                                    dragOffsetX <= TODAY_SWIPE_THRESHOLD -> DragTarget.TODAY
                                     else -> DragTarget.NONE
                                 },
                             )
@@ -854,7 +856,7 @@ private fun SourcePoolSection(
                     Brush.horizontalGradient(
                         listOf(
                             Color.Transparent,
-                            if (dragOffsetX <= -165f) Color(0x3379A16E) else Color(0x33D9A97E),
+                            if (dragOffsetX <= DONE_SWIPE_THRESHOLD) Color(0x3379A16E) else Color(0x33D9A97E),
                         ),
                     )
                 } else {
