@@ -1677,80 +1677,82 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
     val moodItems = remember(state.moodTags) {
         state.moodTags.split(',', '，', ' ').map(String::trim).filter(String::isNotBlank).take(6)
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text("4月4日 · 周四", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), modifier = Modifier.align(Alignment.CenterHorizontally))
-            if (moodItems.isNotEmpty()) {
-                Text(
-                    moodItems.joinToString("  ") { "#$it" },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF8B7A68),
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0x14EFE3D4))
-                    .border(1.dp, Color(0x26CCB79F), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 7.dp, vertical = 6.dp),
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    DiaryLine("☀️ 今日完成", state.todayDone)
-                    DiaryLine("📚 工作任务", state.workTasks)
+    val photos = state.photoNotes.lines().map(String::trim).filter(String::isNotBlank)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+        Text("4月4日 · 周四", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), modifier = Modifier.align(Alignment.CenterHorizontally))
+        if (moodItems.isNotEmpty()) {
+            Text(
+                moodItems.joinToString("  ") { "#$it" },
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF8B7A68),
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+        }
+        if (photos.isNotEmpty()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+                photos.take(3).forEach { note ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(64.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFF2EFE9))
+                            .border(1.dp, Color(0xFFE6DED2), RoundedCornerShape(8.dp))
+                            .padding(5.dp),
+                    ) {
+                        Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258))
+                    }
                 }
             }
         }
-        Box(
-            modifier = Modifier
-                .width(1.dp)
-                .fillMaxHeight()
-                .background(Color(0x18B7A893)),
-        )
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0x11F5E9DB))
-                    .border(1.dp, Color(0x22C5AC8F), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 7.dp, vertical = 6.dp),
-            ) {
-                DiaryLine("🍀 小幸福", state.smallJoy)
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0x14E9AFC0))
-                    .border(1.dp, Color(0x2AE9AFC0), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 6.dp, vertical = 5.dp),
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("📝 可改进", style = MaterialTheme.typography.labelSmall, color = Color(0xFF5A4A3B))
-                    Text(
-                        state.canImprove.ifBlank { "记录今天想优化的一件小事" },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF2F2922),
-                    )
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0x14EFE3D4))
+                        .border(1.dp, Color(0x26CCB79F), RoundedCornerShape(10.dp))
+                        .padding(horizontal = 7.dp, vertical = 6.dp),
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        DiaryLine("☀️ 今日完成", state.todayDone)
+                        DiaryLine("📚 工作任务", state.workTasks)
+                    }
                 }
             }
-            val photos = state.photoNotes.lines().map(String::trim).filter(String::isNotBlank)
-            if (photos.isNotEmpty()) {
-                Text("📷 图片", style = MaterialTheme.typography.labelSmall, color = Color(0xFF5A4A3B))
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
-                    photos.take(2).forEach { note ->
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(62.dp)
-                                .clip(RoundedCornerShape(7.dp))
-                                .background(Color(0xFFF2EFE9))
-                                .border(1.dp, Color(0xFFE6DED2), RoundedCornerShape(7.dp))
-                                .padding(5.dp),
-                        ) {
-                            Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258))
-                        }
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(Color(0x18B7A893)),
+            )
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0x11F5E9DB))
+                        .border(1.dp, Color(0x22C5AC8F), RoundedCornerShape(10.dp))
+                        .padding(horizontal = 7.dp, vertical = 6.dp),
+                ) {
+                    DiaryLine("🍀 小幸福", state.smallJoy)
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0x14E9AFC0))
+                        .border(1.dp, Color(0x2AE9AFC0), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 6.dp, vertical = 5.dp),
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text("📝 可改进", style = MaterialTheme.typography.labelSmall, color = Color(0xFF5A4A3B))
+                        Text(
+                            state.canImprove.ifBlank { "记录今天想优化的一件小事" },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF2F2922),
+                        )
                     }
                 }
             }
