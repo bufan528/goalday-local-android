@@ -118,11 +118,26 @@ class BookViewModel(
         addItemToSchedule(text, resolvedDay)
     }
 
-    fun applyInspirationTemplate(items: List<String>) {
+    fun applyInspirationTemplate(
+        items: List<String>,
+        pushToToday: Boolean = false,
+        clearSourceAfterApply: Boolean = false,
+    ) {
         if (!supportsCustomItems()) return
-        val merged = (_uiState.value.customPageItems + items.map(String::trim).filter(String::isNotBlank)).distinct()
+        val normalized = items.map(String::trim).filter(String::isNotBlank).distinct()
+        val merged = (_uiState.value.customPageItems + normalized).distinct()
         store.saveCustomPageItems(currentBook().id, currentPage().title, merged)
-        _uiState.update { it.copy(customPageItems = merged) }
+        var nextToday = _uiState.value.todayPlanItems
+        var nextCustom = merged
+        if (pushToToday) {
+            nextToday = (nextToday + normalized).distinct()
+            store.saveTodayPlanItems(currentBook().id, currentPage().title, nextToday)
+        }
+        if (clearSourceAfterApply) {
+            nextCustom = nextCustom.filterNot { it in normalized }
+            store.saveCustomPageItems(currentBook().id, currentPage().title, nextCustom)
+        }
+        _uiState.update { it.copy(customPageItems = nextCustom, todayPlanItems = nextToday) }
     }
 
     fun removeCustomPageItem(item: String) {

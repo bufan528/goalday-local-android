@@ -91,8 +91,12 @@ fun BookHomeScreen(
                 selectedIndex = selectedTemplateIndex,
                 onSelect = { selectedTemplateIndex = it },
                 onBack = { showInspiration = false },
-                onApply = { items ->
-                    viewModel.applyInspirationTemplate(items)
+                onApply = { items, pushToToday, clearSource ->
+                    viewModel.applyInspirationTemplate(
+                        items = items,
+                        pushToToday = pushToToday,
+                        clearSourceAfterApply = clearSource,
+                    )
                     showInspiration = false
                 },
             )
@@ -431,11 +435,13 @@ private fun InspirationCenterView(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     onBack: () -> Unit,
-    onApply: (List<String>) -> Unit,
+    onApply: (List<String>, Boolean, Boolean) -> Unit,
 ) {
     val selected = templates[selectedIndex.coerceIn(0, templates.lastIndex)]
     var checkedStates by remember(selected.title) { mutableStateOf(List(selected.items.size) { true }) }
     var editableItems by remember(selected.title) { mutableStateOf(selected.items) }
+    var pushToToday by remember { mutableStateOf(true) }
+    var clearSourceAfterApply by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -461,7 +467,7 @@ private fun InspirationCenterView(
                             val picked = editableItems.filterIndexed { index, _ ->
                                 checkedStates.getOrNull(index) == true
                             }
-                            onApply(picked)
+                            onApply(picked, pushToToday, clearSourceAfterApply)
                         }
                         .padding(horizontal = 10.dp, vertical = 4.dp),
                 )
@@ -527,6 +533,18 @@ private fun InspirationCenterView(
                     }
                 }
                 Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    ActionChip(
+                        label = if (pushToToday) "应用到To do:开" else "应用到To do:关",
+                        color = Color(0xFF8F684F),
+                        onClick = { pushToToday = !pushToToday },
+                    )
+                    ActionChip(
+                        label = if (clearSourceAfterApply) "应用后移出来源:开" else "应用后移出来源:关",
+                        color = Color(0xFF8F684F),
+                        onClick = { clearSourceAfterApply = !clearSourceAfterApply },
+                    )
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     templates.take(4).forEachIndexed { idx, card ->
                         Box(
@@ -559,7 +577,7 @@ private fun InspirationCenterView(
                 Button(
                     onClick = {
                         val picked = editableItems.filterIndexed { index, _ -> checkedStates.getOrNull(index) == true }
-                        onApply(picked)
+                        onApply(picked, pushToToday, clearSourceAfterApply)
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("应用到当前页") }
