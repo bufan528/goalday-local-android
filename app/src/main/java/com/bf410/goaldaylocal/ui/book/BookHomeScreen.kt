@@ -1,6 +1,7 @@
 package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -519,17 +520,36 @@ private fun InspirationCenterView(
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 templates.forEachIndexed { index, item ->
-                    Column(
+                    Box(
                         modifier = Modifier
-                            .width(170.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(if (index == selectedIndex) Color(0xFFF4ECE2) else Color(0x66FFFFFF))
+                            .width(190.dp)
+                            .height(108.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(
+                                Brush.verticalGradient(
+                                    when (index % 4) {
+                                        0 -> listOf(Color(0xFF7E8E55), Color(0xFF4D6032))
+                                        1 -> listOf(Color(0xFF86674B), Color(0xFF5B3F2D))
+                                        2 -> listOf(Color(0xFF6F5A7D), Color(0xFF4E3F5A))
+                                        else -> listOf(Color(0xFF5E6F8A), Color(0xFF3C4F69))
+                                    },
+                                ),
+                            )
+                            .border(
+                                width = if (index == selectedIndex) 2.dp else 1.dp,
+                                color = if (index == selectedIndex) Color.White else Color.White.copy(alpha = 0.35f),
+                                shape = RoundedCornerShape(14.dp),
+                            )
                             .clickable { onSelect(index) }
-                            .padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                            .padding(12.dp),
                     ) {
-                        Text(item.title, color = Color(0xFF2F261D), style = MaterialTheme.typography.titleMedium)
-                        Text(item.subtitle, color = Color(0xFF6F675D), style = MaterialTheme.typography.bodySmall)
+                        Column(
+                            modifier = Modifier.align(Alignment.BottomStart),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(item.title, color = Color.White, style = MaterialTheme.typography.titleSmall)
+                            Text(item.subtitle, color = Color.White.copy(alpha = 0.90f), style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
             }
