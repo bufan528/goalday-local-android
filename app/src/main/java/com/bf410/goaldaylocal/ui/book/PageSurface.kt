@@ -718,24 +718,24 @@ private fun HandbookReplicaPage(
             ) {
                 Text("${pageIndex + 1}  周一", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
                 Text("今日复盘", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
-                leftDayBlocks.forEach { block ->
-                    Text("${block.key}日", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277))
-                    block.value.take(3).forEach { entry ->
-                        HandbookEntryLine(
-                            entry = entry,
-                            editingId = editingId,
-                            editingText = editingText,
-                            onStartEdit = {
-                                editingId = entry.id
-                                editingText = entry.title
-                            },
-                            onTextChange = { editingText = it },
-                            onCommit = {
-                                onUpdateScheduleTitle(entry.id, editingText)
-                                editingId = null
-                            },
-                        )
-                    }
+                repeat(3) { index ->
+                    val block = leftDayBlocks.getOrNull(index)
+                    val day = block?.key ?: (index + 1)
+                    FixedDayScheduleGrid(
+                        day = day,
+                        entries = block?.value.orEmpty(),
+                        editingId = editingId,
+                        editingText = editingText,
+                        onStartEdit = { entry ->
+                            editingId = entry.id
+                            editingText = entry.title
+                        },
+                        onTextChange = { editingText = it },
+                        onCommit = { entry ->
+                            onUpdateScheduleTitle(entry.id, editingText)
+                            editingId = null
+                        },
+                    )
                 }
                 FixedBulletBlock(lines = leftLines.ifEmpty { listOf("记录今日完成") }, slots = 6)
                 Text("收支/步数/专注", style = MaterialTheme.typography.labelSmall, color = Color(0xFF3D3832))
@@ -751,24 +751,24 @@ private fun HandbookReplicaPage(
             ) {
                 Text("${pageIndex + 2}  周二", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
                 Text("今日计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
-                rightDayBlocks.forEach { block ->
-                    Text("${block.key}日", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277))
-                    block.value.take(3).forEach { entry ->
-                        HandbookEntryLine(
-                            entry = entry,
-                            editingId = editingId,
-                            editingText = editingText,
-                            onStartEdit = {
-                                editingId = entry.id
-                                editingText = entry.title
-                            },
-                            onTextChange = { editingText = it },
-                            onCommit = {
-                                onUpdateScheduleTitle(entry.id, editingText)
-                                editingId = null
-                            },
-                        )
-                    }
+                repeat(3) { index ->
+                    val block = rightDayBlocks.getOrNull(index)
+                    val day = block?.key ?: (index + 4)
+                    FixedDayScheduleGrid(
+                        day = day,
+                        entries = block?.value.orEmpty(),
+                        editingId = editingId,
+                        editingText = editingText,
+                        onStartEdit = { entry ->
+                            editingId = entry.id
+                            editingText = entry.title
+                        },
+                        onTextChange = { editingText = it },
+                        onCommit = { entry ->
+                            onUpdateScheduleTitle(entry.id, editingText)
+                            editingId = null
+                        },
+                    )
                 }
                 FixedBulletBlock(lines = rightTop.ifEmpty { listOf("写下明日计划") }, slots = 5)
                 ColorTagCard(color = Color(0xFF84C65A), text = "本月节律进度  30%")
@@ -800,6 +800,34 @@ private fun HandbookReplicaPage(
             style = MaterialTheme.typography.labelSmall,
             color = Color(0x008D857B),
         )
+    }
+}
+
+@Composable
+private fun FixedDayScheduleGrid(
+    day: Int,
+    entries: List<ScheduleEntry>,
+    editingId: String?,
+    editingText: String,
+    onStartEdit: (ScheduleEntry) -> Unit,
+    onTextChange: (String) -> Unit,
+    onCommit: (ScheduleEntry) -> Unit,
+) {
+    Text("${day}日", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277))
+    repeat(3) { idx ->
+        val entry = entries.getOrNull(idx)
+        if (entry == null) {
+            Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(14.dp))
+        } else {
+            HandbookEntryLine(
+                entry = entry,
+                editingId = editingId,
+                editingText = editingText,
+                onStartEdit = { onStartEdit(entry) },
+                onTextChange = onTextChange,
+                onCommit = { onCommit(entry) },
+            )
+        }
     }
 }
 
