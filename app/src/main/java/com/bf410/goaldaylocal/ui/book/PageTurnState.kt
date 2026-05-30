@@ -18,8 +18,8 @@ enum class TurnProfile {
     HANDBOOK,
 }
 
-private const val TURN_DISTANCE_THRESHOLD = 0.36f
-private const val TURN_FLING_THRESHOLD = 980f
+private const val TURN_DISTANCE_THRESHOLD = 0.34f
+private const val TURN_FLING_THRESHOLD = 920f
 private const val BOUNDARY_RESISTANCE_FACTOR = 0.22f
 private const val OPPOSING_VELOCITY_THRESHOLD = 520f
 private const val EDGE_TAP_START_PROGRESS = 0.26f
@@ -40,9 +40,9 @@ fun resolvePageTurnRelease(
         return TurnReleaseResult.SnapBack
     }
 
-    val distanceThreshold = if (profile == TurnProfile.HANDBOOK) 0.40f else TURN_DISTANCE_THRESHOLD
-    val flingThreshold = if (profile == TurnProfile.HANDBOOK) 900f else TURN_FLING_THRESHOLD
-    val opposingThreshold = if (profile == TurnProfile.HANDBOOK) 480f else OPPOSING_VELOCITY_THRESHOLD
+    val distanceThreshold = if (profile == TurnProfile.HANDBOOK) 0.31f else TURN_DISTANCE_THRESHOLD
+    val flingThreshold = if (profile == TurnProfile.HANDBOOK) 740f else TURN_FLING_THRESHOLD
+    val opposingThreshold = if (profile == TurnProfile.HANDBOOK) 430f else OPPOSING_VELOCITY_THRESHOLD
     val progressPasses = progress >= distanceThreshold
     val velocityPasses = when (direction) {
         TurnDirection.NEXT -> velocity <= -flingThreshold
@@ -75,7 +75,7 @@ fun applyBoundaryResistance(rawProgress: Float, canTurn: Boolean): Float {
 }
 
 fun initialEdgeTapProgress(profile: TurnProfile = TurnProfile.DEFAULT): Float =
-    if (profile == TurnProfile.HANDBOOK) 0.20f else EDGE_TAP_START_PROGRESS
+    if (profile == TurnProfile.HANDBOOK) 0.24f else EDGE_TAP_START_PROGRESS
 
 fun updatedTurnProgress(
     currentProgress: Float,

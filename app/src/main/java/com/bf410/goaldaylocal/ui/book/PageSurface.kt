@@ -358,7 +358,7 @@ fun PageBackLayer(
 ) {
     val curlAlignTop = anchorY < 0.46f
     val easedCurl = progress * progress * (3f - 2f * progress)
-    val curlStrength = (0.10f + easedCurl * 0.72f).coerceIn(0f, 0.82f)
+    val curlStrength = (0.12f + easedCurl * 0.76f).coerceIn(0f, 0.88f)
     val stackShadow = (0.07f + progress * 0.18f).coerceAtMost(0.30f)
     Box(
         modifier = modifier
@@ -465,8 +465,8 @@ fun PageBackLayer(
                         else -> Alignment.BottomEnd
                     },
                 )
-                .width((24f + progress * 58f).dp)
-                .height((26f + progress * 64f).dp)
+                .width((28f + progress * 66f).dp)
+                .height((30f + progress * 70f).dp)
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
@@ -474,7 +474,7 @@ fun PageBackLayer(
                             Color(0x22A48A70).copy(alpha = (0.18f + curlStrength * 0.24f).coerceAtMost(0.46f)),
                             Color.Transparent,
                         ),
-                        radius = 180f,
+                        radius = 210f,
                     ),
                 ),
         )
@@ -489,8 +489,8 @@ fun PageBackLayer(
                         else -> Alignment.BottomStart
                     },
                 )
-                .width((12f + progress * 24f).dp)
-                .height((20f + progress * 34f).dp)
+                .width((14f + progress * 30f).dp)
+                .height((24f + progress * 40f).dp)
                 .background(
                     Brush.linearGradient(
                         listOf(
