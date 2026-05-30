@@ -828,7 +828,7 @@ private fun TodayBoardSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("6", style = MaterialTheme.typography.titleMedium, color = Color(0xFF3A342E))
+            Text("6", style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E))
             Text("To do", style = MaterialTheme.typography.labelMedium, color = Color(0xFF3A342E))
         }
         Text("左侧时间栏 · 右侧任务栏", style = MaterialTheme.typography.labelSmall, color = Color(0xFF948778))
@@ -851,7 +851,7 @@ private fun TodayBoardSection(
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
                     "Done  ${todayCompletedItems.size}",
@@ -875,7 +875,7 @@ private fun TodayBoardSection(
                             .padding(horizontal = 8.dp, vertical = 3.dp),
                     )
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.animateContentSize()) {
                     todayCompletedItems.forEach { item ->
                         Row(
                             modifier = Modifier
@@ -884,7 +884,7 @@ private fun TodayBoardSection(
                                 .background(Color(0x08A5C49D))
                                 .border(1.dp, Color(0x18A5C49D), RoundedCornerShape(6.dp))
                                 .clickable { onMoveCompletedToTodo(item) }
-                                .padding(horizontal = 6.dp, vertical = 5.dp),
+                                .padding(horizontal = 6.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
@@ -903,7 +903,7 @@ private fun TodayBoardSection(
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
                     "To do  ${todayPlanItems.size}",
@@ -927,7 +927,7 @@ private fun TodayBoardSection(
                             .padding(horizontal = 8.dp, vertical = 3.dp),
                     )
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.animateContentSize()) {
                     todayPlanItems.forEach { item ->
                         Row(
                             modifier = Modifier
@@ -936,7 +936,7 @@ private fun TodayBoardSection(
                                 .background(Color(0x08D9A97E))
                                 .border(1.dp, Color(0x18D9A97E), RoundedCornerShape(6.dp))
                                 .clickable { onMoveItemToCompleted(item) }
-                                .padding(horizontal = 6.dp, vertical = 5.dp),
+                                .padding(horizontal = 6.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
