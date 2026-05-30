@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -508,6 +509,11 @@ private fun QuickAddTaskSection(
             label = { Text(inputLabel) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    if (newItem.isNotBlank()) onSaveOnly()
+                },
+            ),
         )
         OutlinedTextField(
             value = dueDayText,
@@ -517,6 +523,11 @@ private fun QuickAddTaskSection(
             label = { Text("截止日（可选）") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    if (newItem.isNotBlank()) onSaveWithDeadline()
+                },
+            ),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onSaveWithDeadline) { Text("保存并进日程") }
