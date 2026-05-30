@@ -1209,19 +1209,31 @@ private fun StructuredDiaryEditor(
             Text("4月4日", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E))
             Text("周四", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8A8177))
         }
-        OutlinedTextField(
-            value = state.moodTags,
-            onValueChange = { onStateChange(state.copy(moodTags = it)) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            label = { Text("心情标签（空格/逗号分隔）") },
-            singleLine = true,
-        )
-        DiaryEditField("☀️ 今日完成", state.todayDone) { onStateChange(state.copy(todayDone = it)) }
-        DiaryEditField("📚 工作任务", state.workTasks) { onStateChange(state.copy(workTasks = it)) }
-        DiaryEditField("🍀 小幸福", state.smallJoy) { onStateChange(state.copy(smallJoy = it)) }
-        DiaryEditField("📝 可改进", state.canImprove) { onStateChange(state.copy(canImprove = it)) }
-        DiaryEditField("📷 图片描述", state.photoNotes) { onStateChange(state.copy(photoNotes = it)) }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                OutlinedTextField(
+                    value = state.moodTags,
+                    onValueChange = { onStateChange(state.copy(moodTags = it)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    label = { Text("心情标签（空格/逗号分隔）") },
+                    singleLine = true,
+                )
+                DiaryEditField("☀️ 今日完成", state.todayDone) { onStateChange(state.copy(todayDone = it)) }
+                DiaryEditField("📚 工作任务", state.workTasks) { onStateChange(state.copy(workTasks = it)) }
+            }
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(Color(0x18B7A893)),
+            )
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                DiaryEditField("🍀 小幸福", state.smallJoy) { onStateChange(state.copy(smallJoy = it)) }
+                DiaryEditField("📝 可改进", state.canImprove) { onStateChange(state.copy(canImprove = it)) }
+                DiaryEditField("📷 图片描述", state.photoNotes) { onStateChange(state.copy(photoNotes = it)) }
+            }
+        }
         TextButton(onClick = onDone) { Text("完成") }
     }
 }
