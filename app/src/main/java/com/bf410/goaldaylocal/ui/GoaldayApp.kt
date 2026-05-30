@@ -40,6 +40,7 @@ import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.calendar.CalendarScreen
 import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.home.HomeScreen
+import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
 
 private enum class RootTab(val label: String, val icon: String) {
     HOME("日程", "◍"),
@@ -165,7 +166,7 @@ fun GoaldayApp() {
                         onOpenHandbook = { tab = RootTab.HANDBOOK },
                     )
                     RootTab.CALENDAR -> CalendarScreen(viewModel = calendarViewModel)
-                    RootTab.INSPIRATION -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.INSPIRATION)
+                    RootTab.INSPIRATION -> InspirationScreen(viewModel = bookViewModel)
                     RootTab.HANDBOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.HANDBOOK)
                 }
             }

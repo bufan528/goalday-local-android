@@ -14,10 +14,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,6 +40,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val today = LocalDate.now()
+    var quickInput by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -77,6 +83,26 @@ fun HomeScreen(
             QuickEntry("日历", "查看整月安排", onOpenCalendar, Modifier.weight(1f))
             QuickEntry("灵感", "把想法变成行动", onOpenInspiration, Modifier.weight(1f))
             QuickEntry("手账", "翻页记录与回顾", onOpenHandbook, Modifier.weight(1f))
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedTextField(
+                value = quickInput,
+                onValueChange = { quickInput = it },
+                modifier = Modifier.weight(1f),
+                placeholder = { Text("快速新增 Todo") },
+                singleLine = true,
+            )
+            TextButton(
+                onClick = {
+                    viewModel.addQuickTodo(quickInput)
+                    quickInput = ""
+                },
+            ) { Text("添加") }
         }
 
         Row(

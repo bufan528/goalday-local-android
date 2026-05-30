@@ -234,6 +234,28 @@ class BookViewModel(
         removeCompletedItemFromDiary(book.id, item)
     }
 
+    fun addQuickTodo(item: String) {
+        val normalized = item.trim()
+        if (normalized.isBlank()) return
+        val context = resolvePlanningContext() ?: return
+        val nextTodo = (store.todayPlanItems(context.bookId, context.pageTitle) + normalized).distinct()
+        store.saveTodayPlanItems(context.bookId, context.pageTitle, nextTodo)
+        if (context.matchesCurrentPage) {
+            _uiState.update { it.copy(todayPlanItems = nextTodo) }
+        }
+    }
+
+    fun applyInspirationToToday(items: List<String>) {
+        val normalized = items.map(String::trim).filter(String::isNotBlank).distinct()
+        if (normalized.isEmpty()) return
+        val context = resolvePlanningContext() ?: return
+        val nextTodo = (store.todayPlanItems(context.bookId, context.pageTitle) + normalized).distinct()
+        store.saveTodayPlanItems(context.bookId, context.pageTitle, nextTodo)
+        if (context.matchesCurrentPage) {
+            _uiState.update { it.copy(todayPlanItems = nextTodo) }
+        }
+    }
+
     private fun syncCompletedItemToDiary(bookId: String, item: String) {
         val diaryPage = currentBook().pages.firstOrNull { it is DiaryPage } as? DiaryPage ?: return
         val raw = store.diaryText(bookId, diaryPage.title)
@@ -446,6 +468,42 @@ class BookViewModel(
         return store.scheduleEntries()
             .filter { it.year == year && it.month == month }
             .sortedWith(compareBy({ it.day }, { it.title }))
+    }
+
+    private data class PlanningContext(
+        val bookId: String,
+        val pageTitle: String,
+        val matchesCurrentPage: Boolean,
+    )
+
+    private fun resolvePlanningContext(): PlanningContext? {
+        val current = currentPage()
+        if (current is PlanPage || current is TargetPage || current is SchedulePage) {
+            return PlanningContext(
+                bookId = currentBook().id,
+                pageTitle = current.title,
+                matchesCurrentPage = true,
+            )
+        }
+        val currentBookContext = currentBook().pages.firstOrNull {
+            it is PlanPage || it is TargetPage || it is SchedulePage
+        }
+        if (currentBookContext != null) {
+            return PlanningContext(
+                bookId = currentBook().id,
+                pageTitle = currentBookContext.title,
+                matchesCurrentPage = false,
+            )
+        }
+        val fallback = _uiState.value.books.asSequence()
+            .flatMap { book -> book.pages.asSequence().map { page -> book to page } }
+            .firstOrNull { (_, page) -> page is PlanPage || page is TargetPage || page is SchedulePage }
+            ?: return null
+        return PlanningContext(
+            bookId = fallback.first.id,
+            pageTitle = fallback.second.title,
+            matchesCurrentPage = false,
+        )
     }
 
     private fun updateCurrentBookPages(transform: (List<BookPage>) -> List<BookPage>) {
