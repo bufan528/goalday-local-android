@@ -686,26 +686,26 @@ private fun HandbookReplicaPage(
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(26.dp))
+            .clip(RoundedCornerShape(22.dp))
             .background(Color(0xFFFFFEFC))
-            .border(1.dp, Color(0x12A89A8B), RoundedCornerShape(26.dp))
+            .border(1.dp, Color(0x10A89A8B), RoundedCornerShape(22.dp))
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha
             }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text("${pageIndex + 1}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
                 leftLines.forEach { line ->
-                    Text("• $line", style = MaterialTheme.typography.bodySmall, color = Color(0xFF2C2925))
+                    Text("• $line", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925))
                 }
                 if (leftLines.isEmpty()) {
-                    Text("• 记录今日完成", style = MaterialTheme.typography.bodySmall, color = Color(0xFF2C2925))
+                    Text("• 记录今日完成", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925))
                 }
                 ColorTagCard(color = Color(0xFF9B2F2F), text = "今天优先级排序 · 行动")
                 ColorTagCard(color = Color(0xFF1A1A1A), text = "不熬夜 23:00")
@@ -713,14 +713,14 @@ private fun HandbookReplicaPage(
             }
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text("${pageIndex + 2}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
                 rightLines.forEach { line ->
-                    Text("• $line", style = MaterialTheme.typography.bodySmall, color = Color(0xFF2C2925))
+                    Text("• $line", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925))
                 }
                 if (rightLines.isEmpty()) {
-                    Text("• 写下明日计划", style = MaterialTheme.typography.bodySmall, color = Color(0xFF2C2925))
+                    Text("• 写下明日计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925))
                 }
                 ColorTagCard(color = Color(0xFF84C65A), text = "本月节律进度  30%")
                 ColorTagCard(color = Color(0xFF9B2F2F), text = "任务目标 · 整理复盘")
@@ -731,9 +731,9 @@ private fun HandbookReplicaPage(
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(1.dp)
+                .width(0.8.dp)
                 .fillMaxHeight()
-                .background(Color(0x12000000)),
+                .background(Color(0x0F000000)),
         )
 
         Text(
@@ -755,23 +755,23 @@ private fun ColorTagCard(color: Color, text: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(5.dp))
             .background(color)
-            .padding(horizontal = 7.dp, vertical = 6.dp),
+            .padding(horizontal = 6.dp, vertical = 5.dp),
     ) {
-        Text(text, color = Color.White, style = MaterialTheme.typography.labelSmall)
+        Text(text, color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
 @Composable
 private fun MiniPhotoRow() {
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+    Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.fillMaxWidth()) {
         repeat(3) {
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(28.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .height(24.dp)
+                    .clip(RoundedCornerShape(3.dp))
                     .background(
                         when (it) {
                             0 -> Color(0xFFD3D7C8)
