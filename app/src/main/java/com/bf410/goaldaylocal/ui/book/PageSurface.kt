@@ -670,18 +670,12 @@ private fun EditableBulletPage(
     contentMode: PageContentMode,
     onContentModeChange: (PageContentMode) -> Unit,
 ) {
-    var newItem by remember(pageTitle) { mutableStateOf("") }
-    var dueDayText by remember(pageTitle) { mutableStateOf("") }
-    var showDeadlinePicker by remember(pageTitle) { mutableStateOf(false) }
     val stagedItems = remember(todayPlanItems, todayCompletedItems) { (todayPlanItems + todayCompletedItems).toSet() }
     val sourceBaseItems = remember(baseItems, stagedItems) { baseItems.filterNot { it in stagedItems } }
     val sourceCustomItems = remember(customItems, stagedItems) { customItems.filterNot { it in stagedItems } }
     val sourceItems = sourceBaseItems + sourceCustomItems
-    var dragPreviewTarget by remember(pageTitle) { mutableStateOf(DragTarget.NONE) }
     val listNames = remember { listOf("Todo", "未来的自己", "奖励清单", "电影清单") }
     var selectedListIndex by remember(pageTitle) { mutableStateOf(0) }
-    var dualColumnMode by remember(pageTitle) { mutableStateOf(true) }
-    val referenceBoardMode = true
     val shownSourceItems = remember(sourceItems, selectedListIndex) {
         when (selectedListIndex) {
             1 -> sourceItems.filter { it.contains("目标") || it.contains("学习") || it.contains("计划") || it.contains("未来") }
@@ -692,28 +686,26 @@ private fun EditableBulletPage(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (referenceBoardMode) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFF5EFED))
-                    .border(1.dp, Color(0x1A000000), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 10.dp, vertical = 7.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                val tabs = listOf("日程", "日记", "清单")
-                tabs.forEachIndexed { index, label ->
-                    val active = (index == 0 && isSchedulePage) || (index == 1 && !isSchedulePage) || (index == 2 && pageTitle.contains("清单"))
-                    Text(
-                        text = label,
-                        modifier = Modifier.weight(1f),
-                        color = if (active) Color(0xFF2F2924) else Color(0xFFB3AAA1),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
-                    )
-                }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFFF5EFED))
+                .border(1.dp, Color(0x1A000000), RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 7.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val tabs = listOf("日程", "日记", "清单")
+            tabs.forEachIndexed { index, label ->
+                val active = (index == 0 && isSchedulePage) || (index == 1 && !isSchedulePage) || (index == 2 && pageTitle.contains("清单"))
+                Text(
+                    text = label,
+                    modifier = Modifier.weight(1f),
+                    color = if (active) Color(0xFF2F2924) else Color(0xFFB3AAA1),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
+                )
             }
         }
         if (isSchedulePage) {
@@ -731,156 +723,16 @@ private fun EditableBulletPage(
                 Text("MON-SUN", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9B8C7D))
             }
         }
-        if (!referenceBoardMode) {
-            WeekThemeSection(theme = weeklyTheme, onThemeChange = onWeeklyThemeChange)
-            QuickAddTaskSection(
-                inputLabel = inputLabel,
-                newItem = newItem,
-                onNewItemChange = { newItem = it },
-                dueDayText = dueDayText,
-                onDueDayChange = { dueDayText = it.filter(Char::isDigit).take(2) },
-                onOpenDatePicker = { showDeadlinePicker = true },
-                onSaveWithDeadline = {
-                    val parsedDay = dueDayText.toIntOrNull()
-                    onAddCustomItemWithDeadline(newItem, parsedDay)
-                    newItem = ""
-                    dueDayText = ""
-                },
-                onSaveOnly = {
-                    onAddCustomItem(newItem)
-                    newItem = ""
-                    dueDayText = ""
-                },
-            )
-            FocusTimelineSection(
-                entries = schedulePreviewEntries,
-                todoCount = todayPlanItems.size,
-                doneCount = todayCompletedItems.size,
-            )
-        }
-        if (referenceBoardMode) {
-            ReferencePlannerBoard(
-                sourceItems = shownSourceItems,
-                todayItems = todayPlanItems,
-                doneItems = todayCompletedItems,
-                selectedListName = listNames[selectedListIndex],
-                onSwitchList = { selectedListIndex = (selectedListIndex + 1) % listNames.size },
-                onMoveItemToToday = onMoveItemToToday,
-                onMoveItemToCompleted = onMoveItemToCompleted,
-                onRestoreItemFromDone = onRestoreItemFromCompleted,
-            )
-        } else if (dualColumnMode) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .border(1.dp, Color(0x1F000000), RoundedCornerShape(10.dp))
-                        .background(Color(0xFFFBFBFA)),
-                ) {
-                    TodayBoardSection(
-                        todayPlanItems = todayPlanItems,
-                        todayCompletedItems = todayCompletedItems,
-                        schedulePreviewEntries = schedulePreviewEntries,
-                        onMoveItemToCompleted = onMoveItemToCompleted,
-                        onRestoreItemFromToday = onRestoreItemFromToday,
-                        onRestoreItemFromCompleted = onRestoreItemFromCompleted,
-                        dragPreviewTarget = dragPreviewTarget,
-                        modifier = Modifier.fillMaxWidth().padding(6.dp),
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .border(1.dp, Color(0x1F000000), RoundedCornerShape(10.dp))
-                        .background(Color(0xFFFBFBFA)),
-                ) {
-                    SourcePoolSection(
-                        items = shownSourceItems,
-                        pageTitle = pageTitle,
-                        tint = tint,
-                        selectedListName = listNames[selectedListIndex],
-                        onSwitchList = { selectedListIndex = (selectedListIndex + 1) % listNames.size },
-                        isChecked = isChecked,
-                        onToggleChecked = onToggleChecked,
-                        onMoveItemToToday = onMoveItemToToday,
-                        onMoveItemToCompleted = onMoveItemToCompleted,
-                        dragPreviewTarget = dragPreviewTarget,
-                        onDragPreviewTargetChange = { dragPreviewTarget = it },
-                        modifier = Modifier.fillMaxWidth().padding(6.dp),
-                    )
-                }
-            }
-        } else {
-            TodayBoardSection(
-                todayPlanItems = todayPlanItems,
-                todayCompletedItems = todayCompletedItems,
-                schedulePreviewEntries = schedulePreviewEntries,
-                onMoveItemToCompleted = onMoveItemToCompleted,
-                onRestoreItemFromToday = onRestoreItemFromToday,
-                onRestoreItemFromCompleted = onRestoreItemFromCompleted,
-                dragPreviewTarget = dragPreviewTarget,
-                modifier = Modifier.fillMaxWidth(),
-                )
-            SourcePoolSection(
-                items = shownSourceItems,
-                pageTitle = pageTitle,
-                tint = tint,
-                selectedListName = listNames[selectedListIndex],
-                onSwitchList = { selectedListIndex = (selectedListIndex + 1) % listNames.size },
-                isChecked = isChecked,
-                onToggleChecked = onToggleChecked,
-                onMoveItemToToday = onMoveItemToToday,
-                onMoveItemToCompleted = onMoveItemToCompleted,
-                dragPreviewTarget = dragPreviewTarget,
-                onDragPreviewTargetChange = { dragPreviewTarget = it },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        if (!referenceBoardMode) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0xFFF2A7B4))
-                    .clickable { dualColumnMode = !dualColumnMode },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(if (dualColumnMode) "›" else "‹", color = Color.White, style = MaterialTheme.typography.titleMedium)
-            }
-        }
-    }
-
-    if (showDeadlinePicker) {
-        val pickerState = rememberDatePickerState()
-        DatePickerDialog(
-            onDismissRequest = { showDeadlinePicker = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val millis = pickerState.selectedDateMillis
-                        if (millis != null) {
-                            val day = Instant.ofEpochMilli(millis)
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate()
-                                .dayOfMonth
-                            dueDayText = day.toString()
-                        }
-                        showDeadlinePicker = false
-                    },
-                ) { Text("确定") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeadlinePicker = false }) { Text("取消") }
-            },
-        ) {
-            DatePicker(state = pickerState)
-        }
+        ReferencePlannerBoard(
+            sourceItems = shownSourceItems,
+            todayItems = todayPlanItems,
+            doneItems = todayCompletedItems,
+            selectedListName = listNames[selectedListIndex],
+            onSwitchList = { selectedListIndex = (selectedListIndex + 1) % listNames.size },
+            onMoveItemToToday = onMoveItemToToday,
+            onMoveItemToCompleted = onMoveItemToCompleted,
+            onRestoreItemFromDone = onRestoreItemFromCompleted,
+        )
     }
 }
 
