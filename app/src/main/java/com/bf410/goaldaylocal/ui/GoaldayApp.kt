@@ -34,10 +34,10 @@ import com.bf410.goaldaylocal.ui.book.BookHomeScreen
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.calendar.CalendarScreen
 import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
-import com.bf410.goaldaylocal.ui.settings.SettingsScreen
+import com.bf410.goaldaylocal.ui.home.HomeScreen
 
 private enum class RootTab(val label: String, val icon: String) {
-    PLANNER("计划", "◌"),
+    HOME("首页", "◍"),
     CALENDAR("日历", "☷"),
     INSPIRATION("灵感", "◐"),
     HANDBOOK("手账", "◫"),
@@ -45,12 +45,12 @@ private enum class RootTab(val label: String, val icon: String) {
 
 @Composable
 fun GoaldayApp() {
-    var tab by rememberSaveable { mutableStateOf(RootTab.PLANNER) }
+    var tab by rememberSaveable { mutableStateOf(RootTab.HOME) }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()
 
-    val canGoBackInsideApp = !bookUiState.inLibraryMode || tab != RootTab.PLANNER
+    val canGoBackInsideApp = !bookUiState.inLibraryMode || tab != RootTab.HOME
     val density = LocalDensity.current
     val edgeWidthPx = with(density) { 28.dp.toPx() }
     val triggerDistancePx = with(density) { 72.dp.toPx() }
@@ -60,7 +60,7 @@ fun GoaldayApp() {
     fun navigateBackInsideApp() {
         when {
             !bookUiState.inLibraryMode -> bookViewModel.openLibrary()
-            tab != RootTab.PLANNER -> tab = RootTab.PLANNER
+            tab != RootTab.HOME -> tab = RootTab.HOME
         }
     }
 
@@ -139,7 +139,12 @@ fun GoaldayApp() {
                     },
             ) {
                 when (tab) {
-                    RootTab.PLANNER -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.PLANNER)
+                    RootTab.HOME -> HomeScreen(
+                        viewModel = bookViewModel,
+                        onOpenCalendar = { tab = RootTab.CALENDAR },
+                        onOpenInspiration = { tab = RootTab.INSPIRATION },
+                        onOpenHandbook = { tab = RootTab.HANDBOOK },
+                    )
                     RootTab.CALENDAR -> CalendarScreen(viewModel = calendarViewModel)
                     RootTab.INSPIRATION -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.INSPIRATION)
                     RootTab.HANDBOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.HANDBOOK)

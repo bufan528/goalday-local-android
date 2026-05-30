@@ -115,6 +115,16 @@ fun CalendarScreen(
                     .background(Color(0x12000000)),
             )
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    listOf("一", "二", "三", "四", "五", "六", "日").forEach { label ->
+                        Text(
+                            text = label,
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFA8A194),
+                        )
+                    }
+                }
                 CalendarHeader()
                 repeat(totalCells / 7) { rowIndex ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
@@ -148,7 +158,12 @@ fun CalendarScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("${uiState.month}月${selectedDay}日 日程", style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "${uiState.month}月${selectedDay}日 日程",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF2E2A26),
+                )
                 Text(
                     "新增",
                     color = Color(0xFF2D2A26),
