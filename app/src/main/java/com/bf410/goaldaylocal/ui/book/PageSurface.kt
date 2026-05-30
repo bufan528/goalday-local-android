@@ -1139,34 +1139,21 @@ private fun StructuredDiaryEditor(
     onStateChange: (StructuredDiary) -> Unit,
     onDone: () -> Unit,
 ) {
-    NotebookSpread {
-        Row(
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("4月4日", style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E))
+        OutlinedTextField(
+            value = state.moodTags,
+            onValueChange = { onStateChange(state.copy(moodTags = it)) },
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                DiarySticker("心情标签")
-                SectionField(state.moodTags) { onStateChange(state.copy(moodTags = it)) }
-                DiarySticker("今日完成")
-                SectionField(state.todayDone) { onStateChange(state.copy(todayDone = it)) }
-                DiarySticker("工作任务")
-                SectionField(state.workTasks) { onStateChange(state.copy(workTasks = it)) }
-                DiarySticker("可改进点")
-                SectionField(state.canImprove) { onStateChange(state.copy(canImprove = it)) }
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                DiarySticker("小幸福")
-                SectionField(state.smallJoy) { onStateChange(state.copy(smallJoy = it)) }
-                DiarySticker("图片描述")
-                SectionField(state.photoNotes) { onStateChange(state.copy(photoNotes = it)) }
-            }
-        }
+            shape = RoundedCornerShape(10.dp),
+            label = { Text("心情标签（空格/逗号分隔）") },
+            singleLine = true,
+        )
+        DiaryEditField("☀️ 今日完成", state.todayDone) { onStateChange(state.copy(todayDone = it)) }
+        DiaryEditField("📚 工作任务", state.workTasks) { onStateChange(state.copy(workTasks = it)) }
+        DiaryEditField("🍀 小幸福", state.smallJoy) { onStateChange(state.copy(smallJoy = it)) }
+        DiaryEditField("📝 可改进", state.canImprove) { onStateChange(state.copy(canImprove = it)) }
+        DiaryEditField("📷 图片描述", state.photoNotes) { onStateChange(state.copy(photoNotes = it)) }
         TextButton(onClick = onDone) { Text("完成") }
     }
 }
@@ -1238,6 +1225,23 @@ private fun DiaryLine(title: String, content: String) {
     content.lines().map(String::trim).filter(String::isNotBlank).take(3).forEachIndexed { index, line ->
         Text("${index + 1}. $line", style = MaterialTheme.typography.bodySmall, color = Color(0xFF2F2922))
     }
+}
+
+@Composable
+private fun DiaryEditField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    Text(label, style = MaterialTheme.typography.labelMedium, color = Color(0xFF5A4A3B))
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier.fillMaxWidth(),
+        minLines = 2,
+        maxLines = 4,
+        shape = RoundedCornerShape(10.dp),
+    )
 }
 
 @Composable
