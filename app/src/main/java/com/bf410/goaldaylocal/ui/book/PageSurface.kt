@@ -575,9 +575,9 @@ fun ActivePageLayer(
             },
         ) {
             when (page) {
-                is TargetPage -> EditableBulletPage(page.title, page.items, customPageItems, tint, BookStrings.addTarget, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
-                is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), BookStrings.addSchedule, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
-                is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), BookStrings.addPlan, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
+                is TargetPage -> EditableBulletPage(page.title, page.items, customPageItems, tint, BookStrings.addTarget, false, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
+                is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), BookStrings.addSchedule, true, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
+                is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), BookStrings.addPlan, false, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
                 is DiaryPage -> DiarySection(page.title, page.prompt, tint, diaryDraft, pendingCommand, onCommand, onDiaryChange, contentMode, onContentModeChange)
             }
         }
@@ -602,6 +602,7 @@ private fun EditableBulletPage(
     customItems: List<String>,
     tint: Color,
     inputLabel: String,
+    isSchedulePage: Boolean,
     isChecked: (String, String) -> Boolean,
     onToggleChecked: (String, String) -> Unit,
     onAddCustomItem: (String) -> Unit,
@@ -631,6 +632,21 @@ private fun EditableBulletPage(
     var dragPreviewTarget by remember(pageTitle) { mutableStateOf(DragTarget.NONE) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (isSchedulePage) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0x10A17856))
+                    .border(1.dp, Color(0x1EA17856), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("四月日历页", style = MaterialTheme.typography.labelMedium, color = Color(0xFF655545))
+                Text("MON-SUN", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9B8C7D))
+            }
+        }
         WeekThemeSection(theme = weeklyTheme, onThemeChange = onWeeklyThemeChange)
         QuickAddTaskSection(
             inputLabel = inputLabel,
@@ -1348,6 +1364,20 @@ private fun DiarySection(
     var structured by remember(title, diaryDraft) { mutableStateOf(StructuredDiary.fromRaw(diaryDraft)) }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            listOf("📎 记忆", "🌿 心情", "📸 片段").forEach { sticker ->
+                Text(
+                    sticker,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF7B6A5A),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x12B59072))
+                        .border(1.dp, Color(0x1EB59072), RoundedCornerShape(99.dp))
+                        .padding(horizontal = 7.dp, vertical = 3.dp),
+                )
+            }
+        }
         Text(text = prompt, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6E665D))
         if (editingDiary?.title == title) {
             StructuredDiaryEditor(
