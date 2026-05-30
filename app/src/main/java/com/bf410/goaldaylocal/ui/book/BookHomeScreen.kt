@@ -417,43 +417,47 @@ private fun BookDetailView(
                 ActionChip(label = BookStrings.deleteBook, color = Color(0xFF9C5A52), onClick = viewModel::removeCurrentCustomBook)
             }
         }
-        Spacer(Modifier.height(12.dp))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .pointerInput(segment) {
-                    detectHorizontalDragGestures(
-                        onHorizontalDrag = { _, dragAmount ->
-                            segmentSwipeDistance += dragAmount
-                        },
-                        onDragEnd = {
-                            if (segmentSwipeDistance <= -68f) {
-                                switchSegment(nextSegment(segment))
-                            } else if (segmentSwipeDistance >= 68f) {
-                                switchSegment(previousSegment(segment))
-                            }
-                            segmentSwipeDistance = 0f
-                        },
-                        onDragCancel = { segmentSwipeDistance = 0f },
+        if (forcedSegment == null) {
+            Spacer(Modifier.height(12.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .pointerInput(segment) {
+                        detectHorizontalDragGestures(
+                            onHorizontalDrag = { _, dragAmount ->
+                                segmentSwipeDistance += dragAmount
+                            },
+                            onDragEnd = {
+                                if (segmentSwipeDistance <= -68f) {
+                                    switchSegment(nextSegment(segment))
+                                } else if (segmentSwipeDistance >= 68f) {
+                                    switchSegment(previousSegment(segment))
+                                }
+                                segmentSwipeDistance = 0f
+                            },
+                            onDragCancel = { segmentSwipeDistance = 0f },
+                        )
+                    },
+            ) {
+                filteredPages.forEachIndexed { idx, item ->
+                    val index = book.pages.indexOfFirst { it.title == item.title }.coerceAtLeast(0)
+                    Text(
+                        text = item.title,
+                        color = if (idx == segmentPageIndex) Color(0xFF2F261D) else Color(0xFF7A7065),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(if (idx == segmentPageIndex) Color(0x4DB88A58) else Color(0x18FFFFFF))
+                            .clickable { viewModel.setPage(index) }
+                            .padding(horizontal = 12.dp, vertical = 7.dp),
                     )
-                },
-        ) {
-            filteredPages.forEachIndexed { idx, item ->
-                val index = book.pages.indexOfFirst { it.title == item.title }.coerceAtLeast(0)
-                Text(
-                    text = item.title,
-                    color = if (idx == segmentPageIndex) Color(0xFF2F261D) else Color(0xFF7A7065),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(if (idx == segmentPageIndex) Color(0x4DB88A58) else Color(0x18FFFFFF))
-                        .clickable { viewModel.setPage(index) }
-                        .padding(horizontal = 12.dp, vertical = 7.dp),
-                )
+                }
             }
+            Spacer(Modifier.height(16.dp))
+        } else {
+            Spacer(Modifier.height(8.dp))
         }
-        Spacer(Modifier.height(16.dp))
         BookReader(
             bookId = book.id,
             bookTitle = book.title,
