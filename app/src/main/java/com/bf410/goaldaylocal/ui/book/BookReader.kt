@@ -145,7 +145,7 @@ fun BookReader(
             )
         },
         spine = { visualProgress, active ->
-            SpineLayer(visualProgress = visualProgress, active = active)
+            SpineLayer(visualProgress = visualProgress, active = active, profile = turnProfile)
         },
     )
 }

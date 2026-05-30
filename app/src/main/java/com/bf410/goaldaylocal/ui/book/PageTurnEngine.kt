@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -316,6 +317,23 @@ fun PageTurnEngine(
                                         Color.White.copy(alpha = (0.04f + visualProgress * 0.18f).coerceAtMost(0.22f)),
                                     )
                                 },
+                            ),
+                        ),
+                )
+
+                Box(
+                    modifier = Modifier
+                        .align(if (draggingToNext) Alignment.TopEnd else Alignment.TopStart)
+                        .width((18f + visualProgress * 34f).dp)
+                        .height((18f + visualProgress * 34f).dp)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = (0.04f + visualProgress * 0.14f).coerceAtMost(0.2f)),
+                                    Color.Black.copy(alpha = (0.02f + visualProgress * 0.10f).coerceAtMost(0.12f)),
+                                    Color.Transparent,
+                                ),
+                                radius = 120f,
                             ),
                         ),
                 )

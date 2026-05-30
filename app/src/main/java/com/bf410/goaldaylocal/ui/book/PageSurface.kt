@@ -78,11 +78,13 @@ private const val DONE_SWIPE_THRESHOLD = -170f
 fun BoxScope.SpineLayer(
     visualProgress: Float,
     active: Boolean,
+    profile: TurnProfile = TurnProfile.DEFAULT,
 ) {
+    val baseWidth = if (profile == TurnProfile.HANDBOOK) 24.dp else 20.dp
     Box(
         modifier = Modifier
             .align(Alignment.Center)
-            .width(20.dp)
+            .width(baseWidth)
             .fillMaxHeight()
             .background(
                 Brush.horizontalGradient(
@@ -99,7 +101,7 @@ fun BoxScope.SpineLayer(
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width((16f + visualProgress * 10f).dp)
+                .width((if (profile == TurnProfile.HANDBOOK) 18f else 16f + visualProgress * 10f).dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
@@ -107,6 +109,21 @@ fun BoxScope.SpineLayer(
                             Color.Black.copy(alpha = (0.09f + visualProgress * 0.18f).coerceAtMost(0.24f)),
                             Color.Transparent,
                             Color.Black.copy(alpha = (0.09f + visualProgress * 0.18f).coerceAtMost(0.24f)),
+                        ),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width((3f + visualProgress * if (profile == TurnProfile.HANDBOOK) 9f else 7f).dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color(0x44FFF0DF).copy(alpha = (0.24f + visualProgress * 0.24f).coerceAtMost(0.46f)),
+                            Color(0x11000000),
+                            Color(0x44FFF0DF).copy(alpha = (0.24f + visualProgress * 0.24f).coerceAtMost(0.46f)),
                         ),
                     ),
                 ),
@@ -176,6 +193,17 @@ fun PageSurface(
                 .background(
                     Brush.horizontalGradient(
                         listOf(Color(0x12000000), Color(0x10F7E9D7), Color(0x12000000)),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(14.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color.Transparent, Color(0x10A88A6C), Color.Transparent),
                     ),
                 ),
         )
