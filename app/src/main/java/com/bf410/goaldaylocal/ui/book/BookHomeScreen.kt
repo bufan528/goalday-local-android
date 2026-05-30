@@ -434,6 +434,7 @@ private fun BookDetailView(
             onMoveItemToCompleted = viewModel::moveItemToCompleted,
             onRestoreItemFromToday = viewModel::restoreItemFromToday,
             onRestoreItemFromCompleted = viewModel::restoreItemFromCompleted,
+            shellStyle = if (forcedSegment == BookSegment.DIARY) ShellStyle.BOOK else ShellStyle.LIGHT,
             onFlipNext = { if (uiState.selectedPageIndex < book.pages.lastIndex) viewModel.setPage(uiState.selectedPageIndex + 1) },
             onFlipPrevious = { if (uiState.selectedPageIndex > 0) viewModel.setPage(uiState.selectedPageIndex - 1) },
         )

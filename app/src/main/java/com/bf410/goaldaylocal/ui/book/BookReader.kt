@@ -45,6 +45,7 @@ fun BookReader(
     onMoveItemToCompleted: (String) -> Unit,
     onRestoreItemFromToday: (String) -> Unit,
     onRestoreItemFromCompleted: (String) -> Unit,
+    shellStyle: ShellStyle = ShellStyle.LIGHT,
     onFlipNext: () -> Unit,
     onFlipPrevious: () -> Unit,
 ) {
@@ -60,6 +61,7 @@ fun BookReader(
         onFlipPrevious = onFlipPrevious,
         shell = { canPrev, canNext, enabled, tapPrev, tapNext, content ->
             BookShell(
+                shellStyle = shellStyle,
                 canTurnPrevious = canPrev,
                 canTurnNext = canNext,
                 turnEnabled = enabled,

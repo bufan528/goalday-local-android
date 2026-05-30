@@ -19,9 +19,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+enum class ShellStyle {
+    LIGHT,
+    BOOK,
+}
+
 @Composable
 fun BookShell(
     modifier: Modifier = Modifier,
+    shellStyle: ShellStyle = ShellStyle.LIGHT,
     canTurnPrevious: Boolean,
     canTurnNext: Boolean,
     turnEnabled: Boolean,
@@ -29,39 +35,63 @@ fun BookShell(
     onTapNext: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val outerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(34.dp) else RoundedCornerShape(28.dp)
+    val innerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(26.dp) else RoundedCornerShape(22.dp)
+    val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 8.dp else 10.dp
+    val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 6.dp else 8.dp
+    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 24.dp else 20.dp
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 10.dp, vertical = 8.dp)
-            .shadow(14.dp, RoundedCornerShape(28.dp), clip = false)
-            .clip(RoundedCornerShape(28.dp))
-            .background(Color(0xFFFDFDFD)),
+            .padding(horizontal = outerPaddingH, vertical = outerPaddingV)
+            .shadow(if (shellStyle == ShellStyle.BOOK) 20.dp else 14.dp, outerShape, clip = false)
+            .clip(outerShape)
+            .background(
+                if (shellStyle == ShellStyle.BOOK) {
+                    Brush.linearGradient(
+                        listOf(Color(0xFFB9865E), Color(0xFFE4C39F), Color(0xFFAA7750)),
+                        start = Offset.Zero,
+                        end = Offset(900f, 700f),
+                    )
+                } else {
+                    Brush.verticalGradient(listOf(Color(0xFFFDFDFD), Color(0xFFFDFDFD)))
+                },
+            ),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color(0x10FFFFFF), Color.Transparent, Color(0x05000000)))),
+                .background(
+                    Brush.verticalGradient(
+                        if (shellStyle == ShellStyle.BOOK) {
+                            listOf(Color(0x22FFFFFF), Color.Transparent, Color(0x12000000))
+                        } else {
+                            listOf(Color(0x10FFFFFF), Color.Transparent, Color(0x05000000))
+                        },
+                    ),
+                ),
         )
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 10.dp)
-                .clip(RoundedCornerShape(22.dp))
+                .padding(horizontal = if (shellStyle == ShellStyle.BOOK) 10.dp else 8.dp, vertical = if (shellStyle == ShellStyle.BOOK) 12.dp else 10.dp)
+                .clip(innerShape)
                 .background(Color(0xFFFFFFFF)),
         )
 
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(1.dp)
+                .width(if (shellStyle == ShellStyle.BOOK) 3.dp else 1.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            Color.Transparent,
-                            Color(0x14000000),
-                            Color.Transparent,
+                            if (shellStyle == ShellStyle.BOOK) Color(0x335E3E26) else Color.Transparent,
+                            if (shellStyle == ShellStyle.BOOK) Color(0x55F2E4D6) else Color(0x14000000),
+                            if (shellStyle == ShellStyle.BOOK) Color(0x335E3E26) else Color.Transparent,
                         ),
                     ),
                 ),
@@ -72,7 +102,7 @@ fun BookShell(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .width(20.dp)
+                .width(edgeZoneWidth)
                 .fillMaxHeight()
                 .clickable(enabled = canTurnPrevious && turnEnabled, onClick = onTapPrevious),
         )
@@ -80,7 +110,7 @@ fun BookShell(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .width(20.dp)
+                .width(edgeZoneWidth)
                 .fillMaxHeight()
                 .clickable(enabled = canTurnNext && turnEnabled, onClick = onTapNext),
         )
