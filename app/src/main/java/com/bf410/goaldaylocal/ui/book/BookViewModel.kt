@@ -196,6 +196,7 @@ class BookViewModel(
         _uiState.update { it.copy(todayCompletedItems = nextDone, todayPlanItems = nextPlan) }
         if (!alreadyDone) {
             addItemToSchedule(item, LocalDate.now().dayOfMonth)
+            syncCompletedItemToDiary(book.id, item)
         }
     }
 
@@ -213,6 +214,86 @@ class BookViewModel(
         val updated = _uiState.value.todayCompletedItems.filterNot { it == item }
         store.saveTodayCompletedItems(book.id, page.title, updated)
         _uiState.update { it.copy(todayCompletedItems = updated) }
+        removeCompletedItemFromDiary(book.id, item)
+    }
+
+    private fun syncCompletedItemToDiary(bookId: String, item: String) {
+        val diaryPage = currentBook().pages.firstOrNull { it is DiaryPage } as? DiaryPage ?: return
+        val raw = store.diaryText(bookId, diaryPage.title)
+        val updated = appendToDiarySection(
+            raw = raw,
+            sectionName = "今日完成",
+            item = item,
+        )
+        store.setDiaryText(bookId, diaryPage.title, updated)
+        if (currentPage() is DiaryPage && currentPage().title == diaryPage.title) {
+            _uiState.update { it.copy(diaryDraft = updated) }
+        }
+    }
+
+    private fun removeCompletedItemFromDiary(bookId: String, item: String) {
+        val diaryPage = currentBook().pages.firstOrNull { it is DiaryPage } as? DiaryPage ?: return
+        val raw = store.diaryText(bookId, diaryPage.title)
+        val updated = removeFromDiarySection(
+            raw = raw,
+            sectionName = "今日完成",
+            item = item,
+        )
+        store.setDiaryText(bookId, diaryPage.title, updated)
+        if (currentPage() is DiaryPage && currentPage().title == diaryPage.title) {
+            _uiState.update { it.copy(diaryDraft = updated) }
+        }
+    }
+
+    private fun appendToDiarySection(raw: String, sectionName: String, item: String): String {
+        val normalized = item.trim()
+        if (normalized.isBlank()) return raw
+        val marker = "# $sectionName"
+        val sections = raw.lines().toMutableList()
+        val markerIndex = sections.indexOfFirst { it.trim() == marker }
+        if (markerIndex < 0) {
+            val prefix = if (raw.isBlank()) "" else raw.trimEnd() + "\n"
+            return prefix + marker + "\n" + normalized
+        }
+        val insertStart = markerIndex + 1
+        var insertEnd = sections.size
+        for (i in insertStart until sections.size) {
+            if (sections[i].trim().startsWith("# ")) {
+                insertEnd = i
+                break
+            }
+        }
+        val existing = sections.subList(insertStart, insertEnd)
+            .map { it.trim().removePrefix("- ").removePrefix("• ").removePrefix("✓ ").trim() }
+            .filter { it.isNotBlank() }
+        if (normalized in existing) return raw
+        sections.add(insertEnd, normalized)
+        return sections.joinToString("\n").trimEnd()
+    }
+
+    private fun removeFromDiarySection(raw: String, sectionName: String, item: String): String {
+        val normalized = item.trim()
+        if (normalized.isBlank() || raw.isBlank()) return raw
+        val marker = "# $sectionName"
+        val lines = raw.lines().toMutableList()
+        val markerIndex = lines.indexOfFirst { it.trim() == marker }
+        if (markerIndex < 0) return raw
+        val start = markerIndex + 1
+        var end = lines.size
+        for (i in start until lines.size) {
+            if (lines[i].trim().startsWith("# ")) {
+                end = i
+                break
+            }
+        }
+        for (i in start until end) {
+            val current = lines[i].trim().removePrefix("- ").removePrefix("• ").removePrefix("✓ ").trim()
+            if (current == normalized) {
+                lines.removeAt(i)
+                break
+            }
+        }
+        return lines.joinToString("\n").trimEnd()
     }
 
     fun createCustomBook(title: String, subtitle: String, color: Color) {
