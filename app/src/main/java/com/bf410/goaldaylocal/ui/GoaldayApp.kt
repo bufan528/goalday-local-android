@@ -27,26 +27,28 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bf410.goaldaylocal.ui.book.BookStrings
+import com.bf410.goaldaylocal.ui.book.BookEntryMode
 import com.bf410.goaldaylocal.ui.book.BookHomeScreen
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.calendar.CalendarScreen
 import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
 
-private enum class RootTab(val label: String) {
-    BOOK(BookStrings.tabBook),
-    CALENDAR(BookStrings.tabCalendar),
-    SETTINGS(BookStrings.tabSettings),
+private enum class RootTab(val label: String, val icon: String) {
+    PLANNER("周计划", "✓"),
+    CALENDAR("日历", "◷"),
+    INSPIRATION("灵感", "✦"),
+    HANDBOOK("手账", "📖"),
 }
 
 @Composable
 fun GoaldayApp() {
-    var tab by rememberSaveable { mutableStateOf(RootTab.BOOK) }
+    var tab by rememberSaveable { mutableStateOf(RootTab.PLANNER) }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()
 
-    val canGoBackInsideApp = !bookUiState.inLibraryMode || tab != RootTab.BOOK
+    val canGoBackInsideApp = !bookUiState.inLibraryMode || tab != RootTab.PLANNER
     val density = LocalDensity.current
     val edgeWidthPx = with(density) { 28.dp.toPx() }
     val triggerDistancePx = with(density) { 72.dp.toPx() }
@@ -56,7 +58,7 @@ fun GoaldayApp() {
     fun navigateBackInsideApp() {
         when {
             !bookUiState.inLibraryMode -> bookViewModel.openLibrary()
-            tab != RootTab.BOOK -> tab = RootTab.BOOK
+            tab != RootTab.PLANNER -> tab = RootTab.PLANNER
         }
     }
 
@@ -72,7 +74,7 @@ fun GoaldayApp() {
                         NavigationBarItem(
                             selected = tab == item,
                             onClick = { tab = item },
-                            icon = {},
+                            icon = { Text(item.icon) },
                             label = { Text(item.label) },
                         )
                     }
@@ -116,9 +118,10 @@ fun GoaldayApp() {
                     },
             ) {
                 when (tab) {
-                    RootTab.BOOK -> BookHomeScreen(viewModel = bookViewModel)
+                    RootTab.PLANNER -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.PLANNER)
                     RootTab.CALENDAR -> CalendarScreen(viewModel = calendarViewModel)
-                    RootTab.SETTINGS -> SettingsScreen()
+                    RootTab.INSPIRATION -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.INSPIRATION)
+                    RootTab.HANDBOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.HANDBOOK)
                 }
             }
         }

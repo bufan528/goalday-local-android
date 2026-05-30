@@ -61,9 +61,16 @@ private enum class BookSegment(val label: String) {
     LIST("清单"),
 }
 
+enum class BookEntryMode {
+    PLANNER,
+    INSPIRATION,
+    HANDBOOK,
+}
+
 @Composable
 fun BookHomeScreen(
     viewModel: BookViewModel,
+    entryMode: BookEntryMode = BookEntryMode.PLANNER,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -71,7 +78,7 @@ fun BookHomeScreen(
     var showRenamePageDialog by remember { mutableStateOf(false) }
     var showEditBookDialog by remember { mutableStateOf(false) }
     var showManagePanel by remember { mutableStateOf(false) }
-    var showInspiration by remember { mutableStateOf(false) }
+    var showInspiration by remember(entryMode) { mutableStateOf(entryMode == BookEntryMode.INSPIRATION) }
     var selectedTemplateIndex by remember { mutableStateOf(0) }
 
     if (uiState.inLibraryMode) {
@@ -115,6 +122,11 @@ fun BookHomeScreen(
                 onShowEditBook = { showEditBookDialog = true },
                 onToggleManagePanel = { showManagePanel = !showManagePanel },
                 showManagePanel = showManagePanel,
+                forcedSegment = when (entryMode) {
+                    BookEntryMode.PLANNER -> BookSegment.WEEK
+                    BookEntryMode.HANDBOOK -> BookSegment.DIARY
+                    BookEntryMode.INSPIRATION -> null
+                },
                 onShowInspiration = { showInspiration = true },
             )
         }
@@ -255,9 +267,19 @@ private fun BookDetailView(
     onShowEditBook: () -> Unit,
     onToggleManagePanel: () -> Unit,
     showManagePanel: Boolean,
+    forcedSegment: BookSegment?,
     onShowInspiration: () -> Unit,
 ) {
     var segment by remember(book.id) { mutableStateOf(resolveSegment(currentPage)) }
+    forcedSegment?.let { desired ->
+        if (segment != desired) {
+            segment = desired
+            val firstIndex = book.pages.indexOfFirst { page -> matchesSegment(page, desired) }
+            if (firstIndex >= 0 && uiState.selectedPageIndex != firstIndex) {
+                viewModel.setPage(firstIndex)
+            }
+        }
+    }
     val filteredPages = remember(book.pages, segment) {
         book.pages.filter { page ->
             matchesSegment(page, segment)
