@@ -32,8 +32,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 private const val EDGE_GESTURE_RATIO = 0.13f
-private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.19f
-private const val HANDBOOK_DRAG_START_THRESHOLD = 0.45f
+private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.16f
+private const val HANDBOOK_DRAG_START_THRESHOLD = 0.62f
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase
@@ -105,8 +105,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.86f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 140f else Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.9f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 120f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipNext()
@@ -116,8 +116,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.86f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 140f else Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.9f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 120f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipPrevious()
@@ -127,8 +127,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         0f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.8f else 0.84f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) Spring.StiffnessMediumLow else Spring.StiffnessMediumLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.88f else 0.84f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 260f else Spring.StiffnessMediumLow,
                         ),
                     )
                 }
