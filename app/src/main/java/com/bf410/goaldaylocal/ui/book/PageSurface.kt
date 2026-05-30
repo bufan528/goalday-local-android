@@ -553,6 +553,11 @@ fun ActivePageLayer(
         null -> 0f
     }
     val contentAlpha = (1f - turnProgress * 0.24f).coerceIn(0.74f, 1f)
+    val backgroundShift = when (turnDirection) {
+        TurnDirection.NEXT -> -turnProgress * 7f
+        TurnDirection.PREVIOUS -> turnProgress * 7f
+        null -> 0f
+    }
     val contentTiltY = when (turnDirection) {
         TurnDirection.NEXT -> -turnProgress * 2.2f
         TurnDirection.PREVIOUS -> turnProgress * 2.2f
@@ -567,6 +572,23 @@ fun ActivePageLayer(
         tint = tint,
         onSavedClick = onToggleSaved,
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(94.dp)
+                .graphicsLayer {
+                    translationX = backgroundShift
+                    alpha = (0.11f + turnProgress * 0.08f).coerceAtMost(0.22f)
+                }
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0x18B59072),
+                            Color.Transparent,
+                        ),
+                    ),
+                ),
+        )
         Column(
             modifier = Modifier.graphicsLayer {
                 alpha = contentAlpha

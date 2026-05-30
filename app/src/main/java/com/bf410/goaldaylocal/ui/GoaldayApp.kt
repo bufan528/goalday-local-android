@@ -9,6 +9,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,9 +37,9 @@ import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
 
 private enum class RootTab(val label: String, val icon: String) {
-    PLANNER("计划", "◉"),
-    CALENDAR("日历", "◌"),
-    INSPIRATION("灵感", "✦"),
+    PLANNER("计划", "◍"),
+    CALENDAR("日历", "◔"),
+    INSPIRATION("灵感", "✧"),
     HANDBOOK("手账", "📚"),
 }
 
@@ -79,18 +80,21 @@ fun GoaldayApp() {
                         NavigationBarItem(
                             selected = selected,
                             onClick = { tab = item },
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = Color(0x1F8F684F),
+                                selectedIconColor = Color(0xFF26221E),
+                                selectedTextColor = Color(0xFF26221E),
+                                unselectedIconColor = Color(0xFFB2AAA0),
+                                unselectedTextColor = Color(0xFFB2AAA0),
+                            ),
                             icon = {
                                 Text(
                                     item.icon,
-                                    color = if (selected) Color(0xFF26221E) else Color(0xFFB2AAA0),
                                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                                 )
                             },
                             label = {
-                                Text(
-                                    item.label,
-                                    color = if (selected) Color(0xFF26221E) else Color(0xFFB2AAA0),
-                                )
+                                Text(item.label)
                             },
                             alwaysShowLabel = true,
                         )
