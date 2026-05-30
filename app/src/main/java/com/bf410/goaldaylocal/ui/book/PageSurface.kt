@@ -1176,90 +1176,34 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
     val moodItems = remember(state.moodTags) {
         state.moodTags.split(',', '，', ' ').map(String::trim).filter(String::isNotBlank).take(6)
     }
-    NotebookSpread {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            DiarySticker("05/30 Sat")
-            val completedCount = listOf(state.todayDone, state.workTasks, state.smallJoy, state.canImprove)
-                .count { it.isNotBlank() }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("4月4日", style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E))
+        if (moodItems.isNotEmpty()) {
             Text(
-                text = "打卡 $completedCount/4",
+                moodItems.joinToString("  ") { "#$it" },
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF6B5B4C),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0x1FD8B893))
-                    .padding(horizontal = 9.dp, vertical = 4.dp),
+                color = Color(0xFF8B7A68),
             )
         }
-        if (moodItems.isNotEmpty()) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                moodItems.forEachIndexed { index, mood ->
-                    val chipBg = when (index % 3) {
-                        0 -> Color(0x26F0B4B2)
-                        1 -> Color(0x26F4D8A5)
-                        else -> Color(0x26B8D8F4)
-                    }
-                    Text(
-                        text = "#$mood",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF5B4A3C),
+        DiaryLine("☀️ 今日完成", state.todayDone)
+        DiaryLine("📚 工作任务", state.workTasks)
+        DiaryLine("🍀 小幸福", state.smallJoy)
+        DiaryLine("📝 可改进", state.canImprove)
+        val photos = state.photoNotes.lines().map(String::trim).filter(String::isNotBlank)
+        if (photos.isNotEmpty()) {
+            Text("📷 图片", style = MaterialTheme.typography.labelMedium, color = Color(0xFF5A4A3B))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                photos.take(3).forEach { note ->
+                    Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
-                            .background(chipBg)
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                    )
-                }
-            }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                DiaryBlock("今日完成", state.todayDone)
-                DiaryBlock("工作任务", state.workTasks)
-                DiaryBlock("可改进", state.canImprove)
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                DiaryBlock("小幸福", state.smallJoy)
-                val photos = state.photoNotes.lines().map(String::trim).filter(String::isNotBlank)
-                if (photos.isNotEmpty()) {
-                    DiarySticker("图片墙")
-                    val rows = photos.chunked(3)
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        rows.take(2).forEach { rowItems ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                                repeat(3) { index ->
-                                    val note = rowItems.getOrNull(index)
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(62.dp)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(if (note == null) Color(0xFFF8F4EE) else Color(0xFFEFE9E0))
-                                            .border(1.dp, Color(0xFFDDD3C5), RoundedCornerShape(10.dp))
-                                            .padding(6.dp),
-                                    ) {
-                                        if (note != null) {
-                                            Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258))
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                            .weight(1f)
+                            .height(72.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFF0ECE5))
+                            .border(1.dp, Color(0xFFE1D8CC), RoundedCornerShape(8.dp))
+                            .padding(6.dp),
+                    ) {
+                        Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258))
                     }
                 }
             }
@@ -1284,6 +1228,15 @@ private fun DiaryBlock(title: String, content: String) {
             .padding(horizontal = 9.dp, vertical = 7.dp),
     ) {
         Text(content, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF342C24))
+    }
+}
+
+@Composable
+private fun DiaryLine(title: String, content: String) {
+    if (content.isBlank()) return
+    Text(title, style = MaterialTheme.typography.labelMedium, color = Color(0xFF5A4A3B))
+    content.lines().map(String::trim).filter(String::isNotBlank).take(3).forEachIndexed { index, line ->
+        Text("${index + 1}. $line", style = MaterialTheme.typography.bodySmall, color = Color(0xFF2F2922))
     }
 }
 
