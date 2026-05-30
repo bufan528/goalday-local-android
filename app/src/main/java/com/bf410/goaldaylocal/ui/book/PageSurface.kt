@@ -657,6 +657,14 @@ private fun EditableBulletPage(
     val listNames = remember { listOf("Todo", "未来的自己", "奖励清单", "电影清单") }
     var selectedListIndex by remember(pageTitle) { mutableStateOf(0) }
     var dualColumnMode by remember(pageTitle) { mutableStateOf(true) }
+    val shownSourceItems = remember(sourceItems, selectedListIndex) {
+        when (selectedListIndex) {
+            1 -> sourceItems.filter { it.contains("目标") || it.contains("学习") || it.contains("计划") || it.contains("未来") }
+            2 -> sourceItems.filter { it.contains("奖励") || it.contains("完成") || it.contains("复盘") || it.contains("打卡") }
+            3 -> sourceItems.filter { it.contains("电影") || it.contains("读书") || it.contains("阅读") || it.contains("TED") }
+            else -> sourceItems
+        }.ifEmpty { sourceItems }
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (isSchedulePage) {
@@ -714,7 +722,7 @@ private fun EditableBulletPage(
                     modifier = Modifier.weight(1f),
                 )
                 SourcePoolSection(
-                    items = sourceItems,
+                    items = shownSourceItems,
                     pageTitle = pageTitle,
                     tint = tint,
                     selectedListName = listNames[selectedListIndex],
@@ -739,7 +747,7 @@ private fun EditableBulletPage(
                 modifier = Modifier.fillMaxWidth(),
             )
             SourcePoolSection(
-                items = sourceItems,
+                items = shownSourceItems,
                 pageTitle = pageTitle,
                 tint = tint,
                 selectedListName = listNames[selectedListIndex],
