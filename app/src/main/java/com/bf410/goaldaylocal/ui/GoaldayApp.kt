@@ -142,7 +142,10 @@ fun GoaldayApp() {
                             onOpenInspiration = { tab = RootTab.INSPIRATION },
                         )
                         RootTab.CALENDAR -> CalendarScreen(viewModel = calendarViewModel)
-                        RootTab.INSPIRATION -> InspirationScreen(viewModel = bookViewModel)
+                        RootTab.INSPIRATION -> InspirationScreen(
+                            viewModel = bookViewModel,
+                            onOpenHandbook = { tab = RootTab.HANDBOOK },
+                        )
                         RootTab.HANDBOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.HANDBOOK)
                     }
                 }

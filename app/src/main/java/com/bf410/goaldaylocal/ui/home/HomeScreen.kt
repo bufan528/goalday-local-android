@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
@@ -61,6 +62,14 @@ fun HomeScreen(
             .padding(bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        Text(
+            "为J人而生的APP",
+            color = Color.White,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier
+                .background(Color(0xFF111111), RoundedCornerShape(4.dp))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+        )
         GoaldayTopBar(leftTitle = "Goalday", rightPrimaryText = "今天", onRightPrimaryClick = { calendarViewModel.backToToday() })
 
         SegmentedHeader(
@@ -241,6 +250,23 @@ private fun JournalQuickBoard(
         Text("在清单中勾选一周要做的所有事", color = Color(0xFF2A2723), style = MaterialTheme.typography.titleSmall)
         done.forEachIndexed { index, entry ->
             Text("${index + 1}  ${entry.title}", color = Color(0xFF2F2A24), style = MaterialTheme.typography.bodyMedium)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            repeat(3) { idx ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(58.dp)
+                        .background(
+                            when (idx) {
+                                0 -> Color(0xFFD6D1CA)
+                                1 -> Color(0xFFD9C1B5)
+                                else -> Color(0xFFC8D3BF)
+                            },
+                            RoundedCornerShape(6.dp),
+                        ),
+                )
+            }
         }
         Text(
             "进入手账",
