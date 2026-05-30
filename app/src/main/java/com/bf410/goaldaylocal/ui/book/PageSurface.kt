@@ -1103,7 +1103,10 @@ private fun TodayBoardSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("21周", style = MaterialTheme.typography.titleSmall, color = Color(0xFFE26B72), fontWeight = FontWeight.SemiBold)
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("21周", style = MaterialTheme.typography.titleSmall, color = Color(0xFFE26B72), fontWeight = FontWeight.SemiBold)
+                    Text("▾", color = Color(0xFFE26B72), style = MaterialTheme.typography.labelSmall)
+                }
                 Text("|", color = Color(0xFFDDD7CE))
                 Text("日记", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB5ADA4))
                 Text("|", color = Color(0xFFDDD7CE))
@@ -1112,10 +1115,6 @@ private fun TodayBoardSection(
             Text("完成", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2F2922), fontWeight = FontWeight.Medium)
         }
         Text("左边执行 · 右边计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF948778))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            BoardStatChip(label = "计划 ${todayPlanItems.size}", bg = BoardTonePlan)
-            BoardStatChip(label = "完成 ${todayCompletedItems.size}", bg = BoardToneDone)
-        }
         if (todayPlanItems.isEmpty() && todayCompletedItems.isEmpty()) {
             Text("从右侧清单拖入（点击）到今日执行或完成区。", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
@@ -1203,7 +1202,13 @@ private fun TodayBoardSection(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Text("✓", color = Color(0xFF7FA579), style = MaterialTheme.typography.labelSmall)
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .clip(RoundedCornerShape(99.dp))
+                                    .background(Color(0x227FA579))
+                                    .border(1.dp, Color(0xFF7FA579), RoundedCornerShape(99.dp)),
+                            )
                             Text(
                                 text = item,
                                 style = completedTextStyle(completed = true),
@@ -1261,7 +1266,13 @@ private fun TodayBoardSection(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Text("◌", color = Color(0xFFB2A89B), style = MaterialTheme.typography.labelSmall)
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .clip(RoundedCornerShape(99.dp))
+                                    .background(Color(0x12B2A89B))
+                                    .border(1.dp, Color(0xFFB2A89B), RoundedCornerShape(99.dp)),
+                            )
                             Text(
                                 text = item,
                                 color = Color(0xFF2F2922),
