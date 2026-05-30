@@ -758,7 +758,18 @@ private fun EditableBulletPage(
                 doneCount = todayCompletedItems.size,
             )
         }
-        if (dualColumnMode) {
+        if (referenceBoardMode) {
+            ReferencePlannerBoard(
+                sourceItems = shownSourceItems,
+                todayItems = todayPlanItems,
+                doneItems = todayCompletedItems,
+                selectedListName = listNames[selectedListIndex],
+                onSwitchList = { selectedListIndex = (selectedListIndex + 1) % listNames.size },
+                onMoveItemToToday = onMoveItemToToday,
+                onMoveItemToCompleted = onMoveItemToCompleted,
+                onRestoreItemFromDone = onRestoreItemFromCompleted,
+            )
+        } else if (dualColumnMode) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -915,6 +926,126 @@ private fun FocusTimelineSection(
                         maxLines = 2,
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReferencePlannerBoard(
+    sourceItems: List<String>,
+    todayItems: List<String>,
+    doneItems: List<String>,
+    selectedListName: String,
+    onSwitchList: () -> Unit,
+    onMoveItemToToday: (String) -> Unit,
+    onMoveItemToCompleted: (String) -> Unit,
+    onRestoreItemFromDone: (String) -> Unit,
+) {
+    val weekday = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
+    val dayNumbers = (0..6).map { LocalDate.now().plusDays(it.toLong()).dayOfMonth }
+    val leftItems = (doneItems + todayItems).take(7)
+    val rightItems = (todayItems + sourceItems).distinct().take(9)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(420.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .border(1.dp, Color(0x22000000), RoundedCornerShape(10.dp))
+            .background(Color(0xFFFCFCFB)),
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1.18f)
+                .fillMaxHeight(),
+        ) {
+            weekday.forEachIndexed { index, label ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .border(0.6.dp, Color(0x12000000))
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Column(modifier = Modifier.width(34.dp)) {
+                        Text(dayNumbers[index].toString(), color = Color(0xFF26221D), fontWeight = FontWeight.SemiBold)
+                        Text(label, color = Color(0xFF777067), style = MaterialTheme.typography.labelSmall)
+                    }
+                    Text(
+                        text = leftItems.getOrNull(index) ?: "",
+                        color = Color(0xFF3A332C),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable(enabled = leftItems.getOrNull(index) != null) {
+                                leftItems.getOrNull(index)?.let(onRestoreItemFromDone)
+                            },
+                    )
+                }
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .border(0.8.dp, Color(0x12000000)),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .border(1.dp, Color(0x1A000000), RoundedCornerShape(8.dp))
+                        .clickable(onClick = onSwitchList)
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                ) {
+                    Text(selectedListName, color = Color(0xFF29251F))
+                    Text("  ˅", color = Color(0xFF9C958B))
+                }
+                Text("完成", modifier = Modifier.clickable { rightItems.firstOrNull()?.let(onMoveItemToCompleted) }, color = Color(0xFF2E2924))
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                rightItems.forEach { item ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        Text("·", color = Color(0xFFD8CFC5))
+                        Text(
+                            text = item,
+                            color = Color(0xFF2D2823),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onMoveItemToToday(item) },
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Box(
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(12.dp)
+                    .size(30.dp)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0x12000000)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("›", color = Color(0xFF5D554D))
             }
         }
     }
