@@ -102,7 +102,16 @@ fun HomeScreen(
         when (mode) {
             WeeklyMode.WEEK -> WeekBoard(weekDates, calendarState.entries, onOpenCalendar)
             WeeklyMode.DIARY -> DiaryBoard(calendarState.entries, onOpenHandbook)
-            WeeklyMode.CHECKLIST -> ChecklistBoard(checklistDraft, onOpenInspiration)
+            WeeklyMode.CHECKLIST -> ChecklistBoard(
+                checklistDraft = checklistDraft,
+                scheduleEntries = calendarState.entries,
+                onAddSchedule = { title ->
+                    calendarViewModel.addSchedule(title = title, day = LocalDate.now().dayOfMonth, note = "首页清单")
+                },
+                onRemoveSchedule = { id -> calendarViewModel.removeSchedule(id) },
+                onToggleScheduleDone = { id -> calendarViewModel.toggleScheduleCompleted(id) },
+                onOpenInspiration = onOpenInspiration,
+            )
         }
     }
 }
@@ -259,6 +268,10 @@ private fun DiaryBoard(
 @Composable
 private fun ChecklistBoard(
     checklistDraft: MutableList<ChecklistDraftItem>,
+    scheduleEntries: List<ScheduleEntry>,
+    onAddSchedule: (String) -> Unit,
+    onRemoveSchedule: (String) -> Unit,
+    onToggleScheduleDone: (String) -> Unit,
     onOpenInspiration: () -> Unit,
 ) {
     var focusedIndex by remember { mutableIntStateOf(0) }
@@ -319,19 +332,26 @@ private fun ChecklistBoard(
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("🗑", modifier = Modifier.clickable {
                     if (checklistDraft.isNotEmpty()) {
-                        checklistDraft.removeAt(focusedIndex.coerceIn(0, checklistDraft.lastIndex))
+                        val idx = focusedIndex.coerceIn(0, checklistDraft.lastIndex)
+                        val removed = checklistDraft.removeAt(idx)
+                        val today = LocalDate.now().dayOfMonth
+                        scheduleEntries.firstOrNull { it.day == today && it.title == removed.text }?.let { onRemoveSchedule(it.id) }
                         focusedIndex = (focusedIndex - 1).coerceAtLeast(0)
                     }
                 })
                 Text("＋", modifier = Modifier.clickable {
                     val text = inputText.trim().ifBlank { "新任务" }
                     checklistDraft.add(focusedIndex.coerceIn(0, checklistDraft.size), ChecklistDraftItem(text))
+                    onAddSchedule(text)
                     inputText = ""
                 })
                 Text("✓", modifier = Modifier.clickable {
                     if (checklistDraft.isNotEmpty()) {
                         val i = focusedIndex.coerceIn(0, checklistDraft.lastIndex)
-                        checklistDraft[i] = checklistDraft[i].copy(checked = !checklistDraft[i].checked)
+                        val next = !checklistDraft[i].checked
+                        checklistDraft[i] = checklistDraft[i].copy(checked = next)
+                        val today = LocalDate.now().dayOfMonth
+                        scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[i].text }?.let { onToggleScheduleDone(it.id) }
                     }
                 })
             }
@@ -356,6 +376,20 @@ private fun ChecklistBoard(
             color = Color(0xFFE88FAE),
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier.clickable { onOpenInspiration() },
+        )
+
+        Text(
+            "快速添加日程",
+            color = Color.White,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier
+                .background(Color(0xFF242424), RoundedCornerShape(7.dp))
+                .clickable {
+                    val text = inputText.trim().ifBlank { "新日程" }
+                    onAddSchedule(text)
+                    inputText = ""
+                }
+                .padding(horizontal = 10.dp, vertical = 5.dp),
         )
     }
 }
