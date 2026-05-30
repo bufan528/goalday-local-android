@@ -127,6 +127,13 @@ fun PageSurface(
     ) {
         Box(
             modifier = Modifier
+                .align(Alignment.Center)
+                .width(2.dp)
+                .fillMaxHeight()
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0x12000000), Color.Transparent))),
+        )
+        Box(
+            modifier = Modifier
                 .matchParentSize()
                 .alpha(0.12f)
                 .background(
@@ -149,6 +156,19 @@ fun PageSurface(
                 .background(
                     Brush.horizontalGradient(
                         listOf(Color(0x12000000), Color.Transparent),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .width(20.dp)
+                .height(20.dp)
+                .background(
+                    Brush.linearGradient(
+                        listOf(Color.Transparent, Color(0x12C2AE95)),
+                        start = Offset(0f, 20f),
+                        end = Offset(20f, 0f),
                     ),
                 ),
         )
@@ -1127,6 +1147,20 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
                 style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFF8B7A68),
             )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0x1AE9D6BC))
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+            ) { Text("日记", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B5B4C)) }
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0x1ABEDDF0))
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+            ) { Text("记录", style = MaterialTheme.typography.labelSmall, color = Color(0xFF5A4A3B)) }
         }
         DiaryLine("☀️ 今日完成", state.todayDone)
         DiaryLine("📚 工作任务", state.workTasks)
