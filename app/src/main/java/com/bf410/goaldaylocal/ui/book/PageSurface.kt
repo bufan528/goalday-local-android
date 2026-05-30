@@ -731,15 +731,23 @@ private fun ReferencePlannerBoard(
     }
     val scheduleByDay = weekDates.associateWith { date ->
         schedulePreviewEntries
-            .filter { it.day == date.dayOfMonth }
-            .sortedWith(compareBy<ScheduleEntry> { it.completed.not() }.thenBy { it.title })
+            .filter { entry ->
+                entry.year == date.year &&
+                    entry.month == date.monthValue &&
+                    entry.day == date.dayOfMonth
+            }
+            .sortedWith(
+                compareBy<ScheduleEntry> { it.completed }
+                    .thenBy { it.title.length }
+                    .thenBy { it.title },
+            )
     }
     val leftItems = weekDates.map { date ->
         val entries = scheduleByDay[date].orEmpty()
         when {
             entries.isEmpty() -> ""
             entries.first().completed -> "✓ ${entries.first().title}"
-            else -> entries.first().title
+            else -> "· ${entries.first().title}"
         }
     }
     val todayPool = todayItems.distinct().take(6).map { BoardTask(id = "today_$it", title = it) }
