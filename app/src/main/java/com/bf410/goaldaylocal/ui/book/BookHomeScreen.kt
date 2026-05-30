@@ -448,13 +448,24 @@ private fun BookDetailView(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color(0xFFF3E6D8),
+                                Color(0xFFEBD9C6),
+                                Color(0xFFE0C8B0),
+                            ),
+                        ),
+                    )
+                    .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.88f)
-                        .fillMaxHeight(0.70f),
+                        .fillMaxWidth(0.95f)
+                        .fillMaxHeight(0.84f),
                 ) {
                     BookReader(
                         bookId = book.id,

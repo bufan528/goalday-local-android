@@ -32,8 +32,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 private const val EDGE_GESTURE_RATIO = 0.13f
-private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.16f
-private const val HANDBOOK_DRAG_START_THRESHOLD = 0.62f
+private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.22f
+private const val HANDBOOK_DRAG_START_THRESHOLD = 0.42f
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase

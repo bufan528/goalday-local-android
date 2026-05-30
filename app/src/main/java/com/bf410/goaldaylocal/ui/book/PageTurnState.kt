@@ -40,11 +40,11 @@ fun resolvePageTurnRelease(
         return TurnReleaseResult.SnapBack
     }
 
-    val distanceThreshold = if (profile == TurnProfile.HANDBOOK) 0.27f else TURN_DISTANCE_THRESHOLD
-    val flingThreshold = if (profile == TurnProfile.HANDBOOK) 720f else TURN_FLING_THRESHOLD
+    val distanceThreshold = if (profile == TurnProfile.HANDBOOK) 0.22f else TURN_DISTANCE_THRESHOLD
+    val flingThreshold = if (profile == TurnProfile.HANDBOOK) 620f else TURN_FLING_THRESHOLD
     val opposingThreshold = if (profile == TurnProfile.HANDBOOK) 300f else OPPOSING_VELOCITY_THRESHOLD
     val progressPasses = progress >= distanceThreshold
-    val nearCommitProgress = if (profile == TurnProfile.HANDBOOK) progress >= 0.22f else progress >= 0.2f
+    val nearCommitProgress = if (profile == TurnProfile.HANDBOOK) progress >= 0.18f else progress >= 0.2f
     val velocityPasses = when (direction) {
         TurnDirection.NEXT -> velocity <= -flingThreshold
         TurnDirection.PREVIOUS -> velocity >= flingThreshold
@@ -76,7 +76,7 @@ fun applyBoundaryResistance(rawProgress: Float, canTurn: Boolean): Float {
 }
 
 fun initialEdgeTapProgress(profile: TurnProfile = TurnProfile.DEFAULT): Float =
-    if (profile == TurnProfile.HANDBOOK) 0.24f else EDGE_TAP_START_PROGRESS
+    if (profile == TurnProfile.HANDBOOK) 0.20f else EDGE_TAP_START_PROGRESS
 
 fun updatedTurnProgress(
     currentProgress: Float,
