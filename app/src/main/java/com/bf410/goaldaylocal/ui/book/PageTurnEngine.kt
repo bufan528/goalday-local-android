@@ -3,6 +3,8 @@ package com.bf410.goaldaylocal.ui.book
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -31,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
-private const val EDGE_GESTURE_RATIO = 0.15f
+private const val EDGE_GESTURE_RATIO = 0.13f
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase
@@ -92,17 +94,35 @@ fun PageTurnEngine(
             when (result) {
                 TurnReleaseResult.CompleteNext -> {
                     phase = TurnPhase.SettlingForward
-                    progress.animateTo(1f, animationSpec = tween(durationMillis = 210, easing = FastOutSlowInEasing))
+                    progress.animateTo(
+                        1f,
+                        animationSpec = spring(
+                            dampingRatio = 0.9f,
+                            stiffness = Spring.StiffnessLow,
+                        ),
+                    )
                     onFlipNext()
                 }
                 TurnReleaseResult.CompletePrevious -> {
                     phase = TurnPhase.SettlingForward
-                    progress.animateTo(1f, animationSpec = tween(durationMillis = 210, easing = FastOutSlowInEasing))
+                    progress.animateTo(
+                        1f,
+                        animationSpec = spring(
+                            dampingRatio = 0.9f,
+                            stiffness = Spring.StiffnessLow,
+                        ),
+                    )
                     onFlipPrevious()
                 }
                 TurnReleaseResult.SnapBack -> {
                     phase = TurnPhase.SettlingBack
-                    progress.animateTo(0f, animationSpec = tween(durationMillis = 220, easing = LinearOutSlowInEasing))
+                    progress.animateTo(
+                        0f,
+                        animationSpec = spring(
+                            dampingRatio = 0.84f,
+                            stiffness = Spring.StiffnessMediumLow,
+                        ),
+                    )
                 }
             }
             progress.snapTo(0f)
@@ -311,20 +331,20 @@ fun Modifier.turningPageTransform(
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     transformOrigin = if (draggingToNext) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
     rotationY = when (direction) {
-        TurnDirection.NEXT -> -108f * visualProgress
-        TurnDirection.PREVIOUS -> 108f * visualProgress
+        TurnDirection.NEXT -> -118f * visualProgress
+        TurnDirection.PREVIOUS -> 118f * visualProgress
         null -> 0f
     }
     translationX = when {
-        draggingToNext -> -(visualProgress * 22f + visualProgress * visualProgress * 42f)
-        draggingToPrevious -> visualProgress * 22f + visualProgress * visualProgress * 42f
+        draggingToNext -> -(visualProgress * 16f + visualProgress * visualProgress * 56f)
+        draggingToPrevious -> visualProgress * 16f + visualProgress * visualProgress * 56f
         else -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
     translationY = yOffsetFactor * visualProgress * 12f
     rotationX = -yOffsetFactor * visualProgress * 8.5f
-    cameraDistance = 30f * density
-    shadowElevation = 24f
+    cameraDistance = 34f * density
+    shadowElevation = 28f
 }
 
 fun Modifier.pageBackTransform(
@@ -334,12 +354,12 @@ fun Modifier.pageBackTransform(
 ): Modifier = graphicsLayer {
     transformOrigin = if (direction == TurnDirection.NEXT) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
     rotationY = when (direction) {
-        TurnDirection.NEXT -> -108f * visualProgress * 0.92f
-        TurnDirection.PREVIOUS -> 108f * visualProgress * 0.92f
+        TurnDirection.NEXT -> -118f * visualProgress * 0.91f
+        TurnDirection.PREVIOUS -> 118f * visualProgress * 0.91f
         null -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
     translationY = yOffsetFactor * visualProgress * 7f
     rotationX = -yOffsetFactor * visualProgress * 5f
-    cameraDistance = 30f * density
+    cameraDistance = 34f * density
 }

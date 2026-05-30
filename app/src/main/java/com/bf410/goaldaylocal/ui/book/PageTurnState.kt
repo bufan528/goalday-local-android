@@ -13,11 +13,11 @@ enum class TurnReleaseResult {
     SnapBack,
 }
 
-private const val TURN_DISTANCE_THRESHOLD = 0.30f
-private const val TURN_FLING_THRESHOLD = 1260f
+private const val TURN_DISTANCE_THRESHOLD = 0.36f
+private const val TURN_FLING_THRESHOLD = 980f
 private const val BOUNDARY_RESISTANCE_FACTOR = 0.22f
-private const val OPPOSING_VELOCITY_THRESHOLD = 600f
-private const val EDGE_TAP_START_PROGRESS = 0.34f
+private const val OPPOSING_VELOCITY_THRESHOLD = 520f
+private const val EDGE_TAP_START_PROGRESS = 0.26f
 
 fun resolvePageTurnRelease(
     direction: TurnDirection,
@@ -86,9 +86,9 @@ fun updatedTurnProgress(
 
 fun visualTurnProgress(progress: Float): Float {
     val clamped = progress.coerceIn(0f, 1f)
-    val lateLift = clamped * clamped * (3f - 2f * clamped)
-    val committedLift = lateLift * lateLift
-    return (clamped * 0.42f + lateLift * 0.36f + committedLift * 0.38f).coerceIn(0f, 1f)
+    val curveA = clamped * clamped * (3f - 2f * clamped)
+    val curveB = curveA * curveA
+    return (clamped * 0.28f + curveA * 0.44f + curveB * 0.48f).coerceIn(0f, 1f)
 }
 
 fun destinationRevealAlpha(progress: Float): Float {
