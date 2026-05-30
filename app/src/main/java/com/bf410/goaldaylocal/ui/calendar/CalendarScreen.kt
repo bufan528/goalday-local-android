@@ -83,6 +83,21 @@ fun CalendarScreen(
         GoaldayTopBar(
             onRightPrimaryClick = { viewModel.backToToday() },
         )
+        CalendarMonthBar(
+            year = uiState.year,
+            month = uiState.month,
+            onPrevious = viewModel::previousMonth,
+            onNext = viewModel::nextMonth,
+            onToday = {
+                viewModel.backToToday()
+                selectedDay = LocalDate.now().dayOfMonth
+            },
+        )
+        CalendarStats(
+            total = uiState.entries.size,
+            done = uiState.entries.count { it.completed },
+            todo = uiState.entries.count { !it.completed },
+        )
         GoaldaySegmentBar(
             items = listOf("日程", "${uiState.month}月${selectedDay}日", "清单"),
             selectedIndex = when (mode) {
@@ -172,6 +187,70 @@ fun CalendarScreen(
                 editingEntry = null
             },
         )
+    }
+}
+
+@Composable
+private fun CalendarMonthBar(
+    year: Int,
+    month: Int,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onToday: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFBFAF8), RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("‹ 上月", color = Color(0xFF6F675D), style = MaterialTheme.typography.labelLarge, modifier = Modifier.clickable { onPrevious() })
+        Text("${year}年${month}月", color = Color(0xFF2F2A24), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("今天", color = Color.White, style = MaterialTheme.typography.labelSmall, modifier = Modifier
+                .clip(RoundedCornerShape(99.dp))
+                .background(Color(0xFF222222))
+                .clickable { onToday() }
+                .padding(horizontal = 10.dp, vertical = 5.dp))
+            Text("下月 ›", color = Color(0xFF6F675D), style = MaterialTheme.typography.labelLarge, modifier = Modifier.clickable { onNext() })
+        }
+    }
+}
+
+@Composable
+private fun CalendarStats(
+    total: Int,
+    done: Int,
+    todo: Int,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        StatPill(label = "总任务", value = total.toString(), modifier = Modifier.weight(1f))
+        StatPill(label = "待完成", value = todo.toString(), modifier = Modifier.weight(1f))
+        StatPill(label = "已完成", value = done.toString(), modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun StatPill(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .background(Color(0xFFFBFAF8), RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0x14000000), RoundedCornerShape(12.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(label, color = Color(0xFF90887F), style = MaterialTheme.typography.labelSmall)
+        Text(value, color = Color(0xFF2F2A24), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
     }
 }
 
