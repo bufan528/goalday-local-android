@@ -61,7 +61,7 @@ fun CalendarScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(
             modifier = Modifier
@@ -70,39 +70,39 @@ fun CalendarScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("${uiState.year} / ${uiState.month}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+            Text("${uiState.year}年${uiState.month}月", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             Text(
                 "回到今天",
-                style = MaterialTheme.typography.labelLarge,
-                color = Color(0xFF8F684F),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF2D2A26),
                 modifier = Modifier
-                    .background(Color(0x1A8F684F), RoundedCornerShape(99.dp))
+                    .background(Color(0x12000000), RoundedCornerShape(99.dp))
                     .clickable(onClick = viewModel::backToToday)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
             )
         }
 
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text("上个月", modifier = Modifier.clickable(onClick = viewModel::previousMonth), color = Color(0xFF8F684F))
+            Text("‹ 上个月", modifier = Modifier.clickable(onClick = viewModel::previousMonth), color = Color(0xFF7E776E))
             Text(
                 "新增日程",
                 modifier = Modifier.clickable {
                     selectedDay = selectedDay.coerceIn(1, maxDay)
                     showAddDialog = true
                 },
-                color = Color(0xFF8F684F),
+                color = Color(0xFF2D2A26),
             )
-            Text("下个月", modifier = Modifier.clickable(onClick = viewModel::nextMonth), color = Color(0xFF8F684F))
+            Text("下个月 ›", modifier = Modifier.clickable(onClick = viewModel::nextMonth), color = Color(0xFF7E776E))
         }
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    Brush.verticalGradient(listOf(Color(0xFFFFFBF6), Color(0xFFF2E7D8))),
-                    RoundedCornerShape(28.dp),
+                    Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFFAF7F2))),
+                    RoundedCornerShape(18.dp),
                 )
-                .padding(18.dp),
+                .padding(12.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 CalendarHeader()
@@ -133,7 +133,7 @@ fun CalendarScreen(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("本月日程", style = MaterialTheme.typography.titleMedium)
+            Text("本月日程", style = MaterialTheme.typography.titleSmall)
             if (uiState.entries.isEmpty()) {
                 Text("这个月还没有日程，点日历日期就可以直接添加。", color = Color(0xFF7D7266))
             } else {
@@ -141,8 +141,8 @@ fun CalendarScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0x66FFFFFF), RoundedCornerShape(18.dp))
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                            .background(Color(0xFFFFFFFF), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 10.dp, vertical = 9.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -152,9 +152,9 @@ fun CalendarScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .size(15.dp)
                                     .background(
-                                        if (entry.completed) Color(0xFFB77A5A) else Color(0xFFE5DBCD),
+                                        if (entry.completed) Color(0xFF7FA579) else Color(0xFFE5DBCD),
                                         RoundedCornerShape(99.dp),
                                     )
                                     .clickable { viewModel.toggleScheduleCompleted(entry.id) },
@@ -162,7 +162,7 @@ fun CalendarScreen(
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(
                                     "${entry.month}月${entry.day}日 ${entry.title}",
-                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                    style = MaterialTheme.typography.bodyMedium.copy(
                                         textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                                     ),
                                     color = if (entry.completed) Color(0xFF8B847D) else Color(0xFF342C24),
@@ -177,7 +177,7 @@ fun CalendarScreen(
                             }
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("编辑", color = Color(0xFF8F684F), modifier = Modifier.clickable { editingEntry = entry })
+                            Text("编辑", color = Color(0xFF6F675D), modifier = Modifier.clickable { editingEntry = entry })
                             Text("删除", color = Color(0xFF9C5A52), modifier = Modifier.clickable { viewModel.removeSchedule(entry.id) })
                         }
                     }
@@ -226,15 +226,15 @@ private fun DayCell(
 ) {
     Box(
         modifier = Modifier
-            .width(38.dp)
-            .height(44.dp)
+            .width(36.dp)
+            .height(40.dp)
             .background(
                 when {
-                    isToday -> Color(0xFFE9C7AB)
-                    day != null -> Color(0x55FFFFFF)
+                    isToday -> Color(0xFFF1E1CF)
+                    day != null -> Color(0x10FFFFFF)
                     else -> Color.Transparent
                 },
-                RoundedCornerShape(16.dp),
+                RoundedCornerShape(10.dp),
             )
             .clickable(enabled = day != null, onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -246,8 +246,8 @@ private fun DayCell(
                     Spacer(Modifier.height(2.dp))
                     Box(
                         modifier = Modifier
-                            .size(6.dp)
-                            .background(Color(0xFFB77A5A), RoundedCornerShape(99.dp)),
+                            .size(4.dp)
+                            .background(Color(0xFF7FA579), RoundedCornerShape(99.dp)),
                     )
                 }
             }
