@@ -357,7 +357,8 @@ fun PageBackLayer(
     anchorY: Float = 0.5f,
 ) {
     val curlAlignTop = anchorY < 0.46f
-    val curlStrength = (0.16f + progress * 0.56f).coerceIn(0f, 0.72f)
+    val easedCurl = progress * progress * (3f - 2f * progress)
+    val curlStrength = (0.10f + easedCurl * 0.72f).coerceIn(0f, 0.82f)
     val stackShadow = (0.07f + progress * 0.18f).coerceAtMost(0.30f)
     Box(
         modifier = modifier
@@ -444,7 +445,7 @@ fun PageBackLayer(
                 .background(
                     Brush.linearGradient(
                         listOf(
-                            Color.White.copy(alpha = (0.08f + curlStrength * 0.16f).coerceAtMost(0.30f)),
+                            Color.White.copy(alpha = (0.08f + curlStrength * 0.20f).coerceAtMost(0.34f)),
                             Color(0x18C4A98E),
                             Color.Transparent,
                         ),
@@ -469,7 +470,7 @@ fun PageBackLayer(
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = (0.22f + curlStrength * 0.28f).coerceAtMost(0.54f)),
+                            Color.White.copy(alpha = (0.18f + curlStrength * 0.36f).coerceAtMost(0.60f)),
                             Color(0x22A48A70).copy(alpha = (0.18f + curlStrength * 0.24f).coerceAtMost(0.46f)),
                             Color.Transparent,
                         ),
@@ -493,7 +494,7 @@ fun PageBackLayer(
                 .background(
                     Brush.linearGradient(
                         listOf(
-                            Color.Black.copy(alpha = (0.08f + curlStrength * 0.20f).coerceAtMost(0.30f)),
+                            Color.Black.copy(alpha = (0.06f + curlStrength * 0.24f).coerceAtMost(0.34f)),
                             Color.Transparent,
                         ),
                     ),
@@ -514,7 +515,7 @@ fun PageBackLayer(
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            Color.White.copy(alpha = (0.10f + curlStrength * 0.20f).coerceAtMost(0.30f)),
+                            Color.White.copy(alpha = (0.08f + curlStrength * 0.24f).coerceAtMost(0.34f)),
                             Color(0x229C8167),
                             Color.Transparent,
                         ),

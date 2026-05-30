@@ -289,7 +289,7 @@ fun PageTurnEngine(
                             Brush.radialGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = (0.05f + visualProgress * 0.14f).coerceAtMost(0.20f)),
+                                    Color.Black.copy(alpha = (0.03f + visualProgress * visualProgress * 0.18f).coerceAtMost(0.19f)),
                                 ),
                                 radius = 2200f,
                             ),
@@ -305,7 +305,7 @@ fun PageTurnEngine(
                             if (draggingToNext) {
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color.Black.copy(alpha = (0.10f + visualProgress * visualProgress * 0.34f).coerceAtMost(0.50f)),
+                                        Color.Black.copy(alpha = (0.08f + visualProgress * visualProgress * 0.28f).coerceAtMost(0.42f)),
                                         Color(0x22000000),
                                         Color.Transparent,
                                     ),
@@ -315,7 +315,7 @@ fun PageTurnEngine(
                                     listOf(
                                         Color.Transparent,
                                         Color(0x22000000),
-                                        Color.Black.copy(alpha = (0.10f + visualProgress * visualProgress * 0.34f).coerceAtMost(0.50f)),
+                                        Color.Black.copy(alpha = (0.08f + visualProgress * visualProgress * 0.28f).coerceAtMost(0.42f)),
                                     ),
                                 )
                             },
