@@ -38,22 +38,22 @@ fun BookShell(
     onTapNext: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val outerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(34.dp) else RoundedCornerShape(28.dp)
-    val innerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(26.dp) else RoundedCornerShape(22.dp)
-    val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 8.dp else 10.dp
-    val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 6.dp else 8.dp
-    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 24.dp else 20.dp
+    val outerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(38.dp) else RoundedCornerShape(28.dp)
+    val innerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(28.dp) else RoundedCornerShape(22.dp)
+    val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 6.dp else 10.dp
+    val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 4.dp else 8.dp
+    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 28.dp else 20.dp
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = outerPaddingH, vertical = outerPaddingV)
-            .shadow(if (shellStyle == ShellStyle.BOOK) 20.dp else 14.dp, outerShape, clip = false)
+            .shadow(if (shellStyle == ShellStyle.BOOK) 26.dp else 14.dp, outerShape, clip = false)
             .clip(outerShape)
             .background(
                 if (shellStyle == ShellStyle.BOOK) {
                     Brush.linearGradient(
-                        listOf(Color(0xFFB9865E), Color(0xFFE4C39F), Color(0xFFAA7750)),
+                        listOf(Color(0xFFA66E43), Color(0xFFE7C8A8), Color(0xFF97633B)),
                         start = Offset.Zero,
                         end = Offset(900f, 700f),
                     )
@@ -66,11 +66,11 @@ fun BookShell(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .width(22.dp)
+                    .width(26.dp)
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color(0xAA6F452A), Color(0x88895B3A), Color(0x33895B3A), Color.Transparent),
+                            listOf(Color(0xC05C3821), Color(0xA1774C30), Color(0x667A5032), Color.Transparent),
                         ),
                     ),
             )
@@ -159,7 +159,7 @@ fun BookShell(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .width(16.dp)
+                    .width(18.dp)
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
@@ -185,12 +185,12 @@ fun BookShell(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = if (shellStyle == ShellStyle.BOOK) 10.dp else 8.dp, vertical = if (shellStyle == ShellStyle.BOOK) 12.dp else 10.dp)
+                .padding(horizontal = if (shellStyle == ShellStyle.BOOK) 12.dp else 8.dp, vertical = if (shellStyle == ShellStyle.BOOK) 14.dp else 10.dp)
                 .clip(innerShape)
                 .background(Color(0xFFFFFFFF))
                 .then(
                     if (shellStyle == ShellStyle.BOOK) {
-                        Modifier.border(1.dp, Color(0x22AA8B70), innerShape)
+                        Modifier.border(1.4.dp, Color(0x33A7896E), innerShape)
                     } else {
                         Modifier
                     },
@@ -203,12 +203,12 @@ fun BookShell(
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
-                        .padding(top = (18 + layer).dp, bottom = (20 + layer).dp, end = (offset).dp)
-                        .width((3 + layer).dp)
+                        .padding(top = (16 + layer).dp, bottom = (18 + layer).dp, end = (offset).dp)
+                        .width((4 + layer).dp)
                         .fillMaxHeight()
                         .background(
                             Brush.horizontalGradient(
-                                listOf(Color(0x44A07D5E), Color(0xAAFFF8EE)),
+                                listOf(Color(0x55A07D5E), Color(0xCCFFF8EE)),
                             ),
                         ),
                 )

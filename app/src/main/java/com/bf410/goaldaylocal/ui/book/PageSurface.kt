@@ -60,7 +60,7 @@ fun BoxScope.SpineLayer(
     active: Boolean,
     profile: TurnProfile = TurnProfile.DEFAULT,
 ) {
-    val baseWidth = if (profile == TurnProfile.HANDBOOK) 24.dp else 20.dp
+    val baseWidth = if (profile == TurnProfile.HANDBOOK) 28.dp else 20.dp
     Box(
         modifier = Modifier
             .align(Alignment.Center)
@@ -69,9 +69,9 @@ fun BoxScope.SpineLayer(
             .background(
                 Brush.horizontalGradient(
                     listOf(
-                        Color(0xFF7F4F31).copy(alpha = if (active) 0.88f else 0.74f),
-                        Color(0xFFF6E4D0),
-                        Color(0xFF7F4F31).copy(alpha = if (active) 0.88f else 0.74f),
+                        Color(0xFF6E4229).copy(alpha = if (active) 0.92f else 0.78f),
+                        Color(0xFFF8E8D5),
+                        Color(0xFF6E4229).copy(alpha = if (active) 0.92f else 0.78f),
                     ),
                 ),
             ),
@@ -81,14 +81,14 @@ fun BoxScope.SpineLayer(
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width((if (profile == TurnProfile.HANDBOOK) 18f else 16f + visualProgress * 10f).dp)
+                .width((if (profile == TurnProfile.HANDBOOK) 22f else 16f + visualProgress * 10f).dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            Color.Black.copy(alpha = (0.09f + visualProgress * 0.18f).coerceAtMost(0.24f)),
+                            Color.Black.copy(alpha = (0.10f + visualProgress * 0.22f).coerceAtMost(0.3f)),
                             Color.Transparent,
-                            Color.Black.copy(alpha = (0.09f + visualProgress * 0.18f).coerceAtMost(0.24f)),
+                            Color.Black.copy(alpha = (0.10f + visualProgress * 0.22f).coerceAtMost(0.3f)),
                         ),
                     ),
                 ),
@@ -96,7 +96,7 @@ fun BoxScope.SpineLayer(
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width((3f + visualProgress * if (profile == TurnProfile.HANDBOOK) 9f else 7f).dp)
+                .width((4f + visualProgress * if (profile == TurnProfile.HANDBOOK) 11f else 7f).dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
