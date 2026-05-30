@@ -453,13 +453,13 @@ fun Modifier.turningPageTransform(
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     transformOrigin = if (draggingToNext) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
     val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
-        val tail = ((visualProgress - 0.78f) / 0.22f).coerceIn(0f, 1f)
-        tail * 12f
+        val tail = ((visualProgress - 0.82f) / 0.18f).coerceIn(0f, 1f)
+        tail * 4f
     } else {
         0f
     }
     val progressCurve = (visualProgress * 0.35f) + (visualProgress * visualProgress * 0.65f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 128f + handbookTailBoost else 118f
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 86f + handbookTailBoost else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve
         TurnDirection.PREVIOUS -> maxRotation * progressCurve
@@ -477,10 +477,10 @@ fun Modifier.turningPageTransform(
         else -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
-    translationY = yOffsetFactor * visualProgress * 12f
-    rotationX = -yOffsetFactor * progressCurve * 9.2f
-    cameraDistance = if (profile == TurnProfile.HANDBOOK) 38f * density else 34f * density
-    shadowElevation = if (profile == TurnProfile.HANDBOOK) 32f else 28f
+    translationY = yOffsetFactor * visualProgress * if (profile == TurnProfile.HANDBOOK) 4.5f else 12f
+    rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 2.4f else 9.2f
+    cameraDistance = if (profile == TurnProfile.HANDBOOK) 46f * density else 34f * density
+    shadowElevation = if (profile == TurnProfile.HANDBOOK) 18f else 28f
     val subtleDepthScale = if (profile == TurnProfile.HANDBOOK) 1f - visualProgress * 0.022f else 1f - visualProgress * 0.015f
     scaleY = subtleDepthScale.coerceIn(0.965f, 1f)
     alpha = (1f - visualProgress * 0.08f).coerceIn(0.9f, 1f)
@@ -494,22 +494,22 @@ fun Modifier.pageBackTransform(
 ): Modifier = graphicsLayer {
     transformOrigin = if (direction == TurnDirection.NEXT) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
     val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
-        val tail = ((visualProgress - 0.78f) / 0.22f).coerceIn(0f, 1f)
-        tail * 10f
+        val tail = ((visualProgress - 0.82f) / 0.18f).coerceIn(0f, 1f)
+        tail * 3.5f
     } else {
         0f
     }
     val progressCurve = (visualProgress * 0.32f) + (visualProgress * visualProgress * 0.68f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 128f + handbookTailBoost else 118f
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 84f + handbookTailBoost else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve * 0.9f
         TurnDirection.PREVIOUS -> maxRotation * progressCurve * 0.9f
         null -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
-    translationY = yOffsetFactor * progressCurve * 7.2f
-    rotationX = -yOffsetFactor * progressCurve * 5.4f
-    cameraDistance = if (profile == TurnProfile.HANDBOOK) 38f * density else 34f * density
+    translationY = yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 3.2f else 7.2f
+    rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 1.8f else 5.4f
+    cameraDistance = if (profile == TurnProfile.HANDBOOK) 46f * density else 34f * density
     val subtleBackScale = if (profile == TurnProfile.HANDBOOK) 1f - visualProgress * 0.018f else 1f - visualProgress * 0.012f
     scaleY = subtleBackScale.coerceIn(0.972f, 1f)
 }

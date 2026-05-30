@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -426,76 +427,117 @@ private fun BookDetailView(
             Spacer(Modifier.height(8.dp))
         }
         if (handbookMode) {
-            Row(
+            Text(
+                text = monthLabelForPage(currentPage.title),
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    "‹ 上一页",
-                    color = if (uiState.selectedPageIndex > 0) Color(0xFF6F675D) else Color(0xFFB8B1A7),
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x12000000))
-                        .clickable(enabled = uiState.selectedPageIndex > 0) { viewModel.setPage(uiState.selectedPageIndex - 1) }
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                )
-                Text(
-                    "${uiState.selectedPageIndex + 1}/${book.pages.size}",
-                    color = Color(0xFF8D867C),
-                    style = MaterialTheme.typography.labelSmall,
-                )
-                Text(
-                    "下一页 ›",
-                    color = if (uiState.selectedPageIndex < book.pages.lastIndex) Color(0xFF6F675D) else Color(0xFFB8B1A7),
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x12000000))
-                        .clickable(enabled = uiState.selectedPageIndex < book.pages.lastIndex) { viewModel.setPage(uiState.selectedPageIndex + 1) }
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                )
-            }
-            Spacer(Modifier.height(8.dp))
+                color = Color(0xFF1F1D1A),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "翻页",
+                modifier = Modifier.fillMaxWidth(),
+                color = Color(0xFF1F1D1A),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(6.dp))
         }
-        BookReader(
-            bookId = book.id,
-            bookTitle = book.title,
-            subtitle = book.subtitle,
-            page = currentPage,
-            previousPage = previousPage,
-            nextPage = nextPage,
-            pageIndex = uiState.selectedPageIndex,
-            pageCount = book.pages.size,
-            tint = book.color,
-            isSaved = book.id in uiState.savedBookIds,
-            diaryDraft = uiState.diaryDraft,
-            customPageItems = uiState.customPageItems,
-            weeklyTheme = uiState.weeklyTheme,
-            todayPlanItems = uiState.todayPlanItems,
-            todayCompletedItems = uiState.todayCompletedItems,
-            schedulePreviewEntries = uiState.schedulePreviewEntries,
-            onToggleSaved = viewModel::toggleSavedCurrentBook,
-            isChecked = { pageTitle, item -> viewModel.isChecked(pageTitle, item) },
-            onToggleChecked = { pageTitle, item -> viewModel.toggleChecked(pageTitle, item) },
-            onDiaryChange = viewModel::updateDiaryDraft,
-            onAddCustomItem = viewModel::addCustomPageItem,
-            onAddCustomItemWithDeadline = viewModel::addCustomPageItemWithDeadline,
-            onRemoveCustomItem = viewModel::removeCustomPageItem,
-            onRenameCustomItem = viewModel::renameCustomPageItem,
-            onAddToSchedule = viewModel::addItemToSchedule,
-            onWeeklyThemeChange = viewModel::updateWeeklyTheme,
-            onMoveItemToToday = viewModel::moveItemToToday,
-            onMoveItemToCompleted = viewModel::moveItemToCompleted,
-            onRestoreItemFromToday = viewModel::restoreItemFromToday,
-            onRestoreItemFromCompleted = viewModel::restoreItemFromCompleted,
-            shellStyle = if (forcedSegment == BookSegment.DIARY || currentPage is DiaryPage) ShellStyle.BOOK else ShellStyle.LIGHT,
-            handbookMode = handbookMode,
-            onFlipNext = { if (uiState.selectedPageIndex < book.pages.lastIndex) viewModel.setPage(uiState.selectedPageIndex + 1) },
-            onFlipPrevious = { if (uiState.selectedPageIndex > 0) viewModel.setPage(uiState.selectedPageIndex - 1) },
-        )
+        if (handbookMode) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.92f)
+                        .fillMaxHeight(0.76f),
+                ) {
+                    BookReader(
+                        bookId = book.id,
+                        bookTitle = book.title,
+                        subtitle = book.subtitle,
+                        page = currentPage,
+                        previousPage = previousPage,
+                        nextPage = nextPage,
+                        pageIndex = uiState.selectedPageIndex,
+                        pageCount = book.pages.size,
+                        tint = book.color,
+                        isSaved = book.id in uiState.savedBookIds,
+                        diaryDraft = uiState.diaryDraft,
+                        customPageItems = uiState.customPageItems,
+                        weeklyTheme = uiState.weeklyTheme,
+                        todayPlanItems = uiState.todayPlanItems,
+                        todayCompletedItems = uiState.todayCompletedItems,
+                        schedulePreviewEntries = uiState.schedulePreviewEntries,
+                        onToggleSaved = viewModel::toggleSavedCurrentBook,
+                        isChecked = { pageTitle, item -> viewModel.isChecked(pageTitle, item) },
+                        onToggleChecked = { pageTitle, item -> viewModel.toggleChecked(pageTitle, item) },
+                        onDiaryChange = viewModel::updateDiaryDraft,
+                        onAddCustomItem = viewModel::addCustomPageItem,
+                        onAddCustomItemWithDeadline = viewModel::addCustomPageItemWithDeadline,
+                        onRemoveCustomItem = viewModel::removeCustomPageItem,
+                        onRenameCustomItem = viewModel::renameCustomPageItem,
+                        onAddToSchedule = viewModel::addItemToSchedule,
+                        onWeeklyThemeChange = viewModel::updateWeeklyTheme,
+                        onMoveItemToToday = viewModel::moveItemToToday,
+                        onMoveItemToCompleted = viewModel::moveItemToCompleted,
+                        onRestoreItemFromToday = viewModel::restoreItemFromToday,
+                        onRestoreItemFromCompleted = viewModel::restoreItemFromCompleted,
+                        shellStyle = ShellStyle.BOOK,
+                        handbookMode = true,
+                        onFlipNext = { if (uiState.selectedPageIndex < book.pages.lastIndex) viewModel.setPage(uiState.selectedPageIndex + 1) },
+                        onFlipPrevious = { if (uiState.selectedPageIndex > 0) viewModel.setPage(uiState.selectedPageIndex - 1) },
+                    )
+                }
+            }
+        } else {
+            BookReader(
+                bookId = book.id,
+                bookTitle = book.title,
+                subtitle = book.subtitle,
+                page = currentPage,
+                previousPage = previousPage,
+                nextPage = nextPage,
+                pageIndex = uiState.selectedPageIndex,
+                pageCount = book.pages.size,
+                tint = book.color,
+                isSaved = book.id in uiState.savedBookIds,
+                diaryDraft = uiState.diaryDraft,
+                customPageItems = uiState.customPageItems,
+                weeklyTheme = uiState.weeklyTheme,
+                todayPlanItems = uiState.todayPlanItems,
+                todayCompletedItems = uiState.todayCompletedItems,
+                schedulePreviewEntries = uiState.schedulePreviewEntries,
+                onToggleSaved = viewModel::toggleSavedCurrentBook,
+                isChecked = { pageTitle, item -> viewModel.isChecked(pageTitle, item) },
+                onToggleChecked = { pageTitle, item -> viewModel.toggleChecked(pageTitle, item) },
+                onDiaryChange = viewModel::updateDiaryDraft,
+                onAddCustomItem = viewModel::addCustomPageItem,
+                onAddCustomItemWithDeadline = viewModel::addCustomPageItemWithDeadline,
+                onRemoveCustomItem = viewModel::removeCustomPageItem,
+                onRenameCustomItem = viewModel::renameCustomPageItem,
+                onAddToSchedule = viewModel::addItemToSchedule,
+                onWeeklyThemeChange = viewModel::updateWeeklyTheme,
+                onMoveItemToToday = viewModel::moveItemToToday,
+                onMoveItemToCompleted = viewModel::moveItemToCompleted,
+                onRestoreItemFromToday = viewModel::restoreItemFromToday,
+                onRestoreItemFromCompleted = viewModel::restoreItemFromCompleted,
+                shellStyle = if (forcedSegment == BookSegment.DIARY || currentPage is DiaryPage) ShellStyle.BOOK else ShellStyle.LIGHT,
+                handbookMode = handbookMode,
+                onFlipNext = { if (uiState.selectedPageIndex < book.pages.lastIndex) viewModel.setPage(uiState.selectedPageIndex + 1) },
+                onFlipPrevious = { if (uiState.selectedPageIndex > 0) viewModel.setPage(uiState.selectedPageIndex - 1) },
+            )
+        }
     }
+}
+
+private fun monthLabelForPage(title: String): String {
+    val regex = Regex("(\\d{1,2}月)")
+    return regex.find(title)?.value ?: "1月"
 }
 
 private fun matchesSegment(page: BookPage, segment: BookSegment): Boolean =
