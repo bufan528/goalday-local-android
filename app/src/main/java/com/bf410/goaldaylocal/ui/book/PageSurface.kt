@@ -66,6 +66,7 @@ import com.bf410.goaldaylocal.data.TargetPage
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 
 private val BoardTonePlan = Color(0x22D9A97E)
@@ -712,14 +713,15 @@ private fun EditableBulletPage(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                TodayBoardSection(
-                    todayPlanItems = todayPlanItems,
-                    todayCompletedItems = todayCompletedItems,
-                    onMoveItemToCompleted = onMoveItemToCompleted,
-                    onRestoreItemFromToday = onRestoreItemFromToday,
-                    onRestoreItemFromCompleted = onRestoreItemFromCompleted,
-                    dragPreviewTarget = dragPreviewTarget,
-                    modifier = Modifier.weight(1f),
+            TodayBoardSection(
+                todayPlanItems = todayPlanItems,
+                todayCompletedItems = todayCompletedItems,
+                schedulePreviewEntries = schedulePreviewEntries,
+                onMoveItemToCompleted = onMoveItemToCompleted,
+                onRestoreItemFromToday = onRestoreItemFromToday,
+                onRestoreItemFromCompleted = onRestoreItemFromCompleted,
+                dragPreviewTarget = dragPreviewTarget,
+                modifier = Modifier.weight(1f),
                 )
                 SourcePoolSection(
                     items = shownSourceItems,
@@ -740,6 +742,7 @@ private fun EditableBulletPage(
             TodayBoardSection(
                 todayPlanItems = todayPlanItems,
                 todayCompletedItems = todayCompletedItems,
+                schedulePreviewEntries = schedulePreviewEntries,
                 onMoveItemToCompleted = onMoveItemToCompleted,
                 onRestoreItemFromToday = onRestoreItemFromToday,
                 onRestoreItemFromCompleted = onRestoreItemFromCompleted,
@@ -1033,6 +1036,7 @@ private fun WeekThemeSection(
 private fun TodayBoardSection(
     todayPlanItems: List<String>,
     todayCompletedItems: List<String>,
+    schedulePreviewEntries: List<ScheduleEntry>,
     onMoveItemToCompleted: (String) -> Unit,
     onRestoreItemFromToday: (String) -> Unit,
     onRestoreItemFromCompleted: (String) -> Unit,
@@ -1040,6 +1044,17 @@ private fun TodayBoardSection(
     dragPreviewTarget: DragTarget,
     modifier: Modifier = Modifier,
 ) {
+    val today = LocalDate.now()
+    val anchorDates = remember(schedulePreviewEntries, today) {
+        val fromSchedule = schedulePreviewEntries
+            .mapNotNull { entry ->
+                runCatching { LocalDate.of(entry.year, entry.month, entry.day) }.getOrNull()
+            }
+            .distinct()
+            .sorted()
+            .take(6)
+        if (fromSchedule.isNotEmpty()) fromSchedule else List(6) { today.plusDays(it.toLong()) }
+    }
     val todayHeaderColor by animateColorAsState(
         targetValue = if (dragPreviewTarget == DragTarget.TODAY) Color(0x44D9A97E) else Color(0x14A17856),
         label = "todayHeaderColor",
@@ -1091,6 +1106,41 @@ private fun TodayBoardSection(
                 .border(1.dp, Color(0x12A17856), RoundedCornerShape(10.dp))
                 .padding(6.dp),
         ) {
+            Column(
+                modifier = Modifier.width(46.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                anchorDates.forEach { date ->
+                    val isToday = date == today
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isToday) Color(0xFFF06F78) else Color(0x08A17856))
+                            .padding(vertical = 4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(1.dp),
+                    ) {
+                        Text(
+                            text = date.dayOfMonth.toString(),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = if (isToday) Color.White else Color(0xFF332C25),
+                        )
+                        Text(
+                            text = weekdayCn(date.dayOfWeek.value),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isToday) Color.White else Color(0xFF6E6459),
+                        )
+                    }
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 6.dp)
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(Color(0x1AA17856)),
+            )
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -1229,6 +1279,17 @@ private fun TodayBoardSection(
         }
     }
 }
+
+private fun weekdayCn(value: Int): String =
+    when (value) {
+        1 -> "周一"
+        2 -> "周二"
+        3 -> "周三"
+        4 -> "周四"
+        5 -> "周五"
+        6 -> "周六"
+        else -> "周日"
+    }
 
 @Composable
 private fun SourcePoolSection(
