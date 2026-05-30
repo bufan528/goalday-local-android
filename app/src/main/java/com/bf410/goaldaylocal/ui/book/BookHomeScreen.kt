@@ -490,8 +490,8 @@ private fun InspirationCenterView(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color(0x66FFFFFF))
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color(0xF9FFFFFF))
                 .padding(14.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -523,12 +523,43 @@ private fun InspirationCenterView(
                         )
                     }
                 }
-                Button(onClick = {
-                    val picked = editableItems.filterIndexed { index, _ -> checkedStates.getOrNull(index) == true }
-                    onApply(picked)
-                }) {
-                    Text("应用到当前页")
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    templates.take(4).forEachIndexed { idx, card ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(64.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    Brush.linearGradient(
+                                        when (idx % 4) {
+                                            0 -> listOf(Color(0xFF788B4F), Color(0xFF4E6633))
+                                            1 -> listOf(Color(0xFF8A6847), Color(0xFF61482F))
+                                            2 -> listOf(Color(0xFF7C5A4A), Color(0xFF5E4236))
+                                            else -> listOf(Color(0xFF5D4B3D), Color(0xFF3E3228))
+                                        },
+                                    ),
+                                )
+                                .clickable { onSelect(idx) }
+                                .padding(7.dp),
+                        ) {
+                            Text(
+                                text = card.title,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White,
+                                modifier = Modifier.align(Alignment.BottomStart),
+                            )
+                        }
+                    }
                 }
+                Button(
+                    onClick = {
+                        val picked = editableItems.filterIndexed { index, _ -> checkedStates.getOrNull(index) == true }
+                        onApply(picked)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("应用到当前页") }
             }
         }
     }

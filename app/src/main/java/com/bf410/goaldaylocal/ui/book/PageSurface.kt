@@ -696,8 +696,15 @@ private fun TodayBoardSection(
         label = "doneBorderAlpha",
     )
     PaperNoteCard(modifier = modifier) {
-        Text("今日执行看板", style = MaterialTheme.typography.titleMedium, color = Color(0xFF5E4837))
-        Text("长按右侧任务拖到计划/完成区", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("6", style = MaterialTheme.typography.titleLarge, color = Color(0xFF3A342E))
+            Text("To do", style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E))
+        }
+        Text("左侧时间栏 · 右侧任务栏", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BoardStatChip(label = "计划 ${todayPlanItems.size}", bg = BoardTonePlan)
             BoardStatChip(label = "完成 ${todayCompletedItems.size}", bg = BoardToneDone)
@@ -708,14 +715,14 @@ private fun TodayBoardSection(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(0.28f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("日期", color = Color(0xFF7E7568), style = MaterialTheme.typography.labelMedium)
-                listOf("今", "明", "后").forEach { dayMark ->
+                Text("时间", color = Color(0xFF7E7568), style = MaterialTheme.typography.labelMedium)
+                listOf("6", "7", "8", "9", "10", "11", "12").forEach { dayMark ->
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
                             .background(Color(0x0F8F684F))
-                            .padding(horizontal = 6.dp, vertical = 8.dp),
+                            .padding(horizontal = 6.dp, vertical = 6.dp),
                     ) { Text(dayMark, color = Color(0xFF7A6A5A), style = MaterialTheme.typography.labelLarge) }
                 }
             }
