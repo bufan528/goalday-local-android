@@ -1065,6 +1065,7 @@ private fun DiarySection(
 }
 
 private data class StructuredDiary(
+    val moodTags: String,
     val todayDone: String,
     val workTasks: String,
     val smallJoy: String,
@@ -1072,6 +1073,8 @@ private data class StructuredDiary(
     val photoNotes: String,
 ) {
     fun toRaw(): String = buildString {
+        appendLine("# 心情标签")
+        appendLine(moodTags.trim())
         appendLine("# 今日完成")
         appendLine(todayDone.trim())
         appendLine("# 工作任务")
@@ -1086,7 +1089,7 @@ private data class StructuredDiary(
 
     companion object {
         fun fromRaw(raw: String): StructuredDiary {
-            if (raw.isBlank()) return StructuredDiary("", "", "", "", "")
+            if (raw.isBlank()) return StructuredDiary("", "", "", "", "", "")
             fun section(name: String, next: String?): String {
                 val start = raw.indexOf("# $name")
                 if (start < 0) return ""
@@ -1097,6 +1100,7 @@ private data class StructuredDiary(
                 return raw.substring(bodyStart, bodyEnd).trim()
             }
             return StructuredDiary(
+                moodTags = section("心情标签", "今日完成"),
                 todayDone = section("今日完成", "工作任务"),
                 workTasks = section("工作任务", "小幸福"),
                 smallJoy = section("小幸福", "可改进"),
@@ -1122,6 +1126,8 @@ private fun StructuredDiaryEditor(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                DiarySticker("心情标签")
+                SectionField(state.moodTags) { onStateChange(state.copy(moodTags = it)) }
                 DiarySticker("今日完成")
                 SectionField(state.todayDone) { onStateChange(state.copy(todayDone = it)) }
                 DiarySticker("工作任务")
@@ -1145,6 +1151,9 @@ private fun StructuredDiaryEditor(
 
 @Composable
 private fun StructuredDiaryPreview(state: StructuredDiary) {
+    val moodItems = remember(state.moodTags) {
+        state.moodTags.split(',', '，', ' ').map(String::trim).filter(String::isNotBlank).take(6)
+    }
     NotebookSpread {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1163,6 +1172,29 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
                     .background(Color(0x1FD8B893))
                     .padding(horizontal = 9.dp, vertical = 4.dp),
             )
+        }
+        if (moodItems.isNotEmpty()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                moodItems.forEachIndexed { index, mood ->
+                    val chipBg = when (index % 3) {
+                        0 -> Color(0x26F0B4B2)
+                        1 -> Color(0x26F4D8A5)
+                        else -> Color(0x26B8D8F4)
+                    }
+                    Text(
+                        text = "#$mood",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF5B4A3C),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(chipBg)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
+            }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
