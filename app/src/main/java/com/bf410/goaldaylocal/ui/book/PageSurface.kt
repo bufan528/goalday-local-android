@@ -813,20 +813,50 @@ private fun FixedDayScheduleGrid(
     onTextChange: (String) -> Unit,
     onCommit: (ScheduleEntry) -> Unit,
 ) {
-    Text("${day}日", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277))
-    repeat(3) { idx ->
-        val entry = entries.getOrNull(idx)
-        if (entry == null) {
-            Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(14.dp))
-        } else {
-            HandbookEntryLine(
-                entry = entry,
-                editingId = editingId,
-                editingText = editingText,
-                onStartEdit = { onStartEdit(entry) },
-                onTextChange = onTextChange,
-                onCommit = { onCommit(entry) },
-            )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(0.5.dp, Color(0x11000000))
+            .padding(horizontal = 3.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(
+            modifier = Modifier.width(24.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(day.toString(), style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277), fontWeight = FontWeight.SemiBold)
+            Text("周", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277))
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
+        ) {
+            repeat(3) { idx ->
+                val entry = entries.getOrNull(idx)
+                if (entry == null) {
+                    Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(14.dp))
+                } else {
+                    HandbookEntryLine(
+                        entry = entry,
+                        editingId = editingId,
+                        editingText = editingText,
+                        onStartEdit = { onStartEdit(entry) },
+                        onTextChange = onTextChange,
+                        onCommit = { onCommit(entry) },
+                    )
+                }
+                if (idx < 2) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(Color(0x0E000000)),
+                    )
+                }
+            }
         }
     }
 }
