@@ -113,6 +113,7 @@ fun HomeScreen(
                 onUpdateScheduleTitle = { id, title, day, note ->
                     calendarViewModel.updateSchedule(id, title, day, note)
                 },
+                onUpdateScheduleDay = { id, day -> calendarViewModel.moveScheduleToDay(id, day) },
                 onOpenInspiration = onOpenInspiration,
             )
         }
@@ -276,6 +277,7 @@ private fun ChecklistBoard(
     onRemoveSchedule: (String) -> Unit,
     onToggleScheduleDone: (String) -> Unit,
     onUpdateScheduleTitle: (String, String, Int, String) -> Unit,
+    onUpdateScheduleDay: (String, Int) -> Unit,
     onOpenInspiration: () -> Unit,
 ) {
     var focusedIndex by remember { mutableIntStateOf(0) }
@@ -345,6 +347,15 @@ private fun ChecklistBoard(
                         modifier = Modifier
                             .padding(start = 28.dp, bottom = 2.dp)
                             .background(Color(0xFFADADB3), RoundedCornerShape(99.dp))
+                            .clickable {
+                                val nextDate = nextDeadlineDate(item.deadline)
+                                checklistDraft[index] = checklistDraft[index].copy(deadline = nextDate)
+                                val today = LocalDate.now().dayOfMonth
+                                scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[index].text }?.let { entry ->
+                                    val day = parseDeadlineDay(nextDate).coerceAtLeast(1)
+                                    onUpdateScheduleDay(entry.id, day)
+                                }
+                            }
                             .padding(horizontal = 9.dp, vertical = 1.dp),
                     )
                 }
@@ -443,4 +454,15 @@ private fun weekdayText(dayOfWeek: DayOfWeek): String = when (dayOfWeek) {
     DayOfWeek.FRIDAY -> "周五"
     DayOfWeek.SATURDAY -> "周六"
     DayOfWeek.SUNDAY -> "周日"
+}
+
+private fun nextDeadlineDate(current: String): String {
+    val formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy")
+    val parsed = runCatching { LocalDate.parse(current, formatter) }.getOrNull() ?: LocalDate.now()
+    return parsed.plusDays(1).format(formatter)
+}
+
+private fun parseDeadlineDay(current: String): Int {
+    val formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy")
+    return runCatching { LocalDate.parse(current, formatter).dayOfMonth }.getOrDefault(LocalDate.now().dayOfMonth)
 }
