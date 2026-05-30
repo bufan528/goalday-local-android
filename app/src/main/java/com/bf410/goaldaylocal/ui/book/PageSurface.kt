@@ -801,6 +801,17 @@ private fun TodayBoardSection(
                         .border(1.dp, Color(0xCC79A16E).copy(alpha = doneBorderAlpha), RoundedCornerShape(10.dp))
                         .padding(horizontal = 6.dp, vertical = 3.dp),
                 )
+                if (dragPreviewTarget == DragTarget.DONE) {
+                    Text(
+                        "松手即加入 Done",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF6F8F63),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(Color(0x1F79A16E))
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                    )
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
                     todayCompletedItems.forEach { item ->
                         Row(
@@ -831,6 +842,17 @@ private fun TodayBoardSection(
                         .border(1.dp, Color(0xCCB77A5A).copy(alpha = todayBorderAlpha), RoundedCornerShape(10.dp))
                         .padding(horizontal = 6.dp, vertical = 3.dp),
                 )
+                if (dragPreviewTarget == DragTarget.TODAY) {
+                    Text(
+                        "松手即加入 To do",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF9B7352),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(Color(0x1FD9A97E))
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                    )
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
                     todayPlanItems.forEach { item ->
                         Row(
