@@ -81,17 +81,14 @@ fun GoaldayApp() {
                             selected = selected,
                             onClick = { tab = item },
                             colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = Color(0x1F8F684F),
+                                indicatorColor = Color(0x16E98698),
                                 selectedIconColor = Color(0xFF26221E),
                                 selectedTextColor = Color(0xFF26221E),
                                 unselectedIconColor = Color(0xFFB2AAA0),
                                 unselectedTextColor = Color(0xFFB2AAA0),
                             ),
                             icon = {
-                                Text(
-                                    item.icon,
-                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                                )
+                                Text(if (selected) "◉" else "○", fontWeight = FontWeight.Normal)
                             },
                             label = {
                                 Text(item.label)

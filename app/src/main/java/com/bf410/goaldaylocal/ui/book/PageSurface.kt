@@ -73,6 +73,7 @@ private val BoardTitleColor = Color(0xFF5E4837)
 private val BoardHintColor = Color(0xFF8B7A68)
 private const val TODAY_SWIPE_THRESHOLD = -88f
 private const val DONE_SWIPE_THRESHOLD = -170f
+private val BoardMotionSpec = spring<Float>(dampingRatio = 0.80f, stiffness = 420f)
 
 @Composable
 fun BoxScope.SpineLayer(
@@ -1040,12 +1041,12 @@ private fun TodayBoardSection(
     )
     val todayBorderAlpha by animateFloatAsState(
         targetValue = if (dragPreviewTarget == DragTarget.TODAY) 1f else 0f,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = 500f),
+        animationSpec = BoardMotionSpec,
         label = "todayBorderAlpha",
     )
     val doneBorderAlpha by animateFloatAsState(
         targetValue = if (dragPreviewTarget == DragTarget.DONE) 1f else 0f,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = 500f),
+        animationSpec = BoardMotionSpec,
         label = "doneBorderAlpha",
     )
     PaperNoteCard(modifier = modifier) {
@@ -1257,7 +1258,7 @@ private fun SourcePoolSection(
             val isDragging = dragOffsetX < -2f
             val animatedOffsetX by animateFloatAsState(
                 targetValue = dragOffsetX,
-                animationSpec = spring(dampingRatio = 0.78f, stiffness = 420f),
+                animationSpec = BoardMotionSpec,
                 label = "animatedOffsetX",
             )
             val rowAlpha by animateFloatAsState(
@@ -1266,12 +1267,12 @@ private fun SourcePoolSection(
             )
             val rowScale by animateFloatAsState(
                 targetValue = if (dragOffsetX < -6f) 0.985f else 1f,
-                animationSpec = spring(dampingRatio = 0.80f, stiffness = 420f),
+                animationSpec = BoardMotionSpec,
                 label = "rowScale",
             )
             val rowLift by animateFloatAsState(
                 targetValue = if (dragOffsetX < -6f) -3f else 0f,
-                animationSpec = spring(dampingRatio = 0.82f, stiffness = 380f),
+                animationSpec = BoardMotionSpec,
                 label = "rowLift",
             )
             RowWithDragFeedback(
