@@ -111,6 +111,7 @@ fun CalendarScreen(
                     onToggleCompleted = { id -> viewModel.toggleScheduleCompleted(id) },
                     onEdit = { editingEntry = it },
                     onDelete = { viewModel.removeSchedule(it) },
+                    onMoveToSelectedDay = { id -> viewModel.moveScheduleToDay(id, selectedDay) },
                     onAdd = { showAddDialog = true },
                 )
             }
@@ -324,6 +325,7 @@ private fun ReferenceCalendarBoard(
     onToggleCompleted: (String) -> Unit,
     onEdit: (ScheduleEntry) -> Unit,
     onDelete: (String) -> Unit,
+    onMoveToSelectedDay: (String) -> Unit,
     onAdd: () -> Unit,
 ) {
     val weekDays = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
@@ -356,7 +358,7 @@ private fun ReferenceCalendarBoard(
         onActionDone = { task -> onToggleCompleted(task.id) },
         onActionAdd = { task ->
             val raw = entries.firstOrNull { it.id == task.id } ?: return@DualLaneExecutionBoard
-            if (raw.day != selectedDay) onEdit(raw.copy(day = selectedDay))
+            if (raw.day != selectedDay) onMoveToSelectedDay(task.id)
         },
         onActionRestore = { task -> onToggleCompleted(task.id) },
         topActions = {

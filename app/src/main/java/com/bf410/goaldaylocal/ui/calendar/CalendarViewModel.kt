@@ -93,6 +93,24 @@ class CalendarViewModel(
         refreshEntries()
     }
 
+    fun moveScheduleToDay(id: String, day: Int) {
+        val current = _uiState.value
+        val clampedDay = day.coerceAtLeast(1)
+        val updated = store.scheduleEntries().map { entry ->
+            if (entry.id == id) {
+                entry.copy(
+                    year = current.year,
+                    month = current.month,
+                    day = clampedDay,
+                )
+            } else {
+                entry
+            }
+        }
+        store.saveScheduleEntries(updated)
+        refreshEntries()
+    }
+
     private fun setMonth(year: Int, month: Int) {
         store.setCalendarAnchor(year, month)
         _uiState.update {

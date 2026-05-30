@@ -19,9 +19,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -44,9 +46,12 @@ private enum class InspirationMode {
 fun InspirationScreen(
     viewModel: BookViewModel,
 ) {
-    var selectedIndex by remember { mutableIntStateOf(0) }
-    var mode by remember { mutableIntStateOf(0) }
+    var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
+    var mode by rememberSaveable { mutableIntStateOf(0) }
     val selected = InspirationTemplates.all[selectedIndex.coerceIn(0, InspirationTemplates.all.lastIndex)]
+    val checkedItems = remember(selected.title) {
+        mutableStateListOf<String>().apply { addAll(selected.items) }
+    }
 
     Column(
         modifier = Modifier
@@ -118,7 +123,13 @@ fun InspirationScreen(
             val previewItems = if (mode == InspirationMode.PREVIEW.ordinal) selected.items else selected.items.take(8)
             previewItems.forEach { item ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
-                    Text("·", color = Color(0xFF9E978D))
+                    Text(
+                        if (checkedItems.contains(item)) "✓" else "·",
+                        color = if (checkedItems.contains(item)) Color(0xFF7A9D71) else Color(0xFF9E978D),
+                        modifier = Modifier.clickable {
+                            if (checkedItems.contains(item)) checkedItems.remove(item) else checkedItems.add(item)
+                        },
+                    )
                     Text(item, modifier = Modifier.weight(1f), color = Color(0xFF3A332C), style = MaterialTheme.typography.bodyMedium)
                     Text(
                         "＋",
@@ -131,12 +142,12 @@ fun InspirationScreen(
             }
             if (mode == InspirationMode.APPLY.ordinal) {
                 Text(
-                    "一键应用全部",
+                    "应用勾选项（${checkedItems.size}）",
                     color = Color.White,
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier
                         .background(Color(0xFF222222), RoundedCornerShape(99.dp))
-                        .clickable { viewModel.applyInspirationToToday(selected.items) }
+                        .clickable { viewModel.applyInspirationToToday(checkedItems.toList()) }
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }
