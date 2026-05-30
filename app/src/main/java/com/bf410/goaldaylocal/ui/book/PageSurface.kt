@@ -753,13 +753,7 @@ private fun TodayBoardSection(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(Color(0xFFF6F1E7))
-                                    .border(1.dp, Color(0xFFD9CFBF), RoundedCornerShape(3.dp)),
-                            )
+                            Text("◌", color = Color(0xFFB2A89B), style = MaterialTheme.typography.labelSmall)
                             Text(
                                 text = item,
                                 color = Color(0xFF2F2922),
@@ -801,12 +795,7 @@ private fun TodayBoardSection(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(Color(0xFF84B787)),
-                            )
+                            Text("✓", color = Color(0xFF7FA579), style = MaterialTheme.typography.labelSmall)
                             Text(
                                 text = item,
                                 style = completedTextStyle(completed = true),

@@ -273,16 +273,19 @@ private fun BookDetailView(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("18周", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("14周", style = MaterialTheme.typography.titleSmall, color = Color(0xFF7E776E))
+                Text("一周图", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
+            }
             Text(
                 "完成",
                 color = Color.White,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
                     .background(Color(0xFF222222))
                     .clickable(onClick = onBackToLibrary)
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .padding(horizontal = 9.dp, vertical = 4.dp),
             )
         }
         Row(
