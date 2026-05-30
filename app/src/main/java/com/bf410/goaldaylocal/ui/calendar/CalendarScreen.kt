@@ -59,6 +59,8 @@ fun CalendarScreen(
     val entryDays = uiState.entries.map { it.day }.toSet()
     selectedDay = selectedDay.coerceIn(1, maxDay)
     val selectedDayEntries = uiState.entries.filter { it.day == selectedDay }
+    val monthTotal = uiState.entries.size
+    val monthDone = uiState.entries.count { it.completed }
 
     Column(
         modifier = Modifier
@@ -96,6 +98,30 @@ fun CalendarScreen(
                 color = Color(0xFF2D2A26),
             )
             Text("下个月 ›", modifier = Modifier.clickable(onClick = viewModel::nextMonth), color = Color(0xFF888177))
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            MetricCard(
+                modifier = Modifier.weight(1f),
+                title = "本月完成",
+                value = monthDone.toString(),
+                tint = Color(0xFF9AAE93),
+            )
+            MetricCard(
+                modifier = Modifier.weight(1f),
+                title = "本月计划",
+                value = monthTotal.toString(),
+                tint = Color(0xFFE2A57E),
+            )
+            MetricCard(
+                modifier = Modifier.weight(1f),
+                title = "完成率",
+                value = if (monthTotal == 0) "0%" else "${(monthDone * 100 / monthTotal)}%",
+                tint = Color(0xFF89A8BA),
+            )
         }
 
         Box(
@@ -192,6 +218,15 @@ fun CalendarScreen(
                         ) {
                             Box(
                                 modifier = Modifier
+                                    .width(2.dp)
+                                    .height(34.dp)
+                                    .background(
+                                        if (entry.completed) Color(0xFFA7B99B) else Color(0xFFE3B28B),
+                                        RoundedCornerShape(99.dp),
+                                    ),
+                            )
+                            Box(
+                                modifier = Modifier
                                     .size(16.dp)
                                     .background(
                                         if (entry.completed) Color(0xFFD8D1C8) else Color(0xFFF4F2EE),
@@ -255,6 +290,24 @@ fun CalendarScreen(
                 editingEntry = null
             },
         )
+    }
+}
+
+@Composable
+private fun MetricCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    value: String,
+    tint: Color,
+) {
+    Column(
+        modifier = modifier
+            .background(Color(0xFFF8F5EF), RoundedCornerShape(12.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(title, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8A847A))
+        Text(value, style = MaterialTheme.typography.titleMedium, color = tint, fontWeight = FontWeight.SemiBold)
     }
 }
 

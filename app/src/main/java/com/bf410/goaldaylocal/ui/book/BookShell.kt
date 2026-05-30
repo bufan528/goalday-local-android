@@ -65,6 +65,29 @@ fun BookShell(
         if (shellStyle == ShellStyle.BOOK) {
             Box(
                 modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .width(22.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0xAA6F452A), Color(0x88895B3A), Color(0x33895B3A), Color.Transparent),
+                        ),
+                    ),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 6.dp, top = 24.dp, bottom = 24.dp)
+                    .width(2.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0x66FDE8D2), Color(0x44FADFC6), Color(0x66FDE8D2)),
+                        ),
+                    ),
+            )
+            Box(
+                modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .height(14.dp)
@@ -136,11 +159,11 @@ fun BookShell(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .width(12.dp)
+                    .width(16.dp)
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color(0x44E2C9B2), Color(0x88FFF7EC)),
+                            listOf(Color(0x33A68466), Color(0x55EED8C4), Color(0x99FFF7EC)),
                         ),
                     ),
             )
@@ -185,7 +208,7 @@ fun BookShell(
                         .fillMaxHeight()
                         .background(
                             Brush.horizontalGradient(
-                                listOf(Color(0x30A07D5E), Color(0x80FFF8EE)),
+                                listOf(Color(0x44A07D5E), Color(0xAAFFF8EE)),
                             ),
                         ),
                 )
