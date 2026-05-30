@@ -142,7 +142,7 @@ private fun WeekBoard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.Top,
         ) {
             Text(
@@ -151,7 +151,7 @@ private fun WeekBoard(
             )
             Text(
                 "● 本周Todo",
-                modifier = Modifier.weight(0.78f),
+                modifier = Modifier.weight(0.80f),
                 color = Color(0xFF1F1D1A),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
@@ -162,29 +162,29 @@ private fun WeekBoard(
                 .filter { it.year == day.year && it.month == day.monthValue && it.day == day.dayOfMonth }
                 .sortedWith(compareBy<ScheduleEntry> { it.completed }.thenBy { it.title })
             val leftText = dayEntries.filter { it.completed }.take(2).joinToString("\n") { "✓${it.title}" }
-            val rightText = dayEntries.filterNot { it.completed }.take(2).joinToString("\n") { "▪ ${it.title}" }
+            val rightText = dayEntries.filterNot { it.completed }.take(3).joinToString("\n") { "▪ ${it.title}" }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(0.5.dp, Color(0x11000000))
-                    .padding(vertical = 8.dp, horizontal = 10.dp),
+                    .padding(vertical = 7.dp, horizontal = 8.dp),
                 verticalAlignment = Alignment.Top,
             ) {
-                Column(modifier = Modifier.weight(0.22f)) {
-                    Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.titleLarge, color = Color(0xFF25221D))
-                    Text(weekdayText(day.dayOfWeek), style = MaterialTheme.typography.bodySmall, color = Color(0xFF2C2924))
+                Column(modifier = Modifier.weight(0.18f)) {
+                    Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.titleMedium, color = Color(0xFF25221D), fontWeight = FontWeight.SemiBold)
+                    Text(weekdayText(day.dayOfWeek), style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2924))
                 }
                 Text(
                     text = if (leftText.isBlank()) "" else leftText,
-                    modifier = Modifier.weight(0.44f),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF2A2723),
+                    modifier = Modifier.weight(0.42f),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF35312C),
                 )
                 Text(
                     text = if (rightText.isBlank()) "" else rightText,
-                    modifier = Modifier.weight(0.34f),
-                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(0.40f),
+                    style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF2A2723),
                     textDecoration = TextDecoration.None,
                 )

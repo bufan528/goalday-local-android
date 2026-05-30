@@ -40,10 +40,10 @@ import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 
 private enum class RootTab(val label: String, val icon: String) {
-    HOME("首页", "⌂"),
-    CALENDAR("日历", "◌"),
-    INSPIRATION("灵感", "✦"),
-    HANDBOOK("手账", "📖"),
+    HOME("首页", "◉"),
+    CALENDAR("日历", "◍"),
+    INSPIRATION("灵感", "◌"),
+    HANDBOOK("手账", "☷"),
 }
 
 @Composable
@@ -76,7 +76,7 @@ fun GoaldayApp() {
             containerColor = GoaldayDesign.AppBg,
             bottomBar = {
                 NavigationBar(
-                    containerColor = GoaldayDesign.SurfaceSoft,
+                    containerColor = Color(0xFFF2E7E3),
                     tonalElevation = 0.dp,
                 ) {
                     RootTab.entries.forEach { item ->
@@ -87,11 +87,11 @@ fun GoaldayApp() {
                             icon = { Text(item.icon) },
                             label = { Text(item.label) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = GoaldayDesign.InkPrimary,
-                                selectedTextColor = GoaldayDesign.InkPrimary,
-                                unselectedIconColor = GoaldayDesign.InkMuted,
-                                unselectedTextColor = GoaldayDesign.InkMuted,
-                                indicatorColor = GoaldayDesign.AccentSoft,
+                                selectedIconColor = Color(0xFFE88FAE),
+                                selectedTextColor = Color(0xFFE88FAE),
+                                unselectedIconColor = Color(0xFF9E958A),
+                                unselectedTextColor = Color(0xFF9E958A),
+                                indicatorColor = Color(0x22E88FAE),
                             ),
                         )
                     }
