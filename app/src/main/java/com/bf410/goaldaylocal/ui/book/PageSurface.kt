@@ -840,17 +840,28 @@ private fun TodayBoardSection(
             Text("从右侧清单拖入（点击）到今日执行或完成区。", color = Color(0xFF7B6B5A))
             return@PaperNoteCard
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(0.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0x06A17856))
+                .border(1.dp, Color(0x12A17856), RoundedCornerShape(10.dp))
+                .padding(6.dp),
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 Text(
                     "Done  ${todayCompletedItems.size}",
                     color = Color(0xFF5E4837),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(8.dp))
                         .background(doneHeaderColor)
-                        .border(1.dp, Color(0xCC79A16E).copy(alpha = doneBorderAlpha), RoundedCornerShape(10.dp))
+                        .border(1.dp, Color(0xCC79A16E).copy(alpha = doneBorderAlpha), RoundedCornerShape(8.dp))
                         .padding(horizontal = 6.dp, vertical = 3.dp),
                 )
                 if (dragPreviewTarget == DragTarget.DONE) {
@@ -883,16 +894,26 @@ private fun TodayBoardSection(
                     }
                 }
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 6.dp)
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(Color(0x1AA17856)),
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 Text(
                     "To do  ${todayPlanItems.size}",
                     color = Color(0xFF5E4837),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(8.dp))
                         .background(todayHeaderColor)
-                        .border(1.dp, Color(0xCCB77A5A).copy(alpha = todayBorderAlpha), RoundedCornerShape(10.dp))
+                        .border(1.dp, Color(0xCCB77A5A).copy(alpha = todayBorderAlpha), RoundedCornerShape(8.dp))
                         .padding(horizontal = 6.dp, vertical = 3.dp),
                 )
                 if (dragPreviewTarget == DragTarget.TODAY) {
