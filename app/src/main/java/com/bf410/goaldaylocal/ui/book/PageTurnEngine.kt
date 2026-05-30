@@ -103,8 +103,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.94f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) Spring.StiffnessVeryLow else Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.96f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 145f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipNext()
@@ -114,8 +114,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.94f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) Spring.StiffnessVeryLow else Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.96f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 145f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipPrevious()

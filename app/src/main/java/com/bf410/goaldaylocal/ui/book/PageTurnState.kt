@@ -106,7 +106,8 @@ fun visualTurnProgress(progress: Float, profile: TurnProfile): Float {
     val clamped = progress.coerceIn(0f, 1f)
     val curveA = clamped * clamped * (3f - 2f * clamped)
     val curveB = curveA * curveA
-    return (clamped * 0.18f + curveA * 0.44f + curveB * 0.58f).coerceIn(0f, 1f)
+    val committedCurve = curveB * curveA
+    return (clamped * 0.12f + curveA * 0.36f + curveB * 0.44f + committedCurve * 0.34f).coerceIn(0f, 1f)
 }
 
 fun destinationRevealAlpha(progress: Float): Float {
