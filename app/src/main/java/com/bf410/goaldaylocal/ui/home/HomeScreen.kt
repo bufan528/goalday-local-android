@@ -110,6 +110,9 @@ fun HomeScreen(
                 },
                 onRemoveSchedule = { id -> calendarViewModel.removeSchedule(id) },
                 onToggleScheduleDone = { id -> calendarViewModel.toggleScheduleCompleted(id) },
+                onUpdateScheduleTitle = { id, title, day, note ->
+                    calendarViewModel.updateSchedule(id, title, day, note)
+                },
                 onOpenInspiration = onOpenInspiration,
             )
         }
@@ -272,10 +275,13 @@ private fun ChecklistBoard(
     onAddSchedule: (String) -> Unit,
     onRemoveSchedule: (String) -> Unit,
     onToggleScheduleDone: (String) -> Unit,
+    onUpdateScheduleTitle: (String, String, Int, String) -> Unit,
     onOpenInspiration: () -> Unit,
 ) {
     var focusedIndex by remember { mutableIntStateOf(0) }
     var inputText by remember { mutableStateOf("") }
+    var editingIndex by remember { mutableIntStateOf(-1) }
+    var editingText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -303,7 +309,33 @@ private fun ChecklistBoard(
                 ) {
                     Text(if (item.checked) "✓" else "□", color = if (item.checked) Color(0xFF7AA071) else Color(0xFF302D28), style = MaterialTheme.typography.bodySmall)
                     Text(" ${index + 1}", color = Color(0xFF302D28), style = MaterialTheme.typography.bodySmall)
-                    Text("  ${item.text}", color = Color(0xFF302D28), style = MaterialTheme.typography.bodyMedium)
+                    if (editingIndex == index) {
+                        BasicTextField(
+                            value = editingText,
+                            onValueChange = { editingText = it },
+                            textStyle = TextStyle(color = Color(0xFF302D28)),
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(Color(0x0A000000), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 5.dp, vertical = 2.dp),
+                        )
+                        Text("存", color = Color(0xFFE88FAE), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
+                            val next = editingText.trim().ifBlank { item.text }
+                            val old = item.text
+                            checklistDraft[index] = checklistDraft[index].copy(text = next)
+                            val today = LocalDate.now().dayOfMonth
+                            scheduleEntries.firstOrNull { it.day == today && it.title == old }?.let {
+                                onUpdateScheduleTitle(it.id, next, it.day, it.note)
+                            }
+                            editingIndex = -1
+                        })
+                    } else {
+                        Text("  ${item.text}", color = Color(0xFF302D28), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                        Text("✎", color = Color(0xFF9A9085), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
+                            editingIndex = index
+                            editingText = item.text
+                        })
+                    }
                 }
                 if (item.deadline.isNotBlank()) {
                     Text(
@@ -341,7 +373,8 @@ private fun ChecklistBoard(
                 })
                 Text("＋", modifier = Modifier.clickable {
                     val text = inputText.trim().ifBlank { "新任务" }
-                    checklistDraft.add(focusedIndex.coerceIn(0, checklistDraft.size), ChecklistDraftItem(text))
+                    val deadline = LocalDate.now().plusDays(3).format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
+                    checklistDraft.add(focusedIndex.coerceIn(0, checklistDraft.size), ChecklistDraftItem(text, deadline = deadline))
                     onAddSchedule(text)
                     inputText = ""
                 })
@@ -386,6 +419,8 @@ private fun ChecklistBoard(
                 .background(Color(0xFF242424), RoundedCornerShape(7.dp))
                 .clickable {
                     val text = inputText.trim().ifBlank { "新日程" }
+                    val deadline = LocalDate.now().plusDays(3).format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
+                    checklistDraft.add(0, ChecklistDraftItem(text, deadline = deadline))
                     onAddSchedule(text)
                     inputText = ""
                 }
