@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
-private const val EDGE_GESTURE_RATIO = 0.22f
+private const val EDGE_GESTURE_RATIO = 0.15f
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase
@@ -152,6 +152,10 @@ fun PageTurnEngine(
                             val edgeZonePx = pageWidthPx * EDGE_GESTURE_RATIO
                             val canStartNextFromEdge = dragStartX >= pageWidthPx - edgeZonePx
                             val canStartPreviousFromEdge = dragStartX <= edgeZonePx
+                            val startedAtEdge = canStartNextFromEdge || canStartPreviousFromEdge
+                            if (direction == null && !startedAtEdge) {
+                                return@detectHorizontalDragGestures
+                            }
                             val resolvedDirection = direction ?: when {
                                 dragAmount <= -0.6f && canStartNextFromEdge -> TurnDirection.NEXT
                                 dragAmount >= 0.6f && canStartPreviousFromEdge -> TurnDirection.PREVIOUS

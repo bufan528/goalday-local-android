@@ -72,7 +72,7 @@ fun BookShell(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .width(28.dp)
+                .width(20.dp)
                 .fillMaxHeight()
                 .clickable(enabled = canTurnPrevious && turnEnabled, onClick = onTapPrevious),
         )
@@ -80,7 +80,7 @@ fun BookShell(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .width(28.dp)
+                .width(20.dp)
                 .fillMaxHeight()
                 .clickable(enabled = canTurnNext && turnEnabled, onClick = onTapNext),
         )
