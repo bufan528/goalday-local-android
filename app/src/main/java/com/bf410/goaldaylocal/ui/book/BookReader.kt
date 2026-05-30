@@ -135,6 +135,8 @@ fun BookReader(
                 onCommand = { diaryCommand = it },
                 contentMode = contentMode,
                 onContentModeChange = { contentMode = it },
+                turnProgress = progress,
+                turnDirection = direction,
             )
         },
         spine = { visualProgress, active ->
