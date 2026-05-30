@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -201,11 +202,20 @@ private fun ReferenceCalendarBoard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("To do  ˅", modifier = Modifier.background(Color(0xFFF8F8F6), RoundedCornerShape(8.dp)).padding(horizontal = 7.dp, vertical = 3.dp), style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("完成", modifier = Modifier.clickable { selectedEntry?.let { onToggleCompleted(it.id) } }, color = Color(0xFF2F2A24))
-                    Text("编辑", modifier = Modifier.clickable { selectedEntry?.let(onEdit) }, color = Color(0xFF6F675D))
-                    Text("删除", modifier = Modifier.clickable { selectedEntry?.let { onDelete(it.id) } }, color = Color(0xFF9C5A52))
-                    Text("新增", modifier = Modifier.clickable(onClick = onAdd))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("删", modifier = Modifier.clickable { selectedEntry?.let { onDelete(it.id) } }, color = Color(0xFF9C5A52))
+                    Text("编", modifier = Modifier.clickable { selectedEntry?.let(onEdit) }, color = Color(0xFF6F675D))
+                    Text(
+                        "完成",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(Color(0xFF222222))
+                            .clickable { selectedEntry?.let { onToggleCompleted(it.id) } }
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                    )
+                    Text("新增", modifier = Modifier.clickable(onClick = onAdd), color = Color(0xFF2F2A24))
                 }
             }
             Column(

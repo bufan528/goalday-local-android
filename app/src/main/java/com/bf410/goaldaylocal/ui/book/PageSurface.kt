@@ -793,10 +793,18 @@ private fun ReferencePlannerBoard(
                     Text(selectedListName, color = Color(0xFF29251F), style = MaterialTheme.typography.labelMedium)
                     Text("  ˅", color = Color(0xFF9C958B), style = MaterialTheme.typography.labelMedium)
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("加入", modifier = Modifier.clickable { selectedItem?.let(onMoveItemToToday) }, color = Color(0xFF6E655C))
-                    Text("完成", modifier = Modifier.clickable { selectedItem?.let(onMoveItemToCompleted) }, color = Color(0xFF2E2924))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("回收", modifier = Modifier.clickable { selectedItem?.let(onRestoreItemFromDone) }, color = Color(0xFF8B7E71))
+                    Text(
+                        "完成",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(Color(0xFF222222))
+                            .clickable { selectedItem?.let(onMoveItemToCompleted) }
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                    )
                 }
             }
             Column(
@@ -817,7 +825,10 @@ private fun ReferencePlannerBoard(
                             color = Color(0xFF2D2823),
                             modifier = Modifier
                                 .weight(1f)
-                                .clickable { selectedItem = item },
+                                .clickable {
+                                    selectedItem = item
+                                    onMoveItemToToday(item)
+                                },
                         )
                     }
                 }
