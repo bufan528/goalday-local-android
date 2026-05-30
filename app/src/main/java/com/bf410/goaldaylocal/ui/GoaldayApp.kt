@@ -2,16 +2,21 @@ package com.bf410.goaldaylocal.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,10 +42,10 @@ import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.home.HomeScreen
 
 private enum class RootTab(val label: String, val icon: String) {
-    HOME("首页", "◍"),
-    CALENDAR("日历", "☷"),
-    INSPIRATION("灵感", "◐"),
-    HANDBOOK("手账", "◫"),
+    HOME("日程", "◍"),
+    CALENDAR("日历", "◌"),
+    INSPIRATION("灵感", "◎"),
+    HANDBOOK("手账", "▦"),
 }
 
 @Composable
@@ -71,33 +76,47 @@ fun GoaldayApp() {
     MaterialTheme {
         Scaffold(
             bottomBar = {
-                NavigationBar(
-                    containerColor = Color(0xFFF7F7F5),
-                    tonalElevation = 0.dp,
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFFAF9F6))
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     RootTab.entries.forEach { item ->
                         val selected = tab == item
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = { tab = item },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = Color(0x14E86D84),
-                                selectedIconColor = Color(0xFFE86D84),
-                                selectedTextColor = Color(0xFFE86D84),
-                                unselectedIconColor = Color(0xFFB7B2AA),
-                                unselectedTextColor = Color(0xFFB7B2AA),
-                            ),
-                            icon = {
-                                Text(
-                                    if (selected) item.icon else item.icon,
-                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(54.dp)
+                                .background(
+                                    if (selected) Color(0xFFF2EEE7) else Color.Transparent,
+                                    RoundedCornerShape(14.dp),
                                 )
-                            },
-                            label = {
-                                Text(item.label)
-                            },
-                            alwaysShowLabel = true,
-                        )
+                                .clickable { tab = item }
+                                .padding(top = 6.dp),
+                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            Text(
+                                text = item.icon,
+                                color = if (selected) Color(0xFF2F2A25) else Color(0xFFA9A39A),
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                            )
+                            Text(
+                                text = item.label,
+                                color = if (selected) Color(0xFF2F2A25) else Color(0xFFA9A39A),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 16.dp, height = 2.dp)
+                                    .background(
+                                        if (selected) Color(0xFFE38FA0) else Color.Transparent,
+                                        RoundedCornerShape(99.dp),
+                                    ),
+                            )
+                        }
                     }
                 }
             },

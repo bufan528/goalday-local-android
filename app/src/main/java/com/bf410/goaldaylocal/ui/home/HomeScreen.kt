@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.book.BookViewModel
+import java.time.LocalDate
 
 @Composable
 fun HomeScreen(
@@ -33,6 +34,7 @@ fun HomeScreen(
     onOpenHandbook: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val today = LocalDate.now()
 
     Column(
         modifier = Modifier
@@ -40,17 +42,33 @@ fun HomeScreen(
             .padding(top = 14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            text = "Goalday",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF2E2A26),
-        )
-        Text(
-            text = "左边执行 · 右边计划",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF8A847B),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF8F5EE), RoundedCornerShape(14.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = "今天",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF2E2A26),
+                )
+                Text(
+                    text = "${today.monthValue}月${today.dayOfMonth}日",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF8A847B),
+                )
+            }
+            Text(
+                text = "左 Done · 右 Todo",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF6F675F),
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
