@@ -654,6 +654,7 @@ private fun EditableBulletPage(
     var dragPreviewTarget by remember(pageTitle) { mutableStateOf(DragTarget.NONE) }
     val listNames = remember { listOf("Todo", "未来的自己", "奖励清单", "电影清单") }
     var selectedListIndex by remember(pageTitle) { mutableStateOf(0) }
+    var dualColumnMode by remember(pageTitle) { mutableStateOf(true) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (isSchedulePage) {
@@ -696,10 +697,36 @@ private fun EditableBulletPage(
             todoCount = todayPlanItems.size,
             doneCount = todayCompletedItems.size,
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
+        if (dualColumnMode) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                TodayBoardSection(
+                    todayPlanItems = todayPlanItems,
+                    todayCompletedItems = todayCompletedItems,
+                    onMoveItemToCompleted = onMoveItemToCompleted,
+                    onRestoreItemFromToday = onRestoreItemFromToday,
+                    onRestoreItemFromCompleted = onRestoreItemFromCompleted,
+                    dragPreviewTarget = dragPreviewTarget,
+                    modifier = Modifier.weight(1f),
+                )
+                SourcePoolSection(
+                    items = sourceItems,
+                    pageTitle = pageTitle,
+                    tint = tint,
+                    selectedListName = listNames[selectedListIndex],
+                    onSwitchList = { selectedListIndex = (selectedListIndex + 1) % listNames.size },
+                    isChecked = isChecked,
+                    onToggleChecked = onToggleChecked,
+                    onMoveItemToToday = onMoveItemToToday,
+                    onMoveItemToCompleted = onMoveItemToCompleted,
+                    dragPreviewTarget = dragPreviewTarget,
+                    onDragPreviewTargetChange = { dragPreviewTarget = it },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        } else {
             TodayBoardSection(
                 todayPlanItems = todayPlanItems,
                 todayCompletedItems = todayCompletedItems,
@@ -707,7 +734,7 @@ private fun EditableBulletPage(
                 onRestoreItemFromToday = onRestoreItemFromToday,
                 onRestoreItemFromCompleted = onRestoreItemFromCompleted,
                 dragPreviewTarget = dragPreviewTarget,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
             )
             SourcePoolSection(
                 items = sourceItems,
@@ -721,8 +748,19 @@ private fun EditableBulletPage(
                 onMoveItemToCompleted = onMoveItemToCompleted,
                 dragPreviewTarget = dragPreviewTarget,
                 onDragPreviewTargetChange = { dragPreviewTarget = it },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
             )
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .size(38.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(Color(0xFFF2A7B4))
+                .clickable { dualColumnMode = !dualColumnMode },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(if (dualColumnMode) "›" else "‹", color = Color.White, style = MaterialTheme.typography.titleMedium)
         }
     }
 
