@@ -822,7 +822,7 @@ private fun FixedDayScheduleGrid(
         verticalAlignment = Alignment.Top,
     ) {
         Column(
-            modifier = Modifier.width(24.dp),
+            modifier = Modifier.width(20.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -837,7 +837,7 @@ private fun FixedDayScheduleGrid(
             repeat(3) { idx ->
                 val entry = entries.getOrNull(idx)
                 if (entry == null) {
-                    Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(14.dp))
+                    Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(12.dp))
                 } else {
                     HandbookEntryLine(
                         entry = entry,
@@ -852,7 +852,7 @@ private fun FixedDayScheduleGrid(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(1.dp)
+                            .height(0.8.dp)
                             .background(Color(0x0E000000)),
                     )
                 }
