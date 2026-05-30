@@ -24,6 +24,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bf410.goaldaylocal.ui.book.BookStrings
@@ -69,13 +70,29 @@ fun GoaldayApp() {
     MaterialTheme {
         Scaffold(
             bottomBar = {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = Color(0xFFF8F4EE),
+                    tonalElevation = 0.dp,
+                ) {
                     RootTab.entries.forEach { item ->
+                        val selected = tab == item
                         NavigationBarItem(
-                            selected = tab == item,
+                            selected = selected,
                             onClick = { tab = item },
-                            icon = { Text(item.icon) },
-                            label = { Text(item.label) },
+                            icon = {
+                                Text(
+                                    item.icon,
+                                    color = if (selected) Color(0xFF2D2A26) else Color(0xFF9A9389),
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                )
+                            },
+                            label = {
+                                Text(
+                                    item.label,
+                                    color = if (selected) Color(0xFF2D2A26) else Color(0xFF9A9389),
+                                )
+                            },
+                            alwaysShowLabel = true,
                         )
                     }
                 }
