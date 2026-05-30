@@ -59,8 +59,6 @@ fun CalendarScreen(
     val entryDays = uiState.entries.map { it.day }.toSet()
     selectedDay = selectedDay.coerceIn(1, maxDay)
     val selectedDayEntries = uiState.entries.filter { it.day == selectedDay }
-    val monthTotal = uiState.entries.size
-    val monthDone = uiState.entries.count { it.completed }
 
     Column(
         modifier = Modifier
@@ -100,38 +98,15 @@ fun CalendarScreen(
             Text("下个月 ›", modifier = Modifier.clickable(onClick = viewModel::nextMonth), color = Color(0xFF888177))
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            MetricCard(
-                modifier = Modifier.weight(1f),
-                title = "本月完成",
-                value = monthDone.toString(),
-                tint = Color(0xFF9AAE93),
-            )
-            MetricCard(
-                modifier = Modifier.weight(1f),
-                title = "本月计划",
-                value = monthTotal.toString(),
-                tint = Color(0xFFE2A57E),
-            )
-            MetricCard(
-                modifier = Modifier.weight(1f),
-                title = "完成率",
-                value = if (monthTotal == 0) "0%" else "${(monthDone * 100 / monthTotal)}%",
-                tint = Color(0xFF89A8BA),
-            )
-        }
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFFAF7F2))),
-                    RoundedCornerShape(18.dp),
+                    Color(0xFFFBFAF8),
+                    RoundedCornerShape(14.dp),
                 )
-                .padding(12.dp),
+                .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
+                .padding(10.dp),
         ) {
             Box(
                 modifier = Modifier
@@ -140,7 +115,7 @@ fun CalendarScreen(
                     .fillMaxSize()
                     .background(Color(0x12000000)),
             )
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     listOf("一", "二", "三", "四", "五", "六", "日").forEach { label ->
                         Text(
@@ -153,7 +128,7 @@ fun CalendarScreen(
                 }
                 CalendarHeader()
                 repeat(totalCells / 7) { rowIndex ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
                         repeat(7) { columnIndex ->
                             val cellIndex = rowIndex * 7 + columnIndex
                             val day = cellIndex - firstOffset + 1
@@ -178,7 +153,14 @@ fun CalendarScreen(
             }
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFFBFAF8), RoundedCornerShape(14.dp))
+                .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
+                .padding(10.dp),
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -218,15 +200,6 @@ fun CalendarScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .width(2.dp)
-                                    .height(34.dp)
-                                    .background(
-                                        if (entry.completed) Color(0xFFA7B99B) else Color(0xFFE3B28B),
-                                        RoundedCornerShape(99.dp),
-                                    ),
-                            )
-                            Box(
-                                modifier = Modifier
                                     .size(16.dp)
                                     .background(
                                         if (entry.completed) Color(0xFFD8D1C8) else Color(0xFFF4F2EE),
@@ -252,7 +225,7 @@ fun CalendarScreen(
                                 }
                             }
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("编辑", color = Color(0xFF6F675D), modifier = Modifier.clickable { editingEntry = entry })
                             Text("删除", color = Color(0xFF9C5A52), modifier = Modifier.clickable { viewModel.removeSchedule(entry.id) })
                         }
@@ -293,23 +266,6 @@ fun CalendarScreen(
     }
 }
 
-@Composable
-private fun MetricCard(
-    modifier: Modifier = Modifier,
-    title: String,
-    value: String,
-    tint: Color,
-) {
-    Column(
-        modifier = modifier
-            .background(Color(0xFFF8F5EF), RoundedCornerShape(12.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Text(title, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8A847A))
-        Text(value, style = MaterialTheme.typography.titleMedium, color = tint, fontWeight = FontWeight.SemiBold)
-    }
-}
 
 @Composable
 private fun DayCell(
