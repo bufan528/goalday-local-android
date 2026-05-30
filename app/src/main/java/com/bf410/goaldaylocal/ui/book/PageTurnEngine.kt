@@ -400,15 +400,27 @@ fun Modifier.turningPageTransform(
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     transformOrigin = if (draggingToNext) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 128f else 118f
+    val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
+        val tail = ((visualProgress - 0.78f) / 0.22f).coerceIn(0f, 1f)
+        tail * 12f
+    } else {
+        0f
+    }
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 128f + handbookTailBoost else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * visualProgress
         TurnDirection.PREVIOUS -> maxRotation * visualProgress
         null -> 0f
     }
+    val tailRetract = if (profile == TurnProfile.HANDBOOK) {
+        val tail = ((visualProgress - 0.84f) / 0.16f).coerceIn(0f, 1f)
+        tail * 8f
+    } else {
+        0f
+    }
     translationX = when {
-        draggingToNext -> -(visualProgress * 16f + visualProgress * visualProgress * 56f)
-        draggingToPrevious -> visualProgress * 16f + visualProgress * visualProgress * 56f
+        draggingToNext -> -(visualProgress * 16f + visualProgress * visualProgress * 56f - tailRetract)
+        draggingToPrevious -> visualProgress * 16f + visualProgress * visualProgress * 56f - tailRetract
         else -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
@@ -425,7 +437,13 @@ fun Modifier.pageBackTransform(
     profile: TurnProfile = TurnProfile.DEFAULT,
 ): Modifier = graphicsLayer {
     transformOrigin = if (direction == TurnDirection.NEXT) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 128f else 118f
+    val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
+        val tail = ((visualProgress - 0.78f) / 0.22f).coerceIn(0f, 1f)
+        tail * 10f
+    } else {
+        0f
+    }
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 128f + handbookTailBoost else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * visualProgress * 0.91f
         TurnDirection.PREVIOUS -> maxRotation * visualProgress * 0.91f
