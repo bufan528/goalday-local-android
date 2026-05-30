@@ -1,11 +1,8 @@
 package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -36,6 +33,7 @@ import kotlin.math.abs
 
 private const val EDGE_GESTURE_RATIO = 0.13f
 private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.19f
+private const val HANDBOOK_DRAG_START_THRESHOLD = 0.45f
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase
@@ -104,8 +102,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.91f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 170f else Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.86f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 140f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipNext()
@@ -115,8 +113,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.91f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 170f else Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.86f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 140f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipPrevious()
@@ -126,8 +124,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         0f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.82f else 0.84f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) Spring.StiffnessMedium else Spring.StiffnessMediumLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.8f else 0.84f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) Spring.StiffnessMediumLow else Spring.StiffnessMediumLow,
                         ),
                     )
                 }
@@ -184,8 +182,8 @@ fun PageTurnEngine(
                                 return@detectHorizontalDragGestures
                             }
                             val resolvedDirection = direction ?: when {
-                                dragAmount <= -0.6f && canStartNextFromEdge -> TurnDirection.NEXT
-                                dragAmount >= 0.6f && canStartPreviousFromEdge -> TurnDirection.PREVIOUS
+                                dragAmount <= -(if (profile == TurnProfile.HANDBOOK) HANDBOOK_DRAG_START_THRESHOLD else 0.6f) && canStartNextFromEdge -> TurnDirection.NEXT
+                                dragAmount >= (if (profile == TurnProfile.HANDBOOK) HANDBOOK_DRAG_START_THRESHOLD else 0.6f) && canStartPreviousFromEdge -> TurnDirection.PREVIOUS
                                 else -> null
                             } ?: return@detectHorizontalDragGestures
 

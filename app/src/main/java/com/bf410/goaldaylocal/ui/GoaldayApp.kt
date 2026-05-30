@@ -74,7 +74,7 @@ fun GoaldayApp() {
             containerColor = Color(0xFFF7F6F3),
             bottomBar = {
                 NavigationBar(
-                    containerColor = Color(0xFFF4F1EB),
+                    containerColor = Color(0xFFF1ECE4),
                     tonalElevation = 0.dp,
                 ) {
                     RootTab.entries.forEach { item ->
@@ -85,11 +85,11 @@ fun GoaldayApp() {
                             icon = { Text(item.icon) },
                             label = { Text(item.label) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF2F2A25),
-                                selectedTextColor = Color(0xFF2F2A25),
-                                unselectedIconColor = Color(0xFF9E978D),
-                                unselectedTextColor = Color(0xFF9E978D),
-                                indicatorColor = Color(0xFFEDE6DC),
+                                selectedIconColor = Color(0xFF2B241D),
+                                selectedTextColor = Color(0xFF2B241D),
+                                unselectedIconColor = Color(0xFF938A7F),
+                                unselectedTextColor = Color(0xFF938A7F),
+                                indicatorColor = Color(0xFFE7DDCF),
                             ),
                         )
                     }
