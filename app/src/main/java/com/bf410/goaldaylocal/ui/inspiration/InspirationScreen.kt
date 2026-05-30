@@ -11,43 +11,60 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.book.InspirationTemplates
+import com.bf410.goaldaylocal.ui.replica.ExecutionBoardHeader
+import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
+import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 
 @Composable
 fun InspirationScreen(
     viewModel: BookViewModel,
 ) {
+    var selectedIndex by remember { mutableIntStateOf(0) }
+    val selected = InspirationTemplates.all[selectedIndex.coerceIn(0, InspirationTemplates.all.lastIndex)]
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(top = 14.dp, bottom = 12.dp),
+            .padding(top = 8.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            text = "灵感中心",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF2E2A26),
+        GoaldayTopBar(
+            leftTitle = "灵感",
+            rightPrimaryText = "应用",
+            onRightPrimaryClick = { viewModel.applyInspirationToToday(selected.items) },
         )
+        GoaldaySegmentBar(
+            items = listOf("模板", "预览", "应用"),
+            selectedIndex = 0,
+            onSelect = {},
+        )
+        ExecutionBoardHeader(title = "灵感执行板", subtitle = "选模板 -> 预览 -> 应用到今日")
+
         InspirationTemplates.all.forEachIndexed { index, template ->
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(98.dp)
+                    .height(108.dp)
                     .background(
                         Brush.horizontalGradient(
                             when (index % 4) {
@@ -59,8 +76,8 @@ fun InspirationScreen(
                         ),
                         RoundedCornerShape(14.dp),
                     )
-                    .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(14.dp))
-                    .clickable { viewModel.applyInspirationToToday(template.items) }
+                    .border(if (index == selectedIndex) 2.dp else 1.dp, if (index == selectedIndex) Color.White else Color(0x24FFFFFF), RoundedCornerShape(14.dp))
+                    .clickable { selectedIndex = index }
                     .padding(horizontal = 14.dp, vertical = 10.dp),
             ) {
                 Row(
@@ -72,9 +89,42 @@ fun InspirationScreen(
                         Text(template.title, fontWeight = FontWeight.SemiBold, color = Color.White)
                         Text(template.subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xEFFFFFFF))
                     }
-                    Text("添加", color = Color.White, style = MaterialTheme.typography.labelLarge)
+                    Text(if (index == selectedIndex) "已选" else "选择", color = Color.White, style = MaterialTheme.typography.labelLarge)
                 }
             }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFFBFAF8), RoundedCornerShape(14.dp))
+                .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("预览：${selected.title}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2E2A26))
+            selected.items.take(8).forEach { item ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+                    Text("·", color = Color(0xFF9E978D))
+                    Text(item, modifier = Modifier.weight(1f), color = Color(0xFF3A332C), style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "＋",
+                        color = Color(0xFF6F675D),
+                        modifier = Modifier
+                            .width(18.dp)
+                            .clickable { viewModel.applyInspirationToToday(listOf(item)) },
+                    )
+                }
+            }
+            Text(
+                "一键应用全部",
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier
+                    .background(Color(0xFF222222), RoundedCornerShape(99.dp))
+                    .clickable { viewModel.applyInspirationToToday(selected.items) }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            )
         }
     }
 }
