@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -292,7 +293,9 @@ private fun ChecklistBoard(
     var inputText by remember { mutableStateOf("") }
     var editingIndex by remember { mutableIntStateOf(-1) }
     var editingText by remember { mutableStateOf("") }
+    var actionHint by remember { mutableStateOf("") }
     val rowEditorFocus = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(editingIndex) {
         if (editingIndex >= 0) {
@@ -315,7 +318,19 @@ private fun ChecklistBoard(
         ) {
             Text("‹", color = Color(0xFFD28CA3), style = MaterialTheme.typography.headlineSmall)
             Text("● 本周 Todo", color = Color(0xFF22201C), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Text("Done", color = Color.White, modifier = Modifier.background(Color(0xFF111111), RoundedCornerShape(8.dp)).padding(horizontal = 14.dp, vertical = 5.dp))
+            Text(
+                "Done",
+                color = Color.White,
+                modifier = Modifier
+                    .background(Color(0xFF111111), RoundedCornerShape(8.dp))
+                    .clickable {
+                        editingIndex = -1
+                        inputText = ""
+                        focusManager.clearFocus(force = true)
+                        actionHint = "编辑已完成"
+                    }
+                    .padding(horizontal = 14.dp, vertical = 5.dp),
+            )
         }
 
         checklistDraft.forEachIndexed { index, item ->
@@ -346,6 +361,7 @@ private fun ChecklistBoard(
                                 onUpdateScheduleTitle(it.id, next, it.day, it.note)
                             }
                             editingIndex = -1
+                            actionHint = "已保存修改"
                         })
                     } else {
                         Text("  ${item.text}", color = Color(0xFF302D28), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
@@ -407,6 +423,7 @@ private fun ChecklistBoard(
                         val today = LocalDate.now().dayOfMonth
                         scheduleEntries.firstOrNull { it.day == today && it.title == removed.text }?.let { onRemoveSchedule(it.id) }
                         focusedIndex = (focusedIndex - 1).coerceAtLeast(0)
+                        actionHint = "已删除任务"
                     }
                 })
                 Text("↑", modifier = Modifier.clickable {
@@ -419,6 +436,7 @@ private fun ChecklistBoard(
                             val today = LocalDate.now().dayOfMonth
                             scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[idx - 1].text }?.let { onReorderSchedule(it.id, true) }
                             focusedIndex = idx - 1
+                            actionHint = "已上移"
                         }
                     }
                 })
@@ -432,6 +450,7 @@ private fun ChecklistBoard(
                             val today = LocalDate.now().dayOfMonth
                             scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[idx + 1].text }?.let { onReorderSchedule(it.id, false) }
                             focusedIndex = idx + 1
+                            actionHint = "已下移"
                         }
                     }
                 })
@@ -445,6 +464,7 @@ private fun ChecklistBoard(
                     editingText = text
                     focusedIndex = insertIndex
                     inputText = ""
+                    actionHint = "已新增并进入编辑"
                 })
                 Text("✓", modifier = Modifier.clickable {
                     if (checklistDraft.isNotEmpty()) {
@@ -453,6 +473,7 @@ private fun ChecklistBoard(
                         checklistDraft[i] = checklistDraft[i].copy(checked = next)
                         val today = LocalDate.now().dayOfMonth
                         scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[i].text }?.let { onToggleScheduleDone(it.id) }
+                        actionHint = if (next) "已标记完成" else "已取消完成"
                     }
                 })
             }
@@ -494,9 +515,14 @@ private fun ChecklistBoard(
                     editingText = text
                     focusedIndex = 0
                     inputText = ""
+                    actionHint = "已快速添加"
                 }
                 .padding(horizontal = 10.dp, vertical = 5.dp),
         )
+
+        if (actionHint.isNotBlank()) {
+            Text(actionHint, color = Color(0xFF7A7269), style = MaterialTheme.typography.labelSmall)
+        }
     }
 }
 
