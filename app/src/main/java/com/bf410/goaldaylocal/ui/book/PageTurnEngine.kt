@@ -212,6 +212,20 @@ fun PageTurnEngine(
             if (direction != null && dragProgress > 0.01f) {
                 Box(
                     modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = (0.05f + visualProgress * 0.14f).coerceAtMost(0.20f)),
+                                ),
+                                radius = 2200f,
+                            ),
+                        ),
+                )
+
+                Box(
+                    modifier = Modifier
                         .align(if (draggingToNext) Alignment.CenterStart else Alignment.CenterEnd)
                         .fillMaxHeight()
                         .width(turnShadowWidth)
@@ -239,7 +253,7 @@ fun PageTurnEngine(
                 Box(
                     modifier = Modifier
                         .align(if (draggingToNext) Alignment.CenterEnd else Alignment.CenterStart)
-                        .width((2f + visualProgress * 6f).dp)
+                        .width((2f + visualProgress * 8f).dp)
                         .fillMaxHeight()
                         .background(
                             Brush.horizontalGradient(
@@ -252,6 +266,28 @@ fun PageTurnEngine(
                                     listOf(
                                         Color.Black.copy(alpha = (0.06f + visualProgress * 0.16f).coerceAtMost(0.20f)),
                                         Color.White.copy(alpha = (0.10f + visualProgress * 0.22f).coerceAtMost(0.28f)),
+                                    )
+                                },
+                            ),
+                        ),
+                )
+
+                Box(
+                    modifier = Modifier
+                        .align(if (draggingToNext) Alignment.CenterEnd else Alignment.CenterStart)
+                        .width((5f + visualProgress * 12f).dp)
+                        .fillMaxHeight()
+                        .background(
+                            Brush.horizontalGradient(
+                                if (draggingToNext) {
+                                    listOf(
+                                        Color.White.copy(alpha = (0.04f + visualProgress * 0.18f).coerceAtMost(0.22f)),
+                                        Color.Transparent,
+                                    )
+                                } else {
+                                    listOf(
+                                        Color.Transparent,
+                                        Color.White.copy(alpha = (0.04f + visualProgress * 0.18f).coerceAtMost(0.22f)),
                                     )
                                 },
                             ),
