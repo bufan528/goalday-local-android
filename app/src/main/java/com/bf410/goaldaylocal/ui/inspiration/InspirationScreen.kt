@@ -84,9 +84,12 @@ fun InspirationScreen(
                             ),
                             RoundedCornerShape(14.dp),
                         )
-                        .border(if (index == selectedIndex) 2.dp else 1.dp, if (index == selectedIndex) Color.White else Color(0x24FFFFFF), RoundedCornerShape(14.dp))
-                        .clickable { selectedIndex = index }
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    .border(if (index == selectedIndex) 2.dp else 1.dp, if (index == selectedIndex) Color.White else Color(0x24FFFFFF), RoundedCornerShape(14.dp))
+                    .clickable {
+                        selectedIndex = index
+                        mode = InspirationMode.PREVIEW.ordinal
+                    }
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),

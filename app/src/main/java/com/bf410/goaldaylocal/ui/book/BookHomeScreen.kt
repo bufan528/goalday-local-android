@@ -425,6 +425,40 @@ private fun BookDetailView(
         } else {
             Spacer(Modifier.height(8.dp))
         }
+        if (handbookMode) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "‹ 上一页",
+                    color = if (uiState.selectedPageIndex > 0) Color(0xFF6F675D) else Color(0xFFB8B1A7),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x12000000))
+                        .clickable(enabled = uiState.selectedPageIndex > 0) { viewModel.setPage(uiState.selectedPageIndex - 1) }
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                )
+                Text(
+                    "${uiState.selectedPageIndex + 1}/${book.pages.size}",
+                    color = Color(0xFF8D867C),
+                    style = MaterialTheme.typography.labelSmall,
+                )
+                Text(
+                    "下一页 ›",
+                    color = if (uiState.selectedPageIndex < book.pages.lastIndex) Color(0xFF6F675D) else Color(0xFFB8B1A7),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x12000000))
+                        .clickable(enabled = uiState.selectedPageIndex < book.pages.lastIndex) { viewModel.setPage(uiState.selectedPageIndex + 1) }
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+        }
         BookReader(
             bookId = book.id,
             bookTitle = book.title,
