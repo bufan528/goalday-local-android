@@ -578,9 +578,24 @@ fun ActivePageLayer(
     onCommand: (RichEditorCommand) -> Unit,
     contentMode: PageContentMode,
     onContentModeChange: (PageContentMode) -> Unit,
+    handbookMode: Boolean = false,
     turnProgress: Float = 0f,
     turnDirection: TurnDirection? = null,
 ) {
+    if (handbookMode) {
+        HandbookReplicaPage(
+            modifier = modifier,
+            page = page,
+            pageIndex = pageIndex,
+            pageCount = pageCount,
+            todayPlanItems = todayPlanItems,
+            todayCompletedItems = todayCompletedItems,
+            schedulePreviewEntries = schedulePreviewEntries,
+            turnProgress = turnProgress,
+            turnDirection = turnDirection,
+        )
+        return
+    }
     val easedShift = turnProgress * turnProgress
     val contentShift = when (turnDirection) {
         TurnDirection.NEXT -> -(easedShift * 22f + turnProgress * 5f)
@@ -640,6 +655,132 @@ fun ActivePageLayer(
         }
         Spacer(Modifier.height(24.dp))
         Text(text = "${pageIndex + 1} / $pageCount", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7A7065))
+    }
+}
+
+@Composable
+private fun HandbookReplicaPage(
+    modifier: Modifier,
+    page: BookPage,
+    pageIndex: Int,
+    pageCount: Int,
+    todayPlanItems: List<String>,
+    todayCompletedItems: List<String>,
+    schedulePreviewEntries: List<ScheduleEntry>,
+    turnProgress: Float,
+    turnDirection: TurnDirection?,
+) {
+    val easedShift = turnProgress * turnProgress
+    val contentShift = when (turnDirection) {
+        TurnDirection.NEXT -> -(easedShift * 10f + turnProgress * 2f)
+        TurnDirection.PREVIOUS -> easedShift * 10f + turnProgress * 2f
+        null -> 0f
+    }
+    val alpha = (1f - turnProgress * 0.10f).coerceIn(0.9f, 1f)
+    val leftLines = (todayCompletedItems + schedulePreviewEntries.filter { it.completed }.map { it.title })
+        .distinct()
+        .take(8)
+    val rightLines = (todayPlanItems + schedulePreviewEntries.filterNot { it.completed }.map { it.title })
+        .distinct()
+        .take(8)
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(26.dp))
+            .background(Color(0xFFFFFEFC))
+            .border(1.dp, Color(0x12A89A8B), RoundedCornerShape(26.dp))
+            .graphicsLayer {
+                translationX = contentShift
+                this.alpha = alpha
+            }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text("${pageIndex + 1}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
+                leftLines.forEach { line ->
+                    Text("• $line", style = MaterialTheme.typography.bodySmall, color = Color(0xFF2C2925))
+                }
+                if (leftLines.isEmpty()) {
+                    Text("• 记录今日完成", style = MaterialTheme.typography.bodySmall, color = Color(0xFF2C2925))
+                }
+                ColorTagCard(color = Color(0xFF9B2F2F), text = "今天优先级排序 · 行动")
+                ColorTagCard(color = Color(0xFF1A1A1A), text = "不熬夜 23:00")
+                MiniPhotoRow()
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text("${pageIndex + 2}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
+                rightLines.forEach { line ->
+                    Text("• $line", style = MaterialTheme.typography.bodySmall, color = Color(0xFF2C2925))
+                }
+                if (rightLines.isEmpty()) {
+                    Text("• 写下明日计划", style = MaterialTheme.typography.bodySmall, color = Color(0xFF2C2925))
+                }
+                ColorTagCard(color = Color(0xFF84C65A), text = "本月节律进度  30%")
+                ColorTagCard(color = Color(0xFF9B2F2F), text = "任务目标 · 整理复盘")
+                MiniPhotoRow()
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(1.dp)
+                .fillMaxHeight()
+                .background(Color(0x12000000)),
+        )
+
+        Text(
+            text = page.title.ifBlank { "手账" },
+            style = MaterialTheme.typography.labelSmall,
+            color = Color(0xFF8D857B),
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+        Text(
+            text = "$pageCount",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color(0x008D857B),
+        )
+    }
+}
+
+@Composable
+private fun ColorTagCard(color: Color, text: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(6.dp))
+            .background(color)
+            .padding(horizontal = 7.dp, vertical = 6.dp),
+    ) {
+        Text(text, color = Color.White, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+@Composable
+private fun MiniPhotoRow() {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+        repeat(3) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(28.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(
+                        when (it) {
+                            0 -> Color(0xFFD3D7C8)
+                            1 -> Color(0xFFD7C9C1)
+                            else -> Color(0xFFC9D2D7)
+                        },
+                    ),
+            )
+        }
     }
 }
 

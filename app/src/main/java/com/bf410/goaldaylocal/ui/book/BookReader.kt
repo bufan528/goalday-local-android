@@ -143,6 +143,7 @@ fun BookReader(
                 onCommand = { diaryCommand = it },
                 contentMode = contentMode,
                 onContentModeChange = { contentMode = it },
+                handbookMode = handbookMode,
                 turnProgress = progress,
                 turnDirection = direction,
             )
