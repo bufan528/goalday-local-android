@@ -27,6 +27,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -574,6 +575,7 @@ fun ActivePageLayer(
     onMoveItemToCompleted: (String) -> Unit,
     onRestoreItemFromToday: (String) -> Unit,
     onRestoreItemFromCompleted: (String) -> Unit,
+    onUpdateScheduleTitle: (String, String) -> Unit,
     pendingCommand: RichEditorCommand?,
     onCommand: (RichEditorCommand) -> Unit,
     contentMode: PageContentMode,
@@ -591,6 +593,7 @@ fun ActivePageLayer(
             todayPlanItems = todayPlanItems,
             todayCompletedItems = todayCompletedItems,
             schedulePreviewEntries = schedulePreviewEntries,
+            onUpdateScheduleTitle = onUpdateScheduleTitle,
             turnProgress = turnProgress,
             turnDirection = turnDirection,
         )
@@ -667,6 +670,7 @@ private fun HandbookReplicaPage(
     todayPlanItems: List<String>,
     todayCompletedItems: List<String>,
     schedulePreviewEntries: List<ScheduleEntry>,
+    onUpdateScheduleTitle: (String, String) -> Unit,
     turnProgress: Float,
     turnDirection: TurnDirection?,
 ) {
@@ -686,6 +690,15 @@ private fun HandbookReplicaPage(
     val rightTop = rightLines.take(5)
     val rightMiddle = rightLines.drop(5).take(3)
     val rightBottom = rightLines.drop(8).take(3)
+    var editingId by remember(pageIndex) { mutableStateOf<String?>(null) }
+    var editingText by remember(pageIndex) { mutableStateOf("") }
+
+    val groupedByDay = schedulePreviewEntries
+        .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title }))
+        .groupBy { it.day }
+        .toSortedMap()
+    val leftDayBlocks = groupedByDay.entries.take(3)
+    val rightDayBlocks = groupedByDay.entries.drop(3).take(3)
 
     Box(
         modifier = modifier
@@ -705,6 +718,25 @@ private fun HandbookReplicaPage(
             ) {
                 Text("${pageIndex + 1}  周一", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
                 Text("今日复盘", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
+                leftDayBlocks.forEach { block ->
+                    Text("${block.key}日", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277))
+                    block.value.take(3).forEach { entry ->
+                        HandbookEntryLine(
+                            entry = entry,
+                            editingId = editingId,
+                            editingText = editingText,
+                            onStartEdit = {
+                                editingId = entry.id
+                                editingText = entry.title
+                            },
+                            onTextChange = { editingText = it },
+                            onCommit = {
+                                onUpdateScheduleTitle(entry.id, editingText)
+                                editingId = null
+                            },
+                        )
+                    }
+                }
                 FixedBulletBlock(lines = leftLines.ifEmpty { listOf("记录今日完成") }, slots = 6)
                 Text("收支/步数/专注", style = MaterialTheme.typography.labelSmall, color = Color(0xFF3D3832))
                 ColorTagCard(color = Color(0xFF9B2F2F), text = "今天优先级排序 · 行动")
@@ -719,6 +751,25 @@ private fun HandbookReplicaPage(
             ) {
                 Text("${pageIndex + 2}  周二", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
                 Text("今日计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
+                rightDayBlocks.forEach { block ->
+                    Text("${block.key}日", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277))
+                    block.value.take(3).forEach { entry ->
+                        HandbookEntryLine(
+                            entry = entry,
+                            editingId = editingId,
+                            editingText = editingText,
+                            onStartEdit = {
+                                editingId = entry.id
+                                editingText = entry.title
+                            },
+                            onTextChange = { editingText = it },
+                            onCommit = {
+                                onUpdateScheduleTitle(entry.id, editingText)
+                                editingId = null
+                            },
+                        )
+                    }
+                }
                 FixedBulletBlock(lines = rightTop.ifEmpty { listOf("写下明日计划") }, slots = 5)
                 ColorTagCard(color = Color(0xFF84C65A), text = "本月节律进度  30%")
                 FixedBulletBlock(lines = rightMiddle, slots = 2)
@@ -749,6 +800,35 @@ private fun HandbookReplicaPage(
             style = MaterialTheme.typography.labelSmall,
             color = Color(0x008D857B),
         )
+    }
+}
+
+@Composable
+private fun HandbookEntryLine(
+    entry: ScheduleEntry,
+    editingId: String?,
+    editingText: String,
+    onStartEdit: () -> Unit,
+    onTextChange: (String) -> Unit,
+    onCommit: () -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+        Text(if (entry.completed) "✓" else "•", style = MaterialTheme.typography.labelSmall, color = if (entry.completed) Color(0xFF719A69) else Color(0xFF2C2925))
+        if (editingId == entry.id) {
+            BasicTextField(
+                value = editingText,
+                onValueChange = onTextChange,
+                textStyle = TextStyle(color = Color(0xFF2C2925)),
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color(0x0A000000), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 4.dp, vertical = 1.dp),
+            )
+            Text("存", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE88FAE), modifier = Modifier.clickable { onCommit() })
+        } else {
+            Text(entry.title, style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925), maxLines = 1, modifier = Modifier.weight(1f))
+            Text("✎", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9A9085), modifier = Modifier.clickable { onStartEdit() })
+        }
     }
 }
 

@@ -243,6 +243,16 @@ class BookViewModel(
         }
     }
 
+    fun updateScheduleTitleFromHandbook(entryId: String, newTitle: String) {
+        val normalized = newTitle.trim()
+        if (entryId.isBlank() || normalized.isBlank()) return
+        val updated = store.scheduleEntries().map { entry ->
+            if (entry.id == entryId) entry.copy(title = normalized) else entry
+        }
+        store.saveScheduleEntries(updated)
+        syncEditableContent()
+    }
+
     private fun syncCompletedItemToDiary(bookId: String, item: String) {
         val diaryPage = currentBook().pages.firstOrNull { it is DiaryPage } as? DiaryPage ?: return
         val raw = store.diaryText(bookId, diaryPage.title)
