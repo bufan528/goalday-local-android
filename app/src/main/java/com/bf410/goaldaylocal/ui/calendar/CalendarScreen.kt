@@ -33,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -252,58 +251,6 @@ private fun SegText(text: String, active: Boolean, modifier: Modifier = Modifier
     }
 }
 
-
-@Composable
-private fun DayCell(
-    day: Int?,
-    marked: Boolean,
-    selected: Boolean,
-    isToday: Boolean,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .width(36.dp)
-            .height(40.dp)
-            .background(
-                when {
-                    selected -> Color(0xFFEEE3D4)
-                    isToday -> Color(0xFFF1E1CF)
-                    day != null -> Color(0x10FFFFFF)
-                    else -> Color.Transparent
-                },
-                RoundedCornerShape(10.dp),
-            )
-            .clickable(enabled = day != null, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (day != null) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(day.toString(), color = Color(0xFF3A3028))
-                if (marked) {
-                    Spacer(Modifier.height(2.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(4.dp)
-                            .background(Color(0xFF7FA579), RoundedCornerShape(99.dp)),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CalendarHeader() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        listOf("一", "二", "三", "四", "五", "六", "日").forEach {
-            Text(it, color = Color(0xFF7D7266), style = MaterialTheme.typography.labelLarge)
-        }
-    }
-}
 
 @Composable
 private fun ScheduleDialog(
