@@ -1330,20 +1330,30 @@ private fun SourcePoolSection(
                 Box(
                     modifier = Modifier
                         .size(16.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(if (isChecked(pageTitle, item)) tint.copy(alpha = 0.82f) else Color(0xFFF1ECE4))
-                        .border(1.dp, Color(0xFFD5CEC2), RoundedCornerShape(4.dp))
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(if (isChecked(pageTitle, item)) Color(0xFFE7D7F2) else Color(0xFFF9F6F2))
+                        .border(1.dp, Color(0xFFAA8CB8), RoundedCornerShape(3.dp))
                         .clickable { onToggleChecked(pageTitle, item) },
                 )
                 Text(
                     item,
-                    color = Color(0xFF27231E),
-                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF2B2621),
+                    style = MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.None),
                     modifier = Modifier.weight(1f),
                 )
                 Text("＋", color = Color(0xFF8F684F), modifier = Modifier.clickable(enabled = !isDragging) { onMoveItemToToday(item) })
                 Text("✓", color = Color(0xFF6A9F68), modifier = Modifier.clickable(enabled = !isDragging) { onMoveItemToCompleted(item) })
             }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, Color(0x1FA58D78), Color.Transparent),
+                        ),
+                    ),
+            )
         }
     }
 }
