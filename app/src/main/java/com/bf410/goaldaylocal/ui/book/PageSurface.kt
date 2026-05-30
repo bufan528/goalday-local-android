@@ -726,8 +726,8 @@ private fun ReferencePlannerBoard(
 ) {
     val weekday = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
     val dayNumbers = (0..6).map { LocalDate.now().plusDays(it.toLong()).dayOfMonth }
-    val leftItems = (doneItems + todayItems).take(7)
-    val rightItems = (todayItems + sourceItems).distinct().take(9)
+    val leftItems = doneItems.take(7)
+    val rightItems = (todayItems + sourceItems).distinct().take(10)
     var selectedItem by remember(rightItems) { mutableStateOf(rightItems.firstOrNull()) }
 
     Row(
@@ -740,7 +740,7 @@ private fun ReferencePlannerBoard(
     ) {
         Column(
             modifier = Modifier
-                .weight(1.18f)
+                .weight(1.08f)
                 .fillMaxHeight(),
         ) {
             weekday.forEachIndexed { index, label ->
@@ -762,9 +762,7 @@ private fun ReferencePlannerBoard(
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
                             .weight(1f)
-                            .clickable(enabled = leftItems.getOrNull(index) != null) {
-                                leftItems.getOrNull(index)?.let(onRestoreItemFromDone)
-                            },
+                            .clickable(enabled = false) { },
                     )
                 }
             }
@@ -811,7 +809,7 @@ private fun ReferencePlannerBoard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 rightItems.forEach { item ->
                     Row(
@@ -825,10 +823,12 @@ private fun ReferencePlannerBoard(
                             color = Color(0xFF2D2823),
                             modifier = Modifier
                                 .weight(1f)
-                                .clickable {
-                                    selectedItem = item
-                                    onMoveItemToToday(item)
-                                },
+                                .clickable { selectedItem = item },
+                        )
+                        Text(
+                            "＋",
+                            color = Color(0xFF6E655B),
+                            modifier = Modifier.clickable { onMoveItemToToday(item) },
                         )
                     }
                 }
