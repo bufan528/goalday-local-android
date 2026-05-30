@@ -1054,9 +1054,14 @@ private fun TodayBoardSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("21周", style = MaterialTheme.typography.titleSmall, color = Color(0xFFE26B72))
-            Text("日记", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB5ADA4))
-            Text("清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB5ADA4))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("21周", style = MaterialTheme.typography.titleSmall, color = Color(0xFFE26B72))
+                Text("|", color = Color(0xFFDDD7CE))
+                Text("日记", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB5ADA4))
+                Text("|", color = Color(0xFFDDD7CE))
+                Text("清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB5ADA4))
+            }
+            Text("完成", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2F2922))
         }
         Text("左边执行 · 右边计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF948778))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1111,7 +1116,7 @@ private fun TodayBoardSection(
                                 .background(Color(0x08A5C49D))
                                 .border(1.dp, Color(0x18A5C49D), RoundedCornerShape(6.dp))
                                 .clickable { onMoveCompletedToTodo(item) }
-                                .padding(horizontal = 6.dp, vertical = 4.dp),
+                                .padding(horizontal = 6.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
@@ -1163,7 +1168,7 @@ private fun TodayBoardSection(
                                 .background(Color(0x08D9A97E))
                                 .border(1.dp, Color(0x18D9A97E), RoundedCornerShape(6.dp))
                                 .clickable { onMoveItemToCompleted(item) }
-                                .padding(horizontal = 6.dp, vertical = 4.dp),
+                                .padding(horizontal = 6.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
