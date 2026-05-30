@@ -505,7 +505,11 @@ private fun EditableBulletPage(
                 dueDayText = ""
             },
         )
-        SchedulePreviewSection(entries = schedulePreviewEntries)
+        FocusTimelineSection(
+            entries = schedulePreviewEntries,
+            todoCount = todayPlanItems.size,
+            doneCount = todayCompletedItems.size,
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -558,6 +562,52 @@ private fun EditableBulletPage(
             },
         ) {
             DatePicker(state = pickerState)
+        }
+    }
+}
+
+@Composable
+private fun FocusTimelineSection(
+    entries: List<ScheduleEntry>,
+    todoCount: Int,
+    doneCount: Int,
+) {
+    PaperNoteCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("今日时间流", style = MaterialTheme.typography.titleSmall, color = BoardTitleColor)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                BoardStatChip(label = "To do $todoCount", bg = BoardTonePlan)
+                BoardStatChip(label = "Done $doneCount", bg = BoardToneDone)
+            }
+        }
+        if (entries.isEmpty()) {
+            Text("暂无排期，先把任务放进 To do", color = BoardHintColor)
+            return@PaperNoteCard
+        }
+        val timeline = entries.take(5)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            timeline.forEach { entry ->
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0x10A17856))
+                        .padding(horizontal = 6.dp, vertical = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
+                    Text("${entry.day}", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7E6A58))
+                    Text(
+                        text = entry.title,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (entry.completed) Color(0xFF8B847D) else Color(0xFF2F2922),
+                        maxLines = 2,
+                    )
+                }
+            }
         }
     }
 }
