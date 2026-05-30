@@ -453,8 +453,8 @@ private fun BookDetailView(
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.92f)
-                        .fillMaxHeight(0.76f),
+                        .fillMaxWidth(0.88f)
+                        .fillMaxHeight(0.70f),
                 ) {
                     BookReader(
                         bookId = book.id,

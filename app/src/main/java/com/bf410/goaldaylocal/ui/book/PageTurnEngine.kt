@@ -265,9 +265,9 @@ fun PageTurnEngine(
                             .background(
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.2f).coerceAtMost(0.26f)),
-                                        Color.White.copy(alpha = (0.04f + latePhase * 0.22f).coerceAtMost(0.28f)),
-                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.2f).coerceAtMost(0.26f)),
+                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.12f).coerceAtMost(0.16f)),
+                                        Color.White.copy(alpha = (0.02f + latePhase * 0.14f).coerceAtMost(0.18f)),
+                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.12f).coerceAtMost(0.16f)),
                                     ),
                                 ),
                             ),
@@ -308,7 +308,7 @@ fun PageTurnEngine(
                             Brush.radialGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = (0.015f + earlyPhase * 0.04f + latePhase * 0.2f).coerceAtMost(0.24f)),
+                                    Color.Black.copy(alpha = (0.01f + earlyPhase * 0.02f + latePhase * 0.12f).coerceAtMost(0.15f)),
                                 ),
                                 radius = 2200f,
                             ),
@@ -324,7 +324,7 @@ fun PageTurnEngine(
                             if (draggingToNext) {
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color.Black.copy(alpha = (0.05f + latePhase * 0.34f).coerceAtMost(0.45f)),
+                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.2f).coerceAtMost(0.26f)),
                                         Color(0x22000000),
                                         Color.Transparent,
                                     ),
@@ -334,7 +334,7 @@ fun PageTurnEngine(
                                     listOf(
                                         Color.Transparent,
                                         Color(0x22000000),
-                                        Color.Black.copy(alpha = (0.05f + latePhase * 0.34f).coerceAtMost(0.45f)),
+                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.2f).coerceAtMost(0.26f)),
                                     ),
                                 )
                             },
@@ -350,13 +350,13 @@ fun PageTurnEngine(
                             Brush.horizontalGradient(
                                 if (draggingToNext) {
                                     listOf(
-                                        Color.White.copy(alpha = (0.08f + latePhase * 0.26f).coerceAtMost(0.31f)),
-                                        Color.Black.copy(alpha = (0.04f + latePhase * 0.20f).coerceAtMost(0.24f)),
+                                        Color.White.copy(alpha = (0.05f + latePhase * 0.18f).coerceAtMost(0.22f)),
+                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.12f).coerceAtMost(0.16f)),
                                     )
                                 } else {
                                     listOf(
-                                        Color.Black.copy(alpha = (0.04f + latePhase * 0.20f).coerceAtMost(0.24f)),
-                                        Color.White.copy(alpha = (0.08f + latePhase * 0.26f).coerceAtMost(0.31f)),
+                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.12f).coerceAtMost(0.16f)),
+                                        Color.White.copy(alpha = (0.05f + latePhase * 0.18f).coerceAtMost(0.22f)),
                                     )
                                 },
                             ),
@@ -372,13 +372,13 @@ fun PageTurnEngine(
                             Brush.horizontalGradient(
                                 if (draggingToNext) {
                                     listOf(
-                                        Color.White.copy(alpha = (0.03f + latePhase * 0.22f).coerceAtMost(0.24f)),
+                                        Color.White.copy(alpha = (0.02f + latePhase * 0.14f).coerceAtMost(0.16f)),
                                         Color.Transparent,
                                     )
                                 } else {
                                     listOf(
                                         Color.Transparent,
-                                        Color.White.copy(alpha = (0.03f + latePhase * 0.22f).coerceAtMost(0.24f)),
+                                        Color.White.copy(alpha = (0.02f + latePhase * 0.14f).coerceAtMost(0.16f)),
                                     )
                                 },
                             ),
