@@ -4,14 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -20,14 +18,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
-import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 @Composable
@@ -38,133 +42,205 @@ fun HomeScreen(
     onOpenInspiration: () -> Unit,
 ) {
     val calendarState by calendarViewModel.uiState.collectAsState()
-    val today = LocalDate.now()
-    val todayEntries = calendarState.entries.filter {
-        it.year == today.year && it.month == today.monthValue && it.day == today.dayOfMonth
-    }
-    val doneCount = todayEntries.count { it.completed }
-    val todoCount = todayEntries.size - doneCount
+    var mode by rememberSaveable { mutableIntStateOf(0) }
+    val weekDates = remember { buildCurrentWeek() }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         GoaldayTopBar(leftTitle = "Goalday", rightPrimaryText = "今天", onRightPrimaryClick = { calendarViewModel.backToToday() })
 
-        GoaldaySegmentBar(
-            items = listOf("首页", "日历", "手账"),
-            selectedIndex = 0,
-            onSelect = {
-                when (it) {
-                    1 -> onOpenCalendar()
-                    2 -> onOpenHandbook()
-                }
-            },
+        SegmentedHeader(
+            items = listOf("1周", "日记", "清单"),
+            selected = mode,
+            onSelect = { mode = it },
         )
 
-        SummaryCard(title = "今日执行", value = "${doneCount}/${todayEntries.size}", subtitle = "已完成 ${doneCount} · 待做 ${todoCount}")
-
-        ActionCard(
-            title = "去日历安排",
-            subtitle = "查看整月并拖拽调整任务日期",
-            action = "打开日历",
-            onClick = onOpenCalendar,
-        )
-        ActionCard(
-            title = "去手账复盘",
-            subtitle = "翻页查看执行记录与本周主题",
-            action = "打开手账",
-            onClick = onOpenHandbook,
-        )
-        ActionCard(
-            title = "去灵感补充",
-            subtitle = "从模板直接补到今日任务池",
-            action = "打开灵感",
-            onClick = onOpenInspiration,
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFFBFAF8), RoundedCornerShape(14.dp))
-                .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text("今日任务", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2F2A24))
-            if (todayEntries.isEmpty()) {
-                Text("今天还没有任务，去日历添加一条。", color = Color(0xFF8E877E), style = MaterialTheme.typography.bodySmall)
-            } else {
-                todayEntries.take(8).forEach { entry ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(if (entry.completed) "✓" else "·", color = if (entry.completed) Color(0xFF7AA171) else Color(0xFF9D9589))
-                        Text(
-                            entry.title,
-                            modifier = Modifier.weight(1f),
-                            color = if (entry.completed) Color(0xFF8E877E) else Color(0xFF3A332C),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                        Text("${entry.month}/${entry.day}", color = Color(0xFF9B9388), style = MaterialTheme.typography.labelSmall)
-                    }
-                }
-            }
+        when (mode) {
+            0 -> WeekBoard(
+                weekDates = weekDates,
+                entries = calendarState.entries,
+                onOpenCalendar = onOpenCalendar,
+            )
+            1 -> JournalQuickBoard(
+                entries = calendarState.entries,
+                onOpenHandbook = onOpenHandbook,
+            )
+            else -> ChecklistQuickBoard(
+                entries = calendarState.entries,
+                onOpenInspiration = onOpenInspiration,
+            )
         }
     }
 }
 
 @Composable
-private fun SummaryCard(title: String, value: String, subtitle: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFFBFAF8), RoundedCornerShape(14.dp))
-            .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Text(title, style = MaterialTheme.typography.labelLarge, color = Color(0xFF8D867D))
-        Text(value, style = MaterialTheme.typography.headlineMedium, color = Color(0xFF2F2A24), fontWeight = FontWeight.Bold)
-        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF8E877E))
-    }
-}
-
-@Composable
-private fun ActionCard(
-    title: String,
-    subtitle: String,
-    action: String,
-    onClick: () -> Unit,
+private fun SegmentedHeader(
+    items: List<String>,
+    selected: Int,
+    onSelect: (Int) -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFFBFAF8), RoundedCornerShape(14.dp))
-            .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .background(Color(0xFFE9E0D8), RoundedCornerShape(0.dp))
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(title, color = Color(0xFF2F2A24), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Text(subtitle, color = Color(0xFF8E877E), style = MaterialTheme.typography.bodySmall)
+        items.forEachIndexed { index, label ->
+            Text(
+                text = label,
+                color = if (selected == index) Color(0xFF1F1C19) else Color(0xFF9E958A),
+                fontWeight = if (selected == index) FontWeight.SemiBold else FontWeight.Normal,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onSelect(index) },
+            )
         }
-        Spacer(Modifier.width(8.dp))
-        Text(
-            action,
-            color = Color.White,
-            style = MaterialTheme.typography.labelLarge,
+    }
+}
+
+@Composable
+private fun WeekBoard(
+    weekDates: List<LocalDate>,
+    entries: List<ScheduleEntry>,
+    onOpenCalendar: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFFEFC), RoundedCornerShape(0.dp))
+            .border(1.dp, Color(0x12000000), RoundedCornerShape(0.dp)),
+    ) {
+        weekDates.forEach { day ->
+            val dayEntries = entries
+                .filter { it.year == day.year && it.month == day.monthValue && it.day == day.dayOfMonth }
+                .sortedWith(compareBy<ScheduleEntry> { it.completed }.thenBy { it.title })
+            val leftText = dayEntries.filter { it.completed }.take(3).joinToString("\n") { "✓${it.title}" }
+            val rightText = dayEntries.filterNot { it.completed }.take(2).joinToString("\n") { if (it.title.contains("熬夜")) "✗${it.title}" else "✓${it.title}" }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(0.5.dp, Color(0x12000000))
+                    .padding(vertical = 8.dp, horizontal = 10.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(modifier = Modifier.weight(0.22f)) {
+                    Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.titleLarge, color = Color(0xFF25221D))
+                    Text(weekdayText(day.dayOfWeek), style = MaterialTheme.typography.bodySmall, color = Color(0xFF2C2924))
+                }
+                Text(
+                    text = if (leftText.isBlank()) "" else leftText,
+                    modifier = Modifier.weight(0.44f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF2A2723),
+                )
+                Text(
+                    text = if (rightText.isBlank()) "" else rightText,
+                    modifier = Modifier.weight(0.34f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF2A2723),
+                    textDecoration = TextDecoration.None,
+                )
+            }
+        }
+
+        Box(
             modifier = Modifier
-                .background(Color(0xFF222222), RoundedCornerShape(99.dp))
-                .padding(horizontal = 10.dp, vertical = 6.dp),
+                .fillMaxWidth()
+                .padding(10.dp),
+            contentAlignment = Alignment.CenterEnd,
+        ) {
+            Text(
+                "‹",
+                color = Color(0xFF6E6660),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier
+                    .background(Color(0x26D9CED0), RoundedCornerShape(99.dp))
+                    .clickable { onOpenCalendar() }
+                    .padding(horizontal = 14.dp, vertical = 4.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun JournalQuickBoard(
+    entries: List<ScheduleEntry>,
+    onOpenHandbook: () -> Unit,
+) {
+    val done = entries.filter { it.completed }.take(10)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFFEFC))
+            .border(1.dp, Color(0x12000000))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text("在清单中勾选一周要做的所有事", color = Color(0xFF2A2723), style = MaterialTheme.typography.titleSmall)
+        done.forEachIndexed { index, entry ->
+            Text("${index + 1}  ${entry.title}", color = Color(0xFF2F2A24), style = MaterialTheme.typography.bodyMedium)
+        }
+        Text(
+            "进入手账",
+            color = Color.White,
+            modifier = Modifier
+                .background(Color(0xFF212121), RoundedCornerShape(8.dp))
+                .clickable { onOpenHandbook() }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
         )
     }
-    Spacer(Modifier.height(0.dp))
+}
+
+@Composable
+private fun ChecklistQuickBoard(
+    entries: List<ScheduleEntry>,
+    onOpenInspiration: () -> Unit,
+) {
+    val todo = entries.filterNot { it.completed }.take(12)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFFEFC))
+            .border(1.dp, Color(0x12000000))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text("在清单中列出这周最重要的目标/主题", color = Color(0xFF2A2723), style = MaterialTheme.typography.titleSmall)
+        todo.forEachIndexed { index, entry ->
+            Text("□ ${index + 1}  ${entry.title}", color = Color(0xFF2F2A24), style = MaterialTheme.typography.bodyMedium)
+        }
+        Text(
+            "补充灵感",
+            color = Color.White,
+            modifier = Modifier
+                .background(Color(0xFF212121), RoundedCornerShape(8.dp))
+                .clickable { onOpenInspiration() }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        )
+    }
+}
+
+private fun buildCurrentWeek(): List<LocalDate> {
+    val today = LocalDate.now()
+    val monday = today.with(DayOfWeek.MONDAY)
+    return (0..6).map { monday.plusDays(it.toLong()) }
+}
+
+private fun weekdayText(dayOfWeek: DayOfWeek): String = when (dayOfWeek) {
+    DayOfWeek.MONDAY -> "周一"
+    DayOfWeek.TUESDAY -> "周二"
+    DayOfWeek.WEDNESDAY -> "周三"
+    DayOfWeek.THURSDAY -> "周四"
+    DayOfWeek.FRIDAY -> "周五"
+    DayOfWeek.SATURDAY -> "周六"
+    DayOfWeek.SUNDAY -> "周日"
 }
