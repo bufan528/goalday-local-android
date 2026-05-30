@@ -30,8 +30,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +64,8 @@ import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetPage
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import java.time.Instant
+import java.time.ZoneId
 
 private val BoardTonePlan = Color(0x22D9A97E)
 private val BoardToneDone = Color(0x22A5C49D)
@@ -443,6 +449,7 @@ private fun pagePreviewText(page: BookPage): String =
     }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun EditableBulletPage(
     pageTitle: String,
     baseItems: List<String>,
@@ -470,6 +477,7 @@ private fun EditableBulletPage(
 ) {
     var newItem by remember(pageTitle) { mutableStateOf("") }
     var dueDayText by remember(pageTitle) { mutableStateOf("") }
+    var showDeadlinePicker by remember(pageTitle) { mutableStateOf(false) }
     val stagedItems = remember(todayPlanItems, todayCompletedItems) { (todayPlanItems + todayCompletedItems).toSet() }
     val sourceBaseItems = remember(baseItems, stagedItems) { baseItems.filterNot { it in stagedItems } }
     val sourceCustomItems = remember(customItems, stagedItems) { customItems.filterNot { it in stagedItems } }
@@ -484,6 +492,7 @@ private fun EditableBulletPage(
             onNewItemChange = { newItem = it },
             dueDayText = dueDayText,
             onDueDayChange = { dueDayText = it.filter(Char::isDigit).take(2) },
+            onOpenDatePicker = { showDeadlinePicker = true },
             onSaveWithDeadline = {
                 val parsedDay = dueDayText.toIntOrNull()
                 onAddCustomItemWithDeadline(newItem, parsedDay)
@@ -524,6 +533,33 @@ private fun EditableBulletPage(
             )
         }
     }
+
+    if (showDeadlinePicker) {
+        val pickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDeadlinePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val millis = pickerState.selectedDateMillis
+                        if (millis != null) {
+                            val day = Instant.ofEpochMilli(millis)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                                .dayOfMonth
+                            dueDayText = day.toString()
+                        }
+                        showDeadlinePicker = false
+                    },
+                ) { Text("确定") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeadlinePicker = false }) { Text("取消") }
+            },
+        ) {
+            DatePicker(state = pickerState)
+        }
+    }
 }
 
 @Composable
@@ -533,6 +569,7 @@ private fun QuickAddTaskSection(
     onNewItemChange: (String) -> Unit,
     dueDayText: String,
     onDueDayChange: (String) -> Unit,
+    onOpenDatePicker: () -> Unit,
     onSaveWithDeadline: () -> Unit,
     onSaveOnly: () -> Unit,
 ) {
@@ -567,6 +604,7 @@ private fun QuickAddTaskSection(
             ),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = onOpenDatePicker) { Text("选日期") }
             TextButton(onClick = onSaveWithDeadline) { Text("保存并进日程") }
             TextButton(onClick = onSaveOnly) { Text("仅保存") }
         }
