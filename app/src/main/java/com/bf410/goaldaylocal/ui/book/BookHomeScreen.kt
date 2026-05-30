@@ -317,6 +317,7 @@ private fun BookDetailView(
     forcedSegment: BookSegment?,
     onShowInspiration: () -> Unit,
 ) {
+    val handbookMode = forcedSegment == BookSegment.DIARY
     var segment by remember(book.id) { mutableStateOf(resolveSegment(currentPage)) }
     forcedSegment?.let { desired ->
         if (segment != desired) {
@@ -352,15 +353,19 @@ private fun BookDetailView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("14周", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7E776E))
-                Text("|", style = MaterialTheme.typography.labelMedium, color = Color(0xFFD2CBC1))
-                Text("Goalday", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
+                if (handbookMode) {
+                    Text("手账本", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
+                } else {
+                    Text("14周", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7E776E))
+                    Text("|", style = MaterialTheme.typography.labelMedium, color = Color(0xFFD2CBC1))
+                    Text("Goalday", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (forcedSegment != BookSegment.DIARY) {
+                if (!handbookMode && forcedSegment != BookSegment.DIARY) {
                     Text("＋灵感", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onShowInspiration))
                 }
-                if (book.id.startsWith("custom_")) {
+                if (!handbookMode && book.id.startsWith("custom_")) {
                     Text("⚙管理", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onToggleManagePanel))
                 }
                 Text(
@@ -375,30 +380,32 @@ private fun BookDetailView(
                 )
             }
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFF4EEEC), RoundedCornerShape(10.dp))
-                .border(1.dp, Color(0x16000000), RoundedCornerShape(10.dp))
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BookSegment.entries.forEach { item ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (item == segment) Color.White else Color.Transparent)
-                        .clickable { switchSegment(item) }
-                        .padding(vertical = 4.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = item.label,
-                        color = if (item == segment) Color(0xFF2A261F) else Color(0xFF9E978D),
-                        fontWeight = if (item == segment) FontWeight.SemiBold else FontWeight.Normal,
-                    )
+        if (!handbookMode) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF4EEEC), RoundedCornerShape(10.dp))
+                    .border(1.dp, Color(0x16000000), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BookSegment.entries.forEach { item ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (item == segment) Color.White else Color.Transparent)
+                            .clickable { switchSegment(item) }
+                            .padding(vertical = 4.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = item.label,
+                            color = if (item == segment) Color(0xFF2A261F) else Color(0xFF9E978D),
+                            fontWeight = if (item == segment) FontWeight.SemiBold else FontWeight.Normal,
+                        )
+                    }
                 }
             }
         }
@@ -418,7 +425,7 @@ private fun BookDetailView(
                 ActionChip(label = BookStrings.deleteBook, color = Color(0xFF9C5A52), onClick = viewModel::removeCurrentCustomBook)
             }
         }
-        if (forcedSegment == null) {
+        if (forcedSegment == null && !handbookMode) {
             Spacer(Modifier.height(12.dp))
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -491,6 +498,7 @@ private fun BookDetailView(
             onRestoreItemFromToday = viewModel::restoreItemFromToday,
             onRestoreItemFromCompleted = viewModel::restoreItemFromCompleted,
             shellStyle = if (forcedSegment == BookSegment.DIARY || currentPage is DiaryPage) ShellStyle.BOOK else ShellStyle.LIGHT,
+            handbookMode = handbookMode,
             onFlipNext = { if (uiState.selectedPageIndex < book.pages.lastIndex) viewModel.setPage(uiState.selectedPageIndex + 1) },
             onFlipPrevious = { if (uiState.selectedPageIndex > 0) viewModel.setPage(uiState.selectedPageIndex - 1) },
         )

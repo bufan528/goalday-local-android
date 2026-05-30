@@ -47,15 +47,16 @@ fun BookReader(
     onRestoreItemFromToday: (String) -> Unit,
     onRestoreItemFromCompleted: (String) -> Unit,
     shellStyle: ShellStyle = ShellStyle.LIGHT,
+    handbookMode: Boolean = false,
     onFlipNext: () -> Unit,
     onFlipPrevious: () -> Unit,
 ) {
     var diaryCommand by remember(pageIndex, bookId) { mutableStateOf<RichEditorCommand?>(null) }
     var contentMode by remember(pageIndex, bookId) { mutableStateOf<PageContentMode>(PageContentMode.Browsing) }
     val turnEnabled = canTurnPage(contentMode)
-    val turnProfile = if (page is DiaryPage) TurnProfile.HANDBOOK else TurnProfile.DEFAULT
-    val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 24.dp else 28.dp
-    val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 22.dp else 26.dp
+    val turnProfile = if (handbookMode || page is DiaryPage || shellStyle == ShellStyle.BOOK) TurnProfile.HANDBOOK else TurnProfile.DEFAULT
+    val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 18.dp else 28.dp
+    val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 16.dp else 26.dp
 
     PageTurnEngine(
         canTurnPrevious = previousPage != null,

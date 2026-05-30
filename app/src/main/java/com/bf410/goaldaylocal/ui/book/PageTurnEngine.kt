@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 private const val EDGE_GESTURE_RATIO = 0.13f
+private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.19f
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase
@@ -175,7 +176,7 @@ fun PageTurnEngine(
                             turnAnchorY = (startOffset.y / pageHeightPx).coerceIn(0.12f, 0.88f)
                         },
                         onHorizontalDrag = { change, dragAmount ->
-                            val edgeZonePx = pageWidthPx * EDGE_GESTURE_RATIO
+                            val edgeZonePx = pageWidthPx * if (profile == TurnProfile.HANDBOOK) HANDBOOK_EDGE_GESTURE_RATIO else EDGE_GESTURE_RATIO
                             val canStartNextFromEdge = dragStartX >= pageWidthPx - edgeZonePx
                             val canStartPreviousFromEdge = dragStartX <= edgeZonePx
                             val startedAtEdge = canStartNextFromEdge || canStartPreviousFromEdge
