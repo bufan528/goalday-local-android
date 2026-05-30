@@ -70,6 +70,7 @@ fun BookHomeScreen(
     var showPageDialog by remember { mutableStateOf(false) }
     var showRenamePageDialog by remember { mutableStateOf(false) }
     var showEditBookDialog by remember { mutableStateOf(false) }
+    var showManagePanel by remember { mutableStateOf(false) }
     var showInspiration by remember { mutableStateOf(false) }
     var selectedTemplateIndex by remember { mutableStateOf(0) }
 
@@ -112,6 +113,8 @@ fun BookHomeScreen(
                 onShowAddPage = { showPageDialog = true },
                 onShowRenamePage = { showRenamePageDialog = true },
                 onShowEditBook = { showEditBookDialog = true },
+                onToggleManagePanel = { showManagePanel = !showManagePanel },
+                showManagePanel = showManagePanel,
                 onShowInspiration = { showInspiration = true },
             )
         }
@@ -250,6 +253,8 @@ private fun BookDetailView(
     onShowAddPage: () -> Unit,
     onShowRenamePage: () -> Unit,
     onShowEditBook: () -> Unit,
+    onToggleManagePanel: () -> Unit,
+    showManagePanel: Boolean,
     onShowInspiration: () -> Unit,
 ) {
     var segment by remember(book.id) { mutableStateOf(resolveSegment(currentPage)) }
@@ -277,54 +282,65 @@ private fun BookDetailView(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("14周", style = MaterialTheme.typography.titleSmall, color = Color(0xFF7E776E))
-                Text("一周图", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("18周", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7E776E))
+                Text("一周图", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
             }
-            Text(
-                "完成",
-                color = Color.White,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0xFF222222))
-                    .clickable(onClick = onBackToLibrary)
-                    .padding(horizontal = 9.dp, vertical = 4.dp),
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("灵感", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onShowInspiration))
+                Text("管理", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onToggleManagePanel))
+                Text(
+                    "完成",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0xFF222222))
+                        .clickable(onClick = onBackToLibrary)
+                        .padding(horizontal = 9.dp, vertical = 4.dp),
+                )
+            }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BookSegment.entries.forEach { item ->
-                Text(
-                    text = item.label,
-                    color = if (item == segment) Color(0xFF2A261F) else Color(0xFF9E978D),
-                    fontWeight = if (item == segment) FontWeight.SemiBold else FontWeight.Normal,
-                    modifier = Modifier.clickable {
-                        switchSegment(item)
-                    },
-                )
-                if (item != BookSegment.entries.last()) {
-                    Text("｜", color = Color(0xFFD2CBC1))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.clickable { switchSegment(item) },
+                ) {
+                    Text(
+                        text = item.label,
+                        color = if (item == segment) Color(0xFF2A261F) else Color(0xFF9E978D),
+                        fontWeight = if (item == segment) FontWeight.SemiBold else FontWeight.Normal,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Box(
+                        modifier = Modifier
+                            .width(18.dp)
+                            .height(2.dp)
+                            .background(if (item == segment) Color(0xFF2A261F) else Color.Transparent),
+                    )
                 }
             }
             Spacer(Modifier.weight(1f))
+        }
+        if (showManagePanel && book.id.startsWith("custom_")) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
             ) {
-                ActionChip(label = "灵感中心", color = Color(0xFF8F684F), onClick = onShowInspiration)
-                if (book.id.startsWith("custom_")) {
-                    ActionChip(label = BookStrings.editBook, color = Color(0xFF8F684F), onClick = onShowEditBook)
-                    ActionChip(label = BookStrings.addPage, color = Color(0xFF8F684F), onClick = onShowAddPage)
-                    ActionChip(label = BookStrings.renamePage, color = Color(0xFF8F684F), onClick = onShowRenamePage)
-                    ActionChip(label = BookStrings.moveLeft, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageLeft)
-                    ActionChip(label = BookStrings.moveRight, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageRight)
-                    ActionChip(label = BookStrings.deletePage, color = Color(0xFF9C5A52), onClick = viewModel::deleteCurrentPage)
-                    ActionChip(label = BookStrings.deleteBook, color = Color(0xFF9C5A52), onClick = viewModel::removeCurrentCustomBook)
-                }
+                ActionChip(label = BookStrings.editBook, color = Color(0xFF8F684F), onClick = onShowEditBook)
+                ActionChip(label = BookStrings.addPage, color = Color(0xFF8F684F), onClick = onShowAddPage)
+                ActionChip(label = BookStrings.renamePage, color = Color(0xFF8F684F), onClick = onShowRenamePage)
+                ActionChip(label = BookStrings.moveLeft, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageLeft)
+                ActionChip(label = BookStrings.moveRight, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageRight)
+                ActionChip(label = BookStrings.deletePage, color = Color(0xFF9C5A52), onClick = viewModel::deleteCurrentPage)
+                ActionChip(label = BookStrings.deleteBook, color = Color(0xFF9C5A52), onClick = viewModel::removeCurrentCustomBook)
             }
         }
         Spacer(Modifier.height(12.dp))
