@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -59,6 +61,41 @@ fun BookShell(
                 },
             ),
     ) {
+        if (shellStyle == ShellStyle.BOOK) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .height(28.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0x26FFFFFF), Color.Transparent),
+                        ),
+                    ),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .width(18.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0x66744B2F), Color(0x448E6141), Color(0x22744B2F), Color.Transparent),
+                        ),
+                    ),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .width(8.dp)
+                    .height(24.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0xFFC64B5A), Color(0xFF8D2430)),
+                        ),
+                    ),
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
