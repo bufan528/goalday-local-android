@@ -32,48 +32,36 @@ fun BookShell(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 6.dp, vertical = 4.dp)
-            .shadow(42.dp, RoundedCornerShape(44.dp), clip = false)
-            .clip(RoundedCornerShape(44.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(Color(0xFFB78055), Color(0xFFE4C19B), Color(0xFFC28D60)),
-                    start = Offset.Zero,
-                    end = Offset(1300f, 900f),
-                ),
-            ),
+            .padding(horizontal = 10.dp, vertical = 8.dp)
+            .shadow(14.dp, RoundedCornerShape(28.dp), clip = false)
+            .clip(RoundedCornerShape(28.dp))
+            .background(Color(0xFFFDFDFD)),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color(0x30FFFFFF), Color.Transparent, Color(0x22000000)))),
+                .background(Brush.verticalGradient(listOf(Color(0x10FFFFFF), Color.Transparent, Color(0x05000000)))),
         )
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 18.dp)
-                .clip(RoundedCornerShape(38.dp))
-                .background(
-                    Brush.linearGradient(
-                        listOf(Color(0xFFBC8B63), Color(0xFFE8CCAE), Color(0xFFB07E55)),
-                        start = Offset(0f, 120f),
-                        end = Offset(1280f, 900f),
-                    ),
-                ),
+                .padding(horizontal = 8.dp, vertical = 10.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .background(Color(0xFFFFFFFF)),
         )
 
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(30.dp)
+                .width(1.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            Color(0xFF885A38).copy(alpha = 0.52f),
-                            Color(0xFFF3DFC8).copy(alpha = 0.88f),
-                            Color(0xFF885A38).copy(alpha = 0.52f),
+                            Color.Transparent,
+                            Color(0x14000000),
+                            Color.Transparent,
                         ),
                     ),
                 ),
@@ -84,7 +72,7 @@ fun BookShell(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .width(42.dp)
+                .width(28.dp)
                 .fillMaxHeight()
                 .clickable(enabled = canTurnPrevious && turnEnabled, onClick = onTapPrevious),
         )
@@ -92,7 +80,7 @@ fun BookShell(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .width(42.dp)
+                .width(28.dp)
                 .fillMaxHeight()
                 .clickable(enabled = canTurnNext && turnEnabled, onClick = onTapNext),
         )
