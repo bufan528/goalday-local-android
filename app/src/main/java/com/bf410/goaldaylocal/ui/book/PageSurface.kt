@@ -698,10 +698,11 @@ private fun EditableBulletPage(
         ExecutionBoardHeader(
             title = if (isSchedulePage) "日程执行板" else "任务执行板",
         )
-        ReferencePlannerBoard(
+    ReferencePlannerBoard(
             sourceItems = shownSourceItems,
             todayItems = todayPlanItems,
             doneItems = todayCompletedItems,
+            schedulePreviewEntries = schedulePreviewEntries,
             selectedListName = listNames[selectedListIndex],
             onSwitchList = { selectedListIndex = (selectedListIndex + 1) % listNames.size },
             onMoveItemToToday = onMoveItemToToday,
@@ -716,16 +717,31 @@ private fun ReferencePlannerBoard(
     sourceItems: List<String>,
     todayItems: List<String>,
     doneItems: List<String>,
+    schedulePreviewEntries: List<ScheduleEntry>,
     selectedListName: String,
     onSwitchList: () -> Unit,
     onMoveItemToToday: (String) -> Unit,
     onMoveItemToCompleted: (String) -> Unit,
     onRestoreItemFromDone: (String) -> Unit,
 ) {
+    val weekDates = (0..6).map { LocalDate.now().plusDays(it.toLong()) }
     val weekday = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
-    val dayNumbers = (0..6).map { LocalDate.now().plusDays(it.toLong()).dayOfMonth.toString() }
-    val dayLabels = weekday.mapIndexed { index, label -> dayNumbers[index] to label }
-    val leftItems = doneItems.take(7)
+    val dayLabels = weekDates.map { date ->
+        date.dayOfMonth.toString() to weekday[(date.dayOfWeek.value - 1).coerceIn(0, 6)]
+    }
+    val scheduleByDay = weekDates.associateWith { date ->
+        schedulePreviewEntries
+            .filter { it.day == date.dayOfMonth }
+            .sortedWith(compareBy<ScheduleEntry> { it.completed.not() }.thenBy { it.title })
+    }
+    val leftItems = weekDates.map { date ->
+        val entries = scheduleByDay[date].orEmpty()
+        when {
+            entries.isEmpty() -> ""
+            entries.first().completed -> "✓ ${entries.first().title}"
+            else -> entries.first().title
+        }
+    }
     val todayPool = todayItems.distinct().take(6).map { BoardTask(id = "today_$it", title = it) }
     val poolSource = sourceItems.filterNot { it in todayItems }.distinct().take(8).map { BoardTask(id = "pool_$it", title = it) }
     val donePreview = doneItems.take(3).map { BoardTask(id = "done_$it", title = it, completed = true) }
