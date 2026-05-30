@@ -2,6 +2,7 @@ package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.BookPage
@@ -249,14 +251,17 @@ private fun BookDetailView(
     var segment by remember(book.id) { mutableStateOf(resolveSegment(currentPage)) }
     val filteredPages = remember(book.pages, segment) {
         book.pages.filter { page ->
-            when (segment) {
-                BookSegment.WEEK -> page is TargetPage || page is PlanPage || page is SchedulePage
-                BookSegment.DIARY -> page is DiaryPage
-                BookSegment.LIST -> page is PlanPage || page is TargetPage
-            }
+            matchesSegment(page, segment)
         }.ifEmpty { book.pages }
     }
     val segmentPageIndex = filteredPages.indexOfFirst { it.title == currentPage.title }.coerceAtLeast(0)
+    var segmentSwipeDistance by remember(book.id) { mutableStateOf(0f) }
+
+    fun switchSegment(next: BookSegment) {
+        segment = next
+        val firstIndex = book.pages.indexOfFirst { page -> matchesSegment(page, next) }
+        if (firstIndex >= 0) viewModel.setPage(firstIndex)
+    }
 
     Column(
         modifier = Modifier
@@ -291,15 +296,7 @@ private fun BookDetailView(
                     color = if (item == segment) Color(0xFF2A261F) else Color(0xFF9E978D),
                     fontWeight = if (item == segment) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.clickable {
-                        segment = item
-                        val firstIndex = book.pages.indexOfFirst { page ->
-                            when (item) {
-                                BookSegment.WEEK -> page is TargetPage || page is PlanPage || page is SchedulePage
-                                BookSegment.DIARY -> page is DiaryPage
-                                BookSegment.LIST -> page is PlanPage || page is TargetPage
-                            }
-                        }
-                        if (firstIndex >= 0) viewModel.setPage(firstIndex)
+                        switchSegment(item)
                     },
                 )
                 if (item != BookSegment.entries.last()) {
@@ -328,7 +325,23 @@ private fun BookDetailView(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
+                .horizontalScroll(rememberScrollState())
+                .pointerInput(segment) {
+                    detectHorizontalDragGestures(
+                        onHorizontalDrag = { _, dragAmount ->
+                            segmentSwipeDistance += dragAmount
+                        },
+                        onDragEnd = {
+                            if (segmentSwipeDistance <= -68f) {
+                                switchSegment(nextSegment(segment))
+                            } else if (segmentSwipeDistance >= 68f) {
+                                switchSegment(previousSegment(segment))
+                            }
+                            segmentSwipeDistance = 0f
+                        },
+                        onDragCancel = { segmentSwipeDistance = 0f },
+                    )
+                },
         ) {
             filteredPages.forEachIndexed { idx, item ->
                 val index = book.pages.indexOfFirst { it.title == item.title }.coerceAtLeast(0)
@@ -380,6 +393,27 @@ private fun BookDetailView(
         )
     }
 }
+
+private fun matchesSegment(page: BookPage, segment: BookSegment): Boolean =
+    when (segment) {
+        BookSegment.WEEK -> page is TargetPage || page is PlanPage || page is SchedulePage
+        BookSegment.DIARY -> page is DiaryPage
+        BookSegment.LIST -> page is PlanPage || page is TargetPage
+    }
+
+private fun nextSegment(segment: BookSegment): BookSegment =
+    when (segment) {
+        BookSegment.WEEK -> BookSegment.DIARY
+        BookSegment.DIARY -> BookSegment.LIST
+        BookSegment.LIST -> BookSegment.WEEK
+    }
+
+private fun previousSegment(segment: BookSegment): BookSegment =
+    when (segment) {
+        BookSegment.WEEK -> BookSegment.LIST
+        BookSegment.DIARY -> BookSegment.WEEK
+        BookSegment.LIST -> BookSegment.DIARY
+    }
 
 private fun resolveSegment(page: BookPage): BookSegment =
     when (page) {
