@@ -128,15 +128,63 @@ fun PageSurface(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(28.dp, 28.dp, 32.dp, 32.dp))
-            .background(Color(0xFFFFFDFC))
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFFFFFDF9),
+                        Color(0xFFFFFAF3),
+                        Color(0xFFFFF7EE),
+                    ),
+                ),
+            )
             .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .width(10.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0x1F8C6A4B), Color(0x0EA07E5D), Color.Transparent),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .width(8.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color.Transparent, Color(0x0C8D7A66), Color(0x14806A54)),
+                    ),
+                ),
+        )
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
                 .width(2.dp)
                 .fillMaxHeight()
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0x12000000), Color.Transparent))),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(8.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0x12000000), Color(0x10F7E9D7), Color(0x12000000)),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color(0x12A48A70)),
         )
         Box(
             modifier = Modifier
@@ -178,6 +226,21 @@ fun PageSurface(
                     ),
                 ),
         )
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 14.dp, top = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            repeat(6) {
+                Box(
+                    modifier = Modifier
+                        .width(5.dp)
+                        .height(1.dp)
+                        .background(Color(0x2395785E)),
+                )
+            }
+        }
         Column(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -1330,8 +1393,19 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
                     color = Color(0xFF8B7A68),
                 )
             }
-            DiaryLine("☀️ 今日完成", state.todayDone)
-            DiaryLine("📚 工作任务", state.workTasks)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0x14EFE3D4))
+                    .border(1.dp, Color(0x26CCB79F), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 7.dp, vertical = 6.dp),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    DiaryLine("☀️ 今日完成", state.todayDone)
+                    DiaryLine("📚 工作任务", state.workTasks)
+                }
+            }
         }
         Box(
             modifier = Modifier
@@ -1340,7 +1414,16 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
                 .background(Color(0x18B7A893)),
         )
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            DiaryLine("🍀 小幸福", state.smallJoy)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0x11F5E9DB))
+                    .border(1.dp, Color(0x22C5AC8F), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 7.dp, vertical = 6.dp),
+            ) {
+                DiaryLine("🍀 小幸福", state.smallJoy)
+            }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
