@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.ScheduleEntry
@@ -87,8 +89,8 @@ private fun SegmentedHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFE9E0D8), RoundedCornerShape(0.dp))
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .background(Color(0xFFF0E7DE), RoundedCornerShape(0.dp))
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -100,7 +102,9 @@ private fun SegmentedHeader(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier
                     .weight(1f)
+                    .padding(horizontal = 2.dp)
                     .clickable { onSelect(index) },
+                textAlign = TextAlign.Center,
             )
         }
     }
@@ -112,23 +116,42 @@ private fun WeekBoard(
     entries: List<ScheduleEntry>,
     onOpenCalendar: () -> Unit,
 ) {
+    val weekEntries = entries.filter { e -> weekDates.any { it.year == e.year && it.monthValue == e.month && it.dayOfMonth == e.day } }
+    val weekTodo = weekEntries.filterNot { it.completed }.map { it.title }.distinct().take(6)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFFFFEFC), RoundedCornerShape(0.dp))
-            .border(1.dp, Color(0x12000000), RoundedCornerShape(0.dp)),
+            .background(Color(0xFFFFFEFC), RoundedCornerShape(0.dp)),
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Text(
+                "",
+                modifier = Modifier.weight(0.22f),
+            )
+            Text(
+                "● 本周Todo",
+                modifier = Modifier.weight(0.78f),
+                color = Color(0xFF1F1D1A),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
         weekDates.forEach { day ->
             val dayEntries = entries
                 .filter { it.year == day.year && it.month == day.monthValue && it.day == day.dayOfMonth }
                 .sortedWith(compareBy<ScheduleEntry> { it.completed }.thenBy { it.title })
-            val leftText = dayEntries.filter { it.completed }.take(3).joinToString("\n") { "✓${it.title}" }
-            val rightText = dayEntries.filterNot { it.completed }.take(2).joinToString("\n") { if (it.title.contains("熬夜")) "✗${it.title}" else "✓${it.title}" }
+            val leftText = dayEntries.filter { it.completed }.take(2).joinToString("\n") { "✓${it.title}" }
+            val rightText = dayEntries.filterNot { it.completed }.take(2).joinToString("\n") { "▪ ${it.title}" }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(0.5.dp, Color(0x12000000))
+                    .border(0.5.dp, Color(0x11000000))
                     .padding(vertical = 8.dp, horizontal = 10.dp),
                 verticalAlignment = Alignment.Top,
             ) {
@@ -158,15 +181,29 @@ private fun WeekBoard(
                 .padding(10.dp),
             contentAlignment = Alignment.CenterEnd,
         ) {
-            Text(
-                "‹",
-                color = Color(0xFF6E6660),
-                style = MaterialTheme.typography.headlineSmall,
+            Column(
                 modifier = Modifier
-                    .background(Color(0x26D9CED0), RoundedCornerShape(99.dp))
-                    .clickable { onOpenCalendar() }
-                    .padding(horizontal = 14.dp, vertical = 4.dp),
-            )
+                    .size(44.dp)
+                    .background(Color(0xFFF6AFC2), RoundedCornerShape(99.dp))
+                    .clickable { onOpenCalendar() },
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text("›", color = Color.White, style = MaterialTheme.typography.headlineSmall)
+            }
+        }
+
+        if (weekTodo.isNotEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                weekTodo.forEach { item ->
+                    Text("▪ $item", color = Color(0xFF2A2723), style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
     }
 }
