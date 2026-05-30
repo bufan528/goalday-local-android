@@ -371,30 +371,31 @@ private fun BookDetailView(
             }
         }
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(18.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF4EEEC), RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0x16000000), RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BookSegment.entries.forEach { item ->
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable { switchSegment(item) },
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (item == segment) Color.White else Color.Transparent)
+                        .clickable { switchSegment(item) }
+                        .padding(vertical = 4.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = item.label,
                         color = if (item == segment) Color(0xFF2A261F) else Color(0xFF9E978D),
                         fontWeight = if (item == segment) FontWeight.SemiBold else FontWeight.Normal,
                     )
-                    Spacer(Modifier.height(2.dp))
-                    Box(
-                        modifier = Modifier
-                            .width(18.dp)
-                            .height(2.dp)
-                            .background(if (item == segment) Color(0xFF2A261F) else Color.Transparent),
-                    )
                 }
             }
-            Spacer(Modifier.weight(1f))
         }
         if (showManagePanel && book.id.startsWith("custom_")) {
             Row(

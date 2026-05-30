@@ -126,12 +126,10 @@ fun GoaldayApp() {
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        Brush.verticalGradient(
-                            listOf(Color(0xFFF5F5F3), Color(0xFFF2F2F0)),
-                        ),
+                        Color(0xFFF7F6F3),
                     )
                     .padding(padding)
-                    .padding(horizontal = 14.dp)
+                    .padding(horizontal = 10.dp)
                     .pointerInput(canGoBackInsideApp, edgeWidthPx, triggerDistancePx) {
                         if (!canGoBackInsideApp) return@pointerInput
                         detectHorizontalDragGestures(

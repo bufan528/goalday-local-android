@@ -67,36 +67,53 @@ fun CalendarScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 18.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("${uiState.year}年${uiState.month}月", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = Color(0xFF2E2A26))
-            Text(
-                "回到今天",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF2D2A26),
+        if (referenceMode) {
+            Row(
                 modifier = Modifier
-                    .background(Color(0x12000000), RoundedCornerShape(99.dp))
-                    .clickable(onClick = viewModel::backToToday)
-                    .padding(horizontal = 10.dp, vertical = 5.dp),
-            )
-        }
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .background(Color(0xFFF4EEEC), RoundedCornerShape(10.dp))
+                    .border(1.dp, Color(0x16000000), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SegText("日程", true, Modifier.weight(1f))
+                SegText("${uiState.month}月${selectedDay}日", false, Modifier.weight(1f))
+                SegText("清单", false, Modifier.weight(1f))
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 18.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("${uiState.year}年${uiState.month}月", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = Color(0xFF2E2A26))
+                Text(
+                    "回到今天",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF2D2A26),
+                    modifier = Modifier
+                        .background(Color(0x12000000), RoundedCornerShape(99.dp))
+                        .clickable(onClick = viewModel::backToToday)
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                )
+            }
 
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text("‹ 上个月", modifier = Modifier.clickable(onClick = viewModel::previousMonth), color = Color(0xFF888177))
-            Text(
-                "新增日程",
-                modifier = Modifier.clickable {
-                    selectedDay = selectedDay.coerceIn(1, maxDay)
-                    showAddDialog = true
-                },
-                color = Color(0xFF2D2A26),
-            )
-            Text("下个月 ›", modifier = Modifier.clickable(onClick = viewModel::nextMonth), color = Color(0xFF888177))
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                Text("‹ 上个月", modifier = Modifier.clickable(onClick = viewModel::previousMonth), color = Color(0xFF888177))
+                Text(
+                    "新增日程",
+                    modifier = Modifier.clickable {
+                        selectedDay = selectedDay.coerceIn(1, maxDay)
+                        showAddDialog = true
+                    },
+                    color = Color(0xFF2D2A26),
+                )
+                Text("下个月 ›", modifier = Modifier.clickable(onClick = viewModel::nextMonth), color = Color(0xFF888177))
+            }
         }
 
         if (referenceMode) {
