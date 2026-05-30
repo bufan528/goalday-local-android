@@ -39,7 +39,7 @@ private enum class RootTab(val label: String, val icon: String) {
     PLANNER("计划", "◉"),
     CALENDAR("日历", "◌"),
     INSPIRATION("灵感", "✦"),
-    HANDBOOK("手账", "⌘"),
+    HANDBOOK("手账", "📚"),
 }
 
 @Composable

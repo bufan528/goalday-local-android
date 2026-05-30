@@ -106,6 +106,13 @@ fun CalendarScreen(
                 )
                 .padding(12.dp),
         ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .width(1.dp)
+                    .fillMaxSize()
+                    .background(Color(0x12000000)),
+            )
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 CalendarHeader()
                 repeat(totalCells / 7) { rowIndex ->
