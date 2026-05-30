@@ -40,6 +40,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.ScheduleEntry
+import com.bf410.goaldaylocal.ui.replica.BoardTask
+import com.bf410.goaldaylocal.ui.replica.DualLaneExecutionBoard
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -161,185 +163,48 @@ private fun ReferenceCalendarBoard(
     val doneEntries = todayEntries.filter { it.completed }
     val todoEntries = todayEntries.filterNot { it.completed }
     val stagedEntries = (todayEntries + entries.filter { it.day != selectedDay }).distinctBy { it.id }.take(14)
-    val todoPool = todoEntries.take(6)
+    val todoPool = todoEntries.take(6).map { BoardTask(it.id, it.title, it.note, it.completed) }
     val sourcePool = stagedEntries.filter { !it.completed && it.id !in todoPool.map { t -> t.id } }.take(8)
-    val combinedPool = (todoPool + sourcePool).distinctBy { it.id }
-    var selectedEntryId by remember(combinedPool) { mutableStateOf(combinedPool.firstOrNull()?.id) }
-    val selectedEntry = combinedPool.firstOrNull { it.id == selectedEntryId } ?: combinedPool.firstOrNull()
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(472.dp)
-            .background(Color(0xFFFBFAF8), RoundedCornerShape(14.dp))
-            .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp)),
-    ) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxSize(),
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFF4EEE6))
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("执行", color = Color(0xFF3A332C), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                Text("${month}月${selectedDay}日", color = Color(0xFF8C8379), style = MaterialTheme.typography.labelSmall)
-            }
-            weekDays.forEachIndexed { idx, label ->
-                val day = dayNums[idx]
-                val hasEntry = entries.any { it.day == day }
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .border(0.5.dp, Color(0x12000000))
-                        .clickable { onSelectDay(day) }
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                    verticalArrangement = Arrangement.spacedBy(3.dp),
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(modifier = Modifier.width(30.dp)) {
-                            Text(day.toString(), fontWeight = if (day == selectedDay) FontWeight.SemiBold else FontWeight.Normal)
-                            Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7D766C))
-                        }
-                        Text("✓", color = if (hasEntry) Color(0xFF8BA77B) else Color(0xFFE0D7CD), style = MaterialTheme.typography.labelSmall)
-                    }
-                    Text(
-                        text = entries.firstOrNull { it.day == day }?.title ?: "",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (hasEntry) Color(0xFF2F2924) else Color(0xFFB8B1A7),
-                        maxLines = 2,
-                    )
-                }
-            }
-        }
-        Column(
-            modifier = Modifier
-                .weight(1.08f)
-                .fillMaxSize()
-                .border(1.dp, Color(0x12000000)),
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    "日历执行板",
-                    modifier = Modifier
-                        .background(Color(0xFFF8F8F6), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 7.dp, vertical = 3.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("✎ 编辑", modifier = Modifier.clickable { selectedEntry?.let(onEdit) }, color = Color(0xFF6F675D), style = MaterialTheme.typography.labelSmall)
-                    Text("🗑 删除", modifier = Modifier.clickable { selectedEntry?.let { onDelete(it.id) } }, color = Color(0xFF9C5A52), style = MaterialTheme.typography.labelSmall)
-                    Text(
-                        "✓ 完成",
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
-                            .background(Color(0xFF222222))
-                            .clickable { selectedEntry?.let { onToggleCompleted(it.id) } }
-                            .padding(horizontal = 8.dp, vertical = 3.dp),
-                    )
-                    Text("＋ 新增", modifier = Modifier.clickable(onClick = onAdd), color = Color(0xFF2F2A24), style = MaterialTheme.typography.labelSmall)
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text("今日 Todo", color = Color(0xFF6F675D), style = MaterialTheme.typography.labelSmall)
-                todoPool.forEach { entry ->
-                    CalendarBoardItemRow(
-                        entry = entry,
-                        selected = selectedEntryId == entry.id,
-                        onSelect = { selectedEntryId = entry.id },
-                        onAction = { onToggleCompleted(entry.id) },
-                        actionLabel = "✓",
-                    )
-                }
-                Text("任务池", color = Color(0xFF6F675D), style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
-                sourcePool.forEach { entry ->
-                    CalendarBoardItemRow(
-                        entry = entry,
-                        selected = selectedEntryId == entry.id,
-                        onSelect = { selectedEntryId = entry.id },
-                        onAction = {
-                            if (entry.day != selectedDay) {
-                                onEdit(entry.copy(day = selectedDay))
-                            }
-                        },
-                        actionLabel = "＋",
-                    )
-                }
-                Text("已完成", color = Color(0xFF7A9D71), style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
-                doneEntries.take(3).forEach { entry ->
-                    CalendarBoardItemRow(
-                        entry = entry,
-                        selected = selectedEntryId == entry.id,
-                        onSelect = { selectedEntryId = entry.id },
-                        onAction = { onToggleCompleted(entry.id) },
-                        actionLabel = "↺",
-                        completed = true,
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            Text("${year}年${month}月", modifier = Modifier.padding(12.dp), color = Color(0xFF8D867C), style = MaterialTheme.typography.labelSmall)
-        }
-    }
-}
+        .map { BoardTask(it.id, it.title, it.note, it.completed) }
+    val donePreview = doneEntries.take(3).map { BoardTask(it.id, it.title, it.note, true) }
+    val allRight = todoPool + sourcePool + donePreview
+    var selectedEntryId by remember(allRight) { mutableStateOf(allRight.firstOrNull()?.id) }
+    val selectedEntry = entries.firstOrNull { it.id == selectedEntryId }
+    val dayLabels = weekDays.mapIndexed { idx, label -> dayNums[idx].toString() to label }
 
-@Composable
-private fun CalendarBoardItemRow(
-    entry: ScheduleEntry,
-    selected: Boolean,
-    onSelect: () -> Unit,
-    onAction: () -> Unit,
-    actionLabel: String,
-    completed: Boolean = false,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (selected) Color(0x14B59072) else Color.Transparent)
-            .padding(horizontal = 6.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Text(
-            if (selected) "◉" else if (completed) "✓" else "·",
-            color = if (completed) Color(0xFF7A9D71) else if (selected) Color(0xFF8E857A) else Color(0xFFD8CFC5),
-        )
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .clickable { onSelect() },
-        ) {
+    DualLaneExecutionBoard(
+        leftHeader = "执行",
+        rightHeader = "日历执行板",
+        dayLabels = dayLabels,
+        leftTimelineTasks = doneEntries.take(7).map { it.title },
+        todayTasks = todoPool,
+        poolTasks = sourcePool,
+        donePreviewTasks = donePreview,
+        selectedTaskId = selectedEntryId,
+        onSelectTask = { selectedEntryId = it },
+        onTimelineRowClick = { row -> onSelectDay(dayNums[row]) },
+        onActionDone = { task -> onToggleCompleted(task.id) },
+        onActionAdd = { task ->
+            val raw = entries.firstOrNull { it.id == task.id } ?: return@DualLaneExecutionBoard
+            if (raw.day != selectedDay) onEdit(raw.copy(day = selectedDay))
+        },
+        onActionRestore = { task -> onToggleCompleted(task.id) },
+        topActions = {
+            Text("✎ 编辑", modifier = Modifier.clickable { selectedEntry?.let(onEdit) }, color = Color(0xFF6F675D), style = MaterialTheme.typography.labelSmall)
+            Text("🗑 删除", modifier = Modifier.clickable { selectedEntry?.let { onDelete(it.id) } }, color = Color(0xFF9C5A52), style = MaterialTheme.typography.labelSmall)
             Text(
-                entry.title,
-                color = Color(0xFF2D2823),
-                textDecoration = if (completed) TextDecoration.LineThrough else TextDecoration.None,
-                maxLines = 2,
+                "✓ 完成",
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0xFF222222))
+                    .clickable { selectedEntry?.let { onToggleCompleted(it.id) } }
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
             )
-            if (entry.note.isNotBlank()) {
-                Text(entry.note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8D857C), maxLines = 1)
-            }
-        }
-        Text(actionLabel, color = Color(0xFF6E655B), modifier = Modifier.clickable { onAction() })
-    }
+            Text("＋ 新增", modifier = Modifier.clickable(onClick = onAdd), color = Color(0xFF2F2A24), style = MaterialTheme.typography.labelSmall)
+        },
+    )
 }
 
 @Composable
