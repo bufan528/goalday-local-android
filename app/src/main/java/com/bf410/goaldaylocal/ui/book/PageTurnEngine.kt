@@ -51,6 +51,7 @@ fun PageTurnEngine(
     turnEnabled: Boolean,
     onFlipNext: () -> Unit,
     onFlipPrevious: () -> Unit,
+    profile: TurnProfile = TurnProfile.DEFAULT,
     shell: @Composable (
         canTurnPrevious: Boolean,
         canTurnNext: Boolean,
@@ -76,7 +77,7 @@ fun PageTurnEngine(
     var lastEventTimeMs by remember { mutableStateOf(0L) }
 
     val dragProgress = progress.value.coerceIn(0f, 1f)
-    val visualProgress = visualTurnProgress(dragProgress)
+    val visualProgress = visualTurnProgress(dragProgress, profile)
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     val turnShadowWidth = (18f + visualProgress * visualProgress * 92f).dp
@@ -97,8 +98,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = 0.9f,
-                            stiffness = Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.94f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) Spring.StiffnessVeryLow else Spring.StiffnessLow,
                         ),
                     )
                     onFlipNext()
@@ -108,8 +109,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = 0.9f,
-                            stiffness = Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.94f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) Spring.StiffnessVeryLow else Spring.StiffnessLow,
                         ),
                     )
                     onFlipPrevious()
@@ -119,8 +120,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         0f,
                         animationSpec = spring(
-                            dampingRatio = 0.84f,
-                            stiffness = Spring.StiffnessMediumLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.88f else 0.84f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) Spring.StiffnessLow else Spring.StiffnessMediumLow,
                         ),
                     )
                 }
@@ -134,7 +135,7 @@ fun PageTurnEngine(
         direction = targetDirection
         turnAnchorY = 0.5f
         phase = if (targetDirection == TurnDirection.NEXT) TurnPhase.DraggingNext else TurnPhase.DraggingPrevious
-        scope.launch { progress.snapTo(initialEdgeTapProgress()) }
+        scope.launch { progress.snapTo(initialEdgeTapProgress(profile)) }
         settle(
             if (targetDirection == TurnDirection.NEXT) {
                 TurnReleaseResult.CompleteNext
@@ -218,6 +219,7 @@ fun PageTurnEngine(
                                     velocity = lastVelocityPxPerSecond,
                                     hasPreviousPage = canTurnPrevious,
                                     hasNextPage = canTurnNext,
+                                    profile = profile,
                                 ),
                             )
                         },
@@ -326,13 +328,15 @@ fun Modifier.turningPageTransform(
     direction: TurnDirection?,
     visualProgress: Float,
     anchorY: Float,
+    profile: TurnProfile = TurnProfile.DEFAULT,
 ): Modifier = graphicsLayer {
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     transformOrigin = if (draggingToNext) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 128f else 118f
     rotationY = when (direction) {
-        TurnDirection.NEXT -> -118f * visualProgress
-        TurnDirection.PREVIOUS -> 118f * visualProgress
+        TurnDirection.NEXT -> -maxRotation * visualProgress
+        TurnDirection.PREVIOUS -> maxRotation * visualProgress
         null -> 0f
     }
     translationX = when {
@@ -343,23 +347,25 @@ fun Modifier.turningPageTransform(
     val yOffsetFactor = (anchorY - 0.5f) * 2f
     translationY = yOffsetFactor * visualProgress * 12f
     rotationX = -yOffsetFactor * visualProgress * 8.5f
-    cameraDistance = 34f * density
-    shadowElevation = 28f
+    cameraDistance = if (profile == TurnProfile.HANDBOOK) 38f * density else 34f * density
+    shadowElevation = if (profile == TurnProfile.HANDBOOK) 32f else 28f
 }
 
 fun Modifier.pageBackTransform(
     direction: TurnDirection?,
     visualProgress: Float,
     anchorY: Float,
+    profile: TurnProfile = TurnProfile.DEFAULT,
 ): Modifier = graphicsLayer {
     transformOrigin = if (direction == TurnDirection.NEXT) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 128f else 118f
     rotationY = when (direction) {
-        TurnDirection.NEXT -> -118f * visualProgress * 0.91f
-        TurnDirection.PREVIOUS -> 118f * visualProgress * 0.91f
+        TurnDirection.NEXT -> -maxRotation * visualProgress * 0.91f
+        TurnDirection.PREVIOUS -> maxRotation * visualProgress * 0.91f
         null -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
     translationY = yOffsetFactor * visualProgress * 7f
     rotationX = -yOffsetFactor * visualProgress * 5f
-    cameraDistance = 34f * density
+    cameraDistance = if (profile == TurnProfile.HANDBOOK) 38f * density else 34f * density
 }

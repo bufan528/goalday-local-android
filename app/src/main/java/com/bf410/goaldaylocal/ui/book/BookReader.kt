@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.BookPage
+import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.ScheduleEntry
 
 @Composable
@@ -52,6 +53,7 @@ fun BookReader(
     var diaryCommand by remember(pageIndex, bookId) { mutableStateOf<RichEditorCommand?>(null) }
     var contentMode by remember(pageIndex, bookId) { mutableStateOf<PageContentMode>(PageContentMode.Browsing) }
     val turnEnabled = canTurnPage(contentMode)
+    val turnProfile = if (page is DiaryPage) TurnProfile.HANDBOOK else TurnProfile.DEFAULT
 
     PageTurnEngine(
         canTurnPrevious = previousPage != null,
@@ -59,6 +61,7 @@ fun BookReader(
         turnEnabled = turnEnabled,
         onFlipNext = onFlipNext,
         onFlipPrevious = onFlipPrevious,
+        profile = turnProfile,
         shell = { canPrev, canNext, enabled, tapPrev, tapNext, content ->
             BookShell(
                 shellStyle = shellStyle,
@@ -94,7 +97,7 @@ fun BookReader(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 28.dp, vertical = 26.dp)
-                    .pageBackTransform(direction, progress, anchorY),
+                    .pageBackTransform(direction, progress, anchorY, turnProfile),
                 tint = tint,
                 progress = progress,
                 direction = direction,
@@ -105,7 +108,7 @@ fun BookReader(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 28.dp, vertical = 26.dp)
-                    .turningPageTransform(direction, progress, anchorY),
+                    .turningPageTransform(direction, progress, anchorY, turnProfile),
                 page = page,
                 pageIndex = pageIndex,
                 pageCount = pageCount,
