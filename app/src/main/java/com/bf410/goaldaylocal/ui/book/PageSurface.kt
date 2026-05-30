@@ -69,8 +69,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-private val BoardTonePlan = Color(0x22D9A97E)
-private val BoardToneDone = Color(0x22A5C49D)
+private val BoardTonePlan = Color(0x1ED8CFBF)
+private val BoardToneDone = Color(0x1ECFC8C0)
 private val BoardTitleColor = Color(0xFF5E4837)
 private val BoardHintColor = Color(0xFF8B7A68)
 private const val TODAY_SWIPE_THRESHOLD = -88f
@@ -1079,11 +1079,11 @@ private fun TodayBoardSection(
         if (fromSchedule.isNotEmpty()) fromSchedule else List(6) { today.plusDays(it.toLong()) }
     }
     val todayHeaderColor by animateColorAsState(
-        targetValue = if (dragPreviewTarget == DragTarget.TODAY) Color(0x44D9A97E) else Color(0x14A17856),
+        targetValue = if (dragPreviewTarget == DragTarget.TODAY) Color(0x2AD7CFC5) else Color(0x12C8C3BC),
         label = "todayHeaderColor",
     )
     val doneHeaderColor by animateColorAsState(
-        targetValue = if (dragPreviewTarget == DragTarget.DONE) Color(0x44A5C49D) else Color(0x14A17856),
+        targetValue = if (dragPreviewTarget == DragTarget.DONE) Color(0x2ACFC8C0) else Color(0x12C8C3BC),
         label = "doneHeaderColor",
     )
     val todayBorderAlpha by animateFloatAsState(
@@ -1138,7 +1138,7 @@ private fun TodayBoardSection(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(if (isToday) Color(0xFFF06F78) else Color(0x08A17856))
+                            .background(if (isToday) Color(0xFFE98592) else Color(0x08B9B3AA))
                             .padding(vertical = 5.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(1.dp),
@@ -1146,12 +1146,12 @@ private fun TodayBoardSection(
                         Text(
                             text = date.dayOfMonth.toString(),
                             style = MaterialTheme.typography.labelLarge,
-                            color = if (isToday) Color.White else Color(0xFF332C25),
+                            color = if (isToday) Color.White else Color(0xFF3C3731),
                         )
                         Text(
                             text = weekdayCn(date.dayOfWeek.value),
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (isToday) Color.White else Color(0xFF6E6459),
+                            color = if (isToday) Color.White else Color(0xFF766E65),
                         )
                     }
                 }
@@ -1161,7 +1161,7 @@ private fun TodayBoardSection(
                     .padding(horizontal = 6.dp)
                     .width(1.dp)
                     .fillMaxHeight()
-                    .background(Color(0x1AA17856)),
+                    .background(Color(0x14BAB4AC)),
             )
             Column(
                 modifier = Modifier.weight(1f),
@@ -1169,23 +1169,23 @@ private fun TodayBoardSection(
             ) {
                 Text(
                     "Done  ${todayCompletedItems.size}",
-                    color = Color(0xFF5E4837),
+                    color = Color(0xFF59544E),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
                         .background(doneHeaderColor)
-                        .border(1.dp, Color(0xCC79A16E).copy(alpha = doneBorderAlpha), RoundedCornerShape(8.dp))
+                        .border(1.dp, Color(0xBCA9A39B).copy(alpha = doneBorderAlpha), RoundedCornerShape(8.dp))
                         .padding(horizontal = 6.dp, vertical = 3.dp),
                 )
                 if (dragPreviewTarget == DragTarget.DONE) {
                     Text(
                         "松手即加入 Done",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF6F8F63),
+                        color = Color(0xFF7C756F),
                         modifier = Modifier
                             .clip(RoundedCornerShape(99.dp))
-                            .background(Color(0x1F79A16E))
+                            .background(Color(0x1FBEB8B0))
                             .padding(horizontal = 8.dp, vertical = 3.dp),
                     )
                 }
@@ -1195,8 +1195,8 @@ private fun TodayBoardSection(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0x08A5C49D))
-                                .border(1.dp, Color(0x18A5C49D), RoundedCornerShape(6.dp))
+                                .background(Color(0x08CEC7BE))
+                                .border(1.dp, Color(0x18CEC7BE), RoundedCornerShape(6.dp))
                                 .clickable { onMoveCompletedToTodo(item) }
                                 .padding(horizontal = 6.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -1206,8 +1206,8 @@ private fun TodayBoardSection(
                                 modifier = Modifier
                                     .size(14.dp)
                                     .clip(RoundedCornerShape(99.dp))
-                                    .background(Color(0x227FA579))
-                                    .border(1.dp, Color(0xFF7FA579), RoundedCornerShape(99.dp)),
+                                    .background(Color(0x22B8B1A9))
+                                    .border(1.dp, Color(0xFFB8B1A9), RoundedCornerShape(99.dp)),
                             )
                             Text(
                                 text = item,
@@ -1225,7 +1225,7 @@ private fun TodayBoardSection(
                     .padding(horizontal = 6.dp)
                     .width(1.dp)
                     .fillMaxHeight()
-                    .background(Color(0x1AA17856)),
+                    .background(Color(0x14BAB4AC)),
             )
             Column(
                 modifier = Modifier.weight(1f),
@@ -1233,23 +1233,23 @@ private fun TodayBoardSection(
             ) {
                 Text(
                     "To do  ${todayPlanItems.size}",
-                    color = Color(0xFF5E4837),
+                    color = Color(0xFF59544E),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
                         .background(todayHeaderColor)
-                        .border(1.dp, Color(0xCCB77A5A).copy(alpha = todayBorderAlpha), RoundedCornerShape(8.dp))
+                        .border(1.dp, Color(0xBCD1C8BE).copy(alpha = todayBorderAlpha), RoundedCornerShape(8.dp))
                         .padding(horizontal = 6.dp, vertical = 3.dp),
                 )
                 if (dragPreviewTarget == DragTarget.TODAY) {
                     Text(
                         "松手即加入 To do",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF9B7352),
+                        color = Color(0xFF7C756F),
                         modifier = Modifier
                             .clip(RoundedCornerShape(99.dp))
-                            .background(Color(0x1FD9A97E))
+                            .background(Color(0x1FD5CEC5))
                             .padding(horizontal = 8.dp, vertical = 3.dp),
                     )
                 }
@@ -1259,8 +1259,8 @@ private fun TodayBoardSection(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0x08D9A97E))
-                                .border(1.dp, Color(0x18D9A97E), RoundedCornerShape(6.dp))
+                                .background(Color(0x08D8D1C8))
+                                .border(1.dp, Color(0x18D8D1C8), RoundedCornerShape(6.dp))
                                 .clickable { onMoveItemToCompleted(item) }
                                 .padding(horizontal = 6.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -1270,8 +1270,8 @@ private fun TodayBoardSection(
                                 modifier = Modifier
                                     .size(14.dp)
                                     .clip(RoundedCornerShape(99.dp))
-                                    .background(Color(0x12B2A89B))
-                                    .border(1.dp, Color(0xFFB2A89B), RoundedCornerShape(99.dp)),
+                                    .background(Color(0x12BBB4AD))
+                                    .border(1.dp, Color(0xFFBBB4AD), RoundedCornerShape(99.dp)),
                             )
                             Text(
                                 text = item,
@@ -1294,7 +1294,7 @@ private fun TodayBoardSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(99.dp))
-                .background(Color(0x08A17856))
+                .background(Color(0x08BEB8AF))
                 .padding(horizontal = 8.dp, vertical = 5.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -1302,11 +1302,11 @@ private fun TodayBoardSection(
             listOf("◷", "↻", "✎", "☺", "☁").forEach { icon ->
                 Text(
                     text = icon,
-                    color = Color(0xFF8F857A),
+                    color = Color(0xFF8A847D),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x12FFFFFF))
+                        .background(Color(0x16FFFFFF))
                         .padding(horizontal = 8.dp, vertical = 3.dp),
                 )
             }
@@ -1345,15 +1345,15 @@ private fun SourcePoolSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(11.dp))
-                .background(Color(0x0FA17856))
-                .border(1.dp, Color(0x1EA17856), RoundedCornerShape(11.dp))
+                .background(Color(0x0FC6C1BA))
+                .border(1.dp, Color(0x1EC6C1BA), RoundedCornerShape(11.dp))
                 .clickable(onClick = onSwitchList)
                 .padding(horizontal = 11.dp, vertical = 9.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("●", color = Color(0xFFE7C62E), style = MaterialTheme.typography.labelSmall)
+                Text("●", color = Color(0xFFE9A3AF), style = MaterialTheme.typography.labelSmall)
                 Text(selectedListName, style = MaterialTheme.typography.titleMedium, color = BoardTitleColor, fontWeight = FontWeight.SemiBold)
             }
             Text("⌄", color = Color(0xFF9B8C7D), style = MaterialTheme.typography.titleMedium)
