@@ -499,6 +499,28 @@ fun PageBackLayer(
                     ),
                 ),
         )
+        Box(
+            modifier = Modifier
+                .align(
+                    when {
+                        direction == TurnDirection.NEXT && curlAlignTop -> Alignment.TopEnd
+                        direction == TurnDirection.PREVIOUS && curlAlignTop -> Alignment.TopStart
+                        direction == TurnDirection.NEXT -> Alignment.BottomEnd
+                        else -> Alignment.BottomStart
+                    },
+                )
+                .width((18f + progress * 42f).dp)
+                .height((8f + progress * 20f).dp)
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color.White.copy(alpha = (0.10f + curlStrength * 0.20f).coerceAtMost(0.30f)),
+                            Color(0x229C8167),
+                            Color.Transparent,
+                        ),
+                    ),
+                ),
+        )
 
         Column(modifier = Modifier.fillMaxSize()) {
             PageHeaderLine(
