@@ -59,12 +59,32 @@ fun CalendarScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("14周", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7E776E))
+                Text("|", style = MaterialTheme.typography.labelMedium, color = Color(0xFFD2CBC1))
+                Text("Goalday", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2B2824))
+            }
+            Text(
+                "完成",
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0xFF222222))
+                    .clickable { viewModel.backToToday() }
+                    .padding(horizontal = 9.dp, vertical = 4.dp),
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp)
                 .background(Color(0xFFF4EEEC), RoundedCornerShape(10.dp))
                 .border(1.dp, Color(0x16000000), RoundedCornerShape(10.dp))
                 .padding(horizontal = 10.dp, vertical = 8.dp),
