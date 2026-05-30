@@ -53,13 +53,7 @@ fun CalendarScreen(
     var selectedDay by remember { mutableIntStateOf(LocalDate.now().dayOfMonth) }
     val month = YearMonth.of(uiState.year, uiState.month)
     val maxDay = month.lengthOfMonth()
-    val today = LocalDate.now()
-    val firstOffset = month.atDay(1).dayOfWeek.value - 1
-    val totalCells = ((firstOffset + maxDay + 6) / 7) * 7
-    val entryDays = uiState.entries.map { it.day }.toSet()
     selectedDay = selectedDay.coerceIn(1, maxDay)
-    val selectedDayEntries = uiState.entries.filter { it.day == selectedDay }
-    val referenceMode = true
 
     Column(
         modifier = Modifier
@@ -67,205 +61,33 @@ fun CalendarScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (referenceMode) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-                    .background(Color(0xFFF4EEEC), RoundedCornerShape(10.dp))
-                    .border(1.dp, Color(0x16000000), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                SegText("日程", true, Modifier.weight(1f))
-                SegText("${uiState.month}月${selectedDay}日", false, Modifier.weight(1f))
-                SegText("清单", false, Modifier.weight(1f))
-            }
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 18.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("${uiState.year}年${uiState.month}月", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = Color(0xFF2E2A26))
-                Text(
-                    "回到今天",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF2D2A26),
-                    modifier = Modifier
-                        .background(Color(0x12000000), RoundedCornerShape(99.dp))
-                        .clickable(onClick = viewModel::backToToday)
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                )
-            }
-
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text("‹ 上个月", modifier = Modifier.clickable(onClick = viewModel::previousMonth), color = Color(0xFF888177))
-                Text(
-                    "新增日程",
-                    modifier = Modifier.clickable {
-                        selectedDay = selectedDay.coerceIn(1, maxDay)
-                        showAddDialog = true
-                    },
-                    color = Color(0xFF2D2A26),
-                )
-                Text("下个月 ›", modifier = Modifier.clickable(onClick = viewModel::nextMonth), color = Color(0xFF888177))
-            }
-        }
-
-        if (referenceMode) {
-            ReferenceCalendarBoard(
-                year = uiState.year,
-                month = uiState.month,
-                maxDay = maxDay,
-                selectedDay = selectedDay,
-                entries = uiState.entries,
-                onSelectDay = { selectedDay = it.coerceIn(1, maxDay) },
-                onToggleCompleted = { id -> viewModel.toggleScheduleCompleted(id) },
-                onEdit = { editingEntry = it },
-                onDelete = { viewModel.removeSchedule(it) },
-                onAdd = { showAddDialog = true },
-            )
-        } else {
-            Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Color(0xFFFBFAF8),
-                    RoundedCornerShape(14.dp),
-                )
-                .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
-                .padding(10.dp),
+                .padding(top = 12.dp)
+                .background(Color(0xFFF4EEEC), RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0x16000000), RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .width(1.dp)
-                    .fillMaxSize()
-                    .background(Color(0x12000000)),
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    listOf("一", "二", "三", "四", "五", "六", "日").forEach { label ->
-                        Text(
-                            text = label,
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFA8A194),
-                        )
-                    }
-                }
-                CalendarHeader()
-                repeat(totalCells / 7) { rowIndex ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                        repeat(7) { columnIndex ->
-                            val cellIndex = rowIndex * 7 + columnIndex
-                            val day = cellIndex - firstOffset + 1
-                            val enabled = day in 1..maxDay
-                            DayCell(
-                                day = if (enabled) day else null,
-                                marked = day in entryDays,
-                                selected = enabled && day == selectedDay,
-                                isToday = enabled &&
-                                    uiState.year == today.year &&
-                                    uiState.month == today.monthValue &&
-                                    day == today.dayOfMonth,
-                                onClick = {
-                                    if (enabled) {
-                                        selectedDay = day
-                                    }
-                                },
-                            )
-                        }
-                    }
-                }
-            }
+            SegText("日程", true, Modifier.weight(1f))
+            SegText("${uiState.month}月${selectedDay}日", false, Modifier.weight(1f))
+            SegText("清单", false, Modifier.weight(1f))
         }
 
-            Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFFBFAF8), RoundedCornerShape(14.dp))
-                .border(1.dp, Color(0x14000000), RoundedCornerShape(14.dp))
-                .padding(10.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    "${uiState.month}月${selectedDay}日 日程",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF2E2A26),
-                )
-                Text(
-                    "新增",
-                    color = Color(0xFF2D2A26),
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier
-                        .background(Color(0x12000000), RoundedCornerShape(99.dp))
-                        .clickable { showAddDialog = true }
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                )
-            }
-            if (selectedDayEntries.isEmpty()) {
-                Text("当天还没有日程，点“新增”即可添加。", color = Color(0xFF7D7266))
-            } else {
-                selectedDayEntries.forEach { entry ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFFF8F8F6), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 10.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .background(
-                                        if (entry.completed) Color(0xFFD8D1C8) else Color(0xFFF4F2EE),
-                                        RoundedCornerShape(4.dp),
-                                    )
-                                    .border(1.dp, Color(0xFFBEB8AF), RoundedCornerShape(4.dp))
-                                    .clickable { viewModel.toggleScheduleCompleted(entry.id) },
-                            )
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(
-                                    "${entry.month}月${entry.day}日 ${entry.title}",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
-                                    ),
-                                    color = if (entry.completed) Color(0xFF8B847D) else Color(0xFF342C24),
-                                )
-                                if (entry.note.isNotBlank()) {
-                                    Text(
-                                        entry.note,
-                                        color = if (entry.completed) Color(0xFFAAA39C) else Color(0xFF7D7266),
-                                        textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
-                                    )
-                                }
-                            }
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("编辑", color = Color(0xFF6F675D), modifier = Modifier.clickable { editingEntry = entry })
-                            Text("删除", color = Color(0xFF9C5A52), modifier = Modifier.clickable { viewModel.removeSchedule(entry.id) })
-                        }
-                    }
-                }
-            }
-            }
-        }
+        ReferenceCalendarBoard(
+            year = uiState.year,
+            month = uiState.month,
+            maxDay = maxDay,
+            selectedDay = selectedDay,
+            entries = uiState.entries,
+            onSelectDay = { selectedDay = it.coerceIn(1, maxDay) },
+            onToggleCompleted = { id -> viewModel.toggleScheduleCompleted(id) },
+            onEdit = { editingEntry = it },
+            onDelete = { viewModel.removeSchedule(it) },
+            onAdd = { showAddDialog = true },
+        )
     }
 
     if (showAddDialog) {
