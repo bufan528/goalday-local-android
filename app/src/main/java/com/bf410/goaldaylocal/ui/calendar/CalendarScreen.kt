@@ -76,8 +76,9 @@ fun CalendarScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         GoaldayTopBar(
             onRightPrimaryClick = { viewModel.backToToday() },

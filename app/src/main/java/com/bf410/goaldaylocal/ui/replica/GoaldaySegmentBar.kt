@@ -26,7 +26,7 @@ fun GoaldaySegmentBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFFF4EEEC), RoundedCornerShape(10.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(horizontal = 10.dp, vertical = 9.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -39,7 +39,7 @@ fun GoaldaySegmentBar(
                         RoundedCornerShape(8.dp),
                     )
                     .clickable { onSelect(index) }
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = 6.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(

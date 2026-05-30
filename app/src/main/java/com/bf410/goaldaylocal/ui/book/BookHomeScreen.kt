@@ -235,7 +235,7 @@ private fun LibraryView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 8.dp),
+            .padding(top = 4.dp),
     ) {
         Text(
             text = BookStrings.appTitle,
@@ -543,7 +543,7 @@ private fun InspirationCenterView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 8.dp),
+            .padding(top = 4.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(

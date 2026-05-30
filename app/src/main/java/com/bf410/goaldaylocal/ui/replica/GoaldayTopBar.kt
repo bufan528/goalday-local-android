@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +27,9 @@ fun GoaldayTopBar(
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(top = 2.dp),
+        modifier = Modifier
+            .padding(top = 6.dp)
+            .fillMaxWidth(),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(leftTitle, style = MaterialTheme.typography.labelMedium, color = Color(0xFF7E776E))
@@ -42,7 +45,7 @@ fun GoaldayTopBar(
                 modifier = Modifier
                     .background(Color(0xFF222222), RoundedCornerShape(99.dp))
                     .clickable(onClick = onRightPrimaryClick)
-                    .padding(horizontal = 9.dp, vertical = 4.dp),
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
             )
         }
     }
