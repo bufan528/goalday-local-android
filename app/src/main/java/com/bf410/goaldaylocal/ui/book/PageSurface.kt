@@ -73,8 +73,8 @@ private val BoardTonePlan = Color(0x1ED8CFBF)
 private val BoardToneDone = Color(0x1ECFC8C0)
 private val BoardTitleColor = Color(0xFF5E4837)
 private val BoardHintColor = Color(0xFF8B7A68)
-private const val TODAY_SWIPE_THRESHOLD = -88f
-private const val DONE_SWIPE_THRESHOLD = -170f
+private const val TODAY_SWIPE_THRESHOLD = -64f
+private const val DONE_SWIPE_THRESHOLD = -132f
 private val BoardMotionSpec = spring<Float>(dampingRatio = 0.80f, stiffness = 420f)
 
 @Composable
@@ -1421,7 +1421,7 @@ private fun SourcePoolSection(
                         ) { change, dragAmount ->
                             change.consume()
                             val proposed = dragOffsetX + dragAmount
-                            dragOffsetX = applyDragResistance(proposed).coerceIn(-220f, 0f)
+                            dragOffsetX = applyDragResistance(proposed).coerceIn(-190f, 0f)
                             onDragPreviewTargetChange(
                                 when {
                                     dragOffsetX <= DONE_SWIPE_THRESHOLD -> DragTarget.DONE
@@ -1435,7 +1435,7 @@ private fun SourcePoolSection(
                     Brush.horizontalGradient(
                         listOf(
                             Color.Transparent,
-                            if (dragOffsetX <= DONE_SWIPE_THRESHOLD) Color(0x3379A16E) else Color(0x33D9A97E),
+                            if (dragOffsetX <= DONE_SWIPE_THRESHOLD) Color(0x3D79A16E) else Color(0x3DD9A97E),
                         ),
                     )
                 } else {
@@ -1495,9 +1495,9 @@ private fun BoardStatChip(
 private fun applyDragResistance(offset: Float): Float {
     if (offset >= 0f) return offset
     return when {
-        offset > -70f -> offset
-        offset > -150f -> -70f + (offset + 70f) * 0.72f
-        else -> -127.6f + (offset + 150f) * 0.56f
+        offset > -52f -> offset
+        offset > -118f -> -52f + (offset + 52f) * 0.84f
+        else -> -107.44f + (offset + 118f) * 0.68f
     }
 }
 

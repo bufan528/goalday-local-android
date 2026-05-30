@@ -86,6 +86,22 @@ fun HomeScreen(
         }
 
         Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF5EFE5), RoundedCornerShape(16.dp))
+                .clickable(onClick = onOpenHandbook)
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text("打开手账本", color = Color(0xFF3A3027), fontWeight = FontWeight.SemiBold)
+                Text("像翻书一样回顾与记录今天", color = Color(0xFF7F7468), style = MaterialTheme.typography.bodySmall)
+            }
+            Text("▦", color = Color(0xFF6D5642), style = MaterialTheme.typography.titleLarge)
+        }
+
+        Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
