@@ -10,6 +10,12 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoStories
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -26,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -39,11 +46,11 @@ import com.bf410.goaldaylocal.ui.home.HomeScreen
 import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 
-private enum class RootTab(val label: String, val icon: String) {
-    HOME("首页", "◉"),
-    CALENDAR("日历", "◍"),
-    INSPIRATION("灵感", "◌"),
-    HANDBOOK("手账", "☷"),
+private enum class RootTab(val label: String, val icon: ImageVector) {
+    HOME("首页", Icons.Outlined.Home),
+    CALENDAR("日历", Icons.Outlined.CalendarMonth),
+    INSPIRATION("灵感", Icons.Outlined.Lightbulb),
+    HANDBOOK("手账", Icons.Outlined.AutoStories),
 }
 
 @Composable
@@ -85,7 +92,7 @@ fun GoaldayApp() {
                         NavigationBarItem(
                             selected = selected,
                             onClick = { tab = item },
-                            icon = { Text(item.icon) },
+                            icon = { Icon(imageVector = item.icon, contentDescription = item.label) },
                             label = { Text(item.label) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color(0xFFE88FAE),
