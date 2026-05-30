@@ -143,7 +143,7 @@ private fun ReferenceCalendarBoard(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(440.dp)
+            .height(412.dp)
             .background(Color(0xFFFBFAF8), RoundedCornerShape(12.dp))
             .border(1.dp, Color(0x14000000), RoundedCornerShape(12.dp)),
     ) {
@@ -156,7 +156,7 @@ private fun ReferenceCalendarBoard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFFF4EEEC))
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                    .padding(horizontal = 6.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 SegText("日程", true, Modifier.weight(1f))
@@ -172,10 +172,10 @@ private fun ReferenceCalendarBoard(
                         .weight(1f)
                         .border(0.5.dp, Color(0x12000000))
                         .clickable { onSelectDay(day) }
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                        .padding(horizontal = 6.dp, vertical = 5.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Column(modifier = Modifier.width(34.dp)) {
+                    Column(modifier = Modifier.width(30.dp)) {
                         Text(day.toString(), fontWeight = if (day == selectedDay) FontWeight.SemiBold else FontWeight.Normal)
                         Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7D766C))
                     }
@@ -196,12 +196,12 @@ private fun ReferenceCalendarBoard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                    .padding(horizontal = 6.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("To do  ˅", modifier = Modifier.background(Color(0xFFF8F8F6), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("To do  ˅", modifier = Modifier.background(Color(0xFFF8F8F6), RoundedCornerShape(8.dp)).padding(horizontal = 7.dp, vertical = 3.dp), style = MaterialTheme.typography.labelMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("完成", modifier = Modifier.clickable { selectedEntry?.let { onToggleCompleted(it.id) } }, color = Color(0xFF2F2A24))
                     Text("编辑", modifier = Modifier.clickable { selectedEntry?.let(onEdit) }, color = Color(0xFF6F675D))
                     Text("删除", modifier = Modifier.clickable { selectedEntry?.let { onDelete(it.id) } }, color = Color(0xFF9C5A52))
@@ -211,12 +211,12 @@ private fun ReferenceCalendarBoard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                    .padding(horizontal = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 stacked.forEach { entry ->
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
                         verticalAlignment = Alignment.Top,
                     ) {
                         Text(if (entry.completed) "✓" else "·", color = if (entry.completed) Color(0xFF7A9D71) else Color(0xFFD8CFC5), modifier = Modifier.clickable { onToggleCompleted(entry.id) })

@@ -733,7 +733,7 @@ private fun ReferencePlannerBoard(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(420.dp)
+            .height(404.dp)
             .clip(RoundedCornerShape(10.dp))
             .border(1.dp, Color(0x22000000), RoundedCornerShape(10.dp))
             .background(Color(0xFFFCFCFB)),
@@ -749,10 +749,10 @@ private fun ReferencePlannerBoard(
                         .fillMaxWidth()
                         .weight(1f)
                         .border(0.6.dp, Color(0x12000000))
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                        .padding(horizontal = 6.dp, vertical = 5.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Column(modifier = Modifier.width(34.dp)) {
+                    Column(modifier = Modifier.width(30.dp)) {
                         Text(dayNumbers[index].toString(), color = Color(0xFF26221D), fontWeight = FontWeight.SemiBold)
                         Text(label, color = Color(0xFF777067), style = MaterialTheme.typography.labelSmall)
                     }
@@ -779,7 +779,7 @@ private fun ReferencePlannerBoard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                    .padding(horizontal = 6.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -788,12 +788,12 @@ private fun ReferencePlannerBoard(
                         .clip(RoundedCornerShape(8.dp))
                         .border(1.dp, Color(0x1A000000), RoundedCornerShape(8.dp))
                         .clickable(onClick = onSwitchList)
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                        .padding(horizontal = 7.dp, vertical = 3.dp),
                 ) {
-                    Text(selectedListName, color = Color(0xFF29251F))
-                    Text("  ˅", color = Color(0xFF9C958B))
+                    Text(selectedListName, color = Color(0xFF29251F), style = MaterialTheme.typography.labelMedium)
+                    Text("  ˅", color = Color(0xFF9C958B), style = MaterialTheme.typography.labelMedium)
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("加入", modifier = Modifier.clickable { selectedItem?.let(onMoveItemToToday) }, color = Color(0xFF6E655C))
                     Text("完成", modifier = Modifier.clickable { selectedItem?.let(onMoveItemToCompleted) }, color = Color(0xFF2E2924))
                     Text("回收", modifier = Modifier.clickable { selectedItem?.let(onRestoreItemFromDone) }, color = Color(0xFF8B7E71))
@@ -802,13 +802,13 @@ private fun ReferencePlannerBoard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                    .padding(horizontal = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 rightItems.forEach { item ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.Top,
                     ) {
                         Text("·", color = Color(0xFFD8CFC5))
