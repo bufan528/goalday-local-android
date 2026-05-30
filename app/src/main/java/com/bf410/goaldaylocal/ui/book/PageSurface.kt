@@ -1102,7 +1102,7 @@ private fun TodayBoardSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("21周", style = MaterialTheme.typography.titleSmall, color = Color(0xFFE26B72), fontWeight = FontWeight.SemiBold)
                     Text("▾", color = Color(0xFFE26B72), style = MaterialTheme.typography.labelSmall)
@@ -1112,7 +1112,7 @@ private fun TodayBoardSection(
                 Text("|", color = Color(0xFFDDD7CE))
                 Text("清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB5ADA4))
             }
-            Text("完成", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2F2922), fontWeight = FontWeight.Medium)
+            Text("完成", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2F2922), fontWeight = FontWeight.SemiBold)
         }
         Text("左边执行 · 右边计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF948778))
         if (todayPlanItems.isEmpty() && todayCompletedItems.isEmpty()) {
@@ -1129,7 +1129,7 @@ private fun TodayBoardSection(
                 .padding(6.dp),
         ) {
             Column(
-                modifier = Modifier.width(46.dp),
+                modifier = Modifier.width(44.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 anchorDates.forEach { date ->
@@ -1139,7 +1139,7 @@ private fun TodayBoardSection(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (isToday) Color(0xFFF06F78) else Color(0x08A17856))
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 5.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(1.dp),
                     ) {
@@ -1344,11 +1344,11 @@ private fun SourcePoolSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(11.dp))
                 .background(Color(0x0FA17856))
-                .border(1.dp, Color(0x1EA17856), RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0x1EA17856), RoundedCornerShape(11.dp))
                 .clickable(onClick = onSwitchList)
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+                .padding(horizontal = 11.dp, vertical = 9.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
