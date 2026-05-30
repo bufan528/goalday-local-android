@@ -317,6 +317,8 @@ private fun ReferenceCalendarBoard(
     val dayNums = (0..6).map { (start + it).coerceAtMost(maxDay) }
     val todo = entries.filter { it.day == selectedDay }
     val stacked = (todo + entries.filter { it.day != selectedDay }).take(10)
+    var selectedEntryId by remember(stacked) { mutableStateOf(stacked.firstOrNull()?.id) }
+    val selectedEntry = stacked.firstOrNull { it.id == selectedEntryId } ?: stacked.firstOrNull()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -378,7 +380,12 @@ private fun ReferenceCalendarBoard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("To do  ˅", modifier = Modifier.background(Color(0xFFF8F8F6), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
-                Text("新增", modifier = Modifier.clickable(onClick = onAdd))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("完成", modifier = Modifier.clickable { selectedEntry?.let { onToggleCompleted(it.id) } }, color = Color(0xFF2F2A24))
+                    Text("编辑", modifier = Modifier.clickable { selectedEntry?.let(onEdit) }, color = Color(0xFF6F675D))
+                    Text("删除", modifier = Modifier.clickable { selectedEntry?.let { onDelete(it.id) } }, color = Color(0xFF9C5A52))
+                    Text("新增", modifier = Modifier.clickable(onClick = onAdd))
+                }
             }
             Column(
                 modifier = Modifier
@@ -393,7 +400,11 @@ private fun ReferenceCalendarBoard(
                     ) {
                         Text(if (entry.completed) "✓" else "·", color = if (entry.completed) Color(0xFF7A9D71) else Color(0xFFD8CFC5), modifier = Modifier.clickable { onToggleCompleted(entry.id) })
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(entry.title, textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None)
+                            Text(
+                                entry.title,
+                                textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                                modifier = Modifier.clickable { selectedEntryId = entry.id },
+                            )
                             if (entry.note.isNotBlank()) Text(entry.note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8D857C))
                         }
                         Text("编", modifier = Modifier.clickable { onEdit(entry) }, color = Color(0xFF70685F))

@@ -946,6 +946,7 @@ private fun ReferencePlannerBoard(
     val dayNumbers = (0..6).map { LocalDate.now().plusDays(it.toLong()).dayOfMonth }
     val leftItems = (doneItems + todayItems).take(7)
     val rightItems = (todayItems + sourceItems).distinct().take(9)
+    var selectedItem by remember(rightItems) { mutableStateOf(rightItems.firstOrNull()) }
 
     Row(
         modifier = Modifier
@@ -1010,7 +1011,11 @@ private fun ReferencePlannerBoard(
                     Text(selectedListName, color = Color(0xFF29251F))
                     Text("  ˅", color = Color(0xFF9C958B))
                 }
-                Text("完成", modifier = Modifier.clickable { rightItems.firstOrNull()?.let(onMoveItemToCompleted) }, color = Color(0xFF2E2924))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("加入", modifier = Modifier.clickable { selectedItem?.let(onMoveItemToToday) }, color = Color(0xFF6E655C))
+                    Text("完成", modifier = Modifier.clickable { selectedItem?.let(onMoveItemToCompleted) }, color = Color(0xFF2E2924))
+                    Text("回收", modifier = Modifier.clickable { selectedItem?.let(onRestoreItemFromDone) }, color = Color(0xFF8B7E71))
+                }
             }
             Column(
                 modifier = Modifier
@@ -1030,7 +1035,7 @@ private fun ReferencePlannerBoard(
                             color = Color(0xFF2D2823),
                             modifier = Modifier
                                 .weight(1f)
-                                .clickable { onMoveItemToToday(item) },
+                                .clickable { selectedItem = item },
                         )
                     }
                 }
