@@ -652,6 +652,8 @@ private fun EditableBulletPage(
     val sourceCustomItems = remember(customItems, stagedItems) { customItems.filterNot { it in stagedItems } }
     val sourceItems = sourceBaseItems + sourceCustomItems
     var dragPreviewTarget by remember(pageTitle) { mutableStateOf(DragTarget.NONE) }
+    val listNames = remember { listOf("Todo", "未来的自己", "奖励清单", "电影清单") }
+    var selectedListIndex by remember(pageTitle) { mutableStateOf(0) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (isSchedulePage) {
@@ -711,6 +713,8 @@ private fun EditableBulletPage(
                 items = sourceItems,
                 pageTitle = pageTitle,
                 tint = tint,
+                selectedListName = listNames[selectedListIndex],
+                onSwitchList = { selectedListIndex = (selectedListIndex + 1) % listNames.size },
                 isChecked = isChecked,
                 onToggleChecked = onToggleChecked,
                 onMoveItemToToday = onMoveItemToToday,
@@ -1012,10 +1016,11 @@ private fun TodayBoardSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("6", style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E))
-            Text("To do", style = MaterialTheme.typography.labelMedium, color = Color(0xFF3A342E))
+            Text("21周", style = MaterialTheme.typography.titleSmall, color = Color(0xFFE26B72))
+            Text("日记", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB5ADA4))
+            Text("清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB5ADA4))
         }
-        Text("左侧时间栏 · 右侧任务栏", style = MaterialTheme.typography.labelSmall, color = Color(0xFF948778))
+        Text("左边执行 · 右边计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF948778))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BoardStatChip(label = "计划 ${todayPlanItems.size}", bg = BoardTonePlan)
             BoardStatChip(label = "完成 ${todayCompletedItems.size}", bg = BoardToneDone)
@@ -1165,6 +1170,8 @@ private fun SourcePoolSection(
     items: List<String>,
     pageTitle: String,
     tint: Color,
+    selectedListName: String,
+    onSwitchList: () -> Unit,
     isChecked: (String, String) -> Boolean,
     onToggleChecked: (String, String) -> Unit,
     onMoveItemToToday: (String) -> Unit,
@@ -1174,7 +1181,23 @@ private fun SourcePoolSection(
     modifier: Modifier = Modifier,
 ) {
     PaperNoteCard(modifier = modifier) {
-        Text("待办来源池", style = MaterialTheme.typography.titleMedium, color = BoardTitleColor)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0x0FA17856))
+                .border(1.dp, Color(0x1EA17856), RoundedCornerShape(10.dp))
+                .clickable(onClick = onSwitchList)
+                .padding(horizontal = 10.dp, vertical = 7.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("●", color = Color(0xFFE7C62E), style = MaterialTheme.typography.labelSmall)
+                Text(selectedListName, style = MaterialTheme.typography.titleMedium, color = BoardTitleColor)
+            }
+            Text("⌄", color = Color(0xFF9B8C7D), style = MaterialTheme.typography.titleMedium)
+        }
         val hintText = when (dragPreviewTarget) {
             DragTarget.TODAY -> "松手将进入今日计划"
             DragTarget.DONE -> "松手将直接标记完成"
