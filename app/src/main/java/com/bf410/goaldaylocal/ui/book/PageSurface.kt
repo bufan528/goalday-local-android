@@ -720,10 +720,10 @@ private fun TodayBoardSection(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(7.dp))
                             .background(Color(0x0F8F684F))
-                            .padding(horizontal = 6.dp, vertical = 6.dp),
-                    ) { Text(dayMark, color = Color(0xFF7A6A5A), style = MaterialTheme.typography.labelLarge) }
+                            .padding(horizontal = 5.dp, vertical = 5.dp),
+                    ) { Text(dayMark, color = Color(0xFF7A6A5A), style = MaterialTheme.typography.labelMedium) }
                 }
             }
             Column(modifier = Modifier.weight(0.72f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -746,24 +746,24 @@ private fun TodayBoardSection(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(7.dp))
                                 .background(BoardTonePlan)
                                 .clickable { onMoveItemToCompleted(item) }
-                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(14.dp)
-                                    .clip(RoundedCornerShape(4.dp))
+                                    .size(12.dp)
+                                    .clip(RoundedCornerShape(3.dp))
                                     .background(Color(0xFFF6F1E7))
-                                    .border(1.dp, Color(0xFFD9CFBF), RoundedCornerShape(4.dp)),
+                                    .border(1.dp, Color(0xFFD9CFBF), RoundedCornerShape(3.dp)),
                             )
                             Text(
                                 text = item,
                                 color = Color(0xFF2F2922),
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier.weight(1f),
                             )
                         }
@@ -794,17 +794,17 @@ private fun TodayBoardSection(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(7.dp))
                                 .background(BoardToneDone)
                                 .clickable { onRestoreItemFromCompleted(item) }
-                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(14.dp)
-                                    .clip(RoundedCornerShape(4.dp))
+                                    .size(12.dp)
+                                    .clip(RoundedCornerShape(3.dp))
                                     .background(Color(0xFF84B787)),
                             )
                             Text(
@@ -1359,13 +1359,13 @@ private fun PaperNoteCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(Color.White)
-            .border(1.dp, Color(0xFFE9E3DA), RoundedCornerShape(22.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xFFFEFEFE))
+            .border(1.dp, Color(0xFFEDE7DE), RoundedCornerShape(18.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x10A17856)))
         content()
@@ -1381,7 +1381,7 @@ private fun PageHeaderLine(
     savedText: String,
     onSavedClick: (() -> Unit)? = null,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1389,17 +1389,17 @@ private fun PageHeaderLine(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(99.dp)).background(tint))
-                Spacer(Modifier.width(8.dp))
-                Text(bookTitle, style = MaterialTheme.typography.titleMedium, color = Color(0xFF342C24))
+                Spacer(Modifier.width(6.dp))
+                Text(bookTitle, style = MaterialTheme.typography.titleSmall, color = Color(0xFF342C24))
             }
             Text(
                 text = savedText,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFF8B7660),
                 modifier = if (onSavedClick != null) Modifier.clickable(onClick = onSavedClick) else Modifier,
             )
         }
-        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF7B6A59))
+        Text(subtitle, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7B6A59))
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x1A9C7C5C)))
     }
 }
