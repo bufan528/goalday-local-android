@@ -662,43 +662,28 @@ private fun EditableBulletPage(
         }.ifEmpty { sourceItems }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFFF5EFED))
-                .border(1.dp, Color(0x1A000000), RoundedCornerShape(10.dp))
-                .padding(horizontal = 10.dp, vertical = 7.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .background(Color(0xFFF7F2EC))
+                .border(1.dp, Color(0x18000000), RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val tabs = listOf("日程", "日记", "清单")
-            tabs.forEachIndexed { index, label ->
-                val active = (index == 0 && isSchedulePage) || (index == 1 && !isSchedulePage) || (index == 2 && pageTitle.contains("清单"))
-                Text(
-                    text = label,
-                    modifier = Modifier.weight(1f),
-                    color = if (active) Color(0xFF2F2924) else Color(0xFFB3AAA1),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
-                )
-            }
-        }
-        if (isSchedulePage) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0x10A17856))
-                    .border(1.dp, Color(0x1EA17856), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 8.dp, vertical = 5.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("四月日历页", style = MaterialTheme.typography.labelMedium, color = Color(0xFF655545))
-                Text("MON-SUN", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9B8C7D))
-            }
+            Text(
+                text = if (isSchedulePage) "日程执行板" else "任务执行板",
+                color = Color(0xFF3A332C),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = "左 Done 右 Todo",
+                color = Color(0xFF8C8379),
+                style = MaterialTheme.typography.labelSmall,
+            )
         }
         ReferencePlannerBoard(
             sourceItems = shownSourceItems,
