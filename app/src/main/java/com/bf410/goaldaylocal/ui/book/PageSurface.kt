@@ -54,6 +54,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.BookPage
@@ -1056,13 +1057,13 @@ private fun TodayBoardSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("21周", style = MaterialTheme.typography.titleSmall, color = Color(0xFFE26B72))
+                Text("21周", style = MaterialTheme.typography.titleSmall, color = Color(0xFFE26B72), fontWeight = FontWeight.SemiBold)
                 Text("|", color = Color(0xFFDDD7CE))
                 Text("日记", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB5ADA4))
                 Text("|", color = Color(0xFFDDD7CE))
                 Text("清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB5ADA4))
             }
-            Text("完成", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2F2922))
+            Text("完成", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2F2922), fontWeight = FontWeight.Medium)
         }
         Text("左边执行 · 右边计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF948778))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1117,12 +1118,18 @@ private fun TodayBoardSection(
                                 .background(Color(0x08A5C49D))
                                 .border(1.dp, Color(0x18A5C49D), RoundedCornerShape(6.dp))
                                 .clickable { onMoveCompletedToTodo(item) }
-                                .padding(horizontal = 6.dp, vertical = 6.dp),
+                                .padding(horizontal = 6.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Text("✓", color = Color(0xFF7FA579), style = MaterialTheme.typography.labelSmall)
-                            Text(text = item, style = completedTextStyle(completed = true), color = Color(0xFF8B847D), modifier = Modifier.weight(1f))
+                            Text(
+                                text = item,
+                                style = completedTextStyle(completed = true),
+                                color = Color(0xFF8B847D),
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.weight(1f),
+                            )
                         }
                     }
                 }
@@ -1169,12 +1176,18 @@ private fun TodayBoardSection(
                                 .background(Color(0x08D9A97E))
                                 .border(1.dp, Color(0x18D9A97E), RoundedCornerShape(6.dp))
                                 .clickable { onMoveItemToCompleted(item) }
-                                .padding(horizontal = 6.dp, vertical = 6.dp),
+                                .padding(horizontal = 6.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Text("◌", color = Color(0xFFB2A89B), style = MaterialTheme.typography.labelSmall)
-                            Text(text = item, color = Color(0xFF2F2922), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                            Text(
+                                text = item,
+                                color = Color(0xFF2F2922),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.weight(1f),
+                            )
                         }
                     }
                 }
@@ -1232,13 +1245,13 @@ private fun SourcePoolSection(
                 .background(Color(0x0FA17856))
                 .border(1.dp, Color(0x1EA17856), RoundedCornerShape(10.dp))
                 .clickable(onClick = onSwitchList)
-                .padding(horizontal = 10.dp, vertical = 7.dp),
+                .padding(horizontal = 10.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("●", color = Color(0xFFE7C62E), style = MaterialTheme.typography.labelSmall)
-                Text(selectedListName, style = MaterialTheme.typography.titleMedium, color = BoardTitleColor)
+                Text(selectedListName, style = MaterialTheme.typography.titleMedium, color = BoardTitleColor, fontWeight = FontWeight.SemiBold)
             }
             Text("⌄", color = Color(0xFF9B8C7D), style = MaterialTheme.typography.titleMedium)
         }
@@ -1340,6 +1353,7 @@ private fun SourcePoolSection(
                     item,
                     color = Color(0xFF2B2621),
                     style = MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.None),
+                    fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f),
                 )
                 Text("＋", color = Color(0xFF8F684F), modifier = Modifier.clickable(enabled = !isDragging) { onMoveItemToToday(item) })
