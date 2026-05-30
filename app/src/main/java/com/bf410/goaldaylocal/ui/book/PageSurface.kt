@@ -327,6 +327,7 @@ fun PageBackLayer(
 ) {
     val curlAlignTop = anchorY < 0.46f
     val curlStrength = (0.16f + progress * 0.56f).coerceIn(0f, 0.72f)
+    val stackShadow = (0.07f + progress * 0.18f).coerceAtMost(0.30f)
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp, 24.dp, 30.dp, 30.dp))
@@ -341,6 +342,36 @@ fun PageBackLayer(
             )
             .padding(horizontal = 28.dp, vertical = 26.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .width((4f + progress * 10f).dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color.Black.copy(alpha = stackShadow),
+                            Color(0x33A5876A).copy(alpha = (0.10f + progress * 0.14f).coerceAtMost(0.24f)),
+                            Color.Transparent,
+                        ),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .width((3f + progress * 8f).dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = (0.10f + progress * 0.18f).coerceAtMost(0.28f)),
+                            Color.Black.copy(alpha = (0.05f + progress * 0.12f).coerceAtMost(0.20f)),
+                        ),
+                    ),
+                ),
+        )
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -371,6 +402,23 @@ fun PageBackLayer(
                                 Color.Black.copy(alpha = (0.10f + progress * 0.18f).coerceAtMost(0.24f)),
                             )
                         },
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(if (direction == TurnDirection.NEXT) Alignment.TopEnd else Alignment.TopStart)
+                .width((20f + progress * 44f).dp)
+                .height((16f + progress * 34f).dp)
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            Color.White.copy(alpha = (0.08f + curlStrength * 0.16f).coerceAtMost(0.30f)),
+                            Color(0x18C4A98E),
+                            Color.Transparent,
+                        ),
+                        start = Offset(0f, 0f),
+                        end = Offset(120f, 100f),
                     ),
                 ),
         )
@@ -470,12 +518,18 @@ fun ActivePageLayer(
     turnProgress: Float = 0f,
     turnDirection: TurnDirection? = null,
 ) {
+    val easedShift = turnProgress * turnProgress
     val contentShift = when (turnDirection) {
-        TurnDirection.NEXT -> -turnProgress * 16f
-        TurnDirection.PREVIOUS -> turnProgress * 16f
+        TurnDirection.NEXT -> -(easedShift * 22f + turnProgress * 5f)
+        TurnDirection.PREVIOUS -> easedShift * 22f + turnProgress * 5f
         null -> 0f
     }
-    val contentAlpha = (1f - turnProgress * 0.22f).coerceIn(0.78f, 1f)
+    val contentAlpha = (1f - turnProgress * 0.24f).coerceIn(0.74f, 1f)
+    val contentTiltY = when (turnDirection) {
+        TurnDirection.NEXT -> -turnProgress * 2.2f
+        TurnDirection.PREVIOUS -> turnProgress * 2.2f
+        null -> 0f
+    }
     PageSurface(
         modifier = modifier,
         title = page.title,
@@ -489,6 +543,7 @@ fun ActivePageLayer(
             modifier = Modifier.graphicsLayer {
                 alpha = contentAlpha
                 translationX = contentShift
+                rotationZ = contentTiltY * 0.12f
             },
         ) {
             when (page) {
