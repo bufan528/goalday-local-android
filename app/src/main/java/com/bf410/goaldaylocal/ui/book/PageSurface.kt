@@ -1867,17 +1867,17 @@ private fun PaperNoteCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(5.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFFFEFEFE))
-            .border(1.dp, Color(0xFFEDE7DE), RoundedCornerShape(14.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFF8F8F6))
+            .border(1.dp, Color(0xFFE9E6E1), RoundedCornerShape(12.dp))
+            .padding(horizontal = 10.dp, vertical = 9.dp),
     ) {
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x10A17856)))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x0F9D958C)))
         content()
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x08A17856)))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x0A9D958C)))
     }
 }
 

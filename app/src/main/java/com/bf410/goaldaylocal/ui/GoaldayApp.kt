@@ -72,7 +72,7 @@ fun GoaldayApp() {
         Scaffold(
             bottomBar = {
                 NavigationBar(
-                    containerColor = Color(0xFFFBF8F3),
+                    containerColor = Color(0xFFF7F7F5),
                     tonalElevation = 0.dp,
                 ) {
                     RootTab.entries.forEach { item ->
@@ -81,11 +81,11 @@ fun GoaldayApp() {
                             selected = selected,
                             onClick = { tab = item },
                             colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = Color(0x16E98698),
+                                indicatorColor = Color(0x14E86D84),
                                 selectedIconColor = Color(0xFFE86D84),
                                 selectedTextColor = Color(0xFFE86D84),
-                                unselectedIconColor = Color(0xFFB2AAA0),
-                                unselectedTextColor = Color(0xFFB2AAA0),
+                                unselectedIconColor = Color(0xFFB7B2AA),
+                                unselectedTextColor = Color(0xFFB7B2AA),
                             ),
                             icon = {
                                 Text(
@@ -107,7 +107,7 @@ fun GoaldayApp() {
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            listOf(Color(0xFFF8F4EE), Color(0xFFEDE6D9)),
+                            listOf(Color(0xFFF5F5F3), Color(0xFFF2F2F0)),
                         ),
                     )
                     .padding(padding)
