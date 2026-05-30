@@ -126,6 +126,22 @@ fun PageSurface(
     ) {
         Box(
             modifier = Modifier
+                .matchParentSize()
+                .alpha(0.12f)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0x10C7B39C),
+                            Color.Transparent,
+                            Color(0x08C7B39C),
+                            Color.Transparent,
+                            Color(0x0CC7B39C),
+                        ),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
                 .align(Alignment.CenterStart)
                 .width(4.dp)
                 .fillMaxHeight()
@@ -200,7 +216,10 @@ fun PageBackLayer(
     tint: Color,
     progress: Float,
     direction: TurnDirection?,
+    anchorY: Float = 0.5f,
 ) {
+    val curlAlignTop = anchorY < 0.46f
+    val curlStrength = (0.16f + progress * 0.56f).coerceIn(0f, 0.72f)
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp, 24.dp, 30.dp, 30.dp))
@@ -245,6 +264,52 @@ fun PageBackLayer(
                                 Color.Black.copy(alpha = (0.10f + progress * 0.18f).coerceAtMost(0.24f)),
                             )
                         },
+                    ),
+                ),
+        )
+
+        Box(
+            modifier = Modifier
+                .align(
+                    when {
+                        direction == TurnDirection.NEXT && curlAlignTop -> Alignment.TopStart
+                        direction == TurnDirection.PREVIOUS && curlAlignTop -> Alignment.TopEnd
+                        direction == TurnDirection.NEXT -> Alignment.BottomStart
+                        else -> Alignment.BottomEnd
+                    },
+                )
+                .width((24f + progress * 58f).dp)
+                .height((26f + progress * 64f).dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = (0.22f + curlStrength * 0.28f).coerceAtMost(0.54f)),
+                            Color(0x22A48A70).copy(alpha = (0.18f + curlStrength * 0.24f).coerceAtMost(0.46f)),
+                            Color.Transparent,
+                        ),
+                        radius = 180f,
+                    ),
+                ),
+        )
+
+        Box(
+            modifier = Modifier
+                .align(
+                    when {
+                        direction == TurnDirection.NEXT && curlAlignTop -> Alignment.TopEnd
+                        direction == TurnDirection.PREVIOUS && curlAlignTop -> Alignment.TopStart
+                        direction == TurnDirection.NEXT -> Alignment.BottomEnd
+                        else -> Alignment.BottomStart
+                    },
+                )
+                .width((12f + progress * 24f).dp)
+                .height((20f + progress * 34f).dp)
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            Color.Black.copy(alpha = (0.08f + curlStrength * 0.20f).coerceAtMost(0.30f)),
+                            Color.Transparent,
+                        ),
                     ),
                 ),
         )
