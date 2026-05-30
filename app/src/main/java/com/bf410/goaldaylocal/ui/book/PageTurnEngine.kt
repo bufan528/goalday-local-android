@@ -401,6 +401,43 @@ fun PageTurnEngine(
                             ),
                         ),
                 )
+
+                if (profile == TurnProfile.HANDBOOK) {
+                    Box(
+                        modifier = Modifier
+                            .align(if (draggingToNext) Alignment.TopEnd else Alignment.TopStart)
+                            .width((10f + latePhase * 24f).dp)
+                            .height((22f + latePhase * 38f).dp)
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = (0.04f + latePhase * 0.22f).coerceAtMost(0.26f)),
+                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.12f).coerceAtMost(0.14f)),
+                                        Color.Transparent,
+                                    ),
+                                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                                    end = androidx.compose.ui.geometry.Offset(40f, 80f),
+                                ),
+                            ),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(if (draggingToNext) Alignment.BottomEnd else Alignment.BottomStart)
+                            .width((10f + latePhase * 24f).dp)
+                            .height((22f + latePhase * 38f).dp)
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.12f).coerceAtMost(0.14f)),
+                                        Color.White.copy(alpha = (0.04f + latePhase * 0.22f).coerceAtMost(0.26f)),
+                                    ),
+                                    start = androidx.compose.ui.geometry.Offset(0f, 80f),
+                                    end = androidx.compose.ui.geometry.Offset(40f, 0f),
+                                ),
+                            ),
+                    )
+                }
             }
         }
     }
