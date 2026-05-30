@@ -683,6 +683,9 @@ private fun HandbookReplicaPage(
     val rightLines = (todayPlanItems + schedulePreviewEntries.filterNot { it.completed }.map { it.title })
         .distinct()
         .take(11)
+    val rightTop = rightLines.take(5)
+    val rightMiddle = rightLines.drop(5).take(3)
+    val rightBottom = rightLines.drop(8).take(3)
 
     Box(
         modifier = modifier
@@ -700,13 +703,15 @@ private fun HandbookReplicaPage(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text("${pageIndex + 1}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
+                Text("${pageIndex + 1}  周一", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
+                Text("今日复盘", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
                 leftLines.forEach { line ->
                     Text("• $line", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925), maxLines = 1)
                 }
                 if (leftLines.isEmpty()) {
                     Text("• 记录今日完成", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925))
                 }
+                Text("收支/步数/专注", style = MaterialTheme.typography.labelSmall, color = Color(0xFF3D3832))
                 ColorTagCard(color = Color(0xFF9B2F2F), text = "今天优先级排序 · 行动")
                 ColorTagCard(color = Color(0xFF1A1A1A), text = "不熬夜 23:00")
                 MiniPhotoRow()
@@ -715,15 +720,22 @@ private fun HandbookReplicaPage(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text("${pageIndex + 2}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
-                rightLines.forEach { line ->
+                Text("${pageIndex + 2}  周二", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
+                Text("今日计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
+                rightTop.forEach { line ->
                     Text("• $line", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925), maxLines = 1)
                 }
-                if (rightLines.isEmpty()) {
+                if (rightTop.isEmpty()) {
                     Text("• 写下明日计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925))
                 }
                 ColorTagCard(color = Color(0xFF84C65A), text = "本月节律进度  30%")
+                rightMiddle.forEach { line ->
+                    Text("• $line", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925), maxLines = 1)
+                }
                 ColorTagCard(color = Color(0xFF9B2F2F), text = "任务目标 · 整理复盘")
+                rightBottom.forEach { line ->
+                    Text("• $line", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925), maxLines = 1)
+                }
                 MiniPhotoRow()
             }
         }
