@@ -714,73 +714,15 @@ private fun TodayBoardSection(
             return@PaperNoteCard
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.weight(0.28f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("时间", color = Color(0xFF7E7568), style = MaterialTheme.typography.labelMedium)
-                listOf("6", "7", "8", "9", "10", "11", "12").forEach { dayMark ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(7.dp))
-                            .background(Color(0x0F8F684F))
-                            .padding(horizontal = 5.dp, vertical = 5.dp),
-                    ) { Text(dayMark, color = Color(0xFF7A6A5A), style = MaterialTheme.typography.labelMedium) }
-                }
-            }
-            Column(modifier = Modifier.weight(0.72f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "To do",
-                    color = Color(0xFF5E4837),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(todayHeaderColor)
-                        .border(
-                            width = 1.dp,
-                            color = Color(0xCCB77A5A).copy(alpha = todayBorderAlpha),
-                            shape = RoundedCornerShape(10.dp),
-                        )
-                        .padding(horizontal = 6.dp, vertical = 4.dp),
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
-                    todayPlanItems.forEach { item ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(7.dp))
-                                .background(BoardTonePlan)
-                                .clickable { onMoveItemToCompleted(item) }
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text("◌", color = Color(0xFFB2A89B), style = MaterialTheme.typography.labelSmall)
-                            Text(
-                                text = item,
-                                color = Color(0xFF2F2922),
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(Color(0x10A17856)),
-                        )
-                    }
-                }
-                Text(
-                    "完成",
+                    "Done",
                     color = Color(0xFF5E4837),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
                         .background(doneHeaderColor)
-                        .border(
-                            width = 1.dp,
-                            color = Color(0xCC79A16E).copy(alpha = doneBorderAlpha),
-                            shape = RoundedCornerShape(10.dp),
-                        )
+                        .border(1.dp, Color(0xCC79A16E).copy(alpha = doneBorderAlpha), RoundedCornerShape(10.dp))
                         .padding(horizontal = 6.dp, vertical = 4.dp),
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
@@ -796,19 +738,37 @@ private fun TodayBoardSection(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Text("✓", color = Color(0xFF7FA579), style = MaterialTheme.typography.labelSmall)
-                            Text(
-                                text = item,
-                                style = completedTextStyle(completed = true),
-                                color = Color(0xFF8B847D),
-                                modifier = Modifier.weight(1f),
-                            )
+                            Text(text = item, style = completedTextStyle(completed = true), color = Color(0xFF8B847D), modifier = Modifier.weight(1f))
                         }
-                        Box(
+                    }
+                }
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "To do",
+                    color = Color(0xFF5E4837),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(todayHeaderColor)
+                        .border(1.dp, Color(0xCCB77A5A).copy(alpha = todayBorderAlpha), RoundedCornerShape(10.dp))
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.animateContentSize()) {
+                    todayPlanItems.forEach { item ->
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(1.dp)
-                                .background(Color(0x1095B087)),
-                        )
+                                .clip(RoundedCornerShape(7.dp))
+                                .background(BoardTonePlan)
+                                .clickable { onMoveItemToCompleted(item) }
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text("◌", color = Color(0xFFB2A89B), style = MaterialTheme.typography.labelSmall)
+                            Text(text = item, color = Color(0xFF2F2922), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                        }
                     }
                 }
             }
