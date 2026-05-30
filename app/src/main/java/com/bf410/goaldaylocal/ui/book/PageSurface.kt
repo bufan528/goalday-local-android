@@ -172,6 +172,23 @@ fun PageSurface(
                     ),
                 ),
         )
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 2.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.End,
+        ) {
+            listOf(Color(0x33E693B1), Color(0x33F0C187), Color(0x3394C8E8), Color(0x339FD39B)).forEach { c ->
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(c),
+                )
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -1116,7 +1133,10 @@ private fun StructuredDiaryEditor(
     onDone: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("4月4日", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("4月4日", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E))
+            Text("周四", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8A8177))
+        }
         OutlinedTextField(
             value = state.moodTags,
             onValueChange = { onStateChange(state.copy(moodTags = it)) },
