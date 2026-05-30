@@ -56,6 +56,8 @@ fun CalendarScreen(
     val firstOffset = month.atDay(1).dayOfWeek.value - 1
     val totalCells = ((firstOffset + maxDay + 6) / 7) * 7
     val entryDays = uiState.entries.map { it.day }.toSet()
+    selectedDay = selectedDay.coerceIn(1, maxDay)
+    val selectedDayEntries = uiState.entries.filter { it.day == selectedDay }
 
     Column(
         modifier = Modifier
@@ -115,6 +117,7 @@ fun CalendarScreen(
                             DayCell(
                                 day = if (enabled) day else null,
                                 marked = day in entryDays,
+                                selected = enabled && day == selectedDay,
                                 isToday = enabled &&
                                     uiState.year == today.year &&
                                     uiState.month == today.monthValue &&
@@ -122,7 +125,6 @@ fun CalendarScreen(
                                 onClick = {
                                     if (enabled) {
                                         selectedDay = day
-                                        showAddDialog = true
                                     }
                                 },
                             )
@@ -133,11 +135,26 @@ fun CalendarScreen(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("本月日程", style = MaterialTheme.typography.titleSmall)
-            if (uiState.entries.isEmpty()) {
-                Text("这个月还没有日程，点日历日期就可以直接添加。", color = Color(0xFF7D7266))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("${uiState.month}月${selectedDay}日 日程", style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "新增",
+                    color = Color(0xFF2D2A26),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .background(Color(0x12000000), RoundedCornerShape(99.dp))
+                        .clickable { showAddDialog = true }
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                )
+            }
+            if (selectedDayEntries.isEmpty()) {
+                Text("当天还没有日程，点“新增”即可添加。", color = Color(0xFF7D7266))
             } else {
-                uiState.entries.forEach { entry ->
+                selectedDayEntries.forEach { entry ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -221,6 +238,7 @@ fun CalendarScreen(
 private fun DayCell(
     day: Int?,
     marked: Boolean,
+    selected: Boolean,
     isToday: Boolean,
     onClick: () -> Unit,
 ) {
@@ -230,6 +248,7 @@ private fun DayCell(
             .height(40.dp)
             .background(
                 when {
+                    selected -> Color(0xFFEEE3D4)
                     isToday -> Color(0xFFF1E1CF)
                     day != null -> Color(0x10FFFFFF)
                     else -> Color.Transparent
