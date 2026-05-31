@@ -62,6 +62,7 @@ fun GoaldayApp() {
     val bookUiState by bookViewModel.uiState.collectAsState()
 
     val canGoBackInsideApp = !bookUiState.inLibraryMode || tab != RootTab.HOME
+    val allowEdgeBackSwipe = canGoBackInsideApp && tab != RootTab.HANDBOOK
     val density = LocalDensity.current
     val edgeWidthPx = with(density) { 28.dp.toPx() }
     val triggerDistancePx = with(density) { 72.dp.toPx() }
@@ -111,8 +112,8 @@ fun GoaldayApp() {
                     .fillMaxSize()
                     .background(GoaldayDesign.AppBg)
                     .padding(padding)
-                    .pointerInput(canGoBackInsideApp, edgeWidthPx, triggerDistancePx) {
-                        if (!canGoBackInsideApp) return@pointerInput
+                    .pointerInput(allowEdgeBackSwipe, edgeWidthPx, triggerDistancePx) {
+                        if (!allowEdgeBackSwipe) return@pointerInput
                         detectHorizontalDragGestures(
                             onDragStart = { start ->
                                 backSwipeStartX = start.x
