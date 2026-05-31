@@ -127,8 +127,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         0f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.9f else 0.84f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 300f else Spring.StiffnessMediumLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.94f else 0.84f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 320f else Spring.StiffnessMediumLow,
                         ),
                     )
                 }
@@ -482,8 +482,16 @@ fun Modifier.turningPageTransform(
     cameraDistance = if (profile == TurnProfile.HANDBOOK) 46f * density else 34f * density
     shadowElevation = if (profile == TurnProfile.HANDBOOK) 18f else 28f
     val subtleDepthScale = if (profile == TurnProfile.HANDBOOK) 1f - visualProgress * 0.022f else 1f - visualProgress * 0.015f
-    scaleY = subtleDepthScale.coerceIn(0.965f, 1f)
-    alpha = (1f - visualProgress * 0.08f).coerceIn(0.9f, 1f)
+    scaleY = if (profile == TurnProfile.HANDBOOK) {
+        subtleDepthScale.coerceIn(0.978f, 1f)
+    } else {
+        subtleDepthScale.coerceIn(0.965f, 1f)
+    }
+    alpha = if (profile == TurnProfile.HANDBOOK) {
+        (1f - visualProgress * 0.05f).coerceIn(0.94f, 1f)
+    } else {
+        (1f - visualProgress * 0.08f).coerceIn(0.9f, 1f)
+    }
 }
 
 fun Modifier.pageBackTransform(
@@ -511,5 +519,9 @@ fun Modifier.pageBackTransform(
     rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 1.8f else 5.4f
     cameraDistance = if (profile == TurnProfile.HANDBOOK) 46f * density else 34f * density
     val subtleBackScale = if (profile == TurnProfile.HANDBOOK) 1f - visualProgress * 0.018f else 1f - visualProgress * 0.012f
-    scaleY = subtleBackScale.coerceIn(0.972f, 1f)
+    scaleY = if (profile == TurnProfile.HANDBOOK) {
+        subtleBackScale.coerceIn(0.982f, 1f)
+    } else {
+        subtleBackScale.coerceIn(0.972f, 1f)
+    }
 }
