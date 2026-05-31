@@ -980,6 +980,18 @@ private fun FixedDayScheduleGrid(
     onCommit: (ScheduleEntry) -> Unit,
     onToggleCompleted: (ScheduleEntry) -> Unit,
 ) {
+    val morning = entries.filter { parseTimeSlot(it.note) == "上午" }
+    val afternoon = entries.filter { parseTimeSlot(it.note) == "下午" }
+    val evening = entries.filter { parseTimeSlot(it.note) == "晚上" }
+    val fallback = entries.filter { parseTimeSlot(it.note) == null }
+    val ordered = listOf(
+        morning.firstOrNull(),
+        afternoon.firstOrNull(),
+        evening.firstOrNull(),
+    ).mapIndexed { index, entry ->
+        entry ?: fallback.getOrNull(index)
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1003,7 +1015,7 @@ private fun FixedDayScheduleGrid(
             verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             repeat(3) { idx ->
-                val entry = entries.getOrNull(idx)
+                val entry = ordered.getOrNull(idx)
                 if (entry == null) {
                     Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(11.dp))
                 } else {
@@ -1028,6 +1040,14 @@ private fun FixedDayScheduleGrid(
             }
         }
     }
+}
+
+private fun parseTimeSlot(note: String): String? {
+    val slotPrefix = "时段:"
+    val index = note.indexOf(slotPrefix)
+    if (index < 0) return null
+    val raw = note.substring(index + slotPrefix.length).trim()
+    return raw.split(" ").firstOrNull()?.takeIf { it in listOf("上午", "下午", "晚上") }
 }
 
 private fun weekdayLabel(year: Int, month: Int, day: Int): String {
