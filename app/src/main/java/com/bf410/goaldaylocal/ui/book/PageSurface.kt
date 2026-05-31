@@ -812,6 +812,21 @@ private fun HandbookReplicaPage(
             }
             .padding(horizontal = 10.dp, vertical = 8.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(horizontal = 4.dp, vertical = 4.dp),
+        ) {
+            repeat(22) { idx ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = (idx * 15).dp)
+                        .height(0.6.dp)
+                        .background(Color(0x0F000000)),
+                )
+            }
+        }
         Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Column(
                 modifier = Modifier
@@ -835,7 +850,7 @@ private fun HandbookReplicaPage(
                         style = MaterialTheme.typography.labelSmall,
                         color = Color(0xFFB55C79),
                     )
-                    Text("复盘", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
+                    Text("执行 / 复盘", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
                 }
                 repeat(3) { index ->
                     val block = leftDayBlocks.getOrNull(index)
@@ -861,13 +876,10 @@ private fun HandbookReplicaPage(
                         },
                     )
                 }
-                FixedBulletBlock(lines = leftLines.ifEmpty { listOf("记录今日完成") }, slots = 6)
-                Text("收支/步数/专注", style = MaterialTheme.typography.labelSmall, color = Color(0xFF3D3832))
-                ColorTagCard(color = Color(0xFF9B2F2F), text = "今天优先级排序 · 行动")
-                ColorTagCard(color = Color(0xFF1A1A1A), text = "不熬夜 23:00")
-                MiniPhotoRow()
-                Spacer(modifier = Modifier.height(2.dp))
-                FixedNumberBlock()
+                if (leftLines.isNotEmpty()) {
+                    Text("完成清单", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7B7369))
+                    FixedBulletBlock(lines = leftLines, slots = 8)
+                }
             }
             Column(
                 modifier = Modifier
@@ -891,7 +903,7 @@ private fun HandbookReplicaPage(
                         style = MaterialTheme.typography.labelSmall,
                         color = Color(0xFF5F9740),
                     )
-                    Text("计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
+                    Text("计划 / Todo", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
                 }
                 repeat(3) { index ->
                     val block = rightDayBlocks.getOrNull(index)
@@ -917,14 +929,8 @@ private fun HandbookReplicaPage(
                         },
                     )
                 }
-                FixedBulletBlock(lines = rightTop.ifEmpty { listOf("写下明日计划") }, slots = 5)
-                ColorTagCard(color = Color(0xFF84C65A), text = "本月节律进度  30%")
-                FixedBulletBlock(lines = rightMiddle, slots = 2)
-                ColorTagCard(color = Color(0xFF9B2F2F), text = "任务目标 · 整理复盘")
-                FixedBulletBlock(lines = rightBottom, slots = 2)
-                MiniPhotoRow()
-                Spacer(modifier = Modifier.height(2.dp))
-                FixedNumberBlock()
+                Text("待办清单", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7B7369))
+                FixedBulletBlock(lines = rightLines.ifEmpty { listOf("写下明日计划") }, slots = 8)
             }
         }
 
