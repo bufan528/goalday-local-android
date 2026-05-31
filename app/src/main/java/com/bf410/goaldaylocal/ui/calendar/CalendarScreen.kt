@@ -82,6 +82,7 @@ fun CalendarScreen(
         val day = focusDay ?: return@LaunchedEffect
         selectedDay = day.coerceIn(1, maxDay)
         mode = CalendarMode.SCHEDULE
+        actionHint = "已定位到 ${selectedDay} 日"
         onFocusConsumed()
     }
     LaunchedEffect(actionHint) {
@@ -108,6 +109,7 @@ fun CalendarScreen(
             onToday = {
                 viewModel.backToToday()
                 selectedDay = LocalDate.now().dayOfMonth
+                actionHint = "已回到今天"
             },
         )
         CalendarStats(
