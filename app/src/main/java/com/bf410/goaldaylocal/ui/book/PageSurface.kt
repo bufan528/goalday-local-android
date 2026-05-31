@@ -687,6 +687,26 @@ private fun HandbookReplicaPage(
         null -> 0f
     }
     val alpha = (1f - turnProgress * 0.14f).coerceIn(0.86f, 1f)
+    val leftPageShift = when (turnDirection) {
+        TurnDirection.NEXT -> -(turnProgress * 8f)
+        TurnDirection.PREVIOUS -> turnProgress * 3f
+        null -> 0f
+    }
+    val rightPageShift = when (turnDirection) {
+        TurnDirection.NEXT -> -(turnProgress * 3f)
+        TurnDirection.PREVIOUS -> turnProgress * 8f
+        null -> 0f
+    }
+    val leftPageAlpha = when (turnDirection) {
+        TurnDirection.NEXT -> (1f - turnProgress * 0.18f).coerceIn(0.78f, 1f)
+        TurnDirection.PREVIOUS -> (1f - turnProgress * 0.08f).coerceIn(0.86f, 1f)
+        null -> 1f
+    }
+    val rightPageAlpha = when (turnDirection) {
+        TurnDirection.NEXT -> (1f - turnProgress * 0.08f).coerceIn(0.86f, 1f)
+        TurnDirection.PREVIOUS -> (1f - turnProgress * 0.18f).coerceIn(0.78f, 1f)
+        null -> 1f
+    }
     val leftLines = (todayCompletedItems + schedulePreviewEntries.filter { it.completed }.map { it.title })
         .distinct()
         .take(11)
@@ -750,7 +770,12 @@ private fun HandbookReplicaPage(
     ) {
         Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .graphicsLayer {
+                        translationX = leftPageShift
+                        this.alpha = leftPageAlpha
+                    },
                 verticalArrangement = Arrangement.spacedBy(1.dp),
             ) {
                 Row(
@@ -801,7 +826,12 @@ private fun HandbookReplicaPage(
                 FixedNumberBlock()
             }
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .graphicsLayer {
+                        translationX = rightPageShift
+                        this.alpha = rightPageAlpha
+                    },
                 verticalArrangement = Arrangement.spacedBy(1.dp),
             ) {
                 Row(
