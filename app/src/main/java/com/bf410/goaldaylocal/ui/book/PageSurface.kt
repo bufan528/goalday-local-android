@@ -736,12 +736,21 @@ private fun HandbookReplicaPage(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(1.dp),
             ) {
-                Text(
-                    "${leftHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, leftHeaderDay)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFFD0708E),
-                )
-                Text("今日复盘", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0x1CD0708E))
+                        .padding(horizontal = 5.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        "${leftHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, leftHeaderDay)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFB55C79),
+                    )
+                    Text("复盘", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
+                }
                 repeat(3) { index ->
                     val block = leftDayBlocks.getOrNull(index)
                     val day = block?.key ?: (leftHeaderDay + index).coerceAtMost(31)
@@ -778,12 +787,21 @@ private fun HandbookReplicaPage(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(1.dp),
             ) {
-                Text(
-                    "${rightHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, rightHeaderDay)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFFD0708E),
-                )
-                Text("今日计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0x1C84C65A))
+                        .padding(horizontal = 5.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        "${rightHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, rightHeaderDay)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF5F9740),
+                    )
+                    Text("计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
+                }
                 repeat(3) { index ->
                     val block = rightDayBlocks.getOrNull(index)
                     val day = block?.key ?: (rightHeaderDay + index).coerceAtMost(31)
@@ -835,17 +853,26 @@ private fun HandbookReplicaPage(
                 ),
         )
 
-        Text(
-            text = page.title.ifBlank { "手账" },
-            style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF8D857B),
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
-        Text(
-            text = "$pageCount",
-            style = MaterialTheme.typography.labelSmall,
-            color = Color(0x008D857B),
-        )
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .clip(RoundedCornerShape(99.dp))
+                .background(Color(0x14A68B71))
+                .padding(horizontal = 8.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = page.title.ifBlank { "手账" },
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF8D857B),
+            )
+            Text(
+                text = "${pageIndex + 1}/$pageCount",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF8D857B),
+            )
+        }
     }
 }
 
