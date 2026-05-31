@@ -601,6 +601,20 @@ private fun ReferenceCalendarBoard(
                 )
             }
         }
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                "＋",
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0xFFE88FAE))
+                    .clickable { onAdd() }
+                    .padding(horizontal = 12.dp, vertical = 3.dp),
+            )
+        }
     }
 }
 
