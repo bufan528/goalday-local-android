@@ -57,7 +57,9 @@ import com.bf410.goaldaylocal.ui.replica.BoardTask
 import com.bf410.goaldaylocal.ui.replica.DualLaneExecutionBoard
 import com.bf410.goaldaylocal.ui.replica.ExecutionBoardHeader
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.YearMonth
 
 @Composable
 fun BoxScope.SpineLayer(
@@ -700,8 +702,15 @@ private fun HandbookReplicaPage(
         .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
         .groupBy { it.day }
         .toSortedMap()
-    val leftDayBlocks = groupedByDay.entries.take(3)
-    val rightDayBlocks = groupedByDay.entries.drop(3).take(3)
+    val allDayBlocks = groupedByDay.entries.toList()
+    val pageWindowStart = ((pageIndex * 6).coerceAtLeast(0)).coerceAtMost(allDayBlocks.lastIndex.coerceAtLeast(0))
+    val pageWindowBlocks = allDayBlocks.drop(pageWindowStart).take(6)
+    val leftDayBlocks = pageWindowBlocks.take(3)
+    val rightDayBlocks = pageWindowBlocks.drop(3).take(3)
+    val anchorYear = schedulePreviewEntries.firstOrNull()?.year ?: LocalDate.now().year
+    val anchorMonth = schedulePreviewEntries.firstOrNull()?.month ?: LocalDate.now().monthValue
+    val leftHeaderDay = leftDayBlocks.firstOrNull()?.key ?: 1
+    val rightHeaderDay = rightDayBlocks.firstOrNull()?.key ?: (leftHeaderDay + 3).coerceAtMost(31)
 
     Box(
         modifier = modifier
@@ -719,12 +728,18 @@ private fun HandbookReplicaPage(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text("${pageIndex + 1}  周一", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
+                Text(
+                    "${leftHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, leftHeaderDay)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFFD0708E),
+                )
                 Text("今日复盘", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
                 repeat(3) { index ->
                     val block = leftDayBlocks.getOrNull(index)
-                    val day = block?.key ?: (index + 1)
+                    val day = block?.key ?: (leftHeaderDay + index).coerceAtMost(31)
                     FixedDayScheduleGrid(
+                        year = anchorYear,
+                        month = anchorMonth,
                         day = day,
                         entries = block?.value.orEmpty(),
                         editingId = editingId,
@@ -755,12 +770,18 @@ private fun HandbookReplicaPage(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text("${pageIndex + 2}  周二", style = MaterialTheme.typography.labelSmall, color = Color(0xFFD0708E))
+                Text(
+                    "${rightHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, rightHeaderDay)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFFD0708E),
+                )
                 Text("今日计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
                 repeat(3) { index ->
                     val block = rightDayBlocks.getOrNull(index)
-                    val day = block?.key ?: (index + 4)
+                    val day = block?.key ?: (rightHeaderDay + index).coerceAtMost(31)
                     FixedDayScheduleGrid(
+                        year = anchorYear,
+                        month = anchorMonth,
                         day = day,
                         entries = block?.value.orEmpty(),
                         editingId = editingId,
@@ -814,6 +835,8 @@ private fun HandbookReplicaPage(
 
 @Composable
 private fun FixedDayScheduleGrid(
+    year: Int,
+    month: Int,
     day: Int,
     entries: List<ScheduleEntry>,
     editingId: String?,
@@ -837,7 +860,7 @@ private fun FixedDayScheduleGrid(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(day.toString(), style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277), fontWeight = FontWeight.SemiBold)
-            Text("周", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277))
+            Text(shortWeekdayLabel(year, month, day), style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277))
         }
 
         Column(
@@ -870,6 +893,29 @@ private fun FixedDayScheduleGrid(
             }
         }
     }
+}
+
+private fun weekdayLabel(year: Int, month: Int, day: Int): String {
+    val safeDay = day.coerceIn(1, YearMonth.of(year, month).lengthOfMonth())
+    return when (LocalDate.of(year, month, safeDay).dayOfWeek) {
+        DayOfWeek.MONDAY -> "周一"
+        DayOfWeek.TUESDAY -> "周二"
+        DayOfWeek.WEDNESDAY -> "周三"
+        DayOfWeek.THURSDAY -> "周四"
+        DayOfWeek.FRIDAY -> "周五"
+        DayOfWeek.SATURDAY -> "周六"
+        DayOfWeek.SUNDAY -> "周日"
+    }
+}
+
+private fun shortWeekdayLabel(year: Int, month: Int, day: Int): String = when (LocalDate.of(year, month, day.coerceIn(1, YearMonth.of(year, month).lengthOfMonth())).dayOfWeek) {
+    DayOfWeek.MONDAY -> "一"
+    DayOfWeek.TUESDAY -> "二"
+    DayOfWeek.WEDNESDAY -> "三"
+    DayOfWeek.THURSDAY -> "四"
+    DayOfWeek.FRIDAY -> "五"
+    DayOfWeek.SATURDAY -> "六"
+    DayOfWeek.SUNDAY -> "日"
 }
 
 @Composable
