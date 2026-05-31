@@ -679,6 +679,7 @@ private fun HandbookReplicaPage(
     turnProgress: Float,
     turnDirection: TurnDirection?,
 ) {
+    data class DayBlock(val day: Int, val entries: List<ScheduleEntry>)
     val easedShift = turnProgress * turnProgress
     val contentShift = when (turnDirection) {
         TurnDirection.NEXT -> -(easedShift * 14f + turnProgress * 3f)
@@ -702,15 +703,30 @@ private fun HandbookReplicaPage(
         .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
         .groupBy { it.day }
         .toSortedMap()
-    val allDayBlocks = groupedByDay.entries.toList()
-    val pageWindowStart = ((pageIndex * 6).coerceAtLeast(0)).coerceAtMost(allDayBlocks.lastIndex.coerceAtLeast(0))
-    val pageWindowBlocks = allDayBlocks.drop(pageWindowStart).take(6)
-    val leftDayBlocks = pageWindowBlocks.take(3)
-    val rightDayBlocks = pageWindowBlocks.drop(3).take(3)
     val anchorYear = schedulePreviewEntries.firstOrNull()?.year ?: LocalDate.now().year
     val anchorMonth = schedulePreviewEntries.firstOrNull()?.month ?: LocalDate.now().monthValue
-    val leftHeaderDay = leftDayBlocks.firstOrNull()?.key ?: 1
-    val rightHeaderDay = rightDayBlocks.firstOrNull()?.key ?: (leftHeaderDay + 3).coerceAtMost(31)
+    val monthMaxDay = YearMonth.of(anchorYear, anchorMonth).lengthOfMonth()
+    val allDayBlocks: List<DayBlock> = if (groupedByDay.isNotEmpty()) {
+        groupedByDay.entries.map { DayBlock(it.key, it.value) }
+    } else {
+        (1..monthMaxDay).map { day -> DayBlock(day, emptyList()) }
+    }
+    val baseStart = (pageIndex * 6).coerceAtLeast(0)
+    val pageWindowStart = if (allDayBlocks.isNotEmpty()) baseStart % allDayBlocks.size else 0
+    val pageWindowBlocks: List<DayBlock> = List(6) { offset ->
+        val idx = if (allDayBlocks.isNotEmpty()) (pageWindowStart + offset) % allDayBlocks.size else 0
+        allDayBlocks.getOrElse(idx) { DayBlock(1, emptyList()) }
+    }.map { block ->
+        if (block.entries.isNotEmpty()) {
+            block
+        } else {
+            block.copy(day = block.day.coerceIn(1, monthMaxDay))
+        }
+    }
+    val leftDayBlocks = pageWindowBlocks.take(3)
+    val rightDayBlocks = pageWindowBlocks.drop(3).take(3)
+    val leftHeaderDay = leftDayBlocks.firstOrNull()?.day ?: 1
+    val rightHeaderDay = rightDayBlocks.firstOrNull()?.day ?: (leftHeaderDay + 3).coerceAtMost(31)
 
     Box(
         modifier = modifier
@@ -753,12 +769,12 @@ private fun HandbookReplicaPage(
                 }
                 repeat(3) { index ->
                     val block = leftDayBlocks.getOrNull(index)
-                    val day = block?.key ?: (leftHeaderDay + index).coerceAtMost(31)
+                    val day = block?.day ?: (leftHeaderDay + index).coerceAtMost(31)
                     FixedDayScheduleGrid(
                         year = anchorYear,
                         month = anchorMonth,
                         day = day,
-                        entries = block?.value.orEmpty(),
+                        entries = block?.entries.orEmpty(),
                         editingId = editingId,
                         editingText = editingText,
                         onStartEdit = { entry ->
@@ -804,12 +820,12 @@ private fun HandbookReplicaPage(
                 }
                 repeat(3) { index ->
                     val block = rightDayBlocks.getOrNull(index)
-                    val day = block?.key ?: (rightHeaderDay + index).coerceAtMost(31)
+                    val day = block?.day ?: (rightHeaderDay + index).coerceAtMost(31)
                     FixedDayScheduleGrid(
                         year = anchorYear,
                         month = anchorMonth,
                         day = day,
-                        entries = block?.value.orEmpty(),
+                        entries = block?.entries.orEmpty(),
                         editingId = editingId,
                         editingText = editingText,
                         onStartEdit = { entry ->
