@@ -190,8 +190,11 @@ private fun WeekBoard(
             val dayEntries = entries
                 .filter { it.year == day.year && it.month == day.monthValue && it.day == day.dayOfMonth }
                 .sortedWith(compareBy<ScheduleEntry> { it.completed }.thenBy { it.title })
-            val doneText = dayEntries.filter { it.completed }.take(2).joinToString("\n") { "✓${it.title}" }
-            val todoText = dayEntries.filterNot { it.completed }.take(3).joinToString("\n") { "▪ ${it.title}" }
+            val doneText = dayEntries.filter { it.completed }.take(2).joinToString("\n") { "✓ ${it.title}" }
+            val todo = dayEntries.filterNot { it.completed }.map { it.title }
+            val morning = todo.getOrNull(0) ?: ""
+            val afternoon = todo.getOrNull(1) ?: ""
+            val evening = todo.getOrNull(2) ?: ""
 
             Row(
                 modifier = Modifier
@@ -204,8 +207,16 @@ private fun WeekBoard(
                     Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.titleMedium, color = Color(0xFF27231F), fontWeight = FontWeight.SemiBold)
                     Text(weekdayText(day.dayOfWeek), style = MaterialTheme.typography.labelSmall, color = Color(0xFF34302C))
                 }
-                Text(doneText, modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.labelSmall, color = Color(0xFF37322D))
-                Text(todoText, modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.labelSmall, color = Color(0xFF2D2925), textDecoration = TextDecoration.None)
+                Column(modifier = Modifier.weight(0.4f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("执行", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8278))
+                    Text(doneText.ifBlank { "—" }, style = MaterialTheme.typography.labelSmall, color = Color(0xFF37322D))
+                }
+                Column(modifier = Modifier.weight(0.4f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text("计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8278))
+                    Text("上 $morning", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2D2925), maxLines = 1)
+                    Text("下 $afternoon", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2D2925), maxLines = 1)
+                    Text("晚 $evening", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2D2925), maxLines = 1)
+                }
             }
         }
 
