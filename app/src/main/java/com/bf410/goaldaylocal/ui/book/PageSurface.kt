@@ -805,17 +805,17 @@ private fun HandbookReplicaPage(
                     ),
                 ),
             )
-            .border(1.dp, Color(0x10A89A8B), RoundedCornerShape(22.dp))
+            .border(1.2.dp, Color(0x1DA89A8B), RoundedCornerShape(22.dp))
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha
             }
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(horizontal = 11.dp, vertical = 9.dp),
     ) {
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .padding(horizontal = 4.dp, vertical = 4.dp),
+                .padding(horizontal = 6.dp, vertical = 5.dp),
         ) {
             repeat(22) { idx ->
                 Box(
@@ -823,7 +823,7 @@ private fun HandbookReplicaPage(
                         .fillMaxWidth()
                         .padding(top = (idx * 15).dp)
                         .height(0.6.dp)
-                        .background(Color(0x0F000000)),
+                        .background(Color(0x12000000)),
                 )
             }
         }
@@ -939,15 +939,26 @@ private fun HandbookReplicaPage(
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(2.dp)
+                .width(3.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color(0x12000000),
-                            Color(0x28B08A6A),
-                            Color(0x12000000),
+                            Color(0x18000000),
+                            Color(0x34B08A6A),
+                            Color(0x18000000),
                         ),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(7.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color.Transparent, Color(0x14FFF4E8), Color.Transparent),
                     ),
                 ),
         )
@@ -956,8 +967,9 @@ private fun HandbookReplicaPage(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .clip(RoundedCornerShape(99.dp))
-                .background(Color(0x14A68B71))
-                .padding(horizontal = 8.dp, vertical = 2.dp),
+                .background(Color(0x1CA68B71))
+                .border(0.6.dp, Color(0x2AA68B71), RoundedCornerShape(99.dp))
+                .padding(horizontal = 10.dp, vertical = 3.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
