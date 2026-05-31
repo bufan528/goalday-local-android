@@ -204,12 +204,9 @@ fun CalendarScreen(
     }
 
     if (showAddDialog) {
-        ScheduleDialog(
-            title = "新增日程",
+        QuickAddScheduleSheet(
             maxDay = maxDay,
-            initialTitle = "",
             initialDay = selectedDay.coerceIn(1, maxDay),
-            initialNote = "",
             onDismiss = { showAddDialog = false },
             onConfirm = { title, day, note ->
                 viewModel.addSchedule(title, day, note)
@@ -233,6 +230,85 @@ fun CalendarScreen(
                 editingEntry = null
             },
         )
+    }
+}
+
+@Composable
+private fun QuickAddScheduleSheet(
+    maxDay: Int,
+    initialDay: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (title: String, day: Int, note: String) -> Unit,
+) {
+    var title by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf("") }
+    var day by remember(initialDay) { mutableStateOf(initialDay) }
+    val quickDays = remember(maxDay, initialDay) {
+        listOf(initialDay, (initialDay + 1).coerceAtMost(maxDay), (initialDay + 2).coerceAtMost(maxDay), maxDay).distinct()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0x40000000))
+            .clickable { onDismiss() },
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .background(Color(0xFFFFFEFC))
+                .border(1.dp, Color(0x12000000), RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .clickable(enabled = false) {}
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("新增日程", style = MaterialTheme.typography.titleSmall, color = Color(0xFF2F2A24))
+                Text("关闭", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8D857C), modifier = Modifier.clickable { onDismiss() })
+            }
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text("输入任务") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                quickDays.forEach { d ->
+                    Text(
+                        text = "${d}日",
+                        color = if (day == d) Color.White else Color(0xFF6F675D),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier
+                            .background(if (day == d) Color(0xFF2D2A26) else Color(0x12000000), RoundedCornerShape(99.dp))
+                            .clickable { day = d }
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                    )
+                }
+            }
+            OutlinedTextField(
+                value = note,
+                onValueChange = { note = it },
+                label = { Text("备注（可选）") },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                "完成",
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0xFF1F1F1F))
+                    .clickable {
+                        val finalTitle = title.trim()
+                        if (finalTitle.isNotBlank()) onConfirm(finalTitle, day.coerceIn(1, maxDay), note.trim())
+                    }
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
+            )
+        }
     }
 }
 
