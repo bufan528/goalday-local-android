@@ -253,6 +253,15 @@ class BookViewModel(
         syncEditableContent()
     }
 
+    fun toggleScheduleCompletedFromHandbook(entryId: String) {
+        if (entryId.isBlank()) return
+        val updated = store.scheduleEntries().map { entry ->
+            if (entry.id == entryId) entry.copy(completed = !entry.completed) else entry
+        }
+        store.saveScheduleEntries(updated)
+        syncEditableContent()
+    }
+
     private fun syncCompletedItemToDiary(bookId: String, item: String) {
         val diaryPage = currentBook().pages.firstOrNull { it is DiaryPage } as? DiaryPage ?: return
         val raw = store.diaryText(bookId, diaryPage.title)

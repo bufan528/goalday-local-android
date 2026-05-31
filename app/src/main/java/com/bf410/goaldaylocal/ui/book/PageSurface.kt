@@ -576,6 +576,7 @@ fun ActivePageLayer(
     onRestoreItemFromToday: (String) -> Unit,
     onRestoreItemFromCompleted: (String) -> Unit,
     onUpdateScheduleTitle: (String, String) -> Unit,
+    onToggleScheduleCompleted: (String) -> Unit,
     pendingCommand: RichEditorCommand?,
     onCommand: (RichEditorCommand) -> Unit,
     contentMode: PageContentMode,
@@ -594,6 +595,7 @@ fun ActivePageLayer(
             todayCompletedItems = todayCompletedItems,
             schedulePreviewEntries = schedulePreviewEntries,
             onUpdateScheduleTitle = onUpdateScheduleTitle,
+            onToggleScheduleCompleted = onToggleScheduleCompleted,
             turnProgress = turnProgress,
             turnDirection = turnDirection,
         )
@@ -671,6 +673,7 @@ private fun HandbookReplicaPage(
     todayCompletedItems: List<String>,
     schedulePreviewEntries: List<ScheduleEntry>,
     onUpdateScheduleTitle: (String, String) -> Unit,
+    onToggleScheduleCompleted: (String) -> Unit,
     turnProgress: Float,
     turnDirection: TurnDirection?,
 ) {
@@ -694,7 +697,7 @@ private fun HandbookReplicaPage(
     var editingText by remember(pageIndex) { mutableStateOf("") }
 
     val groupedByDay = schedulePreviewEntries
-        .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title }))
+        .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
         .groupBy { it.day }
         .toSortedMap()
     val leftDayBlocks = groupedByDay.entries.take(3)
@@ -735,6 +738,9 @@ private fun HandbookReplicaPage(
                             onUpdateScheduleTitle(entry.id, editingText)
                             editingId = null
                         },
+                        onToggleCompleted = { entry ->
+                            onToggleScheduleCompleted(entry.id)
+                        },
                     )
                 }
                 FixedBulletBlock(lines = leftLines.ifEmpty { listOf("记录今日完成") }, slots = 6)
@@ -767,6 +773,9 @@ private fun HandbookReplicaPage(
                         onCommit = { entry ->
                             onUpdateScheduleTitle(entry.id, editingText)
                             editingId = null
+                        },
+                        onToggleCompleted = { entry ->
+                            onToggleScheduleCompleted(entry.id)
                         },
                     )
                 }
@@ -812,6 +821,7 @@ private fun FixedDayScheduleGrid(
     onStartEdit: (ScheduleEntry) -> Unit,
     onTextChange: (String) -> Unit,
     onCommit: (ScheduleEntry) -> Unit,
+    onToggleCompleted: (ScheduleEntry) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -846,6 +856,7 @@ private fun FixedDayScheduleGrid(
                         onStartEdit = { onStartEdit(entry) },
                         onTextChange = onTextChange,
                         onCommit = { onCommit(entry) },
+                        onToggleCompleted = { onToggleCompleted(entry) },
                     )
                 }
                 if (idx < 2) {
@@ -869,9 +880,15 @@ private fun HandbookEntryLine(
     onStartEdit: () -> Unit,
     onTextChange: (String) -> Unit,
     onCommit: () -> Unit,
+    onToggleCompleted: () -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
-        Text(if (entry.completed) "✓" else "•", style = MaterialTheme.typography.labelSmall, color = if (entry.completed) Color(0xFF719A69) else Color(0xFF2C2925))
+        Text(
+            if (entry.completed) "✓" else "○",
+            style = MaterialTheme.typography.labelSmall,
+            color = if (entry.completed) Color(0xFF719A69) else Color(0xFF2C2925),
+            modifier = Modifier.clickable { onToggleCompleted() },
+        )
         if (editingId == entry.id) {
             BasicTextField(
                 value = editingText,
@@ -884,7 +901,14 @@ private fun HandbookEntryLine(
             )
             Text("存", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE88FAE), modifier = Modifier.clickable { onCommit() })
         } else {
-            Text(entry.title, style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925), maxLines = 1, modifier = Modifier.weight(1f))
+            Text(
+                entry.title,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (entry.completed) Color(0xFF7D756C) else Color(0xFF2C2925),
+                textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                maxLines = 1,
+                modifier = Modifier.weight(1f),
+            )
             Text("✎", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9A9085), modifier = Modifier.clickable { onStartEdit() })
         }
     }
