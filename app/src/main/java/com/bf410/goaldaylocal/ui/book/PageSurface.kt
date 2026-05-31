@@ -711,7 +711,8 @@ private fun HandbookReplicaPage(
     } else {
         (1..monthMaxDay).map { day -> DayBlock(day, emptyList()) }
     }
-    val baseStart = (pageIndex * 6).coerceAtLeast(0)
+    // Advance by 2 days per page so neighboring spreads overlap and transition feels continuous.
+    val baseStart = (pageIndex * 2).coerceAtLeast(0)
     val pageWindowStart = if (allDayBlocks.isNotEmpty()) baseStart % allDayBlocks.size else 0
     val pageWindowBlocks: List<DayBlock> = List(6) { offset ->
         val idx = if (allDayBlocks.isNotEmpty()) (pageWindowStart + offset) % allDayBlocks.size else 0
