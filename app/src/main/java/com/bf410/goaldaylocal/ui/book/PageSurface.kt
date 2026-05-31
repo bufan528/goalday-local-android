@@ -758,9 +758,6 @@ private fun HandbookReplicaPage(
     val rightLines = (todayPlanItems + schedulePreviewEntries.filterNot { it.completed }.map { it.title })
         .distinct()
         .take(11)
-    val rightTop = rightLines.take(5)
-    val rightMiddle = rightLines.drop(5).take(3)
-    val rightBottom = rightLines.drop(8).take(3)
     var editingId by remember(pageIndex) { mutableStateOf<String?>(null) }
     var editingText by remember(pageIndex) { mutableStateOf("") }
 
@@ -877,7 +874,7 @@ private fun HandbookReplicaPage(
                 }
                 if (leftLines.isNotEmpty()) {
                     Text("完成清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7B7369), fontWeight = FontWeight.Medium)
-                    FixedBulletBlock(lines = leftLines, slots = 8)
+                    FixedBulletBlock(lines = leftLines, slots = 6)
                 }
             }
             Column(
@@ -929,8 +926,17 @@ private fun HandbookReplicaPage(
                         },
                     )
                 }
-                Text("待办清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7B7369), fontWeight = FontWeight.Medium)
-                FixedBulletBlock(lines = rightLines.ifEmpty { listOf("写下明日计划") }, slots = 8)
+                if (rightLines.isNotEmpty()) {
+                    Text("待办清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7B7369), fontWeight = FontWeight.Medium)
+                    FixedBulletBlock(lines = rightLines, slots = 6)
+                } else {
+                    Text(
+                        "写下明日计划",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF8A8277),
+                        modifier = Modifier.padding(vertical = 8.dp),
+                    )
+                }
             }
         }
 
