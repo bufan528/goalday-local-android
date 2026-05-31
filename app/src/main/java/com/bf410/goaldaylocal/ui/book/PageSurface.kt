@@ -715,18 +715,26 @@ private fun HandbookReplicaPage(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(22.dp))
-            .background(Color(0xFFFFFEFC))
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFFFFFEFC),
+                        Color(0xFFFFFCF8),
+                        Color(0xFFFDF7EF),
+                    ),
+                ),
+            )
             .border(1.dp, Color(0x10A89A8B), RoundedCornerShape(22.dp))
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha
             }
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 10.dp, vertical = 8.dp),
     ) {
-        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(1.dp),
             ) {
                 Text(
                     "${leftHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, leftHeaderDay)}",
@@ -768,7 +776,7 @@ private fun HandbookReplicaPage(
             }
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(1.dp),
             ) {
                 Text(
                     "${rightHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, rightHeaderDay)}",
@@ -814,9 +822,17 @@ private fun HandbookReplicaPage(
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(0.8.dp)
+                .width(2.dp)
                 .fillMaxHeight()
-                .background(Color(0x0F000000)),
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0x12000000),
+                            Color(0x28B08A6A),
+                            Color(0x12000000),
+                        ),
+                    ),
+                ),
         )
 
         Text(
@@ -849,8 +865,9 @@ private fun FixedDayScheduleGrid(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .border(0.5.dp, Color(0x11000000))
-            .padding(horizontal = 3.dp, vertical = 2.dp),
+            .border(0.5.dp, Color(0x18000000))
+            .background(Color(0x22FFFFFF))
+            .padding(horizontal = 3.dp, vertical = 1.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.Top,
     ) {
@@ -870,7 +887,7 @@ private fun FixedDayScheduleGrid(
             repeat(3) { idx ->
                 val entry = entries.getOrNull(idx)
                 if (entry == null) {
-                    Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(12.dp))
+                    Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(11.dp))
                 } else {
                     HandbookEntryLine(
                         entry = entry,
@@ -886,8 +903,8 @@ private fun FixedDayScheduleGrid(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(0.8.dp)
-                            .background(Color(0x0E000000)),
+                            .height(0.6.dp)
+                            .background(Color(0x13000000)),
                     )
                 }
             }
@@ -972,7 +989,7 @@ private fun FixedBulletBlock(
             style = MaterialTheme.typography.labelSmall,
             color = Color(0xFF2C2925),
             maxLines = 1,
-            modifier = Modifier.height(14.dp),
+            modifier = Modifier.height(12.dp),
         )
     }
 }
@@ -992,8 +1009,12 @@ private fun ColorTagCard(color: Color, text: String) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(5.dp))
-            .background(color)
-            .padding(horizontal = 6.dp, vertical = 4.dp),
+            .background(
+                Brush.horizontalGradient(
+                    listOf(color.copy(alpha = 0.94f), color.copy(alpha = 0.74f)),
+                ),
+            )
+            .padding(horizontal = 6.dp, vertical = 3.dp),
     ) {
         Text(text, color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
