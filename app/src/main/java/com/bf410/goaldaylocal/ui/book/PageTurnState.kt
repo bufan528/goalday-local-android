@@ -40,11 +40,11 @@ fun resolvePageTurnRelease(
         return TurnReleaseResult.SnapBack
     }
 
-    val distanceThreshold = if (profile == TurnProfile.HANDBOOK) 0.22f else TURN_DISTANCE_THRESHOLD
-    val flingThreshold = if (profile == TurnProfile.HANDBOOK) 620f else TURN_FLING_THRESHOLD
+    val distanceThreshold = if (profile == TurnProfile.HANDBOOK) 0.20f else TURN_DISTANCE_THRESHOLD
+    val flingThreshold = if (profile == TurnProfile.HANDBOOK) 560f else TURN_FLING_THRESHOLD
     val opposingThreshold = if (profile == TurnProfile.HANDBOOK) 300f else OPPOSING_VELOCITY_THRESHOLD
     val progressPasses = progress >= distanceThreshold
-    val nearCommitProgress = if (profile == TurnProfile.HANDBOOK) progress >= 0.18f else progress >= 0.2f
+    val nearCommitProgress = if (profile == TurnProfile.HANDBOOK) progress >= 0.16f else progress >= 0.2f
     val velocityPasses = when (direction) {
         TurnDirection.NEXT -> velocity <= -flingThreshold
         TurnDirection.PREVIOUS -> velocity >= flingThreshold

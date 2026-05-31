@@ -681,11 +681,11 @@ private fun HandbookReplicaPage(
 ) {
     val easedShift = turnProgress * turnProgress
     val contentShift = when (turnDirection) {
-        TurnDirection.NEXT -> -(easedShift * 10f + turnProgress * 2f)
-        TurnDirection.PREVIOUS -> easedShift * 10f + turnProgress * 2f
+        TurnDirection.NEXT -> -(easedShift * 14f + turnProgress * 3f)
+        TurnDirection.PREVIOUS -> easedShift * 14f + turnProgress * 3f
         null -> 0f
     }
-    val alpha = (1f - turnProgress * 0.10f).coerceIn(0.9f, 1f)
+    val alpha = (1f - turnProgress * 0.14f).coerceIn(0.86f, 1f)
     val leftLines = (todayCompletedItems + schedulePreviewEntries.filter { it.completed }.map { it.title })
         .distinct()
         .take(11)

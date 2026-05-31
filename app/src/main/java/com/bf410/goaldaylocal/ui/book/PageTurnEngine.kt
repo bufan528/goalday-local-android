@@ -105,8 +105,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.9f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 120f else Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.86f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 108f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipNext()
@@ -116,8 +116,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.9f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 120f else Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.86f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 108f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipPrevious()
@@ -127,8 +127,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         0f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.88f else 0.84f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 260f else Spring.StiffnessMediumLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.9f else 0.84f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 300f else Spring.StiffnessMediumLow,
                         ),
                     )
                 }
@@ -459,7 +459,7 @@ fun Modifier.turningPageTransform(
         0f
     }
     val progressCurve = (visualProgress * 0.35f) + (visualProgress * visualProgress * 0.65f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 86f + handbookTailBoost else 118f
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 90f + handbookTailBoost else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve
         TurnDirection.PREVIOUS -> maxRotation * progressCurve
@@ -472,13 +472,13 @@ fun Modifier.turningPageTransform(
         0f
     }
     translationX = when {
-        draggingToNext -> -(visualProgress * 12f + progressCurve * 62f - tailRetract)
-        draggingToPrevious -> visualProgress * 12f + progressCurve * 62f - tailRetract
+        draggingToNext -> -(visualProgress * 14f + progressCurve * 68f - tailRetract)
+        draggingToPrevious -> visualProgress * 14f + progressCurve * 68f - tailRetract
         else -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
-    translationY = yOffsetFactor * visualProgress * if (profile == TurnProfile.HANDBOOK) 4.5f else 12f
-    rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 2.4f else 9.2f
+    translationY = yOffsetFactor * visualProgress * if (profile == TurnProfile.HANDBOOK) 5.8f else 12f
+    rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 3.0f else 9.2f
     cameraDistance = if (profile == TurnProfile.HANDBOOK) 46f * density else 34f * density
     shadowElevation = if (profile == TurnProfile.HANDBOOK) 18f else 28f
     val subtleDepthScale = if (profile == TurnProfile.HANDBOOK) 1f - visualProgress * 0.022f else 1f - visualProgress * 0.015f
@@ -500,7 +500,7 @@ fun Modifier.pageBackTransform(
         0f
     }
     val progressCurve = (visualProgress * 0.32f) + (visualProgress * visualProgress * 0.68f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 84f + handbookTailBoost else 118f
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 88f + handbookTailBoost else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve * 0.9f
         TurnDirection.PREVIOUS -> maxRotation * progressCurve * 0.9f
