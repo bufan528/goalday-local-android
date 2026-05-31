@@ -1012,14 +1012,19 @@ private fun FixedDayScheduleGrid(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .border(0.5.dp, Color(0x18000000))
-            .background(Color(0x22FFFFFF))
-            .padding(horizontal = 3.dp, vertical = 1.dp),
+            .clip(RoundedCornerShape(6.dp))
+            .background(Color(0x39FFFFFF))
+            .border(0.8.dp, Color(0x1F000000), RoundedCornerShape(6.dp))
+            .padding(horizontal = 4.dp, vertical = 3.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Column(
-            modifier = Modifier.width(20.dp),
+            modifier = Modifier
+                .width(24.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color(0x14000000))
+                .padding(vertical = 2.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -1034,7 +1039,7 @@ private fun FixedDayScheduleGrid(
             repeat(3) { idx ->
                 val entry = ordered.getOrNull(idx)
                 if (entry == null) {
-                    Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(11.dp))
+                    Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(13.dp))
                 } else {
                     val slotLabel = when (idx) {
                         0 -> "上"
@@ -1056,8 +1061,8 @@ private fun FixedDayScheduleGrid(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(0.6.dp)
-                            .background(Color(0x13000000)),
+                            .height(0.8.dp)
+                            .background(Color(0x16000000)),
                     )
                 }
             }
@@ -1114,7 +1119,7 @@ private fun HandbookEntryLine(
             color = Color(0xFF8B8277),
             modifier = Modifier
                 .clip(RoundedCornerShape(3.dp))
-                .background(Color(0x13000000))
+                .background(Color(0x1F000000))
                 .padding(horizontal = 3.dp, vertical = 1.dp),
         )
         Text(
@@ -1143,7 +1148,7 @@ private fun HandbookEntryLine(
                 maxLines = 1,
                 modifier = Modifier.weight(1f),
             )
-            Text("✎", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9A9085), modifier = Modifier.clickable { onStartEdit() })
+            Text("✎", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8479), modifier = Modifier.clickable { onStartEdit() })
         }
     }
 }
@@ -1160,7 +1165,7 @@ private fun FixedBulletBlock(
             style = MaterialTheme.typography.labelSmall,
             color = Color(0xFF2C2925),
             maxLines = 1,
-            modifier = Modifier.height(12.dp),
+            modifier = Modifier.height(13.dp),
         )
     }
 }
