@@ -108,7 +108,14 @@ fun HomeScreen(
         )
 
         when (mode) {
-            WeeklyMode.WEEK -> WeekBoard(weekDates, calendarState.entries, onOpenCalendar)
+            WeeklyMode.WEEK -> WeekBoard(
+                weekDates = weekDates,
+                entries = calendarState.entries,
+                onOpenCalendar = onOpenCalendar,
+                onAssignTimeSlot = { entryId, title, day, note ->
+                    calendarViewModel.updateSchedule(entryId, title, day, note)
+                },
+            )
             WeeklyMode.DIARY -> DiaryBoard(calendarState.entries, onOpenHandbook)
             WeeklyMode.CHECKLIST -> ChecklistBoard(
                 checklistDraft = checklistDraft,
@@ -162,6 +169,7 @@ private fun WeekBoard(
     weekDates: List<LocalDate>,
     entries: List<ScheduleEntry>,
     onOpenCalendar: () -> Unit,
+    onAssignTimeSlot: (String, String, Int, String) -> Unit,
 ) {
     val weekEntries = entries.filter { e -> weekDates.any { it.year == e.year && it.monthValue == e.month && it.dayOfMonth == e.day } }
     val weekTodo = weekEntries.filterNot { it.completed }.map { it.title }.distinct().take(8)
@@ -191,10 +199,11 @@ private fun WeekBoard(
                 .filter { it.year == day.year && it.month == day.monthValue && it.day == day.dayOfMonth }
                 .sortedWith(compareBy<ScheduleEntry> { it.completed }.thenBy { it.title })
             val doneText = dayEntries.filter { it.completed }.take(2).joinToString("\n") { "✓ ${it.title}" }
-            val todo = dayEntries.filterNot { it.completed }.map { it.title }
-            val morning = todo.getOrNull(0) ?: ""
-            val afternoon = todo.getOrNull(1) ?: ""
-            val evening = todo.getOrNull(2) ?: ""
+            val todoEntries = dayEntries.filterNot { it.completed }
+            val morningEntry = todoEntries.firstOrNull { parseTimeSlot(it.note) == "上午" }
+            val afternoonEntry = todoEntries.firstOrNull { parseTimeSlot(it.note) == "下午" }
+            val eveningEntry = todoEntries.firstOrNull { parseTimeSlot(it.note) == "晚上" }
+            val unassigned = todoEntries.firstOrNull { parseTimeSlot(it.note) == null }
 
             Row(
                 modifier = Modifier
@@ -213,9 +222,36 @@ private fun WeekBoard(
                 }
                 Column(modifier = Modifier.weight(0.4f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text("计划", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8278))
-                    Text("上 $morning", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2D2925), maxLines = 1)
-                    Text("下 $afternoon", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2D2925), maxLines = 1)
-                    Text("晚 $evening", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2D2925), maxLines = 1)
+                    Text(
+                        "上 ${morningEntry?.title ?: "（点此分配）"}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF2D2925),
+                        maxLines = 1,
+                        modifier = Modifier.clickable {
+                            val target = unassigned ?: return@clickable
+                            onAssignTimeSlot(target.id, target.title, target.day, mergeTimeSlot(target.note, "上午"))
+                        },
+                    )
+                    Text(
+                        "下 ${afternoonEntry?.title ?: "（点此分配）"}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF2D2925),
+                        maxLines = 1,
+                        modifier = Modifier.clickable {
+                            val target = unassigned ?: return@clickable
+                            onAssignTimeSlot(target.id, target.title, target.day, mergeTimeSlot(target.note, "下午"))
+                        },
+                    )
+                    Text(
+                        "晚 ${eveningEntry?.title ?: "（点此分配）"}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF2D2925),
+                        maxLines = 1,
+                        modifier = Modifier.clickable {
+                            val target = unassigned ?: return@clickable
+                            onAssignTimeSlot(target.id, target.title, target.day, mergeTimeSlot(target.note, "晚上"))
+                        },
+                    )
                 }
             }
         }
@@ -595,6 +631,19 @@ private fun parseDeadlineDate(current: String): LocalDate? {
 
 private fun parseDeadlineDay(current: String): Int {
     return parseDeadlineDate(current)?.dayOfMonth ?: LocalDate.now().dayOfMonth
+}
+
+private fun parseTimeSlot(note: String): String? {
+    val slotPrefix = "时段:"
+    val index = note.indexOf(slotPrefix)
+    if (index < 0) return null
+    val raw = note.substring(index + slotPrefix.length).trim()
+    return raw.split(" ").firstOrNull()?.takeIf { it in listOf("上午", "下午", "晚上") }
+}
+
+private fun mergeTimeSlot(note: String, slot: String): String {
+    val cleaned = note.replace(Regex("时段:(上午|下午|晚上)"), "").trim()
+    return if (cleaned.isBlank()) "时段:$slot" else "时段:$slot $cleaned"
 }
 
 private fun resolveChecklistEntry(
