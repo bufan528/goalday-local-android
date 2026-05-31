@@ -110,6 +110,21 @@ fun PageTurnEngine(
                         ),
                     )
                     onFlipNext()
+                    if (profile == TurnProfile.HANDBOOK) {
+                        clearState()
+                        progress.snapTo(0.12f)
+                        phase = TurnPhase.SettlingBack
+                        progress.animateTo(
+                            0f,
+                            animationSpec = spring(
+                                dampingRatio = 0.95f,
+                                stiffness = 340f,
+                            ),
+                        )
+                        progress.snapTo(0f)
+                        clearState()
+                        return@launch
+                    }
                 }
                 TurnReleaseResult.CompletePrevious -> {
                     phase = TurnPhase.SettlingForward
@@ -121,6 +136,21 @@ fun PageTurnEngine(
                         ),
                     )
                     onFlipPrevious()
+                    if (profile == TurnProfile.HANDBOOK) {
+                        clearState()
+                        progress.snapTo(0.12f)
+                        phase = TurnPhase.SettlingBack
+                        progress.animateTo(
+                            0f,
+                            animationSpec = spring(
+                                dampingRatio = 0.95f,
+                                stiffness = 340f,
+                            ),
+                        )
+                        progress.snapTo(0f)
+                        clearState()
+                        return@launch
+                    }
                 }
                 TurnReleaseResult.SnapBack -> {
                     phase = TurnPhase.SettlingBack
