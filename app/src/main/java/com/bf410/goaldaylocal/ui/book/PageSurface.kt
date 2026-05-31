@@ -842,13 +842,14 @@ private fun HandbookReplicaPage(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(6.dp))
                         .background(Color(0x1CD0708E))
-                        .padding(horizontal = 5.dp, vertical = 2.dp),
+                        .padding(horizontal = 6.dp, vertical = 3.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
                         "${leftHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, leftHeaderDay)}",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelMedium,
                         color = Color(0xFFB55C79),
+                        fontWeight = FontWeight.SemiBold,
                     )
                     Text("执行 / 复盘", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
                 }
@@ -877,7 +878,7 @@ private fun HandbookReplicaPage(
                     )
                 }
                 if (leftLines.isNotEmpty()) {
-                    Text("完成清单", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7B7369))
+                    Text("完成清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7B7369), fontWeight = FontWeight.Medium)
                     FixedBulletBlock(lines = leftLines, slots = 8)
                 }
             }
@@ -895,13 +896,14 @@ private fun HandbookReplicaPage(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(6.dp))
                         .background(Color(0x1C84C65A))
-                        .padding(horizontal = 5.dp, vertical = 2.dp),
+                        .padding(horizontal = 6.dp, vertical = 3.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
                         "${rightHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, rightHeaderDay)}",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelMedium,
                         color = Color(0xFF5F9740),
+                        fontWeight = FontWeight.SemiBold,
                     )
                     Text("计划 / Todo", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
                 }
@@ -929,7 +931,7 @@ private fun HandbookReplicaPage(
                         },
                     )
                 }
-                Text("待办清单", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7B7369))
+                Text("待办清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7B7369), fontWeight = FontWeight.Medium)
                 FixedBulletBlock(lines = rightLines.ifEmpty { listOf("写下明日计划") }, slots = 8)
             }
         }
@@ -1025,7 +1027,13 @@ private fun FixedDayScheduleGrid(
                 if (entry == null) {
                     Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(11.dp))
                 } else {
+                    val slotLabel = when (idx) {
+                        0 -> "上"
+                        1 -> "下"
+                        else -> "晚"
+                    }
                     HandbookEntryLine(
+                        slotLabel = slotLabel,
                         entry = entry,
                         editingId = editingId,
                         editingText = editingText,
@@ -1081,6 +1089,7 @@ private fun shortWeekdayLabel(year: Int, month: Int, day: Int): String = when (L
 
 @Composable
 private fun HandbookEntryLine(
+    slotLabel: String,
     entry: ScheduleEntry,
     editingId: String?,
     editingText: String,
@@ -1090,6 +1099,15 @@ private fun HandbookEntryLine(
     onToggleCompleted: () -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+        Text(
+            slotLabel,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color(0xFF8B8277),
+            modifier = Modifier
+                .clip(RoundedCornerShape(3.dp))
+                .background(Color(0x13000000))
+                .padding(horizontal = 3.dp, vertical = 1.dp),
+        )
         Text(
             if (entry.completed) "✓" else "○",
             style = MaterialTheme.typography.labelSmall,
@@ -1110,7 +1128,7 @@ private fun HandbookEntryLine(
         } else {
             Text(
                 entry.title,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.bodySmall,
                 color = if (entry.completed) Color(0xFF7D756C) else Color(0xFF2C2925),
                 textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                 maxLines = 1,
