@@ -152,6 +152,10 @@ fun CalendarScreen(
                         actionHint = "已删除日程"
                     },
                     onMoveToSelectedDay = { id -> viewModel.moveScheduleToDay(id, selectedDay) },
+                    onAssignTimeSlot = { entry, slot ->
+                        viewModel.updateSchedule(entry.id, entry.title, entry.day, mergeTimeSlot(entry.note, slot))
+                        actionHint = "已分配到$slot"
+                    },
                     onAdd = { showAddDialog = true },
                 )
             }
@@ -462,6 +466,7 @@ private fun ReferenceCalendarBoard(
     onEdit: (ScheduleEntry) -> Unit,
     onDelete: (String) -> Unit,
     onMoveToSelectedDay: (String) -> Unit,
+    onAssignTimeSlot: (ScheduleEntry, String) -> Unit,
     onAdd: () -> Unit,
 ) {
     val todayEntries = entries.filter { it.day == selectedDay }
@@ -568,6 +573,11 @@ private fun ReferenceCalendarBoard(
                         if (entry.note.isNotBlank()) {
                             Text(entry.note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8D857C))
                         }
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 2.dp)) {
+                            TimeSlotChip(label = "上", active = parseTimeSlot(entry.note) == "上午", onClick = { onAssignTimeSlot(entry, "上午") })
+                            TimeSlotChip(label = "下", active = parseTimeSlot(entry.note) == "下午", onClick = { onAssignTimeSlot(entry, "下午") })
+                            TimeSlotChip(label = "晚", active = parseTimeSlot(entry.note) == "晚上", onClick = { onAssignTimeSlot(entry, "晚上") })
+                        }
                     }
                     Text("移动", color = Color(0xFF8A8178), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onMoveToSelectedDay(entry.id) })
                     Text("✎", color = Color(0xFF70685F), modifier = Modifier.clickable { onEdit(entry) })
@@ -592,6 +602,36 @@ private fun ReferenceCalendarBoard(
             }
         }
     }
+}
+
+@Composable
+private fun TimeSlotChip(
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    Text(
+        text = label,
+        color = if (active) Color.White else Color(0xFF6F675D),
+        style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier
+            .background(if (active) Color(0xFF2D2A26) else Color(0x11000000), RoundedCornerShape(99.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 7.dp, vertical = 2.dp),
+    )
+}
+
+private fun parseTimeSlot(note: String): String? {
+    val slotPrefix = "时段:"
+    val index = note.indexOf(slotPrefix)
+    if (index < 0) return null
+    val raw = note.substring(index + slotPrefix.length).trim()
+    return raw.split(" ").firstOrNull()?.takeIf { it in listOf("上午", "下午", "晚上") }
+}
+
+private fun mergeTimeSlot(note: String, slot: String): String {
+    val cleaned = note.replace(Regex("时段:(上午|下午|晚上)"), "").trim()
+    return if (cleaned.isBlank()) "时段:$slot" else "时段:$slot $cleaned"
 }
 
 @Composable
