@@ -164,6 +164,10 @@ fun CalendarScreen(
                     onEdit = { editingEntry = it },
                     onDelete = { viewModel.removeSchedule(it) },
                     onAdd = { showAddDialog = true },
+                    onOpenDay = { day ->
+                        selectedDay = day.coerceIn(1, maxDay)
+                        mode = CalendarMode.SCHEDULE
+                    },
                 )
             }
         }
@@ -336,12 +340,14 @@ private fun AgendaListBoard(
     onEdit: (ScheduleEntry) -> Unit,
     onDelete: (String) -> Unit,
     onAdd: () -> Unit,
+    onOpenDay: (Int) -> Unit,
 ) {
     val filtered = when (filter) {
         AgendaFilter.ALL -> entries
         AgendaFilter.TODO -> entries.filterNot { it.completed }
         AgendaFilter.DONE -> entries.filter { it.completed }
     }
+    val grouped = filtered.sortedWith(compareBy<ScheduleEntry> { it.day }.thenBy { it.completed }.thenBy { it.title }).groupBy { it.day }
 
     Column(
         modifier = Modifier
@@ -360,27 +366,40 @@ private fun AgendaListBoard(
             FilterChip(label = "未完成", active = filter == AgendaFilter.TODO, onClick = { onFilterChange(AgendaFilter.TODO) })
             FilterChip(label = "已完成", active = filter == AgendaFilter.DONE, onClick = { onFilterChange(AgendaFilter.DONE) })
         }
-        filtered.sortedBy { it.day }.forEach { entry ->
-            Row(
+        grouped.forEach { (day, dayEntries) ->
+            Text(
+                "${month}月${day}日",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF7B7268),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(10.dp))
-                    .border(1.dp, Color(0x12000000), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.Top,
-            ) {
-                Text(if (entry.completed) "✓" else "·", color = if (entry.completed) Color(0xFF7A9D71) else Color(0xFFC7BEB4), modifier = Modifier.clickable { onToggleCompleted(entry.id) })
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        "${entry.day}日  ${entry.title}",
-                        color = Color(0xFF2D2823),
-                        textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
-                    )
-                    if (entry.note.isNotBlank()) Text(entry.note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8D857C))
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0x12000000))
+                    .clickable { onOpenDay(day) }
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+            )
+            dayEntries.forEach { entry ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White, RoundedCornerShape(10.dp))
+                        .border(1.dp, Color(0x12000000), RoundedCornerShape(10.dp))
+                        .clickable { onOpenDay(day) }
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Text(if (entry.completed) "✓" else "·", color = if (entry.completed) Color(0xFF7A9D71) else Color(0xFFC7BEB4), modifier = Modifier.clickable { onToggleCompleted(entry.id) })
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            entry.title,
+                            color = Color(0xFF2D2823),
+                            textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                        )
+                        if (entry.note.isNotBlank()) Text(entry.note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8D857C))
+                    }
+                    Text("✎", color = Color(0xFF70685F), modifier = Modifier.clickable { onEdit(entry) })
+                    Text("🗑", color = Color(0xFF9C5A52), modifier = Modifier.clickable { onDelete(entry.id) })
                 }
-                Text("✎", color = Color(0xFF70685F), modifier = Modifier.clickable { onEdit(entry) })
-                Text("🗑", color = Color(0xFF9C5A52), modifier = Modifier.clickable { onDelete(entry.id) })
             }
         }
     }
