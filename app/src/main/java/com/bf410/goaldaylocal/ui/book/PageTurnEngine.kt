@@ -308,7 +308,7 @@ fun PageTurnEngine(
                             Brush.radialGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = (0.01f + earlyPhase * 0.02f + latePhase * 0.12f).coerceAtMost(0.15f)),
+                                    Color.Black.copy(alpha = (0.006f + earlyPhase * 0.012f + latePhase * 0.08f).coerceAtMost(0.10f)),
                                 ),
                                 radius = 2200f,
                             ),
@@ -324,7 +324,7 @@ fun PageTurnEngine(
                             if (draggingToNext) {
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.2f).coerceAtMost(0.26f)),
+                                        Color.Black.copy(alpha = (0.04f + latePhase * 0.24f).coerceAtMost(0.30f)),
                                         Color(0x22000000),
                                         Color.Transparent,
                                     ),
@@ -334,7 +334,7 @@ fun PageTurnEngine(
                                     listOf(
                                         Color.Transparent,
                                         Color(0x22000000),
-                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.2f).coerceAtMost(0.26f)),
+                                        Color.Black.copy(alpha = (0.04f + latePhase * 0.24f).coerceAtMost(0.30f)),
                                     ),
                                 )
                             },
@@ -350,13 +350,13 @@ fun PageTurnEngine(
                             Brush.horizontalGradient(
                                 if (draggingToNext) {
                                     listOf(
-                                        Color.White.copy(alpha = (0.05f + latePhase * 0.18f).coerceAtMost(0.22f)),
+                                        Color.White.copy(alpha = (0.07f + latePhase * 0.24f).coerceAtMost(0.30f)),
                                         Color.Black.copy(alpha = (0.03f + latePhase * 0.12f).coerceAtMost(0.16f)),
                                     )
                                 } else {
                                     listOf(
                                         Color.Black.copy(alpha = (0.03f + latePhase * 0.12f).coerceAtMost(0.16f)),
-                                        Color.White.copy(alpha = (0.05f + latePhase * 0.18f).coerceAtMost(0.22f)),
+                                        Color.White.copy(alpha = (0.07f + latePhase * 0.24f).coerceAtMost(0.30f)),
                                     )
                                 },
                             ),
@@ -372,13 +372,13 @@ fun PageTurnEngine(
                             Brush.horizontalGradient(
                                 if (draggingToNext) {
                                     listOf(
-                                        Color.White.copy(alpha = (0.02f + latePhase * 0.14f).coerceAtMost(0.16f)),
+                                        Color.White.copy(alpha = (0.04f + latePhase * 0.20f).coerceAtMost(0.24f)),
                                         Color.Transparent,
                                     )
                                 } else {
                                     listOf(
                                         Color.Transparent,
-                                        Color.White.copy(alpha = (0.02f + latePhase * 0.14f).coerceAtMost(0.16f)),
+                                        Color.White.copy(alpha = (0.04f + latePhase * 0.20f).coerceAtMost(0.24f)),
                                     )
                                 },
                             ),
@@ -393,8 +393,8 @@ fun PageTurnEngine(
                         .background(
                             Brush.radialGradient(
                                 colors = listOf(
-                                    Color.White.copy(alpha = (0.03f + latePhase * 0.18f).coerceAtMost(0.22f)),
-                                    Color.Black.copy(alpha = (0.015f + latePhase * 0.12f).coerceAtMost(0.14f)),
+                                    Color.White.copy(alpha = (0.06f + latePhase * 0.24f).coerceAtMost(0.30f)),
+                                    Color.Black.copy(alpha = (0.012f + latePhase * 0.09f).coerceAtMost(0.11f)),
                                     Color.Transparent,
                                 ),
                                 radius = 120f,
@@ -411,8 +411,8 @@ fun PageTurnEngine(
                             .background(
                                 Brush.linearGradient(
                                     colors = listOf(
-                                        Color.White.copy(alpha = (0.04f + latePhase * 0.22f).coerceAtMost(0.26f)),
-                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.12f).coerceAtMost(0.14f)),
+                                        Color.White.copy(alpha = (0.08f + latePhase * 0.28f).coerceAtMost(0.34f)),
+                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.10f).coerceAtMost(0.12f)),
                                         Color.Transparent,
                                     ),
                                     start = androidx.compose.ui.geometry.Offset(0f, 0f),
@@ -429,8 +429,8 @@ fun PageTurnEngine(
                                 Brush.linearGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.12f).coerceAtMost(0.14f)),
-                                        Color.White.copy(alpha = (0.04f + latePhase * 0.22f).coerceAtMost(0.26f)),
+                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.10f).coerceAtMost(0.12f)),
+                                        Color.White.copy(alpha = (0.08f + latePhase * 0.28f).coerceAtMost(0.34f)),
                                     ),
                                     start = androidx.compose.ui.geometry.Offset(0f, 80f),
                                     end = androidx.compose.ui.geometry.Offset(40f, 0f),
