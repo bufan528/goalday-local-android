@@ -725,30 +725,31 @@ private fun HandbookReplicaPage(
 ) {
     data class DayBlock(val day: Int, val entries: List<ScheduleEntry>)
     val easedShift = turnProgress * turnProgress
+    val easedInOut = turnProgress * turnProgress * (3f - 2f * turnProgress)
     val contentShift = when (turnDirection) {
-        TurnDirection.NEXT -> -(easedShift * 14f + turnProgress * 3f)
-        TurnDirection.PREVIOUS -> easedShift * 14f + turnProgress * 3f
+        TurnDirection.NEXT -> -(easedShift * 10f + easedInOut * 8f + turnProgress * 2f)
+        TurnDirection.PREVIOUS -> easedShift * 10f + easedInOut * 8f + turnProgress * 2f
         null -> 0f
     }
-    val alpha = (1f - turnProgress * 0.14f).coerceIn(0.86f, 1f)
+    val alpha = (1f - easedInOut * 0.12f).coerceIn(0.89f, 1f)
     val leftPageShift = when (turnDirection) {
-        TurnDirection.NEXT -> -(turnProgress * 8f)
-        TurnDirection.PREVIOUS -> turnProgress * 3f
+        TurnDirection.NEXT -> -(easedInOut * 6f + turnProgress * 2f)
+        TurnDirection.PREVIOUS -> easedInOut * 2f + turnProgress
         null -> 0f
     }
     val rightPageShift = when (turnDirection) {
-        TurnDirection.NEXT -> -(turnProgress * 3f)
-        TurnDirection.PREVIOUS -> turnProgress * 8f
+        TurnDirection.NEXT -> -(easedInOut * 2f + turnProgress)
+        TurnDirection.PREVIOUS -> easedInOut * 6f + turnProgress * 2f
         null -> 0f
     }
     val leftPageAlpha = when (turnDirection) {
-        TurnDirection.NEXT -> (1f - turnProgress * 0.18f).coerceIn(0.78f, 1f)
-        TurnDirection.PREVIOUS -> (1f - turnProgress * 0.08f).coerceIn(0.86f, 1f)
+        TurnDirection.NEXT -> (1f - easedInOut * 0.16f).coerceIn(0.82f, 1f)
+        TurnDirection.PREVIOUS -> (1f - easedInOut * 0.06f).coerceIn(0.90f, 1f)
         null -> 1f
     }
     val rightPageAlpha = when (turnDirection) {
-        TurnDirection.NEXT -> (1f - turnProgress * 0.08f).coerceIn(0.86f, 1f)
-        TurnDirection.PREVIOUS -> (1f - turnProgress * 0.18f).coerceIn(0.78f, 1f)
+        TurnDirection.NEXT -> (1f - easedInOut * 0.06f).coerceIn(0.90f, 1f)
+        TurnDirection.PREVIOUS -> (1f - easedInOut * 0.16f).coerceIn(0.82f, 1f)
         null -> 1f
     }
     val leftLines = (todayCompletedItems + schedulePreviewEntries.filter { it.completed }.map { it.title })
@@ -798,7 +799,7 @@ private fun HandbookReplicaPage(
                     listOf(
                         Color(0xFFFFFEFC),
                         Color(0xFFFFFCF8),
-                        Color(0xFFFDF7EF),
+                        Color(0xFFFCF4E9),
                     ),
                 ),
             )
@@ -820,7 +821,7 @@ private fun HandbookReplicaPage(
                         .fillMaxWidth()
                         .padding(top = (idx * 15).dp)
                         .height(0.6.dp)
-                        .background(Color(0x12000000)),
+                        .background(Color(0x15000000)),
                 )
             }
         }
