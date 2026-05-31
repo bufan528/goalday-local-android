@@ -45,7 +45,7 @@ class CalendarViewModel(
         if (current.month == 12) setMonth(current.year + 1, 1) else setMonth(current.year, current.month + 1)
     }
 
-    fun addSchedule(title: String, day: Int, note: String) {
+    fun addSchedule(title: String, day: Int, note: String): String {
         val current = _uiState.value
         val entry = ScheduleEntry(
             id = UUID.randomUUID().toString(),
@@ -58,6 +58,7 @@ class CalendarViewModel(
         val updated = store.scheduleEntries() + entry
         store.saveScheduleEntries(updated)
         refreshEntries()
+        return entry.id
     }
 
     fun removeSchedule(id: String) {

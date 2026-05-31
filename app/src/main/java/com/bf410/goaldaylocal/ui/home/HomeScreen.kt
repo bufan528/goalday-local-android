@@ -55,6 +55,7 @@ data class ChecklistDraftItem(
     var text: String,
     var deadline: String = "",
     var checked: Boolean = false,
+    var scheduleId: String? = null,
 )
 
 @Composable
@@ -282,7 +283,7 @@ private fun DiaryBoard(
 private fun ChecklistBoard(
     checklistDraft: MutableList<ChecklistDraftItem>,
     scheduleEntries: List<ScheduleEntry>,
-    onAddSchedule: (String) -> Unit,
+    onAddSchedule: (String) -> String,
     onRemoveSchedule: (String) -> Unit,
     onToggleScheduleDone: (String) -> Unit,
     onUpdateScheduleTitle: (String, String, Int, String) -> Unit,
@@ -357,10 +358,8 @@ private fun ChecklistBoard(
                         )
                         Text("存", color = Color(0xFFE88FAE), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
                             val next = editingText.trim().ifBlank { item.text }
-                            val old = item.text
                             checklistDraft[index] = checklistDraft[index].copy(text = next)
-                            val today = LocalDate.now().dayOfMonth
-                            scheduleEntries.firstOrNull { it.day == today && it.title == old }?.let {
+                            resolveChecklistEntry(scheduleEntries, checklistDraft[index])?.let {
                                 onUpdateScheduleTitle(it.id, next, it.day, it.note)
                             }
                             editingIndex = -1
@@ -390,8 +389,7 @@ private fun ChecklistBoard(
                                         val selected = LocalDate.of(year, month + 1, dayOfMonth)
                                         val nextDate = selected.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
                                         checklistDraft[index] = checklistDraft[index].copy(deadline = nextDate)
-                                        val today = LocalDate.now().dayOfMonth
-                                        scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[index].text }?.let { entry ->
+                                        resolveChecklistEntry(scheduleEntries, checklistDraft[index])?.let { entry ->
                                             onUpdateScheduleDay(entry.id, dayOfMonth.coerceAtLeast(1))
                                         }
                                         actionHint = "截止日已更新"
@@ -419,8 +417,7 @@ private fun ChecklistBoard(
                                         val selected = LocalDate.of(year, month + 1, dayOfMonth)
                                         val nextDate = selected.format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
                                         checklistDraft[index] = checklistDraft[index].copy(deadline = nextDate)
-                                        val today = LocalDate.now().dayOfMonth
-                                        scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[index].text }?.let { entry ->
+                                        resolveChecklistEntry(scheduleEntries, checklistDraft[index])?.let { entry ->
                                             onUpdateScheduleDay(entry.id, dayOfMonth.coerceAtLeast(1))
                                         }
                                         actionHint = "已添加截止日"
@@ -462,8 +459,7 @@ private fun ChecklistBoard(
                     if (checklistDraft.isNotEmpty()) {
                         val idx = focusedIndex.coerceIn(0, checklistDraft.lastIndex)
                         val removed = checklistDraft.removeAt(idx)
-                        val today = LocalDate.now().dayOfMonth
-                        scheduleEntries.firstOrNull { it.day == today && it.title == removed.text }?.let { onRemoveSchedule(it.id) }
+                        resolveChecklistEntry(scheduleEntries, removed)?.let { onRemoveSchedule(it.id) }
                         focusedIndex = (focusedIndex - 1).coerceAtLeast(0)
                         actionHint = "已删除任务"
                     }
@@ -475,8 +471,7 @@ private fun ChecklistBoard(
                             val temp = checklistDraft[idx - 1]
                             checklistDraft[idx - 1] = checklistDraft[idx]
                             checklistDraft[idx] = temp
-                            val today = LocalDate.now().dayOfMonth
-                            scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[idx - 1].text }?.let { onReorderSchedule(it.id, true) }
+                            resolveChecklistEntry(scheduleEntries, checklistDraft[idx - 1])?.let { onReorderSchedule(it.id, true) }
                             focusedIndex = idx - 1
                             actionHint = "已上移"
                         }
@@ -489,8 +484,7 @@ private fun ChecklistBoard(
                             val temp = checklistDraft[idx + 1]
                             checklistDraft[idx + 1] = checklistDraft[idx]
                             checklistDraft[idx] = temp
-                            val today = LocalDate.now().dayOfMonth
-                            scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[idx + 1].text }?.let { onReorderSchedule(it.id, false) }
+                            resolveChecklistEntry(scheduleEntries, checklistDraft[idx + 1])?.let { onReorderSchedule(it.id, false) }
                             focusedIndex = idx + 1
                             actionHint = "已下移"
                         }
@@ -500,8 +494,8 @@ private fun ChecklistBoard(
                     val text = inputText.trim().ifBlank { "新任务" }
                     val deadline = LocalDate.now().plusDays(3).format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
                     val insertIndex = focusedIndex.coerceIn(0, checklistDraft.size)
-                    checklistDraft.add(insertIndex, ChecklistDraftItem(text, deadline = deadline))
-                    onAddSchedule(text)
+                    val createdId = onAddSchedule(text)
+                    checklistDraft.add(insertIndex, ChecklistDraftItem(text, deadline = deadline, scheduleId = createdId))
                     editingIndex = insertIndex
                     editingText = text
                     focusedIndex = insertIndex
@@ -513,8 +507,7 @@ private fun ChecklistBoard(
                         val i = focusedIndex.coerceIn(0, checklistDraft.lastIndex)
                         val next = !checklistDraft[i].checked
                         checklistDraft[i] = checklistDraft[i].copy(checked = next)
-                        val today = LocalDate.now().dayOfMonth
-                        scheduleEntries.firstOrNull { it.day == today && it.title == checklistDraft[i].text }?.let { onToggleScheduleDone(it.id) }
+                        resolveChecklistEntry(scheduleEntries, checklistDraft[i])?.let { onToggleScheduleDone(it.id) }
                         actionHint = if (next) "已标记完成" else "已取消完成"
                     }
                 })
@@ -551,8 +544,8 @@ private fun ChecklistBoard(
                 .clickable {
                     val text = inputText.trim().ifBlank { "新日程" }
                     val deadline = LocalDate.now().plusDays(3).format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
-                    checklistDraft.add(0, ChecklistDraftItem(text, deadline = deadline))
-                    onAddSchedule(text)
+                    val createdId = onAddSchedule(text)
+                    checklistDraft.add(0, ChecklistDraftItem(text, deadline = deadline, scheduleId = createdId))
                     editingIndex = 0
                     editingText = text
                     focusedIndex = 0
@@ -591,4 +584,13 @@ private fun parseDeadlineDate(current: String): LocalDate? {
 
 private fun parseDeadlineDay(current: String): Int {
     return parseDeadlineDate(current)?.dayOfMonth ?: LocalDate.now().dayOfMonth
+}
+
+private fun resolveChecklistEntry(
+    scheduleEntries: List<ScheduleEntry>,
+    item: ChecklistDraftItem,
+): ScheduleEntry? {
+    val byId = item.scheduleId?.let { id -> scheduleEntries.firstOrNull { it.id == id } }
+    if (byId != null) return byId
+    return scheduleEntries.firstOrNull { it.title == item.text }
 }
