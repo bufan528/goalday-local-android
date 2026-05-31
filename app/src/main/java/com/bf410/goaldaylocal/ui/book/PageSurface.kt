@@ -766,14 +766,11 @@ private fun HandbookReplicaPage(
     val groupedByDay = schedulePreviewEntries
         .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
         .groupBy { it.day }
-        .toSortedMap()
     val anchorYear = schedulePreviewEntries.firstOrNull()?.year ?: LocalDate.now().year
     val anchorMonth = schedulePreviewEntries.firstOrNull()?.month ?: LocalDate.now().monthValue
     val monthMaxDay = YearMonth.of(anchorYear, anchorMonth).lengthOfMonth()
-    val allDayBlocks: List<DayBlock> = if (groupedByDay.isNotEmpty()) {
-        groupedByDay.entries.map { DayBlock(it.key, it.value) }
-    } else {
-        (1..monthMaxDay).map { day -> DayBlock(day, emptyList()) }
+    val allDayBlocks: List<DayBlock> = (1..monthMaxDay).map { day ->
+        DayBlock(day, groupedByDay[day].orEmpty())
     }
     // Advance by 2 days per page so neighboring spreads overlap and transition feels continuous.
     val baseStart = (pageIndex * 2).coerceAtLeast(0)
