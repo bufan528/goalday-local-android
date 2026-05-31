@@ -369,6 +369,9 @@ fun PageBackLayer(
     anchorY: Float = 0.5f,
 ) {
     val curlAlignTop = anchorY < 0.46f
+    val anchorVerticalOffset = ((anchorY - 0.5f) * 2f).coerceIn(-1f, 1f)
+    val anchorTopBias = (-anchorVerticalOffset).coerceIn(0f, 1f)
+    val anchorBottomBias = anchorVerticalOffset.coerceIn(0f, 1f)
     val easedCurl = progress * progress * (3f - 2f * progress)
     val curlStrength = (0.12f + easedCurl * 0.76f).coerceIn(0f, 0.88f)
     val stackShadow = (0.07f + progress * 0.18f).coerceAtMost(0.30f)
@@ -482,7 +485,14 @@ fun PageBackLayer(
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = (0.18f + curlStrength * 0.36f).coerceAtMost(0.60f)),
+                            Color.White.copy(
+                                alpha = (
+                                    0.18f +
+                                        curlStrength * 0.36f +
+                                        anchorTopBias * 0.10f +
+                                        anchorBottomBias * 0.10f
+                                    ).coerceAtMost(0.66f),
+                            ),
                             Color(0x22A48A70).copy(alpha = (0.18f + curlStrength * 0.24f).coerceAtMost(0.46f)),
                             Color.Transparent,
                         ),
@@ -506,7 +516,13 @@ fun PageBackLayer(
                 .background(
                     Brush.linearGradient(
                         listOf(
-                            Color.Black.copy(alpha = (0.06f + curlStrength * 0.24f).coerceAtMost(0.34f)),
+                            Color.Black.copy(
+                                alpha = (
+                                    0.06f + curlStrength * 0.24f +
+                                        anchorTopBias * 0.06f +
+                                        anchorBottomBias * 0.06f
+                                    ).coerceAtMost(0.40f),
+                            ),
                             Color.Transparent,
                         ),
                     ),
@@ -527,10 +543,38 @@ fun PageBackLayer(
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            Color.White.copy(alpha = (0.08f + curlStrength * 0.24f).coerceAtMost(0.34f)),
+                            Color.White.copy(
+                                alpha = (
+                                    0.08f + curlStrength * 0.24f +
+                                        anchorTopBias * 0.08f +
+                                        anchorBottomBias * 0.08f
+                                    ).coerceAtMost(0.42f),
+                            ),
                             Color(0x229C8167),
                             Color.Transparent,
                         ),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(
+                    when {
+                        direction == TurnDirection.NEXT && curlAlignTop -> Alignment.BottomEnd
+                        direction == TurnDirection.PREVIOUS && curlAlignTop -> Alignment.BottomStart
+                        direction == TurnDirection.NEXT -> Alignment.TopEnd
+                        else -> Alignment.TopStart
+                    },
+                )
+                .width((10f + progress * 26f).dp)
+                .height((16f + progress * 26f).dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = (0.02f + curlStrength * 0.08f).coerceAtMost(0.12f)),
+                            Color.Transparent,
+                        ),
+                        radius = 100f,
                     ),
                 ),
         )
