@@ -74,6 +74,8 @@ fun CalendarScreen(
     var mode by remember { mutableStateOf(CalendarMode.SCHEDULE) }
     var agendaFilter by remember { mutableStateOf(AgendaFilter.ALL) }
     var actionHint by remember { mutableStateOf("") }
+    var pendingSelectedEntryId by remember { mutableStateOf<String?>(null) }
+    var pendingAutoEditEntryId by remember { mutableStateOf<String?>(null) }
     val month = YearMonth.of(uiState.year, uiState.month)
     val maxDay = month.lengthOfMonth()
     selectedDay = selectedDay.coerceIn(1, maxDay)
@@ -89,6 +91,12 @@ fun CalendarScreen(
         if (actionHint.isBlank()) return@LaunchedEffect
         delay(1400)
         actionHint = ""
+    }
+    LaunchedEffect(pendingAutoEditEntryId, uiState.entries) {
+        val targetId = pendingAutoEditEntryId ?: return@LaunchedEffect
+        val target = uiState.entries.firstOrNull { it.id == targetId } ?: return@LaunchedEffect
+        editingEntry = target
+        pendingAutoEditEntryId = null
     }
 
     Column(
@@ -156,6 +164,8 @@ fun CalendarScreen(
                         viewModel.updateSchedule(entry.id, entry.title, entry.day, mergeTimeSlot(entry.note, slot))
                         actionHint = "已分配到$slot"
                     },
+                    preferredSelectedEntryId = pendingSelectedEntryId,
+                    onPreferredSelectedConsumed = { pendingSelectedEntryId = null },
                     onAdd = { showAddDialog = true },
                 )
             }
@@ -209,7 +219,11 @@ fun CalendarScreen(
             initialDay = selectedDay.coerceIn(1, maxDay),
             onDismiss = { showAddDialog = false },
             onConfirm = { title, day, note ->
-                viewModel.addSchedule(title, day, note)
+                val createdId = viewModel.addSchedule(title, day, note)
+                selectedDay = day.coerceIn(1, maxDay)
+                mode = CalendarMode.SCHEDULE
+                pendingSelectedEntryId = createdId
+                pendingAutoEditEntryId = createdId
                 actionHint = "已新增日程"
                 showAddDialog = false
             },
@@ -543,12 +557,21 @@ private fun ReferenceCalendarBoard(
     onDelete: (String) -> Unit,
     onMoveToSelectedDay: (String) -> Unit,
     onAssignTimeSlot: (ScheduleEntry, String) -> Unit,
+    preferredSelectedEntryId: String?,
+    onPreferredSelectedConsumed: () -> Unit,
     onAdd: () -> Unit,
 ) {
     val todayEntries = entries.filter { it.day == selectedDay }
     val doneEntries = todayEntries.filter { it.completed }
     val todoEntries = todayEntries.filterNot { it.completed }
     var selectedEntryId by remember(todayEntries) { mutableStateOf(todayEntries.firstOrNull()?.id) }
+    LaunchedEffect(preferredSelectedEntryId, todayEntries) {
+        val preferred = preferredSelectedEntryId ?: return@LaunchedEffect
+        if (todayEntries.any { it.id == preferred }) {
+            selectedEntryId = preferred
+            onPreferredSelectedConsumed()
+        }
+    }
     val selectedEntry = todayEntries.firstOrNull { it.id == selectedEntryId }
 
     val week = remember(year, month, selectedDay, maxDay) {
