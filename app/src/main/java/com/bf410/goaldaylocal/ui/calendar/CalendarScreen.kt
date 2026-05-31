@@ -47,6 +47,7 @@ import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlinx.coroutines.delay
 
 private enum class CalendarMode {
     SCHEDULE,
@@ -72,6 +73,7 @@ fun CalendarScreen(
     var selectedDay by remember { mutableIntStateOf(LocalDate.now().dayOfMonth) }
     var mode by remember { mutableStateOf(CalendarMode.SCHEDULE) }
     var agendaFilter by remember { mutableStateOf(AgendaFilter.ALL) }
+    var actionHint by remember { mutableStateOf("") }
     val month = YearMonth.of(uiState.year, uiState.month)
     val maxDay = month.lengthOfMonth()
     selectedDay = selectedDay.coerceIn(1, maxDay)
@@ -81,6 +83,11 @@ fun CalendarScreen(
         selectedDay = day.coerceIn(1, maxDay)
         mode = CalendarMode.SCHEDULE
         onFocusConsumed()
+    }
+    LaunchedEffect(actionHint) {
+        if (actionHint.isBlank()) return@LaunchedEffect
+        delay(1400)
+        actionHint = ""
     }
 
     Column(
@@ -133,9 +140,15 @@ fun CalendarScreen(
                     selectedDay = selectedDay,
                     entries = uiState.entries,
                     onSelectDay = { selectedDay = it.coerceIn(1, maxDay) },
-                    onToggleCompleted = { id -> viewModel.toggleScheduleCompleted(id) },
+                    onToggleCompleted = { id ->
+                        viewModel.toggleScheduleCompleted(id)
+                        actionHint = "已更新完成状态"
+                    },
                     onEdit = { editingEntry = it },
-                    onDelete = { viewModel.removeSchedule(it) },
+                    onDelete = {
+                        viewModel.removeSchedule(it)
+                        actionHint = "已删除日程"
+                    },
                     onMoveToSelectedDay = { id -> viewModel.moveScheduleToDay(id, selectedDay) },
                     onAdd = { showAddDialog = true },
                 )
@@ -150,6 +163,7 @@ fun CalendarScreen(
                     onSelectDay = {
                         selectedDay = it.coerceIn(1, maxDay)
                         mode = CalendarMode.SCHEDULE
+                        actionHint = "已切换到 ${selectedDay} 日"
                     },
                 )
             }
@@ -160,16 +174,26 @@ fun CalendarScreen(
                     entries = uiState.entries,
                     filter = agendaFilter,
                     onFilterChange = { agendaFilter = it },
-                    onToggleCompleted = { id -> viewModel.toggleScheduleCompleted(id) },
+                    onToggleCompleted = { id ->
+                        viewModel.toggleScheduleCompleted(id)
+                        actionHint = "已更新完成状态"
+                    },
                     onEdit = { editingEntry = it },
-                    onDelete = { viewModel.removeSchedule(it) },
+                    onDelete = {
+                        viewModel.removeSchedule(it)
+                        actionHint = "已删除日程"
+                    },
                     onAdd = { showAddDialog = true },
                     onOpenDay = { day ->
                         selectedDay = day.coerceIn(1, maxDay)
                         mode = CalendarMode.SCHEDULE
+                        actionHint = "已跳转到 ${selectedDay} 日"
                     },
                 )
             }
+        }
+        if (actionHint.isNotBlank()) {
+            Text(actionHint, color = Color(0xFF7A7269), style = MaterialTheme.typography.labelSmall)
         }
     }
 
@@ -183,6 +207,7 @@ fun CalendarScreen(
             onDismiss = { showAddDialog = false },
             onConfirm = { title, day, note ->
                 viewModel.addSchedule(title, day, note)
+                actionHint = "已新增日程"
                 showAddDialog = false
             },
         )
@@ -198,6 +223,7 @@ fun CalendarScreen(
             onDismiss = { editingEntry = null },
             onConfirm = { title, day, note ->
                 viewModel.updateSchedule(entry.id, title, day, note)
+                actionHint = "已保存修改"
                 editingEntry = null
             },
         )
