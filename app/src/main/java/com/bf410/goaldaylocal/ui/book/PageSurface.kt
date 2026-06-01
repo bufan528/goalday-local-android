@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,6 +61,7 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlinx.coroutines.delay
 
 @Composable
 fun BoxScope.SpineLayer(
@@ -760,6 +762,12 @@ private fun HandbookReplicaPage(
         .take(11)
     var editingId by remember(pageIndex) { mutableStateOf<String?>(null) }
     var editingText by remember(pageIndex) { mutableStateOf("") }
+    var saveHint by remember(pageIndex) { mutableStateOf("") }
+    LaunchedEffect(saveHint) {
+        if (saveHint.isBlank()) return@LaunchedEffect
+        delay(1200)
+        saveHint = ""
+    }
 
     val groupedByDay = schedulePreviewEntries
         .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
@@ -867,6 +875,7 @@ private fun HandbookReplicaPage(
                         onCommit = { entry ->
                             onUpdateScheduleTitle(entry.id, editingText)
                             editingId = null
+                            saveHint = "已保存"
                         },
                         onToggleCompleted = { entry ->
                             onToggleScheduleCompleted(entry.id)
@@ -921,6 +930,7 @@ private fun HandbookReplicaPage(
                         onCommit = { entry ->
                             onUpdateScheduleTitle(entry.id, editingText)
                             editingId = null
+                            saveHint = "已保存"
                         },
                         onToggleCompleted = { entry ->
                             onToggleScheduleCompleted(entry.id)
@@ -987,6 +997,16 @@ private fun HandbookReplicaPage(
                 text = "${pageIndex + 1}/$pageCount",
                 style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFF8D857B),
+            )
+        }
+        if (saveHint.isNotBlank()) {
+            Text(
+                saveHint,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF7A7269),
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 4.dp, bottom = 2.dp),
             )
         }
     }
