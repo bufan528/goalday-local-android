@@ -1166,15 +1166,25 @@ private fun HandbookEntryLine(
             )
             Text("存", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE88FAE), modifier = Modifier.clickable { onCommit() })
         } else {
-            Text(
-                entry.title,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (entry.completed) Color(0xFF7D756C) else Color(0xFF2C2925),
-                textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
-                maxLines = 1,
-                modifier = Modifier.weight(1f),
-            )
-            Text("✎", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8479), modifier = Modifier.clickable { onStartEdit() })
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(4.dp))
+                    .clickable { onStartEdit() }
+                    .padding(horizontal = 2.dp, vertical = 1.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    entry.title,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (entry.completed) Color(0xFF7D756C) else Color(0xFF2C2925),
+                    textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f),
+                )
+                Text("✎", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8479))
+            }
         }
     }
 }
