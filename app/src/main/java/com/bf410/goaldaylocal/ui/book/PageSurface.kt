@@ -47,6 +47,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
@@ -731,41 +732,37 @@ private fun HandbookReplicaPage(
     turnProgress: Float,
     turnDirection: TurnDirection?,
 ) {
-    data class DayBlock(val day: Int, val entries: List<ScheduleEntry>)
-    val easedShift = turnProgress * turnProgress
-    val easedInOut = turnProgress * turnProgress * (3f - 2f * turnProgress)
+    data class DaySpreadBlock(
+        val day: Int,
+        val done: List<ScheduleEntry>,
+        val todo: List<ScheduleEntry>,
+    )
+    val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
     val contentShift = when (turnDirection) {
-        TurnDirection.NEXT -> -(easedShift * 10f + easedInOut * 8f + turnProgress * 2f)
-        TurnDirection.PREVIOUS -> easedShift * 10f + easedInOut * 8f + turnProgress * 2f
+        TurnDirection.NEXT -> -(eased * 8f)
+        TurnDirection.PREVIOUS -> eased * 8f
         null -> 0f
     }
-    val alpha = (1f - easedInOut * 0.12f).coerceIn(0.89f, 1f)
-    val leftPageShift = when (turnDirection) {
-        TurnDirection.NEXT -> -(easedInOut * 6f + turnProgress * 2f)
-        TurnDirection.PREVIOUS -> easedInOut * 2f + turnProgress
-        null -> 0f
+    val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
+    val sorted = schedulePreviewEntries.sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
+    val anchorYear = sorted.firstOrNull()?.year ?: LocalDate.now().year
+    val anchorMonth = sorted.firstOrNull()?.month ?: LocalDate.now().monthValue
+    val monthLength = YearMonth.of(anchorYear, anchorMonth).lengthOfMonth()
+    val todayStart = (LocalDate.now().dayOfMonth - 1).coerceIn(0, monthLength - 1)
+    val start = (todayStart + pageIndex) % monthLength
+    val dayBlocks = List(6) { offset ->
+        val day = ((start + offset) % monthLength) + 1
+        val dayEntries = sorted.filter { it.day == day }
+        DaySpreadBlock(
+            day = day,
+            done = dayEntries.filter { it.completed }.take(3),
+            todo = dayEntries.filterNot { it.completed }.take(3),
+        )
     }
-    val rightPageShift = when (turnDirection) {
-        TurnDirection.NEXT -> -(easedInOut * 2f + turnProgress)
-        TurnDirection.PREVIOUS -> easedInOut * 6f + turnProgress * 2f
-        null -> 0f
-    }
-    val leftPageAlpha = when (turnDirection) {
-        TurnDirection.NEXT -> (1f - easedInOut * 0.16f).coerceIn(0.82f, 1f)
-        TurnDirection.PREVIOUS -> (1f - easedInOut * 0.06f).coerceIn(0.90f, 1f)
-        null -> 1f
-    }
-    val rightPageAlpha = when (turnDirection) {
-        TurnDirection.NEXT -> (1f - easedInOut * 0.06f).coerceIn(0.90f, 1f)
-        TurnDirection.PREVIOUS -> (1f - easedInOut * 0.16f).coerceIn(0.82f, 1f)
-        null -> 1f
-    }
-    val leftLines = (todayCompletedItems + schedulePreviewEntries.filter { it.completed }.map { it.title })
-        .distinct()
-        .take(11)
-    val rightLines = (todayPlanItems + schedulePreviewEntries.filterNot { it.completed }.map { it.title })
-        .distinct()
-        .take(11)
+    val leftBlocks = dayBlocks.take(3)
+    val rightBlocks = dayBlocks.drop(3).take(3)
+    val fallbackLeftDone = todayCompletedItems.take(3)
+    val fallbackRightTodo = todayPlanItems.take(3)
     var editingId by remember(pageIndex) { mutableStateOf<String?>(null) }
     var editingText by remember(pageIndex) { mutableStateOf("") }
     var saveHint by remember(pageIndex) { mutableStateOf("") }
@@ -775,183 +772,94 @@ private fun HandbookReplicaPage(
         saveHint = ""
     }
 
-    val groupedByDay = schedulePreviewEntries
-        .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
-        .groupBy { it.day }
-    val anchorYear = schedulePreviewEntries.firstOrNull()?.year ?: LocalDate.now().year
-    val anchorMonth = schedulePreviewEntries.firstOrNull()?.month ?: LocalDate.now().monthValue
-    val monthMaxDay = YearMonth.of(anchorYear, anchorMonth).lengthOfMonth()
-    val allDayBlocks: List<DayBlock> = (1..monthMaxDay).map { day ->
-        DayBlock(day, groupedByDay[day].orEmpty())
-    }
-    // Start near today, then advance by 1 day per page for smoother spread continuity.
-    val todayStart = (LocalDate.now().dayOfMonth - 1).coerceIn(0, monthMaxDay - 1)
-    val baseStart = (todayStart + pageIndex).coerceAtLeast(0)
-    val pageWindowStart = if (allDayBlocks.isNotEmpty()) baseStart % allDayBlocks.size else 0
-    val pageWindowBlocks: List<DayBlock> = List(6) { offset ->
-        val idx = if (allDayBlocks.isNotEmpty()) (pageWindowStart + offset) % allDayBlocks.size else 0
-        allDayBlocks.getOrElse(idx) { DayBlock(1, emptyList()) }
-    }.map { block ->
-        if (block.entries.isNotEmpty()) {
-            block
-        } else {
-            block.copy(day = block.day.coerceIn(1, monthMaxDay))
-        }
-    }
-    val leftDayBlocks = pageWindowBlocks.take(3)
-    val rightDayBlocks = pageWindowBlocks.drop(3).take(3)
-    val leftHeaderDay = leftDayBlocks.firstOrNull()?.day ?: 1
-    val rightHeaderDay = rightDayBlocks.firstOrNull()?.day ?: (leftHeaderDay + 3).coerceAtMost(31)
-
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(22.dp))
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFFFFFEFC),
-                        Color(0xFFFFFCF8),
-                        Color(0xFFFCF4E9),
-                    ),
-                ),
-            )
-            .border(1.2.dp, Color(0x1DA89A8B), RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
+            .background(GoaldayDesign.Surface)
+            .border(0.8.dp, Color(0x18000000), RoundedCornerShape(GoaldayDesign.RadiusL))
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha
             }
-            .padding(horizontal = 11.dp, vertical = 9.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .padding(horizontal = 6.dp, vertical = 5.dp),
-        ) {
-            repeat(22) { idx ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = (idx * 15).dp)
-                        .height(0.6.dp)
-                        .background(Color(0x15000000)),
-                )
-            }
-        }
-        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .graphicsLayer {
-                        translationX = leftPageShift
-                        this.alpha = leftPageAlpha
-                    },
-                verticalArrangement = Arrangement.spacedBy(1.dp),
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0x1CD0708E))
-                        .padding(horizontal = 6.dp, vertical = 3.dp),
+                        .padding(horizontal = 3.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        "${leftHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, leftHeaderDay)}",
+                        "done",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFFB55C79),
-                        fontWeight = FontWeight.SemiBold,
+                        color = GoaldayDesign.InkPrimary,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.alpha(0.92f),
                     )
-                    Text("执行 / 复盘", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
+                    Text("已执行", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, modifier = Modifier.alpha(0.85f))
                 }
-                repeat(3) { index ->
-                    val block = leftDayBlocks.getOrNull(index)
-                    val day = block?.day ?: (leftHeaderDay + index).coerceAtMost(31)
-                    FixedDayScheduleGrid(
-                        year = anchorYear,
-                        month = anchorMonth,
-                        day = day,
-                        entries = block?.entries.orEmpty(),
-                        editingId = editingId,
-                        editingText = editingText,
-                        onStartEdit = { entry ->
-                            editingId = entry.id
-                            editingText = entry.title
-                        },
-                        onTextChange = { editingText = it },
-                        onCommit = { entry ->
-                            onUpdateScheduleTitle(entry.id, editingText)
-                            editingId = null
-                            saveHint = "已保存"
-                        },
-                        onToggleCompleted = { entry ->
-                            onToggleScheduleCompleted(entry.id)
-                        },
+                leftBlocks.forEachIndexed { idx, block ->
+                    DaySpreadSection(
+                        day = block.day,
+                        done = if (idx == 0 && block.done.isEmpty()) fallbackLeftDone else block.done.map { it.title },
+                        todo = block.todo.map { it.title },
+                        accent = GoaldayDesign.Positive,
                     )
-                }
-                if (leftLines.isNotEmpty()) {
-                    Text("完成清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7B7369), fontWeight = FontWeight.Medium)
-                    FixedBulletBlock(lines = leftLines, slots = 6)
                 }
             }
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .graphicsLayer {
-                        translationX = rightPageShift
-                        this.alpha = rightPageAlpha
-                    },
-                verticalArrangement = Arrangement.spacedBy(1.dp),
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0x1C84C65A))
-                        .padding(horizontal = 6.dp, vertical = 3.dp),
+                        .padding(horizontal = 3.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        "${rightHeaderDay}  ${weekdayLabel(anchorYear, anchorMonth, rightHeaderDay)}",
+                        "todo",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF5F9740),
-                        fontWeight = FontWeight.SemiBold,
+                        color = GoaldayDesign.InkPrimary,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.alpha(0.92f),
                     )
-                    Text("计划 / Todo", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6F655B))
+                    Text("待计划", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, modifier = Modifier.alpha(0.85f))
                 }
-                repeat(3) { index ->
-                    val block = rightDayBlocks.getOrNull(index)
-                    val day = block?.day ?: (rightHeaderDay + index).coerceAtMost(31)
-                    FixedDayScheduleGrid(
-                        year = anchorYear,
-                        month = anchorMonth,
-                        day = day,
-                        entries = block?.entries.orEmpty(),
+                rightBlocks.forEachIndexed { idx, block ->
+                    DaySpreadEditableSection(
+                        day = block.day,
+                        entries = if (idx == 0 && block.todo.isEmpty()) {
+                            fallbackRightTodo.mapIndexed { i, text ->
+                                ScheduleEntry(id = "fallback_$i", title = text, day = block.day, month = anchorMonth, year = anchorYear, completed = false, note = "")
+                            }
+                        } else {
+                            block.todo
+                        },
                         editingId = editingId,
                         editingText = editingText,
                         onStartEdit = { entry ->
-                            editingId = entry.id
-                            editingText = entry.title
+                            if (!entry.id.startsWith("fallback_")) {
+                                editingId = entry.id
+                                editingText = entry.title
+                            }
                         },
                         onTextChange = { editingText = it },
                         onCommit = { entry ->
-                            onUpdateScheduleTitle(entry.id, editingText)
-                            editingId = null
-                            saveHint = "已保存"
+                            if (!entry.id.startsWith("fallback_")) {
+                                onUpdateScheduleTitle(entry.id, editingText)
+                                editingId = null
+                                saveHint = "已保存"
+                            }
                         },
                         onToggleCompleted = { entry ->
-                            onToggleScheduleCompleted(entry.id)
+                            if (!entry.id.startsWith("fallback_")) onToggleScheduleCompleted(entry.id)
                         },
-                    )
-                }
-                if (rightLines.isNotEmpty()) {
-                    Text("待办清单", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7B7369), fontWeight = FontWeight.Medium)
-                    FixedBulletBlock(lines = rightLines, slots = 6)
-                } else {
-                    Text(
-                        "写下明日计划",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF8A8277),
-                        modifier = Modifier.padding(vertical = 8.dp),
                     )
                 }
             }
@@ -960,26 +868,15 @@ private fun HandbookReplicaPage(
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(3.dp)
+                .width(1.5.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color(0x18000000),
-                            Color(0x34B08A6A),
-                            Color(0x18000000),
+                            Color(0x0E000000),
+                            Color(0x20000000),
+                            Color(0x0E000000),
                         ),
-                    ),
-                ),
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .width(7.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color.Transparent, Color(0x14FFF4E8), Color.Transparent),
                     ),
                 ),
         )
@@ -987,22 +884,26 @@ private fun HandbookReplicaPage(
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .clip(RoundedCornerShape(99.dp))
-                .background(Color(0x1CA68B71))
-                .border(0.6.dp, Color(0x2AA68B71), RoundedCornerShape(99.dp))
-                .padding(horizontal = 10.dp, vertical = 3.dp),
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(Color(0x11A68B71))
+                .border(0.5.dp, Color(0x1EA68B71), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .padding(horizontal = 9.dp, vertical = 1.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = page.title.ifBlank { "手账" },
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF8D857B),
+                color = GoaldayDesign.InkSecondary,
+                modifier = Modifier.alpha(0.86f),
+                textAlign = TextAlign.Center,
             )
             Text(
                 text = "${pageIndex + 1}/$pageCount",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF8D857B),
+                color = GoaldayDesign.InkSecondary,
+                modifier = Modifier.alpha(0.78f),
+                textAlign = TextAlign.Center,
             )
         }
         if (saveHint.isNotBlank()) {
@@ -1019,9 +920,41 @@ private fun HandbookReplicaPage(
 }
 
 @Composable
-private fun FixedDayScheduleGrid(
-    year: Int,
-    month: Int,
+private fun DaySpreadSection(
+    day: Int,
+    done: List<String>,
+    todo: List<String>,
+    accent: Color,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(0.5.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
+            Text("done ${done.size}", style = MaterialTheme.typography.labelSmall, color = accent.copy(alpha = 0.88f))
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("done", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
+            Text("todo", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
+        }
+        done.take(2).forEach { line ->
+            Text("✓ $line", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary, textDecoration = TextDecoration.LineThrough, maxLines = 1)
+        }
+        if (done.isEmpty()) {
+            Text("○", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
+        }
+        todo.take(1).forEach { line ->
+            Text("· $line", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun DaySpreadEditableSection(
     day: Int,
     entries: List<ScheduleEntry>,
     editingId: String?,
@@ -1031,127 +964,47 @@ private fun FixedDayScheduleGrid(
     onCommit: (ScheduleEntry) -> Unit,
     onToggleCompleted: (ScheduleEntry) -> Unit,
 ) {
-    val morning = entries.filter { parseTimeSlot(it.note) == "上午" }
-    val afternoon = entries.filter { parseTimeSlot(it.note) == "下午" }
-    val evening = entries.filter { parseTimeSlot(it.note) == "晚上" }
-    val fallback = entries.filter { parseTimeSlot(it.note) == null }
-    val ordered = listOf(
-        morning.firstOrNull(),
-        afternoon.firstOrNull(),
-        evening.firstOrNull(),
-    ).mapIndexed { index, entry ->
-        entry ?: fallback.getOrNull(index)
-    }
-
-    Row(
+    val doneCount = entries.count { it.completed }
+    val todoCount = entries.count { !it.completed }
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(6.dp))
-            .background(Color(0x39FFFFFF))
-            .border(0.8.dp, Color(0x1F000000), RoundedCornerShape(6.dp))
-            .padding(horizontal = 4.dp, vertical = 3.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.Top,
+            .border(0.5.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .width(24.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(Color(0x14000000))
-                .padding(vertical = 2.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(day.toString(), style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277), fontWeight = FontWeight.SemiBold)
-            Text(shortWeekdayLabel(year, month, day), style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B8277))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
+            Text("d${doneCount}/t${todoCount}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB07A8F))
         }
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(0.dp),
-        ) {
-            repeat(3) { idx ->
-                val entry = ordered.getOrNull(idx)
-                val slotLabel = when (idx) {
-                    0 -> "上"
-                    1 -> "下"
-                    else -> "晚"
-                }
-                if (entry == null) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(13.dp),
-                    ) {
-                        Text(
-                            slotLabel,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0x668B8277),
-                        )
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(0.6.dp)
-                                .background(Color(0x22000000)),
-                        )
-                    }
-                } else {
-                    HandbookEntryLine(
-                        slotLabel = slotLabel,
-                        entry = entry,
-                        editingId = editingId,
-                        editingText = editingText,
-                        onStartEdit = { onStartEdit(entry) },
-                        onTextChange = onTextChange,
-                        onCommit = { onCommit(entry) },
-                        onToggleCompleted = { onToggleCompleted(entry) },
-                    )
-                }
-                if (idx < 2) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(0.8.dp)
-                            .background(Color(0x16000000)),
-                    )
-                }
+        repeat(3) { idx ->
+            val entry = entries.getOrNull(idx)
+            if (entry == null) {
+                Text("○", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
+            } else {
+                HandbookEntryLine(
+                    slotLabel = "${day}",
+                    entry = entry,
+                    editingId = editingId,
+                    editingText = editingText,
+                    onStartEdit = { onStartEdit(entry) },
+                    onTextChange = onTextChange,
+                    onCommit = { onCommit(entry) },
+                    onToggleCompleted = { onToggleCompleted(entry) },
+                )
             }
         }
     }
 }
 
-private fun parseTimeSlot(note: String): String? {
-    val slotPrefix = "时段:"
-    val index = note.indexOf(slotPrefix)
-    if (index < 0) return null
-    val raw = note.substring(index + slotPrefix.length).trim()
-    return raw.split(" ").firstOrNull()?.takeIf { it in listOf("上午", "下午", "晚上") }
-}
-
-private fun weekdayLabel(year: Int, month: Int, day: Int): String {
-    val safeDay = day.coerceIn(1, YearMonth.of(year, month).lengthOfMonth())
-    return when (LocalDate.of(year, month, safeDay).dayOfWeek) {
-        DayOfWeek.MONDAY -> "周一"
-        DayOfWeek.TUESDAY -> "周二"
-        DayOfWeek.WEDNESDAY -> "周三"
-        DayOfWeek.THURSDAY -> "周四"
-        DayOfWeek.FRIDAY -> "周五"
-        DayOfWeek.SATURDAY -> "周六"
-        DayOfWeek.SUNDAY -> "周日"
+private fun pagePreviewText(page: BookPage): String =
+    when (page) {
+        is TargetPage -> page.items.take(3).joinToString("\n") { "• $it" }.ifBlank { BookStrings.contentEmpty }
+        is PlanPage -> page.items.take(3).joinToString("\n") { "• $it" }.ifBlank { BookStrings.contentEmpty }
+        is SchedulePage -> page.items.take(3).joinToString("\n") { "• $it" }.ifBlank { BookStrings.contentEmpty }
+        is DiaryPage -> page.prompt
     }
-}
 
-private fun shortWeekdayLabel(year: Int, month: Int, day: Int): String = when (LocalDate.of(year, month, day.coerceIn(1, YearMonth.of(year, month).lengthOfMonth())).dayOfWeek) {
-    DayOfWeek.MONDAY -> "一"
-    DayOfWeek.TUESDAY -> "二"
-    DayOfWeek.WEDNESDAY -> "三"
-    DayOfWeek.THURSDAY -> "四"
-    DayOfWeek.FRIDAY -> "五"
-    DayOfWeek.SATURDAY -> "六"
-    DayOfWeek.SUNDAY -> "日"
-}
 
 @Composable
 private fun HandbookEntryLine(
@@ -1171,27 +1024,33 @@ private fun HandbookEntryLine(
             rowEditorFocus.requestFocus()
         }
     }
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+    Row(
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        modifier = Modifier.fillMaxWidth().height(16.dp),
+    ) {
         Text(
             slotLabel,
             style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF8B8277),
+            color = Color(0xFF9A958D),
             modifier = Modifier
+                .width(18.dp)
                 .clip(RoundedCornerShape(3.dp))
-                .background(Color(0x1F000000))
-                .padding(horizontal = 3.dp, vertical = 1.dp),
+                .background(Color(0x14000000))
+                .padding(horizontal = 1.dp, vertical = 0.dp),
+            textAlign = TextAlign.Center,
         )
         Text(
             if (entry.completed) "✓" else "○",
             style = MaterialTheme.typography.labelSmall,
-            color = if (entry.completed) Color(0xFF719A69) else Color(0xFF2C2925),
-            modifier = Modifier.clickable { onToggleCompleted() },
+            color = if (entry.completed) Color(0xFF7A9D73) else Color(0xFF9A958D),
+            modifier = Modifier.padding(top = 1.dp).clickable { onToggleCompleted() },
         )
         if (editingId == entry.id) {
             BasicTextField(
                 value = editingText,
                 onValueChange = onTextChange,
-                textStyle = TextStyle(color = Color(0xFF2C2925)),
+                textStyle = TextStyle(color = Color(0xFF2F2E2C)),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = {
                     onCommit()
@@ -1200,10 +1059,10 @@ private fun HandbookEntryLine(
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(rowEditorFocus)
-                    .background(Color(0x0A000000), RoundedCornerShape(4.dp))
+                    .background(Color(0x09000000), RoundedCornerShape(4.dp))
                     .padding(horizontal = 4.dp, vertical = 1.dp),
             )
-            Text("存", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE88FAE), modifier = Modifier.clickable {
+            Text("Done", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE18DA9), modifier = Modifier.clickable {
                 onCommit()
                 focusManager.clearFocus(force = true)
             })
@@ -1213,95 +1072,24 @@ private fun HandbookEntryLine(
                     .weight(1f)
                     .clip(RoundedCornerShape(4.dp))
                     .clickable { onStartEdit() }
-                    .padding(horizontal = 2.dp, vertical = 1.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .padding(horizontal = 2.dp, vertical = 0.dp),
+                verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
                     entry.title,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (entry.completed) Color(0xFF7D756C) else Color(0xFF2C2925),
+                    color = if (entry.completed) Color(0xFF7A746E) else Color(0xFF2F2E2C),
                     textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                     maxLines = 1,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).padding(top = 1.dp),
+                    textAlign = TextAlign.Start,
                 )
-                Text("✎", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E8479))
+                Text("✎", style = MaterialTheme.typography.labelSmall, color = Color(0xFFAAA39A), modifier = Modifier.padding(top = 1.dp))
             }
         }
     }
 }
-
-@Composable
-private fun FixedBulletBlock(
-    lines: List<String>,
-    slots: Int,
-) {
-    repeat(slots) { idx ->
-        val text = lines.getOrNull(idx)
-        Text(
-            text = if (text.isNullOrBlank()) "" else "• $text",
-            style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF2C2925),
-            maxLines = 1,
-            modifier = Modifier.height(13.dp),
-        )
-    }
-}
-
-@Composable
-private fun FixedNumberBlock() {
-    Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-        Text("收入: 200", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925), maxLines = 1)
-        Text("支出: 40", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925), maxLines = 1)
-        Text("步数: 8100", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2C2925), maxLines = 1)
-    }
-}
-
-@Composable
-private fun ColorTagCard(color: Color, text: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(5.dp))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(color.copy(alpha = 0.94f), color.copy(alpha = 0.74f)),
-                ),
-            )
-            .padding(horizontal = 6.dp, vertical = 3.dp),
-    ) {
-        Text(text, color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
-    }
-}
-
-@Composable
-private fun MiniPhotoRow() {
-    Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.fillMaxWidth()) {
-        repeat(3) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(20.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(
-                        when (it) {
-                            0 -> Color(0xFFD3D7C8)
-                            1 -> Color(0xFFD7C9C1)
-                            else -> Color(0xFFC9D2D7)
-                        },
-                    ),
-            )
-        }
-    }
-}
-
-private fun pagePreviewText(page: BookPage): String =
-    when (page) {
-        is TargetPage -> page.items.take(3).joinToString("\n") { "• $it" }.ifBlank { BookStrings.contentEmpty }
-        is PlanPage -> page.items.take(3).joinToString("\n") { "• $it" }.ifBlank { BookStrings.contentEmpty }
-        is SchedulePage -> page.items.take(3).joinToString("\n") { "• $it" }.ifBlank { BookStrings.contentEmpty }
-        is DiaryPage -> page.prompt
-    }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)

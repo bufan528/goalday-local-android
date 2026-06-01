@@ -32,8 +32,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 private const val EDGE_GESTURE_RATIO = 0.13f
-private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.22f
-private const val HANDBOOK_DRAG_START_THRESHOLD = 0.42f
+private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.28f
+private const val HANDBOOK_DRAG_START_THRESHOLD = 0.28f
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase
@@ -84,7 +84,7 @@ fun PageTurnEngine(
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     val turnShadowWidth = if (profile == TurnProfile.HANDBOOK) {
-        (16f + latePhase * 132f).dp
+        (20f + latePhase * 148f).dp
     } else {
         (14f + latePhase * 104f).dp
     }
@@ -105,8 +105,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.86f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 108f else Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.9f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 92f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipNext()
@@ -117,8 +117,8 @@ fun PageTurnEngine(
                         progress.animateTo(
                             0f,
                             animationSpec = spring(
-                                dampingRatio = 0.95f,
-                                stiffness = 340f,
+                                dampingRatio = 0.97f,
+                                stiffness = 270f,
                             ),
                         )
                         progress.snapTo(0f)
@@ -131,8 +131,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.86f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 108f else Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.9f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 92f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipPrevious()
@@ -143,8 +143,8 @@ fun PageTurnEngine(
                         progress.animateTo(
                             0f,
                             animationSpec = spring(
-                                dampingRatio = 0.95f,
-                                stiffness = 340f,
+                                dampingRatio = 0.97f,
+                                stiffness = 270f,
                             ),
                         )
                         progress.snapTo(0f)
@@ -157,8 +157,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         0f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.94f else 0.84f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 320f else Spring.StiffnessMediumLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.98f else 0.84f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 240f else Spring.StiffnessMediumLow,
                         ),
                     )
                 }
@@ -330,6 +330,24 @@ fun PageTurnEngine(
                                 ),
                         )
                     }
+                }
+                if (profile == TurnProfile.HANDBOOK) {
+                    Box(
+                        modifier = Modifier
+                            .align(if (draggingToNext) Alignment.BottomEnd else Alignment.BottomStart)
+                            .width((18f + latePhase * 42f).dp)
+                            .height((22f + latePhase * 48f).dp)
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = (0.04f + latePhase * 0.22f).coerceAtMost(0.28f)),
+                                        Color.Black.copy(alpha = (0.01f + latePhase * 0.10f).coerceAtMost(0.12f)),
+                                        Color.Transparent,
+                                    ),
+                                    radius = 160f,
+                                ),
+                            ),
+                    )
                 }
                 Box(
                     modifier = Modifier
