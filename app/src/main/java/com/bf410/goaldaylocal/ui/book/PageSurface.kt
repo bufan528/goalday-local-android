@@ -36,6 +36,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,9 +48,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.PlanPage
@@ -1158,6 +1164,13 @@ private fun HandbookEntryLine(
     onCommit: () -> Unit,
     onToggleCompleted: () -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
+    val rowEditorFocus = remember(entry.id) { FocusRequester() }
+    LaunchedEffect(editingId) {
+        if (editingId == entry.id) {
+            rowEditorFocus.requestFocus()
+        }
+    }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
         Text(
             slotLabel,
@@ -1179,12 +1192,21 @@ private fun HandbookEntryLine(
                 value = editingText,
                 onValueChange = onTextChange,
                 textStyle = TextStyle(color = Color(0xFF2C2925)),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    onCommit()
+                    focusManager.clearFocus(force = true)
+                }),
                 modifier = Modifier
                     .weight(1f)
+                    .focusRequester(rowEditorFocus)
                     .background(Color(0x0A000000), RoundedCornerShape(4.dp))
                     .padding(horizontal = 4.dp, vertical = 1.dp),
             )
-            Text("存", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE88FAE), modifier = Modifier.clickable { onCommit() })
+            Text("存", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE88FAE), modifier = Modifier.clickable {
+                onCommit()
+                focusManager.clearFocus(force = true)
+            })
         } else {
             Row(
                 modifier = Modifier
