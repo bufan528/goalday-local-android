@@ -1046,14 +1046,32 @@ private fun FixedDayScheduleGrid(
         ) {
             repeat(3) { idx ->
                 val entry = ordered.getOrNull(idx)
+                val slotLabel = when (idx) {
+                    0 -> "上"
+                    1 -> "下"
+                    else -> "晚"
+                }
                 if (entry == null) {
-                    Text("", style = MaterialTheme.typography.labelSmall, modifier = Modifier.height(13.dp))
-                } else {
-                    val slotLabel = when (idx) {
-                        0 -> "上"
-                        1 -> "下"
-                        else -> "晚"
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(13.dp),
+                    ) {
+                        Text(
+                            slotLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0x668B8277),
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(0.6.dp)
+                                .background(Color(0x22000000)),
+                        )
                     }
+                } else {
                     HandbookEntryLine(
                         slotLabel = slotLabel,
                         entry = entry,
