@@ -2,16 +2,19 @@ package com.bf410.goaldaylocal.ui.calendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.bf410.goaldaylocal.data.LocalStateStore
 import com.bf410.goaldaylocal.data.ScheduleEntry
+import com.bf410.goaldaylocal.data.ScheduleRepository
 import com.bf410.goaldaylocal.data.ScheduleStatus
 import com.tencent.mmkv.MMKV
 import java.time.LocalDate
-import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class CalendarUiState(
     val year: Int,
@@ -22,6 +25,7 @@ data class CalendarUiState(
 
 class CalendarViewModel(
     private val store: LocalStateStore,
+    private val scheduleRepository: ScheduleRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(
         CalendarUiState(
@@ -32,6 +36,14 @@ class CalendarViewModel(
         ),
     )
     val uiState: StateFlow<CalendarUiState> = _uiState
+
+    init {
+        viewModelScope.launch {
+            scheduleRepository.revision.drop(1).collect {
+                refreshEntries()
+            }
+        }
+    }
 
     fun backToToday() {
         val today = LocalDate.now()
@@ -50,16 +62,13 @@ class CalendarViewModel(
 
     fun addSchedule(title: String, day: Int, note: String): String {
         val current = _uiState.value
-        val entry = ScheduleEntry(
-            id = UUID.randomUUID().toString(),
+        val entry = scheduleRepository.addEntry(
             title = title,
             year = current.year,
             month = current.month,
             day = day,
             note = note,
         )
-        val updated = store.scheduleEntries() + entry
-        store.saveScheduleEntries(updated)
         refreshEntries()
         return entry.id
     }
@@ -71,26 +80,26 @@ class CalendarViewModel(
     }
 
     fun removeSchedule(id: String) {
-        val updated = store.scheduleEntries().filterNot { it.id == id }
-        store.saveScheduleEntries(updated)
+        val updated = scheduleRepository.entries().filterNot { it.id == id }
+        scheduleRepository.saveEntries(updated)
         refreshEntries()
     }
 
     fun toggleScheduleCompleted(id: String) {
-        val updated = store.scheduleEntries().map { entry ->
+        val updated = scheduleRepository.entries().map { entry ->
             if (entry.id == id) {
                 entry.withStatus(if (entry.status == ScheduleStatus.DONE) ScheduleStatus.PLANNED else ScheduleStatus.DONE)
             } else {
                 entry
             }
         }
-        store.saveScheduleEntries(updated)
+        scheduleRepository.saveEntries(updated)
         refreshEntries()
     }
 
     fun updateSchedule(id: String, title: String, day: Int, note: String) {
         val current = _uiState.value
-        val updated = store.scheduleEntries().map { entry ->
+        val updated = scheduleRepository.entries().map { entry ->
             if (entry.id == id) {
                 entry.copy(
                     title = title.trim(),
@@ -103,14 +112,14 @@ class CalendarViewModel(
                 entry
             }
         }
-        store.saveScheduleEntries(updated)
+        scheduleRepository.saveEntries(updated)
         refreshEntries()
     }
 
     fun moveScheduleToDay(id: String, day: Int) {
         val current = _uiState.value
         val clampedDay = day.coerceAtLeast(1)
-        val updated = store.scheduleEntries().map { entry ->
+        val updated = scheduleRepository.entries().map { entry ->
             if (entry.id == id) {
                 entry.copy(
                     year = current.year,
@@ -121,12 +130,12 @@ class CalendarViewModel(
                 entry
             }
         }
-        store.saveScheduleEntries(updated)
+        scheduleRepository.saveEntries(updated)
         refreshEntries()
     }
 
     fun reorderScheduleInDay(id: String, moveUp: Boolean) {
-        val all = store.scheduleEntries().toMutableList()
+        val all = scheduleRepository.entries().toMutableList()
         val currentIndex = all.indexOfFirst { it.id == id }
         if (currentIndex < 0) return
         val target = all[currentIndex]
@@ -143,7 +152,7 @@ class CalendarViewModel(
         val temp = all[currentIndex]
         all[currentIndex] = all[swapIndex]
         all[swapIndex] = temp
-        store.saveScheduleEntries(all)
+        scheduleRepository.saveEntries(all)
         refreshEntries()
     }
 
@@ -165,7 +174,7 @@ class CalendarViewModel(
     }
 
     private fun monthEntries(year: Int, month: Int): List<ScheduleEntry> =
-        store.scheduleEntries()
+        scheduleRepository.entries()
             .filter { it.year == year && it.month == month }
             .sortedBy { it.day }
 
@@ -173,8 +182,9 @@ class CalendarViewModel(
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                 val store = LocalStateStore(MMKV.defaultMMKV())
+                val scheduleRepository = ScheduleRepository.getInstance(store)
                 @Suppress("UNCHECKED_CAST")
-                return CalendarViewModel(store) as T
+                return CalendarViewModel(store, scheduleRepository) as T
             }
         }
     }

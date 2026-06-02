@@ -3,6 +3,7 @@ package com.bf410.goaldaylocal.ui.book
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
@@ -10,6 +11,7 @@ import com.bf410.goaldaylocal.data.LocalStateStore
 import com.bf410.goaldaylocal.data.PlanPage
 import com.bf410.goaldaylocal.data.SampleLibrary
 import com.bf410.goaldaylocal.data.ScheduleEntry
+import com.bf410.goaldaylocal.data.ScheduleRepository
 import com.bf410.goaldaylocal.data.ScheduleStatus
 import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetPage
@@ -17,13 +19,16 @@ import com.bf410.goaldaylocal.data.TopicBook
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.UUID
 
 class BookViewModel(
     private val store: LocalStateStore,
+    private val scheduleRepository: ScheduleRepository,
 ) : ViewModel() {
     private data class ScheduleImport(
         val todo: List<String>,
@@ -53,6 +58,11 @@ class BookViewModel(
     init {
         syncPageFromStore()
         syncEditableContent()
+        viewModelScope.launch {
+            scheduleRepository.revision.drop(1).collect {
+                syncEditableContent()
+            }
+        }
     }
 
     fun openLibrary() {
@@ -173,7 +183,7 @@ class BookViewModel(
         val maxDay = YearMonth.of(year, month).lengthOfMonth()
         val safeDay = day.coerceIn(1, maxDay)
         val bookTitle = currentBook().title
-        val duplicated = store.scheduleEntries().any { entry ->
+        val duplicated = scheduleRepository.entries().any { entry ->
             entry.title == title &&
                 entry.year == year &&
                 entry.month == month &&
@@ -181,7 +191,7 @@ class BookViewModel(
                 entry.note == bookTitle
         }
         if (duplicated) return
-        store.addScheduleEntry(
+        scheduleRepository.addEntry(
             title = title,
             year = year,
             month = month,
@@ -198,14 +208,14 @@ class BookViewModel(
         val safeMonth = month.coerceIn(1, 12)
         val maxDay = YearMonth.of(year, safeMonth).lengthOfMonth()
         val safeDay = day.coerceIn(1, maxDay)
-        val duplicated = store.scheduleEntries().any { entry ->
+        val duplicated = scheduleRepository.entries().any { entry ->
             entry.title == title &&
                 entry.year == year &&
                 entry.month == safeMonth &&
                 entry.day == safeDay
         }
         if (duplicated) return
-        store.addScheduleEntry(
+        scheduleRepository.addEntry(
             title = title,
             year = year,
             month = safeMonth,
@@ -275,23 +285,23 @@ class BookViewModel(
     fun updateScheduleTitleFromHandbook(entryId: String, newTitle: String) {
         val normalized = newTitle.trim()
         if (entryId.isBlank() || normalized.isBlank()) return
-        val updated = store.scheduleEntries().map { entry ->
+        val updated = scheduleRepository.entries().map { entry ->
             if (entry.id == entryId) entry.copy(title = normalized) else entry
         }
-        store.saveScheduleEntries(updated)
+        scheduleRepository.saveEntries(updated)
         syncEditableContent()
     }
 
     fun toggleScheduleCompletedFromHandbook(entryId: String) {
         if (entryId.isBlank()) return
-        val updated = store.scheduleEntries().map { entry ->
+        val updated = scheduleRepository.entries().map { entry ->
             if (entry.id == entryId) {
                 entry.withStatus(if (entry.status == ScheduleStatus.DONE) ScheduleStatus.PLANNED else ScheduleStatus.DONE)
             } else {
                 entry
             }
         }
-        store.saveScheduleEntries(updated)
+        scheduleRepository.saveEntries(updated)
         syncEditableContent()
     }
 
@@ -506,7 +516,7 @@ class BookViewModel(
         val year = store.calendarAnchorYear()
         val month = store.calendarAnchorMonth().coerceIn(1, 12)
         val day = LocalDate.now().dayOfMonth
-        val entries = store.scheduleEntries()
+        val entries = scheduleRepository.entries()
             .filter { it.year == year && it.month == month && it.day == day }
             .sortedBy { it.title }
         val todo = entries.filterNot { it.completed }.map { it.title }.distinct()
@@ -520,7 +530,7 @@ class BookViewModel(
         val year = store.calendarAnchorYear()
         val month = store.calendarAnchorMonth().coerceIn(1, 12)
         val day = LocalDate.now().dayOfMonth
-        val existing = store.scheduleEntries()
+        val existing = scheduleRepository.entries()
         var matched = false
         val updated = existing.map { entry ->
             if (!matched && entry.year == year && entry.month == month && entry.day == day && entry.title == normalized) {
@@ -541,7 +551,7 @@ class BookViewModel(
                 completed = completed,
             )
         }
-        store.saveScheduleEntries(updated)
+        scheduleRepository.saveEntries(updated)
     }
 
     private fun removeTodayScheduleEntry(item: String) {
@@ -550,15 +560,15 @@ class BookViewModel(
         val year = store.calendarAnchorYear()
         val month = store.calendarAnchorMonth().coerceIn(1, 12)
         val day = LocalDate.now().dayOfMonth
-        val updated = store.scheduleEntries().filterNot {
+        val updated = scheduleRepository.entries().filterNot {
             it.year == year && it.month == month && it.day == day && it.title == normalized
         }
-        store.saveScheduleEntries(updated)
+        scheduleRepository.saveEntries(updated)
     }
 
     private fun yearEntriesForAnchor(): List<ScheduleEntry> {
         val year = store.calendarAnchorYear()
-        return store.scheduleEntries()
+        return scheduleRepository.entries()
             .filter { it.year == year }
             .sortedWith(compareBy({ it.month }, { it.day }, { it.title.lowercase() }))
     }
@@ -637,8 +647,9 @@ class BookViewModel(
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                 val store = LocalStateStore(MMKV.defaultMMKV())
+                val scheduleRepository = ScheduleRepository.getInstance(store)
                 @Suppress("UNCHECKED_CAST")
-                return BookViewModel(store) as T
+                return BookViewModel(store, scheduleRepository) as T
             }
         }
     }
