@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -284,29 +285,99 @@ private fun LibraryView(
             modifier = Modifier.verticalScroll(rememberScrollState()),
         ) {
             books.forEachIndexed { index, book ->
-                Row(
+                LibraryBookCoverCard(
+                    book = book,
+                    selected = index == 0,
+                    onClick = { onOpenBook(index) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibraryBookCoverCard(
+    book: TopicBook,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val coverShape = RoundedCornerShape(24.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(148.dp)
+            .shadow(12.dp, coverShape, clip = false)
+            .clip(coverShape)
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        book.color.copy(alpha = 0.94f),
+                        book.color.copy(alpha = 0.74f),
+                        Color.White.copy(alpha = 0.28f),
+                    ),
+                    start = Offset.Zero,
+                    end = Offset(920f, 620f),
+                ),
+            )
+            .border(1.dp, Color(0x33FFFFFF), coverShape)
+            .clickable(onClick = onClick),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .width(38.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0x502F261D), Color(0x22FFFFFF), Color.Transparent),
+                    ),
+                ),
+        )
+        Text(
+            "GOALDAY",
+            color = Color(0xCCFFFFFF),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .graphicsLayer { rotationZ = -90f }
+                .padding(bottom = 2.dp),
+        )
+        repeat(4) { layer ->
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(top = (16 + layer).dp, bottom = (14 + layer).dp, end = (3 + layer).dp)
+                    .width((4 + layer).dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0x33FFFFFF), Color(0xCCFFF9F0)),
+                        ),
+                    ),
+            )
+        }
+        Column(
+            modifier = Modifier
+                .padding(start = 56.dp, top = 22.dp, end = 28.dp, bottom = 18.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text(book.title, style = MaterialTheme.typography.titleLarge, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+                Text(book.subtitle, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF4B3D31))
+            }
+            Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text("${book.pages.size} ${BookStrings.pageUnit}", style = MaterialTheme.typography.labelLarge, color = Color(0xFF5D4B3D))
+                Text(
+                    if (selected) "默认手账" else BookStrings.openBook,
+                    color = Color(0xFF5D4B3D),
+                    style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(28.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(book.color.copy(alpha = 0.92f), book.color.copy(alpha = 0.58f)),
-                                start = Offset.Zero,
-                                end = Offset(900f, 700f),
-                            ),
-                        )
-                        .clickable { onOpenBook(index) }
-                        .padding(horizontal = 22.dp, vertical = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(book.title, style = MaterialTheme.typography.titleLarge, color = Color(0xFF2F261D))
-                        Text(book.subtitle, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF4B3D31))
-                        Text("${book.pages.size} ${BookStrings.pageUnit}", style = MaterialTheme.typography.labelLarge, color = Color(0xFF5D4B3D))
-                    }
-                    Text(BookStrings.openBook, color = Color(0xFF5D4B3D))
-                }
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x26FFFFFF))
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                )
             }
         }
     }
@@ -362,7 +433,10 @@ private fun BookDetailView(
     ) {
         GoaldayTopBar(
             leftTitle = if (handbookMode) "手账本" else "14周",
-            onRightPrimaryClick = onBackToLibrary,
+            rightPrimaryText = if (handbookMode) "离线手账" else "完成",
+            onRightPrimaryClick = {
+                if (!handbookMode) onBackToLibrary()
+            },
             rightSecondary = {
                 if (!handbookMode && forcedSegment != BookSegment.DIARY) {
                     Text("＋灵感", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onShowInspiration))

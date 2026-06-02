@@ -26,6 +26,7 @@ The readable asset layer shows the reference app is built around:
 ## UX implications for this app
 
 - The app needs a real topic/template center, not just a small inspiration list.
+- Topic entries are presented like soft-color handbook covers; the cover images are mostly low-saturation rounded color plates with UI text overlaid by the app.
 - Templates should carry color, type, schedule-link behavior, and a multi-item target list.
 - Imported template items should land in the handbook task pool so they can be assigned to dates.
 - The planner should support the video workflow: collect tasks first, drag into dates, then drag completed items into done.
