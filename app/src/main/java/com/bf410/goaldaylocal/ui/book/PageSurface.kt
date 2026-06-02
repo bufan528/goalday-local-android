@@ -862,6 +862,10 @@ private fun HandbookReplicaPage(
             canShiftNext = start < maxStart,
             onPreviousRange = { windowStart = (start - 3).coerceAtLeast(0) },
             onNextRange = { windowStart = (start + 3).coerceAtMost(maxStart) },
+            onSelectMonthDay = { day ->
+                windowStart = (day - 1).coerceIn(0, maxStart)
+                draftDay = day
+            },
         )
         Row(
             modifier = Modifier
@@ -1149,6 +1153,7 @@ private fun BoxScope.HandbookMonthHeader(
     canShiftNext: Boolean,
     onPreviousRange: () -> Unit,
     onNextRange: () -> Unit,
+    onSelectMonthDay: (Int) -> Unit,
 ) {
     val monthModel = remember(year, month) { YearMonth.of(year, month) }
     val today = LocalDate.now()
@@ -1217,6 +1222,7 @@ private fun BoxScope.HandbookMonthHeader(
                                 .weight(1f)
                                 .height(if (visible) 9.dp else 5.dp)
                                 .clip(RoundedCornerShape(99.dp))
+                                .clickable { onSelectMonthDay(day) }
                                 .background(
                                     when {
                                         visible -> GoaldayDesign.Pink
