@@ -1996,54 +1996,47 @@ private fun TargetDetailReplicaPage(
             custom = customItems.size,
         )
 
-        items.chunked(2).forEachIndexed { rowIndex, rowItems ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                rowItems.forEachIndexed { columnIndex, item ->
-                    val index = rowIndex * 2 + columnIndex
-                    val checked = isChecked(pageTitle, item)
-                    val scheduledEntries = scheduledByTitle[item].orEmpty()
-                    val meta = targetItemMeta[item] ?: TargetItemMeta()
-                    var noteDraft by remember(item, meta.note) { mutableStateOf(meta.note) }
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                            .background(if (checked) GoaldayDesign.GreenSoft else Color(0xFFFFFEFC))
-                            .border(0.6.dp, if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
-                            .padding(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(5.dp),
-                    ) {
+        items.forEachIndexed { index, item ->
+            val checked = isChecked(pageTitle, item)
+            val scheduledEntries = scheduledByTitle[item].orEmpty()
+            val meta = targetItemMeta[item] ?: TargetItemMeta()
+            var noteDraft by remember(item, meta.note) { mutableStateOf(meta.note) }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
+                    .background(if (checked) GoaldayDesign.GreenSoft else Color(0xFFFFFEFC))
+                    .border(0.8.dp, if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else Color(0x14000000), RoundedCornerShape(GoaldayDesign.RadiusM))
+                    .padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp),
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(9.dp), verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            "%02d".format(index + 1),
+                            color = if (checked) Color.White else GoaldayDesign.Pink,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(99.dp))
+                                .background(if (checked) GoaldayDesign.Positive else Color(0x18E88FAE))
+                                .padding(horizontal = 7.dp, vertical = 4.dp),
+                        )
+                        Text(
+                            if (checked) "✓" else "□",
+                            color = if (checked) GoaldayDesign.Positive else GoaldayDesign.InkMuted,
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.clickable { onToggleChecked(pageTitle, item) },
+                        )
+                    }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(if (checked) "✓" else "□", color = if (checked) GoaldayDesign.Positive else GoaldayDesign.InkMuted, modifier = Modifier.clickable { onToggleChecked(pageTitle, item) })
-                                Text("目标 ${index + 1}", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
-                            }
+                            Text("目标档案", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
                             Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text("详情", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onOpenTargetDetail(item) })
                                 Text("排入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onAddToSchedule(item, todayDay) })
                             }
                         }
-                        TargetScheduleMeta(entries = scheduledEntries)
-                        BasicTextField(
-                            value = noteDraft,
-                            onValueChange = {
-                                noteDraft = it
-                                onUpdateTargetNote(item, it)
-                            },
-                            textStyle = MaterialTheme.typography.labelSmall.copy(color = GoaldayDesign.InkSecondary),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                                .background(Color(0x40FFFFFF))
-                                .border(0.35.dp, Color(0x12A88966), RoundedCornerShape(GoaldayDesign.RadiusS))
-                                .padding(horizontal = 6.dp, vertical = 4.dp),
-                            decorationBox = { inner ->
-                                if (noteDraft.isBlank()) {
-                                    Text("备注 / 做法 / 灵感", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
-                                }
-                                inner()
-                            },
-                        )
                         if (editingItem == item) {
                             BasicTextField(
                                 value = editingText,
@@ -2057,18 +2050,22 @@ private fun TargetDetailReplicaPage(
                                 }),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color(0x08000000), RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 5.dp, vertical = 3.dp),
+                                    .background(Color(0x08000000), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 7.dp, vertical = 5.dp),
                             )
-                            Text("保存", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
-                                if (item in customItems) onRenameCustomItem(item, editingText)
-                                editingItem = null
-                            })
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("保存", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
+                                    if (item in customItems) onRenameCustomItem(item, editingText)
+                                    editingItem = null
+                                })
+                                Text("取消", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { editingItem = null })
+                            }
                         } else {
                             Text(
                                 item,
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = if (checked) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
+                                fontWeight = FontWeight.Medium,
                                 textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                                 maxLines = 2,
                                 modifier = Modifier.clickable {
@@ -2078,24 +2075,50 @@ private fun TargetDetailReplicaPage(
                                     }
                                 },
                             )
-                            if (item in customItems) {
-                                Text("删除", color = GoaldayDesign.Danger, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onRemoveCustomItem(item) })
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            TargetScheduleMeta(entries = scheduledEntries)
+                            meta.deadlineDay?.let {
+                                Text("截止 ${it}日", color = GoaldayDesign.Positive, style = MaterialTheme.typography.labelSmall)
                             }
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-                            TargetScheduleChip("今天") { onAddToSchedule(item, todayDay) }
-                            TargetScheduleChip("明天") { onAddToSchedule(item, tomorrowDay) }
-                            TargetScheduleChip("周末") { onAddToSchedule(item, weekendDay) }
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-                            TargetDeadlineChip("截止 ${meta.deadlineDay?.let { "${it}日" } ?: "未定"}", active = meta.deadlineDay != null) {}
-                            TargetDeadlineChip("今", active = meta.deadlineDay == todayDay) { onUpdateTargetDeadline(item, todayDay) }
-                            TargetDeadlineChip("明", active = meta.deadlineDay == tomorrowDay) { onUpdateTargetDeadline(item, tomorrowDay) }
-                            TargetDeadlineChip("清除", active = false) { onUpdateTargetDeadline(item, null) }
                         }
                     }
                 }
-                if (rowItems.size == 1) Spacer(Modifier.weight(1f))
+                BasicTextField(
+                    value = noteDraft,
+                    onValueChange = {
+                        noteDraft = it
+                        onUpdateTargetNote(item, it)
+                    },
+                    textStyle = MaterialTheme.typography.labelSmall.copy(color = GoaldayDesign.InkSecondary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .background(Color(0x40FFFFFF))
+                        .border(0.45.dp, Color(0x12A88966), RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .padding(horizontal = 7.dp, vertical = 5.dp),
+                    decorationBox = { inner ->
+                        if (noteDraft.isBlank()) {
+                            Text("备注 / 做法 / 灵感", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                        }
+                        inner()
+                    },
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                        TargetScheduleChip("今天") { onAddToSchedule(item, todayDay) }
+                        TargetScheduleChip("明天") { onAddToSchedule(item, tomorrowDay) }
+                        TargetScheduleChip("周末") { onAddToSchedule(item, weekendDay) }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                        TargetDeadlineChip("今", active = meta.deadlineDay == todayDay) { onUpdateTargetDeadline(item, todayDay) }
+                        TargetDeadlineChip("明", active = meta.deadlineDay == tomorrowDay) { onUpdateTargetDeadline(item, tomorrowDay) }
+                        TargetDeadlineChip("清除", active = false) { onUpdateTargetDeadline(item, null) }
+                        if (item in customItems) {
+                            Text("删除", color = GoaldayDesign.Danger, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onRemoveCustomItem(item) })
+                        }
+                    }
+                }
             }
         }
 
