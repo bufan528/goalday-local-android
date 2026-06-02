@@ -772,6 +772,11 @@ fun ActivePageLayer(
     }
 }
 
+private enum class ScheduleBoardMode(val label: String) {
+    SPREAD("手账"),
+    MONTH("整月"),
+}
+
 @Composable
 private fun HandbookReplicaPage(
     modifier: Modifier,
@@ -856,6 +861,7 @@ private fun HandbookReplicaPage(
     var editingId by remember(pageIndex) { mutableStateOf<String?>(null) }
     var editingText by remember(pageIndex) { mutableStateOf("") }
     var saveHint by remember(pageIndex) { mutableStateOf("") }
+    var boardMode by remember(pageIndex) { mutableStateOf(ScheduleBoardMode.SPREAD) }
     var spreadOrigin by remember(pageIndex) { mutableStateOf(Offset.Zero) }
     val todoDropBounds = remember(pageIndex) { mutableMapOf<Int, Rect>() }
     val doneDropBounds = remember(pageIndex) { mutableMapOf<Int, Rect>() }
@@ -965,6 +971,18 @@ private fun HandbookReplicaPage(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            ScheduleBoardMode.entries.forEach { mode ->
+                Text(
+                    mode.label,
+                    color = if (boardMode == mode) Color.White else Color(0xFF8B6F78),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(if (boardMode == mode) GoaldayDesign.Pink else Color(0x18E88FAE))
+                        .clickable { boardMode = mode }
+                        .padding(horizontal = 7.dp, vertical = 3.dp),
+                )
+            }
             Text(
                 "预览",
                 color = Color(0xFF8B6F78),
@@ -999,12 +1017,29 @@ private fun HandbookReplicaPage(
                 Text(exportHint, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A7065))
             }
         }
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 58.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
+        if (boardMode == ScheduleBoardMode.MONTH) {
+            HandbookMonthBoard(
+                year = anchorYear,
+                month = anchorMonth,
+                monthLength = monthLength,
+                entries = sorted,
+                selectedDays = visibleDays,
+                onSelectDay = { day ->
+                    windowStart = (day - 1).coerceIn(0, maxStart)
+                    draftDay = day
+                    boardMode = ScheduleBoardMode.SPREAD
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 58.dp),
+            )
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 58.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
@@ -1188,6 +1223,7 @@ private fun HandbookReplicaPage(
                     )
                 }
             }
+            }
         }
 
         (draggingPoolItem ?: draggingTodoEntry?.title)?.let { text ->
@@ -1265,6 +1301,83 @@ private fun HandbookReplicaPage(
             preview = preview,
             onDismiss = { longImagePreview = null },
         )
+    }
+}
+
+@Composable
+private fun HandbookMonthBoard(
+    year: Int,
+    month: Int,
+    monthLength: Int,
+    entries: List<ScheduleEntry>,
+    selectedDays: List<Int>,
+    onSelectDay: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val today = LocalDate.now()
+    val weeks = (1..monthLength).chunked(7)
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.58f))
+            .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(16.dp))
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("MONTHLY", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+            Text("${year}年${month}月 · 点击日期展开到手账页", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+        }
+        weeks.forEach { week ->
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.weight(1f)) {
+                week.forEach { day ->
+                    val dayEntries = entries.filter { it.day == day }
+                    val todoCount = dayEntries.count { !it.completed }
+                    val doneCount = dayEntries.count { it.completed }
+                    val title = dayEntries.firstOrNull { !it.completed }?.title
+                        ?: dayEntries.firstOrNull { it.completed }?.title
+                        ?: "空白"
+                    val isVisible = day in selectedDays
+                    val isToday = today.year == year && today.monthValue == month && today.dayOfMonth == day
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(9.dp))
+                            .background(
+                                when {
+                                    isVisible -> Color(0x20E88FAE)
+                                    isToday -> Color(0x16F2C0A5)
+                                    else -> Color(0xBFFFFFFF)
+                                },
+                            )
+                            .border(
+                                width = if (isVisible || isToday) 1.dp else 0.6.dp,
+                                color = when {
+                                    isVisible -> GoaldayDesign.Pink.copy(alpha = 0.42f)
+                                    isToday -> Color(0x66F2A65F)
+                                    else -> Color(0x12A88966)
+                                },
+                                shape = RoundedCornerShape(9.dp),
+                            )
+                            .clickable { onSelectDay(day) }
+                            .padding(5.dp),
+                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                    ) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text("$day", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                            if (todoCount + doneCount > 0) {
+                                Text("$doneCount/$todoCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                            }
+                        }
+                        Text(title, style = MaterialTheme.typography.labelSmall, color = if (title == "空白") GoaldayDesign.InkMuted else GoaldayDesign.InkSecondary, maxLines = 2)
+                    }
+                }
+                repeat(7 - week.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
     }
 }
 

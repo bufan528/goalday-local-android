@@ -14,6 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +42,7 @@ private data class GuidePage(
     val title: String,
     val body: String,
     val action: String,
+    val focus: String,
 )
 
 @Composable
@@ -45,10 +51,10 @@ internal fun GuideOverlay(
 ) {
     val pages = remember {
         listOf(
-            GuidePage("目标", "先把目标放进手账", "从灵感中心选择主题，勾选目标后可以导入任务池，也可以保存成一本手账。", "选主题 · 勾目标"),
-            GuidePage("日程", "把任务排进今天", "在日程页把任务拖入日期，或者点目标卡片的排入按钮；桌面小组件会跟着刷新。", "拖入日期 · 标记完成"),
-            GuidePage("日记", "每天写成块", "日记支持文字块、目标块、专题目标块和图片；完成的目标也能直接关联到日记。", "写文字 · 贴目标"),
-            GuidePage("导出", "最后导出成手账图", "日记和日程手账都可以预览长图，再保存、分享或调用系统打印。", "预览 · 分享 · 打印"),
+            GuidePage("目标", "先把目标放进手账", "从灵感中心选择主题，勾选目标后可以导入任务池，也可以保存成一本手账。", "选主题 · 勾目标", "聚焦：灵感中心"),
+            GuidePage("日程", "把任务排进今天", "在日程页把任务拖入日期，或者点目标卡片的排入按钮；桌面小组件会跟着刷新。", "拖入日期 · 标记完成", "聚焦：手账/整月"),
+            GuidePage("日记", "每天写成块", "日记支持文字块、目标块、专题目标块和图片；完成的目标也能直接关联到日记。", "写文字 · 贴目标", "聚焦：日记块"),
+            GuidePage("导出", "最后导出成手账图", "日记和日程手账都可以预览长图，再保存、分享或调用系统打印。", "预览 · 分享 · 打印", "聚焦：长图预览"),
         )
     }
     var index by remember { mutableIntStateOf(0) }
@@ -138,6 +144,16 @@ private fun GuideIllustration(
     page: GuidePage,
     index: Int,
 ) {
+    val transition = rememberInfiniteTransition(label = "guide-pulse")
+    val pulse = transition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.88f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1100),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "guide-pulse-alpha",
+    )
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -190,10 +206,21 @@ private fun GuideIllustration(
                 .padding(top = 16.dp, end = 20.dp)
                 .size(44.dp)
                 .clip(RoundedCornerShape(99.dp))
-                .background(GoaldayDesign.PrimaryAction.copy(alpha = 0.88f)),
+                .background(GoaldayDesign.PrimaryAction.copy(alpha = pulse.value)),
         ) {
             Text("${index + 1}", color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Center))
         }
+        Text(
+            page.focus,
+            color = Color.White,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .clip(RoundedCornerShape(99.dp))
+                .background(GoaldayDesign.Pink.copy(alpha = pulse.value))
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+        )
         Text(
             page.action,
             color = GoaldayDesign.InkPrimary,
