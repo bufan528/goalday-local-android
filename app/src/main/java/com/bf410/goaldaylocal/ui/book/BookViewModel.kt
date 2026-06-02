@@ -234,6 +234,15 @@ class BookViewModel(
         syncEditableContent()
     }
 
+    fun removeHandbookPoolItem(item: String) {
+        val title = item.trim()
+        if (title.isBlank()) return
+        val context = resolvePlanningContext() ?: return
+        val updated = store.todayPlanItems(context.bookId, context.pageTitle).filterNot { it == title }
+        store.saveTodayPlanItems(context.bookId, context.pageTitle, updated)
+        syncEditableContent()
+    }
+
     fun updateWeeklyTheme(text: String) {
         val book = currentBook()
         store.setWeeklyTheme(book.id, text)

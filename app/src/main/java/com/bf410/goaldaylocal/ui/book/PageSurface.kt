@@ -633,6 +633,7 @@ fun ActivePageLayer(
     onRenameCustomItem: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
     onAddHandbookPoolItem: (String) -> Unit,
+    onRemoveHandbookPoolItem: (String) -> Unit,
     onAddScheduleFromHandbook: (String, Int, Int) -> Unit,
     onWeeklyThemeChange: (String) -> Unit,
     onMoveItemToToday: (String) -> Unit,
@@ -661,6 +662,7 @@ fun ActivePageLayer(
             schedulePreviewEntries = schedulePreviewEntries,
             weeklyTheme = weeklyTheme,
             onAddPoolItem = onAddHandbookPoolItem,
+            onRemovePoolItem = onRemoveHandbookPoolItem,
             onAddSchedule = onAddScheduleFromHandbook,
             onWeeklyThemeChange = onWeeklyThemeChange,
             onUpdateScheduleTitle = onUpdateScheduleTitle,
@@ -744,6 +746,7 @@ private fun HandbookReplicaPage(
     schedulePreviewEntries: List<ScheduleEntry>,
     weeklyTheme: String,
     onAddPoolItem: (String) -> Unit,
+    onRemovePoolItem: (String) -> Unit,
     onAddSchedule: (String, Int, Int) -> Unit,
     onWeeklyThemeChange: (String) -> Unit,
     onUpdateScheduleTitle: (String, String) -> Unit,
@@ -940,6 +943,10 @@ private fun HandbookReplicaPage(
                         onAddPoolItem(text)
                         draftText = ""
                         saveHint = "已加入待安排"
+                    },
+                    onRemovePoolItem = { text ->
+                        onRemovePoolItem(text)
+                        saveHint = "已从待安排移除"
                     },
                     onPickPoolItem = { text ->
                         onAddSchedule(text, anchorMonth, selectedDraftDay)
@@ -1345,6 +1352,7 @@ private fun HandbookQuickAddRow(
     onSelectDay: (Int) -> Unit,
     poolItems: List<String>,
     onAddPoolItem: (String) -> Unit,
+    onRemovePoolItem: (String) -> Unit,
     onPickPoolItem: (String) -> Unit,
     onPoolDragStart: (String, Offset) -> Unit,
     onPoolDrag: (Offset) -> Unit,
@@ -1435,6 +1443,7 @@ private fun HandbookQuickAddRow(
                     ) {
                         Text("□", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                         Text(item, style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkPrimary, maxLines = 1, modifier = Modifier.weight(1f))
+                        Text("×", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, modifier = Modifier.clickable { onRemovePoolItem(item) })
                     }
                 }
             }
