@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -178,7 +179,7 @@ private fun GuideIllustration(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 20.dp, top = (row * 20 - 38).dp)
+                    .offset(x = (-20).dp, y = (row * 20 - 38).dp)
                     .width((70 + row * 7).dp)
                     .height(5.dp)
                     .clip(RoundedCornerShape(99.dp))
