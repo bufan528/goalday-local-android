@@ -650,7 +650,9 @@ fun ActivePageLayer(
             todayPlanItems = todayPlanItems,
             todayCompletedItems = todayCompletedItems,
             schedulePreviewEntries = schedulePreviewEntries,
+            weeklyTheme = weeklyTheme,
             onAddSchedule = onAddScheduleFromHandbook,
+            onWeeklyThemeChange = onWeeklyThemeChange,
             onUpdateScheduleTitle = onUpdateScheduleTitle,
             onToggleScheduleCompleted = onToggleScheduleCompleted,
             turnProgress = turnProgress,
@@ -729,7 +731,9 @@ private fun HandbookReplicaPage(
     todayPlanItems: List<String>,
     todayCompletedItems: List<String>,
     schedulePreviewEntries: List<ScheduleEntry>,
+    weeklyTheme: String,
     onAddSchedule: (String, Int, Int) -> Unit,
+    onWeeklyThemeChange: (String) -> Unit,
     onUpdateScheduleTitle: (String, String) -> Unit,
     onToggleScheduleCompleted: (String) -> Unit,
     turnProgress: Float,
@@ -807,11 +811,13 @@ private fun HandbookReplicaPage(
             month = anchorMonth,
             pageIndex = pageIndex,
             pageCount = pageCount,
+            weeklyTheme = weeklyTheme,
+            onWeeklyThemeChange = onWeeklyThemeChange,
         )
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 34.dp),
+                .padding(top = 58.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Column(
@@ -1006,6 +1012,8 @@ private fun BoxScope.HandbookMonthHeader(
     month: Int,
     pageIndex: Int,
     pageCount: Int,
+    weeklyTheme: String,
+    onWeeklyThemeChange: (String) -> Unit,
 ) {
     val monthModel = remember(year, month) { YearMonth.of(year, month) }
     val weekdays = listOf("M", "T", "W", "T", "F", "S", "S")
@@ -1014,64 +1022,91 @@ private fun BoxScope.HandbookMonthHeader(
             monthModel.atDay((offset + 1).coerceAtMost(monthModel.lengthOfMonth()))
         }
     }
-    Row(
+    Column(
         modifier = Modifier
             .align(Alignment.TopCenter)
             .fillMaxWidth()
             .padding(horizontal = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.Top,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Column(modifier = Modifier.weight(0.88f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text(
-                "$year GOALDAY",
-                style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.InkMuted,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.alpha(0.86f),
-            )
-            Text(
-                "${month}月计划",
-                style = MaterialTheme.typography.titleSmall,
-                color = GoaldayDesign.InkPrimary,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-            )
-        }
         Row(
-            modifier = Modifier
-                .weight(1.12f)
-                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                .background(Color(0x08E88FAE))
-                .border(0.35.dp, Color(0x10E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
-                .padding(horizontal = 4.dp, vertical = 3.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.Top,
         ) {
-            firstWeekDays.forEachIndexed { index, date ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(weekdays[index], style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
-                    Text(
-                        date.dayOfMonth.toString(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (date.dayOfMonth == LocalDate.now().dayOfMonth && date.monthValue == LocalDate.now().monthValue) {
-                            GoaldayDesign.Pink
-                        } else {
-                            GoaldayDesign.InkSecondary
-                        },
-                        fontWeight = FontWeight.SemiBold,
-                    )
+            Column(modifier = Modifier.weight(0.88f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(
+                    "$year GOALDAY",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GoaldayDesign.InkMuted,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.alpha(0.86f),
+                )
+                Text(
+                    "${month}月计划",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = GoaldayDesign.InkPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .weight(1.12f)
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .background(Color(0x08E88FAE))
+                    .border(0.35.dp, Color(0x10E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .padding(horizontal = 4.dp, vertical = 3.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                firstWeekDays.forEachIndexed { index, date ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(weekdays[index], style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                        Text(
+                            date.dayOfMonth.toString(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (date.dayOfMonth == LocalDate.now().dayOfMonth && date.monthValue == LocalDate.now().monthValue) {
+                                GoaldayDesign.Pink
+                            } else {
+                                GoaldayDesign.InkSecondary
+                            },
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
                 }
             }
+            Text(
+                "${pageIndex + 1}/$pageCount",
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.InkMuted,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .background(Color(0x0D000000))
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+            )
         }
-        Text(
-            "${pageIndex + 1}/$pageCount",
-            style = MaterialTheme.typography.labelSmall,
-            color = GoaldayDesign.InkMuted,
+        BasicTextField(
+            value = weeklyTheme,
+            onValueChange = onWeeklyThemeChange,
+            singleLine = true,
             modifier = Modifier
-                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .background(Color(0x0D000000))
-                .padding(horizontal = 6.dp, vertical = 2.dp),
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                .background(GoaldayDesign.PinkSoft)
+                .border(0.35.dp, Color(0x18E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
+                .padding(horizontal = 7.dp, vertical = 4.dp),
+            textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+            decorationBox = { inner ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text("本月重点", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+                    Box(Modifier.weight(1f)) {
+                        if (weeklyTheme.isBlank()) {
+                            Text("写下最重要的目标", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
+                        }
+                        inner()
+                    }
+                }
+            },
         )
     }
 }
