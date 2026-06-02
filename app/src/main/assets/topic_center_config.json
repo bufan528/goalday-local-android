@@ -5,7 +5,7 @@
     "cn": {
       "title": "灵感中心",
       "coverRoot": "compose/cover",
-      "targetRoot": "compose/topictarget",
+      "targetRoot": "assets/topictarget",
       "topics": [
         {
           "id": "wish_2026",
@@ -44,7 +44,7 @@
     "en": {
       "title": "Inspiration Center",
       "coverRoot": "compose/cover",
-      "targetRoot": "compose/topictarget",
+      "targetRoot": "assets/topictarget",
       "topics": []
     }
   }

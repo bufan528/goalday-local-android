@@ -1,5 +1,6 @@
 package com.bf410.goaldaylocal.ui.book
 
+import android.content.Context
 import androidx.compose.ui.graphics.Color
 
 data class InspirationTemplate(
@@ -275,7 +276,7 @@ internal object InspirationTemplates {
             category = category,
             catalogPath = "assets/topic_center_config.json",
             coverAssetPath = "compose/cover/$coverKey",
-            targetAssetPath = "compose/topictarget/${coverKey}_target.txt",
+            targetAssetPath = "assets/topictarget/${coverKey}_target.txt",
             linkToSchedule = linkToSchedule,
             items = items.distinct(),
         )
@@ -495,3 +496,14 @@ internal object InspirationTemplates {
         )
     }
 }
+
+internal fun loadTargetAssetItems(context: Context, path: String): List<String> =
+    runCatching {
+        val assetName = path.removePrefix("assets/")
+        context.assets.open(assetName).bufferedReader().useLines { lines ->
+            lines.map(String::trim)
+                .filter { it.isNotBlank() && !it.startsWith("#") }
+                .distinct()
+                .toList()
+        }
+    }.getOrDefault(emptyList())

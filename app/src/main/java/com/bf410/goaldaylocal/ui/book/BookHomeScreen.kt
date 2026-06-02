@@ -1102,11 +1102,14 @@ private fun InspirationCenterView(
     onSaveAsBook: (InspirationTemplate, List<String>) -> Unit,
 ) {
     val selected = templates[selectedIndex.coerceIn(0, templates.lastIndex)]
-    var checkedStates by remember(selected.id) { mutableStateOf(List(selected.items.size) { true }) }
-    var editableItems by remember(selected.id) { mutableStateOf(selected.items) }
+    val context = LocalContext.current
+    val loadedTargetItems = remember(selected.id, selected.targetAssetPath) {
+        loadTargetAssetItems(context, selected.targetAssetPath).ifEmpty { selected.items }
+    }
+    var checkedStates by remember(selected.id, loadedTargetItems) { mutableStateOf(List(loadedTargetItems.size) { true }) }
+    var editableItems by remember(selected.id, loadedTargetItems) { mutableStateOf(loadedTargetItems) }
     var pushToToday by remember { mutableStateOf(true) }
     var clearSourceAfterApply by remember { mutableStateOf(false) }
-    val context = LocalContext.current
     val catalogStatus = remember(selected.catalogPath) {
         loadTopicCatalogStatus(context, selected.catalogPath)
     }
@@ -1232,7 +1235,7 @@ private fun InspirationCenterView(
                     Text("目标详情", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
                     Column(horizontalAlignment = Alignment.End) {
                         Text("catalog: ${selected.catalogPath.substringAfterLast('/')} · ${catalogStatus.label}", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
-                        Text("target: ${selected.targetAssetPath.substringAfterLast('/')}", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                        Text("target: ${selected.targetAssetPath.substringAfterLast('/')} · ${loadedTargetItems.size} lines", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
                     }
                 }
                 editableItems.chunked(2).forEachIndexed { rowIndex, rowItems ->

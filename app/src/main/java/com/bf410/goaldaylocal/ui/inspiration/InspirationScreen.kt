@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,6 +38,7 @@ import com.bf410.goaldaylocal.ui.book.InspirationTemplate
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.book.InspirationTemplates
 import com.bf410.goaldaylocal.ui.book.TopicCoverArt
+import com.bf410.goaldaylocal.ui.book.loadTargetAssetItems
 import com.bf410.goaldaylocal.ui.book.topicCoverBrush
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 
@@ -62,9 +64,13 @@ fun InspirationScreen(
     var inputText by rememberSaveable { mutableStateOf("") }
 
     val selectedTemplate = InspirationTemplates.all[selectedTemplateIndex.coerceIn(0, InspirationTemplates.all.lastIndex)]
-    val draftItems = remember(selectedTemplate.id) {
+    val context = LocalContext.current
+    val selectedTemplateItems = remember(selectedTemplate.id, selectedTemplate.targetAssetPath) {
+        loadTargetAssetItems(context, selectedTemplate.targetAssetPath).ifEmpty { selectedTemplate.items }
+    }
+    val draftItems = remember(selectedTemplate.id, selectedTemplateItems) {
         mutableStateListOf<InspirationDraftItem>().apply {
-            addAll(selectedTemplate.items.map { InspirationDraftItem(it, selected = true) })
+            addAll(selectedTemplateItems.map { InspirationDraftItem(it, selected = true) })
         }
     }
 
@@ -106,6 +112,9 @@ fun InspirationScreen(
 
         if (mode == InspirationMode.CENTER) {
             InspirationTemplates.all.forEachIndexed { index, template ->
+                val previewItems = remember(template.id, template.targetAssetPath) {
+                    loadTargetAssetItems(context, template.targetAssetPath).ifEmpty { template.items }
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -115,7 +124,7 @@ fun InspirationScreen(
                         .clickable {
                             selectedTemplateIndex = index
                             draftItems.clear()
-                            draftItems.addAll(template.items.map { InspirationDraftItem(it, selected = true) })
+                            draftItems.addAll(previewItems.map { InspirationDraftItem(it, selected = true) })
                             focusedIndex = 0
                         }
                         .padding(horizontal = 12.dp, vertical = 9.dp),
@@ -142,7 +151,7 @@ fun InspirationScreen(
                             )
                         }
                         Text(template.subtitle, color = Color(0xE8FFFFFF), style = MaterialTheme.typography.bodySmall)
-                        Text("预览 ${template.items.take(4).joinToString(" · ")}", color = Color(0xDFFFFFFF), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        Text("预览 ${previewItems.take(4).joinToString(" · ")}", color = Color(0xDFFFFFFF), style = MaterialTheme.typography.labelSmall, maxLines = 1)
                     }
                 }
             }
@@ -158,7 +167,7 @@ fun InspirationScreen(
         ) {
             Text(
                 text = when (mode) {
-                    InspirationMode.CENTER -> "${selectedTemplate.title} · ${selectedTemplate.targetCount}项"
+                    InspirationMode.CENTER -> "${selectedTemplate.title} · ${draftItems.size}项"
                     InspirationMode.SAVE -> "已导入任务池"
                     InspirationMode.FLIP -> "翻页"
                 },
