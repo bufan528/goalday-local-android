@@ -50,7 +50,7 @@ The APK still shows `assets/libjiagu*.so`; business class names are mostly not r
 
 - Target detail now has a full-screen overlay route with completion, note, deadline, and schedule actions.
 - Topic catalog now has id/cover key/target key/category and longer local target lists.
-- Diary has structured Compose fields and image support, but `RichDiaryEditor` is only defined and is not currently used by the diary page.
+- Diary now has structured Compose fields, image support, and persistent typed diary blocks for text/target/topic-target entries. `RichDiaryEditor` is still only defined and is not currently used by the diary page.
 - Export/share currently renders PNG long images directly; there is no dedicated preview screen and no PDF/print path.
 - Backup/settings are functional but sparse: immediate backup, latest restore, and path display only.
 - Widgets exist, but reference widget assets imply denser visual variants and more polished states.
@@ -59,17 +59,17 @@ The APK still shows `assets/libjiagu*.so`; business class names are mostly not r
 
 | Scope | Estimate | Why |
 | --- | ---: | --- |
-| Useful offline planner functionality | 72-78% | Local scheduling, templates, handbook, target detail, diary, widgets, import, and backup exist. |
-| Reference/video visual parity | 46-54% | Book shell, topic cards, and target detail improved; diary/export/widget/settings still visibly simplified. |
-| APK structure parity excluding account/VIP/pay/server | 60-66% | Major local modules exist, but diary, export/print, settings, and widget polish remain incomplete. |
+| Useful offline planner functionality | 74-80% | Local scheduling, templates, handbook, target detail, typed diary blocks, widgets, import, and backup exist. |
+| Reference/video visual parity | 50-58% | Book shell, topic cards, target detail, and diary item rows improved; export preview/widget/settings still visibly simplified. |
+| APK structure parity excluding account/VIP/pay/server | 63-69% | Major local modules exist and diary now has item-level blocks, but export/print, settings, and widget polish remain incomplete. |
 | Full APK parity including account/VIP/pay/server | 28-35% | Account/VIP/pay/login/coupon flows are still intentionally excluded for a local offline app. |
 
 ## Remaining Gap Ranking
 
 | Rank | Area | Current Gap | Impact |
 | --- | --- | --- | --- |
-| 1 | Diary editor/model | Current diary is structured fields; reference points to rich editor plus separate text/image/target/topic-target item models. | High: directly visible in daily-use workflow. |
-| 2 | Export/print preview | Current app exports/shares immediately; reference has long-image display and print/PDF signals. | High: visible product polish and share flow. |
+| 1 | Export/print preview | Current app exports/shares immediately; reference has long-image display and print/PDF signals. | High: visible product polish and share flow. |
+| 2 | Diary editor polish | Diary now has persistent typed blocks; reference still points to richer editor chrome and text formatting. | High: directly visible in daily-use workflow. |
 | 3 | Widget visual polish | Current widgets work; reference has mid/large/add widget assets and colored dot variants. | Medium: home-screen experience still simpler. |
 | 4 | Settings/backup density | Current settings are sparse; reference has denser setting rows, backup menu, font size/menu assets. | Medium: less important than planner flow, but visible. |
 | 5 | Target detail completion | Route now exists; still lacks save-as-own and richer section/menu options. | Medium-low: core target editing works, but reference has more options. |
@@ -77,12 +77,11 @@ The APK still shows `assets/libjiagu*.so`; business class names are mostly not r
 
 ## Next Build Recommendation
 
-The next implementation should focus on diary parity:
+The diary model pass is now implemented. The next implementation should focus on export/print parity:
 
-1. Add a persistent diary block model instead of relying on one raw structured string.
-2. Add block types: text, image, target, topic-target.
-3. Make the diary editor show block rows similar to the reference item model.
-4. Wire the existing `RichDiaryEditor` into text blocks or replace it with a Compose toolbar if WebView assets are not bundled in this local app.
-5. Keep existing image picker and target-link chips, but store them as real blocks.
+1. Add a dedicated long-image preview route instead of exporting immediately.
+2. Let diary and handbook share the preview/share/export surface.
+3. Add print/PDF entry points where Android platform APIs allow.
+4. Keep the current direct export as a fallback command.
 
-This will likely move visual parity more than another small book-shell or topic-card pass.
+This should now move visual parity more than another small diary field tweak.

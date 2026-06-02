@@ -49,9 +49,9 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 
 | Scope | Estimate | Reason |
 | --- | ---: | --- |
-| Useful offline planner functionality | 72-78% | Core local scheduling, handbook, diary, config-style templates, target detail overlay, widgets, backup, and import exist. |
-| Reference/video visual parity | 46-54% | Opened-book shell, topic-cover cards, and target detail route improved, but diary item layouts and print preview still differ. |
-| APK structure parity excluding account/VIP/pay | 60-66% | Many module names have local equivalents, but diary/export/settings are still merged or simplified. |
+| Useful offline planner functionality | 74-80% | Core local scheduling, handbook, typed diary blocks, config-style templates, target detail overlay, widgets, backup, and import exist. |
+| Reference/video visual parity | 50-58% | Opened-book shell, topic-cover cards, target detail route, and diary item rows improved, but print preview/widgets/settings still differ. |
+| APK structure parity excluding account/VIP/pay | 63-69% | Many module names have local equivalents and diary has item-level blocks, but export/settings/widgets are still merged or simplified. |
 | Full APK parity including account/VIP/pay/server | 28-35% | Those online/business flows are intentionally out of scope for the local app. |
 
 ## Biggest Remaining Gaps
@@ -60,21 +60,21 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 | --- | --- | --- | --- | --- |
 | P1 | Topic center visual assets | Config JSON, 33 covers, 28 target files | `InspirationTemplates` now has id/cover key/target key/category and longer local lists, but visuals are generated cover-style cards | Need stronger original cover illustrations or asset-backed cover model. |
 | P1 | Target detail flow | Dedicated `TargetDetailActivity`, target detail item names/options | Target cards now open a full-screen detail overlay with status, note, deadline, and schedule actions | Need save-as-own behavior and richer per-target sections. |
-| P0 | Diary model | Rich editor bundle and diary image/text/target/topic-target item layouts | Compose structured diary with images and target chips | Need richer block model: text block, image block, target block, topic-target block, inline formatting toolbar. |
+| P1 | Diary polish | Rich editor bundle and diary image/text/target/topic-target item layouts | Compose structured diary with images and persistent text/target/topic-target blocks | Need richer editor chrome and inline formatting; image blocks still use the existing image strip. |
 | P1 | Book page content parity | `BookActivity`, in-book schedule/diary fragments | Better shell and handbook schedule page | Need page contents to stop looking like generic panels, especially target and diary pages. |
 | P1 | Monthly schedule split | `fragment_monthly_schedule`, schedule item variants | Calendar page plus handbook spread | Need a clearer monthly board/detail split and closer schedule-item density. |
-| P1 | Print/export preview | `LongImageDisplayActivity`, `PrintPage`, iText | Direct export/share from diary/handbook | Need dedicated preview screen before share/print/export. |
+| P0 | Print/export preview | `LongImageDisplayActivity`, `PrintPage`, iText | Direct export/share from diary/handbook, now including typed diary blocks | Need dedicated preview screen before share/print/export. |
 | P2 | Widgets visual parity | diary add, mid schedule, large schedule widgets | Widgets exist | Need visual polish, empty states, and closer compact layout. |
 | P2 | Settings/backup density | `BackupActivity`, `SettingActivity` | Basic local backup/settings | Need backup history, restore confirmation, storage path/status, and denser settings rows. |
 
 ## Recommended Next Implementation Order
 
-1. Extend diary storage/UI to separate block types instead of encoding most content in one raw diary string.
-2. Add a dedicated long-image/print preview screen shared by diary and handbook exports.
+1. Add a dedicated long-image/print preview screen shared by diary and handbook exports.
+2. Add richer diary editor chrome and optional inline formatting.
 3. Strengthen original topic cover illustrations or add a local asset-backed cover model.
 4. Add target save-as-own behavior and richer per-target sections.
 5. Polish widgets/settings after the main in-app flow is closer.
 
 ## Practical Conclusion
 
-The current app is no longer "almost completely different"; it now has a similar offline product skeleton. But compared with the APK/video, it is still missing the reference app's richer diary/export surfaces. The next high-impact change should be the diary editor model, not another small visual tweak.
+The current app is no longer "almost completely different"; it now has a similar offline product skeleton. But compared with the APK/video, it is still missing the reference app's export/print surface and finer editor chrome. The next high-impact change should be the preview/export flow, not another small page-shell tweak.
