@@ -812,12 +812,20 @@ private fun HandbookReplicaPage(
     var saveHint by remember(pageIndex) { mutableStateOf("") }
     var spreadOrigin by remember(pageIndex) { mutableStateOf(Offset.Zero) }
     val todoDropBounds = remember(pageIndex) { mutableMapOf<Int, Rect>() }
+    val doneDropBounds = remember(pageIndex) { mutableMapOf<Int, Rect>() }
     var draggingPoolItem by remember(pageIndex) { mutableStateOf<String?>(null) }
+    var draggingTodoEntry by remember(pageIndex) { mutableStateOf<ScheduleEntry?>(null) }
     var dragPosition by remember(pageIndex) { mutableStateOf(Offset.Zero) }
     var activePoolDropDay by remember(pageIndex) { mutableStateOf<Int?>(null) }
+    var activeDoneDropDay by remember(pageIndex) { mutableStateOf<Int?>(null) }
     fun clearPoolDrag() {
         draggingPoolItem = null
         activePoolDropDay = null
+        dragPosition = Offset.Zero
+    }
+    fun clearTodoDrag() {
+        draggingTodoEntry = null
+        activeDoneDropDay = null
         dragPosition = Offset.Zero
     }
     LaunchedEffect(saveHint) {
@@ -885,6 +893,8 @@ private fun HandbookReplicaPage(
                         done = if (idx == 0 && block.done.isEmpty()) fallbackLeftDone else block.done.map { it.title },
                         todoCount = block.todo.size,
                         accent = GoaldayDesign.Positive,
+                        activeDrop = activeDoneDropDay == block.day,
+                        onBounds = { rect -> doneDropBounds[block.day] = rect },
                     )
                 }
             }
@@ -991,12 +1001,40 @@ private fun HandbookReplicaPage(
                                 saveHint = "已放入${entry.day}日"
                             }
                         },
+                        onEntryDragStart = { entry, position ->
+                            if (!entry.id.startsWith("fallback_")) {
+                                draggingTodoEntry = entry
+                                dragPosition = position
+                                activeDoneDropDay = doneDropBounds.entries.firstOrNull { it.value.contains(position) }?.key
+                            }
+                        },
+                        onEntryDrag = { delta ->
+                            dragPosition += delta
+                            activeDoneDropDay = doneDropBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
+                        },
+                        onEntryDragEnd = {
+                            val entry = draggingTodoEntry
+                            val targetDay = activeDoneDropDay
+                            when {
+                                entry != null && targetDay == entry.day -> {
+                                    onToggleScheduleCompleted(entry.id)
+                                    saveHint = "已放入${targetDay}日 done"
+                                }
+                                entry != null && targetDay != null -> saveHint = "请拖到同日期 done"
+                                entry != null -> saveHint = "未命中 done"
+                            }
+                            clearTodoDrag()
+                        },
+                        onEntryDragCancel = {
+                            saveHint = "已取消拖放"
+                            clearTodoDrag()
+                        },
                     )
                 }
             }
         }
 
-        draggingPoolItem?.let { text ->
+        (draggingPoolItem ?: draggingTodoEntry?.title)?.let { text ->
             val localX = (dragPosition.x - spreadOrigin.x).toInt()
             val localY = (dragPosition.y - spreadOrigin.y).toInt()
             Text(
@@ -1231,11 +1269,15 @@ private fun DaySpreadSection(
     done: List<String>,
     todoCount: Int,
     accent: Color,
+    activeDrop: Boolean,
+    onBounds: (Rect) -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .border(0.35.dp, Color(0x0A000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(if (activeDrop) GoaldayDesign.GreenSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
+            .border(if (activeDrop) 0.9.dp else 0.35.dp, if (activeDrop) GoaldayDesign.Positive else Color(0x0A000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) }
             .padding(horizontal = 5.dp, vertical = 3.dp),
         verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
@@ -1368,6 +1410,10 @@ private fun DaySpreadEditableSection(
     onTextChange: (String) -> Unit,
     onCommit: (ScheduleEntry) -> Unit,
     onToggleCompleted: (ScheduleEntry) -> Unit,
+    onEntryDragStart: (ScheduleEntry, Offset) -> Unit,
+    onEntryDrag: (Offset) -> Unit,
+    onEntryDragEnd: () -> Unit,
+    onEntryDragCancel: () -> Unit,
 ) {
     val doneCount = entries.count { it.completed }
     val todoCount = entries.count { !it.completed }
@@ -1398,6 +1444,10 @@ private fun DaySpreadEditableSection(
                     onTextChange = onTextChange,
                     onCommit = { onCommit(entry) },
                     onToggleCompleted = { onToggleCompleted(entry) },
+                    onDragStart = { position -> onEntryDragStart(entry, position) },
+                    onDrag = onEntryDrag,
+                    onDragEnd = onEntryDragEnd,
+                    onDragCancel = onEntryDragCancel,
                 )
             }
         }
@@ -1423,9 +1473,14 @@ private fun HandbookEntryLine(
     onTextChange: (String) -> Unit,
     onCommit: () -> Unit,
     onToggleCompleted: () -> Unit,
+    onDragStart: (Offset) -> Unit,
+    onDrag: (Offset) -> Unit,
+    onDragEnd: () -> Unit,
+    onDragCancel: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
     val rowEditorFocus = remember(entry.id) { FocusRequester() }
+    var rowOrigin by remember(entry.id) { mutableStateOf(Offset.Zero) }
     LaunchedEffect(editingId) {
         if (editingId == entry.id) {
             rowEditorFocus.requestFocus()
@@ -1434,7 +1489,21 @@ private fun HandbookEntryLine(
     Row(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
-        modifier = Modifier.fillMaxWidth().height(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(16.dp)
+            .onGloballyPositioned { coordinates ->
+                rowOrigin = coordinates.boundsInRoot().topLeft
+            }
+            .pointerInput(entry.id, editingId) {
+                if (editingId == entry.id || entry.id.startsWith("fallback_")) return@pointerInput
+                detectDragGesturesAfterLongPress(
+                    onDragStart = { start -> onDragStart(rowOrigin + start) },
+                    onDrag = { _, dragAmount -> onDrag(dragAmount) },
+                    onDragEnd = onDragEnd,
+                    onDragCancel = onDragCancel,
+                )
+            },
     ) {
         Text(
             slotLabel,
