@@ -782,6 +782,8 @@ private fun HandbookReplicaPage(
     val rightBlocks = dayBlocks
     val fallbackLeftDone = todayCompletedItems.take(3)
     val fallbackRightTodo = todayPlanItems.take(3)
+    val scheduledTitles = sorted.map { it.title }.toSet()
+    val visiblePoolItems = todayPlanItems.filterNot { it in scheduledTitles }.take(3)
     var draftText by remember(page.title) { mutableStateOf("") }
     var draftDay by remember(page.title) { mutableStateOf(rightBlocks.firstOrNull()?.day ?: 1) }
     val selectedDraftDay = draftDay.coerceIn(1, monthLength)
@@ -873,6 +875,11 @@ private fun HandbookReplicaPage(
                     days = rightBlocks.map { it.day },
                     selectedDay = selectedDraftDay,
                     onSelectDay = { draftDay = it },
+                    poolItems = visiblePoolItems,
+                    onPickPoolItem = { text ->
+                        onAddSchedule(text, anchorMonth, selectedDraftDay)
+                        saveHint = "已放入${selectedDraftDay}日"
+                    },
                     onDone = {
                         val text = draftText.trim()
                         if (text.isNotBlank()) {
@@ -1149,6 +1156,8 @@ private fun HandbookQuickAddRow(
     days: List<Int>,
     selectedDay: Int,
     onSelectDay: (Int) -> Unit,
+    poolItems: List<String>,
+    onPickPoolItem: (String) -> Unit,
     onDone: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -1199,6 +1208,26 @@ private fun HandbookQuickAddRow(
                         .clickable { onSelectDay(day) }
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 )
+            }
+        }
+        if (poolItems.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("待安排", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                poolItems.forEach { item ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .background(Color(0x08E88FAE))
+                            .clickable { onPickPoolItem(item) }
+                            .padding(horizontal = 5.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("□", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                        Text(item, style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkPrimary, maxLines = 1, modifier = Modifier.weight(1f))
+                    }
+                }
             }
         }
     }
