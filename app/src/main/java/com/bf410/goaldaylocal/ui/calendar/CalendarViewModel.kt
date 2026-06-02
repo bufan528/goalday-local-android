@@ -16,6 +16,7 @@ data class CalendarUiState(
     val year: Int,
     val month: Int,
     val entries: List<ScheduleEntry>,
+    val theme: String,
 )
 
 class CalendarViewModel(
@@ -26,6 +27,7 @@ class CalendarViewModel(
             year = store.calendarAnchorYear(),
             month = store.calendarAnchorMonth(),
             entries = monthEntries(store.calendarAnchorYear(), store.calendarAnchorMonth()),
+            theme = store.calendarTheme(store.calendarAnchorYear(), store.calendarAnchorMonth()),
         ),
     )
     val uiState: StateFlow<CalendarUiState> = _uiState
@@ -59,6 +61,12 @@ class CalendarViewModel(
         store.saveScheduleEntries(updated)
         refreshEntries()
         return entry.id
+    }
+
+    fun updateTheme(text: String) {
+        val current = _uiState.value
+        store.setCalendarTheme(current.year, current.month, text)
+        _uiState.update { it.copy(theme = text) }
     }
 
     fun removeSchedule(id: String) {
@@ -141,6 +149,7 @@ class CalendarViewModel(
                 year = year,
                 month = month,
                 entries = monthEntries(year, month),
+                theme = store.calendarTheme(year, month),
             )
         }
     }

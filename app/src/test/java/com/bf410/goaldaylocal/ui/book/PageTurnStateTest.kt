@@ -102,6 +102,7 @@ class PageTurnStateTest {
     fun drag_update_for_next_turn_accumulates_progress_from_left_swipe() {
         val next = updatedTurnProgress(
             currentProgress = 0.20f,
+            direction = TurnDirection.NEXT,
             dragAmountPx = -120f,
             pageWidthPx = 400f,
             canTurn = true,
@@ -114,6 +115,7 @@ class PageTurnStateTest {
     fun drag_update_for_blocked_turn_uses_boundary_resistance() {
         val next = updatedTurnProgress(
             currentProgress = 0.05f,
+            direction = TurnDirection.NEXT,
             dragAmountPx = -180f,
             pageWidthPx = 360f,
             canTurn = false,

@@ -744,12 +744,24 @@ private fun HandbookReplicaPage(
         null -> 0f
     }
     val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
-    val sorted = schedulePreviewEntries.sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
-    val anchorYear = sorted.firstOrNull()?.year ?: LocalDate.now().year
-    val anchorMonth = sorted.firstOrNull()?.month ?: LocalDate.now().monthValue
+    val today = LocalDate.now()
+    val pageMonth = Regex("(\\d{1,2})月")
+        .find(page.title)
+        ?.groupValues
+        ?.getOrNull(1)
+        ?.toIntOrNull()
+        ?.coerceIn(1, 12)
+    val anchorYear = schedulePreviewEntries.firstOrNull()?.year ?: today.year
+    val anchorMonth = pageMonth ?: schedulePreviewEntries.firstOrNull()?.month ?: today.monthValue
+    val sorted = schedulePreviewEntries
+        .filter { it.month == anchorMonth }
+        .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
     val monthLength = YearMonth.of(anchorYear, anchorMonth).lengthOfMonth()
-    val todayStart = (LocalDate.now().dayOfMonth - 1).coerceIn(0, monthLength - 1)
-    val start = (todayStart + pageIndex) % monthLength
+    val start = if (anchorYear == today.year && anchorMonth == today.monthValue) {
+        (today.dayOfMonth - 1).coerceIn(0, monthLength - 1)
+    } else {
+        0
+    }
     val dayBlocks = List(6) { offset ->
         val day = ((start + offset) % monthLength) + 1
         val dayEntries = sorted.filter { it.day == day }
@@ -776,7 +788,7 @@ private fun HandbookReplicaPage(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.Surface)
-            .border(0.8.dp, Color(0x18000000), RoundedCornerShape(GoaldayDesign.RadiusL))
+            .border(0.5.dp, Color(0x10000000), RoundedCornerShape(GoaldayDesign.RadiusL))
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha
@@ -929,17 +941,17 @@ private fun DaySpreadSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .border(0.5.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = 6.dp, vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+            .border(0.35.dp, Color(0x0A000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .padding(horizontal = 5.dp, vertical = 3.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
             Text("done ${done.size}", style = MaterialTheme.typography.labelSmall, color = accent.copy(alpha = 0.88f))
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("done", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
-            Text("todo", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
+            Text("done", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+            Text("todo", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
         }
         done.take(2).forEach { line ->
             Text("✓ $line", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary, textDecoration = TextDecoration.LineThrough, maxLines = 1)
@@ -969,9 +981,9 @@ private fun DaySpreadEditableSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .border(0.5.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = 6.dp, vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+            .border(0.35.dp, Color(0x0A000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .padding(horizontal = 5.dp, vertical = 3.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)

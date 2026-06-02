@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,9 +70,14 @@ fun CalendarScreen(
     var toast by remember { mutableStateOf("") }
     var grabbedPoolEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
     var draggingPoolEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
+    var draggingDayEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
     var dragPosition by remember { mutableStateOf(Offset.Zero) }
     var activeDropSlot by remember { mutableStateOf<String?>(null) }
+    var activeDoneDrop by remember { mutableStateOf(false) }
+    var doneDropBounds by remember { mutableStateOf(Rect.Zero) }
     val dropSlotBounds = remember { mutableStateMapOf<String, Rect>() }
+    var editingEntryId by remember { mutableStateOf<String?>(null) }
+    var editingText by remember { mutableStateOf("") }
 
     val maxDay = YearMonth.of(state.year, state.month).lengthOfMonth()
     selectedDay = selectedDay.coerceIn(1, maxDay)
@@ -119,6 +125,19 @@ fun CalendarScreen(
                 toast = "已回到今天"
             },
         )
+        Text(
+            "为J人而生的App",
+            color = Color.White,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier
+                .background(Color(0xFF111111), RoundedCornerShape(GoaldayDesign.RadiusS))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+        )
+
+        CalendarThemeField(
+            value = state.theme,
+            onValueChange = viewModel::updateTheme,
+        )
 
         Row(
             modifier = Modifier
@@ -160,6 +179,31 @@ fun CalendarScreen(
         }
 
         BoardCard(title = "${state.month}月${selectedDay}日 · 今日执行", subtitle = "待办 ${todoEntries.size} / 已完成 ${doneEntries.size}") {
+            if (editingEntryId != null) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    Text(
+                        "完成",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier
+                            .background(GoaldayDesign.PrimaryAction, RoundedCornerShape(GoaldayDesign.RadiusPill))
+                            .clickable {
+                                val targetId = editingEntryId
+                                val target = dayEntries.firstOrNull { it.id == targetId }
+                                if (target != null) {
+                                    val nextTitle = editingText.trim()
+                                    if (nextTitle.isNotBlank()) {
+                                        viewModel.updateSchedule(target.id, nextTitle, target.day, target.note)
+                                        toast = "已保存编辑"
+                                    }
+                                }
+                                editingEntryId = null
+                                editingText = ""
+                            }
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
+                }
+            }
             grabbedPoolEntry?.let { g ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("已抓取：${g.title}（点上/下/晚投放）", color = Color(0xFFB07A8F), style = MaterialTheme.typography.labelSmall)
@@ -215,14 +259,20 @@ fun CalendarScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(if (activeDoneDrop) GoaldayDesign.GreenSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
                     .border(0.5.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 8.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .onGloballyPositioned { doneDropBounds = it.boundsInRoot() },
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
                     Text("done", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                     if (doneEntries.isEmpty()) {
-                        Text("○", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                        Text(if (activeDoneDrop) "释放放入 done" else "○", color = if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
                     } else {
                         doneEntries.take(4).forEach { entry ->
                             Text(
@@ -256,9 +306,43 @@ fun CalendarScreen(
                 Text("当天暂无任务", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.bodySmall)
             }
             dayEntries.forEach { entry ->
+                var dayRowOrigin by remember(entry.id) { mutableStateOf(Offset.Zero) }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(if (draggingDayEntry?.id == entry.id) Color(0x18E88FAE) else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .onGloballyPositioned { dayRowOrigin = it.boundsInRoot().topLeft }
+                        .pointerInput(entry.id, entry.completed) {
+                            if (entry.completed) return@pointerInput
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = { start ->
+                                    draggingDayEntry = entry
+                                    dragPosition = dayRowOrigin + start
+                                    activeDoneDrop = doneDropBounds.contains(dragPosition)
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    dragPosition += dragAmount
+                                    activeDoneDrop = doneDropBounds.contains(dragPosition)
+                                },
+                                onDragEnd = {
+                                    val target = draggingDayEntry
+                                    if (target != null && activeDoneDrop) {
+                                        viewModel.toggleScheduleCompleted(target.id)
+                                        toast = "已放入 done"
+                                    } else if (target != null) {
+                                        toast = "未命中 done 区"
+                                    }
+                                    draggingDayEntry = null
+                                    activeDoneDrop = false
+                                },
+                                onDragCancel = {
+                                    draggingDayEntry = null
+                                    activeDoneDrop = false
+                                    toast = "已取消拖放"
+                                },
+                            )
+                        }
                         .padding(vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -276,8 +360,27 @@ fun CalendarScreen(
                         textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                         modifier = Modifier.weight(1f),
                     )
-                    Text("✎", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { editingEntry = entry })
+                    Text(
+                        "✎",
+                        color = GoaldayDesign.InkSecondary,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.clickable {
+                            editingEntryId = entry.id
+                            editingText = entry.title
+                        },
+                    )
                     Text("🗑", color = GoaldayDesign.Danger, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { viewModel.removeSchedule(entry.id) })
+                }
+                if (editingEntryId == entry.id) {
+                    BasicTextField(
+                        value = editingText,
+                        onValueChange = { editingText = it },
+                        textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0x10000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                    )
                 }
             }
             Text(
@@ -319,11 +422,13 @@ fun CalendarScreen(
                                     draggingPoolEntry = entry
                                     dragPosition = rowOrigin + start
                                     activeDropSlot = dropSlotBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
+                                    activeDoneDrop = false
                                 },
                                 onDrag = { change, dragAmount ->
                                     change.consume()
                                     dragPosition += dragAmount
                                     activeDropSlot = dropSlotBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
+                                    activeDoneDrop = false
                                 },
                                 onDragEnd = {
                                     val targetSlot = activeDropSlot
@@ -337,10 +442,12 @@ fun CalendarScreen(
                                     }
                                     draggingPoolEntry = null
                                     activeDropSlot = null
+                                    activeDoneDrop = false
                                 },
                                 onDragCancel = {
                                     draggingPoolEntry = null
                                     activeDropSlot = null
+                                    activeDoneDrop = false
                                     toast = "已取消拖放"
                                 },
                             )
@@ -412,18 +519,23 @@ fun CalendarScreen(
         }
         }
 
-        draggingPoolEntry?.let { entry ->
+        (draggingPoolEntry ?: draggingDayEntry)?.let { entry ->
             Column(
                 modifier = Modifier
                     .offset { IntOffset(dragPosition.x.toInt(), dragPosition.y.toInt()) }
-                    .background(if (activeDropSlot != null) Color(0xFFE88FAE) else Color(0xDDE88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .border(if (activeDropSlot != null) 1.2.dp else 0.8.dp, Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .background(if (activeDropSlot != null || activeDoneDrop) Color(0xFFE88FAE) else Color(0xDDE88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .border(if (activeDropSlot != null || activeDoneDrop) 1.2.dp else 0.8.dp, Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(entry.title, color = Color.White, style = MaterialTheme.typography.labelSmall)
                 Text(
-                    if (activeDropSlot != null) "释放投放到$activeDropSlot" else "拖到上/下/晚槽位",
+                    when {
+                        draggingDayEntry != null && activeDoneDrop -> "释放放入 done"
+                        draggingDayEntry != null -> "拖到 done 区"
+                        activeDropSlot != null -> "释放投放到$activeDropSlot"
+                        else -> "拖到上/下/晚槽位"
+                    },
                     color = Color.White.copy(alpha = 0.9f),
                     style = MaterialTheme.typography.labelSmall,
                 )
@@ -463,6 +575,37 @@ fun CalendarScreen(
             },
         )
     }
+}
+
+@Composable
+private fun CalendarThemeField(
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+        decorationBox = { inner ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(GoaldayDesign.PinkSoft, RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .padding(horizontal = 9.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text("本周主题", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Box(Modifier.weight(1f)) {
+                    if (value.isBlank()) {
+                        Text("写下最重要的目标", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                    }
+                    inner()
+                }
+            }
+        },
+    )
 }
 
 @Composable

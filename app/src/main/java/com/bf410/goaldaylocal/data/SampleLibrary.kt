@@ -5,16 +5,20 @@ import androidx.compose.ui.graphics.Color
 object SampleLibrary {
     val books = listOf(
         TopicBook(
-            id = "wish-2026",
-            title = "2026 愿望清单",
-            subtitle = "年度计划与人生小愿望",
-            color = Color(0xFFF2C0A5),
-            pages = listOf(
-                TargetPage("目标页", listOf("写一封感谢信", "整理房间", "尝试一道新食谱", "学习一项新技能", "为自己买一束花")),
-                PlanPage("计划页", listOf("把 3 个本月目标拆成每周动作", "安排周日复盘", "设置本月储蓄提醒")),
-                SchedulePage("日程页", listOf("周六 10:00 周复盘", "每天 22:30 准备入睡", "周三 20:00 记录本周进展")),
-                DiaryPage("日记页", "今天最接近 2026 愿望的一件事是什么？"),
-            ),
+            id = "goalday-2026",
+            title = "2026 GOALDAY",
+            subtitle = "月度日程本",
+            color = Color(0xFFBBD1AD),
+            pages = (1..12).map { month ->
+                SchedulePage(
+                    title = "${month}月",
+                    items = listOf(
+                        "列出本月要做的所有事",
+                        "标出每周最重要的目标",
+                        "把当天计划拖入 todo/done",
+                    ),
+                )
+            },
         ),
         TopicBook(
             id = "weekly-review",

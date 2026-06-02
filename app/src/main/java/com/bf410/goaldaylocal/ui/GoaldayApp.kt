@@ -23,6 +23,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -80,12 +81,18 @@ fun GoaldayApp() {
         navigateBackInsideApp()
     }
 
+    LaunchedEffect(tab) {
+        if (tab == RootTab.HANDBOOK) {
+            bookViewModel.refreshSchedulePreview()
+        }
+    }
+
     MaterialTheme {
         Scaffold(
             containerColor = GoaldayDesign.AppBg,
             bottomBar = {
                 NavigationBar(
-                    containerColor = Color(0xFFF2E7E3),
+                    containerColor = Color.White,
                     tonalElevation = 0.dp,
                 ) {
                     RootTab.entries.forEach { item ->
@@ -96,11 +103,11 @@ fun GoaldayApp() {
                             icon = { Icon(imageVector = item.icon, contentDescription = item.label) },
                             label = { Text(item.label) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFFE88FAE),
-                                selectedTextColor = Color(0xFFE88FAE),
+                                selectedIconColor = GoaldayDesign.Pink,
+                                selectedTextColor = GoaldayDesign.Pink,
                                 unselectedIconColor = Color(0xFF9E958A),
                                 unselectedTextColor = Color(0xFF9E958A),
-                                indicatorColor = Color(0x22E88FAE),
+                                indicatorColor = GoaldayDesign.PinkSoft,
                             ),
                         )
                     }

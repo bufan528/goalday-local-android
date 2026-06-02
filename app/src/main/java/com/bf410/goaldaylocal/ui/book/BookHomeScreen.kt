@@ -27,6 +27,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -87,6 +88,11 @@ fun BookHomeScreen(
 
     val hasBooks = uiState.books.isNotEmpty()
     val safeBookIndex = uiState.selectedBookIndex.coerceIn(0, (uiState.books.lastIndex).coerceAtLeast(0))
+    LaunchedEffect(entryMode, hasBooks, uiState.selectedBookIndex) {
+        if (entryMode == BookEntryMode.HANDBOOK && hasBooks && uiState.selectedBookIndex != 0) {
+            viewModel.selectBook(0)
+        }
+    }
 
     when (entryMode) {
         BookEntryMode.INSPIRATION -> {
@@ -107,6 +113,7 @@ fun BookHomeScreen(
 
         BookEntryMode.HANDBOOK -> {
             if (!hasBooks) return
+            if (uiState.selectedBookIndex != 0) return
             val book = uiState.books[safeBookIndex]
             val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
             val currentPage = book.pages[clampedPageIndex]
@@ -125,7 +132,8 @@ fun BookHomeScreen(
                 onShowEditBook = { showEditBookDialog = true },
                 onToggleManagePanel = { },
                 showManagePanel = false,
-                forcedSegment = BookSegment.DIARY,
+                forcedSegment = null,
+                bookOnlyMode = true,
                 onShowInspiration = { },
             )
         }
@@ -175,6 +183,7 @@ fun BookHomeScreen(
                         onToggleManagePanel = { showManagePanel = !showManagePanel },
                         showManagePanel = showManagePanel,
                         forcedSegment = BookSegment.WEEK,
+                        bookOnlyMode = false,
                         onShowInspiration = { showInspiration = true },
                     )
                 }
@@ -318,9 +327,10 @@ private fun BookDetailView(
     onToggleManagePanel: () -> Unit,
     showManagePanel: Boolean,
     forcedSegment: BookSegment?,
+    bookOnlyMode: Boolean = false,
     onShowInspiration: () -> Unit,
 ) {
-    val handbookMode = forcedSegment == BookSegment.DIARY
+    val handbookMode = bookOnlyMode || forcedSegment == BookSegment.DIARY
     var segment by remember(book.id) { mutableStateOf(resolveSegment(currentPage)) }
     forcedSegment?.let { desired ->
         if (segment != desired) {
@@ -428,7 +438,7 @@ private fun BookDetailView(
         }
         if (handbookMode) {
             Text(
-                text = monthLabelForPage(currentPage.title),
+                text = monthLabelForPage(currentPage.title, fallback = book.title),
                 modifier = Modifier.fillMaxWidth(),
                 color = Color(0xFF1F1D1A),
                 style = MaterialTheme.typography.headlineSmall,
@@ -436,7 +446,7 @@ private fun BookDetailView(
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                "翻页",
+                currentPage.title,
                 modifier = Modifier.fillMaxWidth(),
                 color = Color(0xFF1F1D1A),
                 style = MaterialTheme.typography.titleLarge,
@@ -550,9 +560,9 @@ private fun BookDetailView(
     }
 }
 
-private fun monthLabelForPage(title: String): String {
+private fun monthLabelForPage(title: String, fallback: String): String {
     val regex = Regex("(\\d{1,2}月)")
-    return regex.find(title)?.value ?: "1月"
+    return regex.find(title)?.value ?: fallback
 }
 
 private fun matchesSegment(page: BookPage, segment: BookSegment): Boolean =

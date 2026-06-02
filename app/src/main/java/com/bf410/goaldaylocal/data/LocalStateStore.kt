@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import com.tencent.mmkv.MMKV
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.LocalDate
 import java.util.UUID
 
 class LocalStateStore(
@@ -38,13 +39,20 @@ class LocalStateStore(
         mmkv.encode(KEY_SAVED_BOOKS, savedBookIds() - bookId)
     }
 
-    fun calendarAnchorYear(): Int = mmkv.decodeInt(KEY_CALENDAR_YEAR, 2026)
+    fun calendarAnchorYear(): Int = mmkv.decodeInt(KEY_CALENDAR_YEAR, LocalDate.now().year)
 
-    fun calendarAnchorMonth(): Int = mmkv.decodeInt(KEY_CALENDAR_MONTH, 5)
+    fun calendarAnchorMonth(): Int = mmkv.decodeInt(KEY_CALENDAR_MONTH, LocalDate.now().monthValue)
 
     fun setCalendarAnchor(year: Int, month: Int) {
         mmkv.encode(KEY_CALENDAR_YEAR, year)
         mmkv.encode(KEY_CALENDAR_MONTH, month)
+    }
+
+    fun calendarTheme(year: Int, month: Int): String =
+        mmkv.decodeString(calendarThemeKey(year, month), "") ?: ""
+
+    fun setCalendarTheme(year: Int, month: Int, text: String) {
+        mmkv.encode(calendarThemeKey(year, month), text)
     }
 
     fun scheduleEntries(): List<ScheduleEntry> {
@@ -220,6 +228,8 @@ class LocalStateStore(
         "page_items_${bookId}_${pageTitle.hashCode()}"
 
     private fun weeklyThemeKey(bookId: String): String = "week_theme_$bookId"
+
+    private fun calendarThemeKey(year: Int, month: Int): String = "calendar_theme_${year}_$month"
 
     private fun todayPlanKey(bookId: String, pageTitle: String): String =
         "today_plan_${bookId}_${pageTitle.hashCode()}"

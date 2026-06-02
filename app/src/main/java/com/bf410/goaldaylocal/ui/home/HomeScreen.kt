@@ -1,10 +1,10 @@
 package com.bf410.goaldaylocal.ui.home
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,36 +17,46 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
-import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.delay
@@ -62,299 +72,178 @@ fun HomeScreen(
 ) {
     val state by calendarViewModel.uiState.collectAsState()
     val today = LocalDate.now()
-    val todayEntries = state.entries
-        .filter { it.year == today.year && it.month == today.monthValue && it.day == today.dayOfMonth }
-        .sortedWith(compareBy<ScheduleEntry> { it.completed }.thenBy { it.title.lowercase() })
-
     val currentMonth = YearMonth.of(state.year, state.month)
     val maxDay = currentMonth.lengthOfMonth()
+    val defaultDay = if (state.year == today.year && state.month == today.monthValue) today.dayOfMonth else 1
+    var selectedDay by remember(state.year, state.month) { mutableIntStateOf(defaultDay.coerceIn(1, maxDay)) }
+    selectedDay = selectedDay.coerceIn(1, maxDay)
 
-    val backlog = state.entries
-        .filter { it.year == state.year && it.month == state.month }
-        .filterNot { it.year == today.year && it.month == today.monthValue && it.day == today.dayOfMonth }
-        .filterNot { it.completed }
-        .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.title.lowercase() }))
-        .take(8)
-
-    var priorityDay by remember(state.year, state.month) { mutableStateOf(today.dayOfMonth.coerceIn(1, maxDay)) }
-    priorityDay = priorityDay.coerceIn(1, maxDay)
-    val priorityEntries = state.entries
-        .filter { it.year == state.year && it.month == state.month && it.day == priorityDay }
-        .filterNot { it.completed }
-        .sortedBy { it.title.lowercase() }
-        .take(3)
-
-    val morning = todayEntries.filter { parseTimeSlot(it.note) == "上午" }
-    val afternoon = todayEntries.filter { parseTimeSlot(it.note) == "下午" }
-    val evening = todayEntries.filter { parseTimeSlot(it.note) == "晚上" }
-    val unassigned = todayEntries.filter { parseTimeSlot(it.note) == null }
+    var draftTask by rememberSaveable(state.year, state.month) { mutableStateOf("") }
+    var draftDay by rememberSaveable(state.year, state.month) { mutableIntStateOf(selectedDay) }
+    draftDay = draftDay.coerceIn(1, maxDay)
+    var hint by remember { mutableStateOf("") }
     var grabbedEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
     var draggingEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
     var dragPosition by remember { mutableStateOf(Offset.Zero) }
-    var activeDropSlot by remember { mutableStateOf<String?>(null) }
-    val dropSlotBounds = remember { mutableStateMapOf<String, Rect>() }
-    var hint by remember { mutableStateOf("") }
+    var activeDropDay by remember { mutableStateOf<Int?>(null) }
+    var activeDoneDrop by remember { mutableStateOf(false) }
+    val dayDropBounds = remember { mutableStateMapOf<Int, Rect>() }
+    var doneDropBounds by remember { mutableStateOf(Rect.Zero) }
+
     LaunchedEffect(hint) {
         if (hint.isBlank()) return@LaunchedEffect
-        delay(1000)
+        delay(1200)
         hint = ""
     }
+
+    fun addDraftTask(day: Int = draftDay) {
+        val title = draftTask.trim()
+        if (title.isBlank()) return
+        calendarViewModel.addSchedule(title, day.coerceIn(1, maxDay), "")
+        selectedDay = day.coerceIn(1, maxDay)
+        draftDay = selectedDay
+        draftTask = ""
+        hint = "已加入 ${selectedDay} 日"
+    }
+
+    fun moveEntryToDay(entry: ScheduleEntry, day: Int) {
+        calendarViewModel.moveScheduleToDay(entry.id, day.coerceIn(1, maxDay))
+        grabbedEntry = null
+        hint = "已拖入 ${day.coerceIn(1, maxDay)} 日"
+    }
+
+    fun markDone(entry: ScheduleEntry) {
+        if (!entry.completed) {
+            calendarViewModel.toggleScheduleCompleted(entry.id)
+        }
+        grabbedEntry = null
+        hint = "已放入 done"
+    }
+
+    val weekStart = ((selectedDay - 1) / 7) * 7 + 1
+    val weekDays = (weekStart until weekStart + 7).filter { it <= maxDay }
+    val monthEntries = state.entries
+        .filter { it.year == state.year && it.month == state.month }
+        .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }))
+    val selectedDayEntries = monthEntries.filter { it.day == selectedDay }
+    val todoEntries = monthEntries.filterNot { it.completed }.take(12)
+    val doneEntries = monthEntries.filter { it.completed }.takeLast(6).reversed()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(GoaldayDesign.AppBg)
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-        GoaldayTopBar(
-            leftTitle = "Goalday",
-            rightPrimaryText = "今天",
-            onRightPrimaryClick = { calendarViewModel.backToToday() },
+            PromoHeader(
+                year = state.year,
+                month = state.month,
+                onToday = {
+                    calendarViewModel.backToToday()
+                    selectedDay = today.dayOfMonth
+                    draftDay = selectedDay
+                    hint = "已回到今天"
+                },
+            )
+
+            PaperPlanner(
+                year = state.year,
+                month = state.month,
+                selectedDay = selectedDay,
+                weekDays = weekDays,
+                entries = monthEntries,
+                selectedDayEntries = selectedDayEntries,
+                weeklyGoal = state.theme,
+                onWeeklyGoalChange = calendarViewModel::updateTheme,
+                draftTask = draftTask,
+                onDraftTaskChange = { draftTask = it },
+                draftDay = draftDay,
+                onDraftDayChange = { draftDay = it },
+                onAddDraftTask = { addDraftTask() },
+                grabbedEntry = grabbedEntry,
+                activeDropDay = activeDropDay,
+                onSelectDay = {
+                    selectedDay = it
+                    draftDay = it
+                },
+                onOpenDay = onOpenCalendarForDay,
+                onDayBounds = { day, rect -> dayDropBounds[day] = rect },
+                todoEntries = todoEntries,
+                doneEntries = doneEntries,
+                activeDoneDrop = activeDoneDrop,
+                onDoneBounds = { doneDropBounds = it },
+                onGrab = { grabbedEntry = it },
+                onMoveToDay = ::moveEntryToDay,
+                onMarkDone = ::markDone,
+                onToggleDone = { calendarViewModel.toggleScheduleCompleted(it.id) },
+                onDragStart = { entry, position ->
+                    draggingEntry = entry
+                    dragPosition = position
+                    activeDropDay = dayDropBounds.entries.firstOrNull { it.value.contains(position) }?.key
+                    activeDoneDrop = doneDropBounds.contains(position)
+                },
+                onDrag = { amount ->
+                    dragPosition += amount
+                    activeDropDay = dayDropBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
+                    activeDoneDrop = doneDropBounds.contains(dragPosition)
+                },
+                onDragEnd = {
+                    val target = draggingEntry
+                    val targetDay = activeDropDay
+                    when {
+                        target != null && activeDoneDrop -> markDone(target)
+                        target != null && targetDay != null -> moveEntryToDay(target, targetDay)
+                        target != null -> hint = "未命中日期或 done"
+                    }
+                    draggingEntry = null
+                    activeDropDay = null
+                    activeDoneDrop = false
+                },
+                onDragCancel = {
+                    draggingEntry = null
+                    activeDropDay = null
+                    activeDoneDrop = false
+                    hint = "已取消拖放"
+                },
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                TextNav("日历", Modifier.weight(1f), onOpenCalendar)
+                TextNav("灵感", Modifier.weight(1f), onOpenInspiration)
+                TextNav("手账", Modifier.weight(1f), onOpenHandbook)
+            }
+            if (hint.isNotBlank()) {
+                Text(hint, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+            }
+        }
+
+        FloatingAddButton(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(18.dp),
+            onClick = { addDraftTask() },
         )
-
-        StepCard(title = "1. 在清单中列出一周要做的所有事", subtitle = "计划池") {
-            grabbedEntry?.let { g ->
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("已抓取：${g.title}（点上/下/晚投放）", color = Color(0xFFB07A8F), style = MaterialTheme.typography.labelSmall)
-                    Text("取消", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { grabbedEntry = null })
-                }
-            }
-            if (backlog.isEmpty()) {
-                Text("暂无待安排事项", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.bodySmall)
-            }
-            backlog.forEach { entry ->
-                var rowOrigin by remember(entry.id) { mutableStateOf(Offset.Zero) }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            if (grabbedEntry?.id == entry.id) Color(0x18E88FAE) else Color.Transparent,
-                            RoundedCornerShape(GoaldayDesign.RadiusS),
-                        )
-                        .combinedClickable(
-                            onClick = { onOpenCalendarForDay(entry.day) },
-                            onLongClick = { grabbedEntry = entry },
-                        )
-                        .onGloballyPositioned { coords -> rowOrigin = coords.boundsInRoot().topLeft }
-                        .pointerInput(entry.id) {
-                            detectDragGesturesAfterLongPress(
-                                onDragStart = { start ->
-                                    draggingEntry = entry
-                                    dragPosition = rowOrigin + start
-                                    activeDropSlot = dropSlotBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
-                                },
-                                onDrag = { change, dragAmount ->
-                                    change.consume()
-                                    dragPosition += dragAmount
-                                    activeDropSlot = dropSlotBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
-                                },
-                                onDragEnd = {
-                                    val targetSlot = activeDropSlot
-                                    val target = draggingEntry
-                                    if (targetSlot != null && target != null) {
-                                        calendarViewModel.moveScheduleToDay(target.id, today.dayOfMonth)
-                                        calendarViewModel.updateSchedule(target.id, target.title, today.dayOfMonth, mergeTimeSlot(target.note, targetSlot))
-                                        hint = "已投放到$targetSlot"
-                                    } else if (target != null) {
-                                        hint = "未命中投放槽位"
-                                    }
-                                    draggingEntry = null
-                                    activeDropSlot = null
-                                },
-                                onDragCancel = {
-                                    draggingEntry = null
-                                    activeDropSlot = null
-                                    hint = "已取消拖放"
-                                },
-                            )
-                        }
-                        .padding(horizontal = 4.dp, vertical = 3.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Text("○", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
-                    Text("${entry.day}日", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
-                    Text(entry.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                    Text("长按抓取", color = Color(0xFFB07A8F), style = MaterialTheme.typography.labelSmall)
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        QuickSlotChip("上") {
-                            calendarViewModel.moveScheduleToDay(entry.id, today.dayOfMonth)
-                            calendarViewModel.updateSchedule(entry.id, entry.title, today.dayOfMonth, mergeTimeSlot(entry.note, "上午"))
-                        }
-                        QuickSlotChip("下") {
-                            calendarViewModel.moveScheduleToDay(entry.id, today.dayOfMonth)
-                            calendarViewModel.updateSchedule(entry.id, entry.title, today.dayOfMonth, mergeTimeSlot(entry.note, "下午"))
-                        }
-                        QuickSlotChip("晚") {
-                            calendarViewModel.moveScheduleToDay(entry.id, today.dayOfMonth)
-                            calendarViewModel.updateSchedule(entry.id, entry.title, today.dayOfMonth, mergeTimeSlot(entry.note, "晚上"))
-                        }
-                    }
-                }
-            }
-        }
-
-        StepCard(title = "2. 在每页列出最重要的目标/主题", subtitle = "优先级") {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("日期", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
-                listOf(priorityDay, (priorityDay + 1).coerceAtMost(maxDay), (priorityDay + 2).coerceAtMost(maxDay)).distinct().forEach { day ->
-                    Text(
-                        "${day}日",
-                        color = if (day == priorityDay) Color.White else GoaldayDesign.InkSecondary,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier
-                            .background(if (day == priorityDay) GoaldayDesign.PrimaryAction else Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .clickable { priorityDay = day }
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                    )
-                }
-            }
-            if (priorityEntries.isEmpty()) {
-                Text("该日暂无计划", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.bodySmall)
-            }
-            priorityEntries.forEach { entry ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Text("•", color = Color(0xFFE88FAE), style = MaterialTheme.typography.labelSmall)
-                    Text(entry.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                    Text("移到今天", color = Color(0xFFB07A8F), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
-                        calendarViewModel.moveScheduleToDay(entry.id, today.dayOfMonth)
-                    })
-                }
-            }
-        }
-
-        StepCard(title = "3. 到了当天，从右侧清单中拖入计划事项", subtitle = "今日执行") {
-            TimeSlotLine(
-                "上",
-                slotKey = "上午",
-                assigned = morning.firstOrNull(),
-                fallback = grabbedEntry ?: unassigned.firstOrNull(),
-                dropReady = grabbedEntry != null || draggingEntry != null,
-                hover = activeDropSlot == "上午",
-                onZoneBounds = { rect -> dropSlotBounds["上午"] = rect },
-            ) { entry, slot ->
-                calendarViewModel.updateSchedule(entry.id, entry.title, today.dayOfMonth, mergeTimeSlot(entry.note, slot))
-                grabbedEntry = null
-                hint = "已投放到$slot"
-            }
-            TimeSlotLine(
-                "下",
-                slotKey = "下午",
-                assigned = afternoon.firstOrNull(),
-                fallback = grabbedEntry ?: unassigned.drop(1).firstOrNull(),
-                dropReady = grabbedEntry != null || draggingEntry != null,
-                hover = activeDropSlot == "下午",
-                onZoneBounds = { rect -> dropSlotBounds["下午"] = rect },
-            ) { entry, slot ->
-                calendarViewModel.updateSchedule(entry.id, entry.title, today.dayOfMonth, mergeTimeSlot(entry.note, slot))
-                grabbedEntry = null
-                hint = "已投放到$slot"
-            }
-            TimeSlotLine(
-                "晚",
-                slotKey = "晚上",
-                assigned = evening.firstOrNull(),
-                fallback = grabbedEntry ?: unassigned.drop(2).firstOrNull(),
-                dropReady = grabbedEntry != null || draggingEntry != null,
-                hover = activeDropSlot == "晚上",
-                onZoneBounds = { rect -> dropSlotBounds["晚上"] = rect },
-            ) { entry, slot ->
-                calendarViewModel.updateSchedule(entry.id, entry.title, today.dayOfMonth, mergeTimeSlot(entry.note, slot))
-                grabbedEntry = null
-                hint = "已投放到$slot"
-            }
-            Spacer(Modifier.height(4.dp))
-            todayEntries.forEach { entry ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Text(
-                        if (entry.completed) "✓" else "○",
-                        color = if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.InkSecondary,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.clickable { calendarViewModel.toggleScheduleCompleted(entry.id) },
-                    )
-                    Text(
-                        entry.title,
-                        color = if (entry.completed) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
-                        style = MaterialTheme.typography.bodySmall,
-                        textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
-                    )
-                }
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            ActionPill("打开日历", Modifier.weight(1f)) { onOpenCalendar() }
-            ActionPill("灵感模板", Modifier.weight(1f)) { onOpenInspiration() }
-            ActionPill("手账本", Modifier.weight(1f)) { onOpenHandbook() }
-        }
-        if (hint.isNotBlank()) {
-            Text(hint, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
-        }
-        grabbedEntry?.let { entry ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0x1AE88FAE), RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .border(0.8.dp, Color(0x22E88FAE), RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("快速投放：${entry.title}", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    QuickSlotChip("上") {
-                        calendarViewModel.moveScheduleToDay(entry.id, today.dayOfMonth)
-                        calendarViewModel.updateSchedule(entry.id, entry.title, today.dayOfMonth, mergeTimeSlot(entry.note, "上午"))
-                        grabbedEntry = null
-                        hint = "已投放到上午"
-                    }
-                    QuickSlotChip("下") {
-                        calendarViewModel.moveScheduleToDay(entry.id, today.dayOfMonth)
-                        calendarViewModel.updateSchedule(entry.id, entry.title, today.dayOfMonth, mergeTimeSlot(entry.note, "下午"))
-                        grabbedEntry = null
-                        hint = "已投放到下午"
-                    }
-                    QuickSlotChip("晚") {
-                        calendarViewModel.moveScheduleToDay(entry.id, today.dayOfMonth)
-                        calendarViewModel.updateSchedule(entry.id, entry.title, today.dayOfMonth, mergeTimeSlot(entry.note, "晚上"))
-                        grabbedEntry = null
-                        hint = "已投放到晚上"
-                    }
-                }
-            }
-        }
-        }
 
         draggingEntry?.let { entry ->
             Column(
                 modifier = Modifier
                     .offset { IntOffset(dragPosition.x.toInt(), dragPosition.y.toInt()) }
-                    .background(if (activeDropSlot != null) Color(0xFFE88FAE) else Color(0xDDE88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .border(if (activeDropSlot != null) 1.2.dp else 0.8.dp, Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .background(GoaldayDesign.Pink, RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .border(1.dp, Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .padding(horizontal = 9.dp, vertical = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(entry.title, color = Color.White, style = MaterialTheme.typography.labelSmall)
+                Text(entry.title, color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 Text(
-                    if (activeDropSlot != null) "释放投放到$activeDropSlot" else "拖到上/下/晚槽位",
-                    color = Color.White.copy(alpha = 0.9f),
+                    when {
+                        activeDoneDrop -> "释放放入 done"
+                        activeDropDay != null -> "释放拖入 ${activeDropDay} 日"
+                        else -> "拖到日期或 done"
+                    },
+                    color = Color.White.copy(alpha = 0.88f),
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
@@ -363,108 +252,448 @@ fun HomeScreen(
 }
 
 @Composable
-private fun StepCard(
-    title: String,
-    subtitle: String,
-    content: @Composable ColumnScope.() -> Unit,
+private fun PromoHeader(
+    year: Int,
+    month: Int,
+    onToday: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                "新手",
+                color = GoaldayDesign.InkPrimary,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .border(0.8.dp, Color(0x33000000), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .padding(horizontal = 12.dp, vertical = 3.dp),
+            )
+            Text("Goalday", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+            Text("${year}年${month}月 · 周计划", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelMedium)
+        }
+        Text(
+            "今天",
+            color = Color.White,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier
+                .background(GoaldayDesign.InkPrimary, RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .clickable(onClick = onToday)
+                .padding(horizontal = 13.dp, vertical = 7.dp),
+        )
+    }
+}
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+private fun PaperPlanner(
+    year: Int,
+    month: Int,
+    selectedDay: Int,
+    weekDays: List<Int>,
+    entries: List<ScheduleEntry>,
+    selectedDayEntries: List<ScheduleEntry>,
+    weeklyGoal: String,
+    onWeeklyGoalChange: (String) -> Unit,
+    draftTask: String,
+    onDraftTaskChange: (String) -> Unit,
+    draftDay: Int,
+    onDraftDayChange: (Int) -> Unit,
+    onAddDraftTask: () -> Unit,
+    grabbedEntry: ScheduleEntry?,
+    activeDropDay: Int?,
+    onSelectDay: (Int) -> Unit,
+    onOpenDay: (Int) -> Unit,
+    onDayBounds: (Int, Rect) -> Unit,
+    todoEntries: List<ScheduleEntry>,
+    doneEntries: List<ScheduleEntry>,
+    activeDoneDrop: Boolean,
+    onDoneBounds: (Rect) -> Unit,
+    onGrab: (ScheduleEntry) -> Unit,
+    onMoveToDay: (ScheduleEntry, Int) -> Unit,
+    onMarkDone: (ScheduleEntry) -> Unit,
+    onToggleDone: (ScheduleEntry) -> Unit,
+    onDragStart: (ScheduleEntry, Offset) -> Unit,
+    onDrag: (Offset) -> Unit,
+    onDragEnd: () -> Unit,
+    onDragCancel: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(GoaldayDesign.Surface, RoundedCornerShape(GoaldayDesign.RadiusM))
-            .border(0.8.dp, Color(0x14000000), RoundedCornerShape(GoaldayDesign.RadiusM))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+            .background(GoaldayDesign.Surface, RoundedCornerShape(18.dp))
+            .border(1.dp, Color(0x11000000), RoundedCornerShape(18.dp))
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
-            Text(subtitle, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("${month}月", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+            Text("为J人而生的App", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall)
         }
+
+        BasicTextField(
+            value = weeklyGoal,
+            onValueChange = onWeeklyGoalChange,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+            decorationBox = { inner ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(GoaldayDesign.PinkSoft, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .padding(horizontal = 9.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text("本周主题", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                    Box(Modifier.weight(1f)) {
+                        if (weeklyGoal.isBlank()) {
+                            Text("写下最重要的目标", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                        }
+                        inner()
+                    }
+                }
+            },
+        )
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.weight(1.03f), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                Text("date", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                weekDays.forEach { day ->
+                    val dayEntries = entries.filter { it.day == day }
+                    TimelineDayRow(
+                        day = day,
+                        selected = day == selectedDay,
+                        activeDrop = activeDropDay == day || grabbedEntry != null && day == selectedDay,
+                        entries = dayEntries,
+                        year = year,
+                        month = month,
+                        onSelect = { onSelectDay(day) },
+                        onOpen = { onOpenDay(day) },
+                        onBounds = { onDayBounds(day, it) },
+                        onGrabDrop = {
+                            val entry = grabbedEntry ?: return@TimelineDayRow
+                            onMoveToDay(entry, day)
+                        },
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(430.dp)
+                    .background(Color(0x11000000)),
+            )
+
+            Column(
+                modifier = Modifier
+                    .weight(1.18f)
+                    .padding(start = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp),
+            ) {
+                Text("todo", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                QuickInput(
+                    value = draftTask,
+                    onValueChange = onDraftTaskChange,
+                    weekDays = weekDays,
+                    selectedDay = draftDay,
+                    onSelectDay = onDraftDayChange,
+                    onDone = onAddDraftTask,
+                )
+                if (selectedDayEntries.isNotEmpty()) {
+                    MiniSection("当天") {
+                        selectedDayEntries.take(4).forEach { entry ->
+                            TaskLine(
+                                entry = entry,
+                                onGrab = onGrab,
+                                onToggleDone = onToggleDone,
+                                onDragStart = onDragStart,
+                                onDrag = onDrag,
+                                onDragEnd = onDragEnd,
+                                onDragCancel = onDragCancel,
+                            )
+                        }
+                    }
+                }
+                MiniSection("右侧清单") {
+                    if (todoEntries.isEmpty()) {
+                        EmptyHint("在上方输入一周要做的事")
+                    } else {
+                        todoEntries.forEach { entry ->
+                            TaskLine(
+                                entry = entry,
+                                onGrab = onGrab,
+                                onToggleDone = onToggleDone,
+                                onDragStart = onDragStart,
+                                onDrag = onDrag,
+                                onDragEnd = onDragEnd,
+                                onDragCancel = onDragCancel,
+                            )
+                        }
+                    }
+                }
+                MiniSection(
+                    title = "done",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned { onDoneBounds(it.boundsInRoot()) }
+                        .background(if (activeDoneDrop) GoaldayDesign.GreenSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .border(0.7.dp, if (activeDoneDrop) GoaldayDesign.Positive else Color(0x14000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .padding(horizontal = 6.dp, vertical = 5.dp),
+                ) {
+                    if (doneEntries.isEmpty()) {
+                        EmptyHint("把完成的事项拖入")
+                    } else {
+                        doneEntries.forEach { entry ->
+                            Text(
+                                "✓ ${entry.title}",
+                                color = GoaldayDesign.InkSecondary,
+                                style = MaterialTheme.typography.bodySmall,
+                                textDecoration = TextDecoration.LineThrough,
+                                maxLines = 1,
+                            )
+                        }
+                    }
+                    grabbedEntry?.let {
+                        Text(
+                            "点此放入 done",
+                            color = GoaldayDesign.Positive,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.clickable { onMarkDone(it) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+private fun TimelineDayRow(
+    day: Int,
+    selected: Boolean,
+    activeDrop: Boolean,
+    entries: List<ScheduleEntry>,
+    year: Int,
+    month: Int,
+    onSelect: () -> Unit,
+    onOpen: () -> Unit,
+    onBounds: (Rect) -> Unit,
+    onGrabDrop: () -> Unit,
+) {
+    val currentMonth = YearMonth.of(year, month)
+    val date = currentMonth.atDay(day.coerceIn(1, currentMonth.lengthOfMonth()))
+    val week = when (date.dayOfWeek) {
+        DayOfWeek.MONDAY -> "一"
+        DayOfWeek.TUESDAY -> "二"
+        DayOfWeek.WEDNESDAY -> "三"
+        DayOfWeek.THURSDAY -> "四"
+        DayOfWeek.FRIDAY -> "五"
+        DayOfWeek.SATURDAY -> "六"
+        DayOfWeek.SUNDAY -> "日"
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .onGloballyPositioned { onBounds(it.boundsInRoot()) }
+            .background(
+                if (activeDrop) GoaldayDesign.PinkSoft else if (selected) Color(0x0DE88FAE) else Color.Transparent,
+                RoundedCornerShape(GoaldayDesign.RadiusS),
+            )
+            .combinedClickable(onClick = onSelect, onLongClick = onOpen)
+            .padding(horizontal = 6.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(28.dp)) {
+            Text(day.toString(), color = if (selected) GoaldayDesign.Pink else GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+            Text(week, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            if (entries.isEmpty()) {
+                Text(if (activeDrop) "点此拖入" else " ", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onGrabDrop))
+            } else {
+                entries.take(2).forEach { entry ->
+                    Text(
+                        (if (entry.completed) "✓ " else "· ") + entry.title,
+                        color = if (entry.completed) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
+                        style = MaterialTheme.typography.labelSmall,
+                        textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    weekDays: List<Int>,
+    selectedDay: Int,
+    onSelectDay: (Int) -> Unit,
+    onDone: () -> Unit,
+) {
+    val focusRequester = remember { FocusRequester() }
+    fun submitAndKeepFocus() {
+        onDone()
+        focusRequester.requestFocus()
+    }
+
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        modifier = Modifier.focusRequester(focusRequester),
+        textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { submitAndKeepFocus() }),
+        decorationBox = { inner ->
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(0.7.dp, Color(0x16000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text("□", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                    Box(Modifier.weight(1f)) {
+                        if (value.isBlank()) {
+                            Text("列出一周要做的所有事", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                        }
+                        inner()
+                    }
+                    Text("加入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = ::submitAndKeepFocus))
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("日期", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                    DateChipRow(days = weekDays.take(4), selectedDay = selectedDay, onSelectDay = onSelectDay)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(Modifier.width(24.dp))
+                    DateChipRow(days = weekDays.drop(4).take(3), selectedDay = selectedDay, onSelectDay = onSelectDay)
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun DateChipRow(
+    days: List<Int>,
+    selectedDay: Int,
+    onSelectDay: (Int) -> Unit,
+) {
+    days.forEach { day ->
+        Text(
+            "${day}日",
+            color = if (day == selectedDay) Color.White else GoaldayDesign.InkSecondary,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier
+                .background(if (day == selectedDay) GoaldayDesign.Pink else Color(0x0F000000), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .clickable { onSelectDay(day) }
+                .padding(horizontal = 6.dp, vertical = 3.dp),
+        )
+    }
+}
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+private fun TaskLine(
+    entry: ScheduleEntry,
+    onGrab: (ScheduleEntry) -> Unit,
+    onToggleDone: (ScheduleEntry) -> Unit,
+    onDragStart: (ScheduleEntry, Offset) -> Unit,
+    onDrag: (Offset) -> Unit,
+    onDragEnd: () -> Unit,
+    onDragCancel: () -> Unit,
+) {
+    var rowOrigin by remember(entry.id) { mutableStateOf(Offset.Zero) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = { onToggleDone(entry) }, onLongClick = { onGrab(entry) })
+            .onGloballyPositioned { rowOrigin = it.boundsInRoot().topLeft }
+            .pointerInput(entry.id) {
+                detectDragGesturesAfterLongPress(
+                    onDragStart = { onDragStart(entry, rowOrigin + it) },
+                    onDrag = { change, amount ->
+                        change.consume()
+                        onDrag(amount)
+                    },
+                    onDragEnd = onDragEnd,
+                    onDragCancel = onDragCancel,
+                )
+            }
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Text(if (entry.completed) "✓" else "□", color = if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                entry.title,
+                color = if (entry.completed) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
+                style = MaterialTheme.typography.bodySmall,
+                textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                maxLines = 2,
+            )
+            Text("${entry.day}日", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+@Composable
+private fun MiniSection(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Text(title, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
         content()
     }
 }
 
 @Composable
-private fun TimeSlotLine(
-    slotShort: String,
-    slotKey: String,
-    assigned: ScheduleEntry?,
-    fallback: ScheduleEntry?,
-    dropReady: Boolean,
-    hover: Boolean,
-    onZoneBounds: (Rect) -> Unit,
-    onAssign: (ScheduleEntry, String) -> Unit,
-) {
-    val slot = when (slotShort) {
-        "上" -> "上午"
-        "下" -> "下午"
-        else -> "晚上"
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .onGloballyPositioned { coords -> onZoneBounds(coords.boundsInRoot()) }
-            .background(
-                if (hover) Color(0x33E88FAE) else if (dropReady && assigned == null) Color(0x22E88FAE) else Color.Transparent,
-                RoundedCornerShape(GoaldayDesign.RadiusS),
-            )
-            .border(if (hover) 1.dp else 0.5.dp, if (hover) Color(0xFFE88FAE) else Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = 8.dp, vertical = 5.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Text(slotShort, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(16.dp))
-        if (assigned != null) {
-            Text(assigned.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall)
-        } else {
-            Text(
-                if (dropReady) "（点此投放）" else "（点此分配）",
-                color = Color(0xFFB07A8F),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.clickable {
-                    val target = fallback ?: return@clickable
-                    onAssign(target, slot)
-                },
-            )
-        }
-    }
+private fun EmptyHint(text: String) {
+    Text(text, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
 }
 
 @Composable
-private fun ActionPill(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun TextNav(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Box(
         modifier = modifier
-            .background(GoaldayDesign.PrimaryAction, RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .clickable { onClick() }
-            .padding(horizontal = 10.dp, vertical = 7.dp),
+            .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusPill))
+            .border(0.7.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusPill))
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = Color.White, style = MaterialTheme.typography.labelMedium)
+        Text(label, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
     }
 }
 
 @Composable
-private fun QuickSlotChip(label: String, onClick: () -> Unit) {
-    Text(
-        label,
-        color = Color.White,
-        style = MaterialTheme.typography.labelSmall,
-        modifier = Modifier
-            .background(Color(0xFFB07A8F), RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .clickable { onClick() }
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-    )
-}
-
-private fun parseTimeSlot(note: String): String? {
-    val slotPrefix = "时段:"
-    val index = note.indexOf(slotPrefix)
-    if (index < 0) return null
-    val raw = note.substring(index + slotPrefix.length).trim()
-    return raw.split(" ").firstOrNull()?.takeIf { it in listOf("上午", "下午", "晚上") }
-}
-
-private fun mergeTimeSlot(note: String, slot: String): String {
-    val cleaned = note.replace(Regex("时段:(上午|下午|晚上)"), "").trim()
-    return if (cleaned.isBlank()) "时段:$slot" else "时段:$slot $cleaned"
+private fun FloatingAddButton(modifier: Modifier, onClick: () -> Unit) {
+    Box(
+        modifier = modifier
+            .size(48.dp)
+            .background(GoaldayDesign.Pink, CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("+", color = Color.White, style = MaterialTheme.typography.titleLarge)
+    }
 }

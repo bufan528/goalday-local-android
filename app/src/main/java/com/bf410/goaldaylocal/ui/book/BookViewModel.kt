@@ -42,7 +42,7 @@ class BookViewModel(
             weeklyTheme = "",
             todayPlanItems = emptyList(),
             todayCompletedItems = emptyList(),
-            schedulePreviewEntries = monthEntriesForAnchor(),
+            schedulePreviewEntries = yearEntriesForAnchor(),
             customBookCount = store.customBooks().size,
             inLibraryMode = true,
         ),
@@ -187,13 +187,17 @@ class BookViewModel(
             day = safeDay,
             note = bookTitle,
         )
-        _uiState.update { it.copy(schedulePreviewEntries = monthEntriesForAnchor()) }
+        _uiState.update { it.copy(schedulePreviewEntries = yearEntriesForAnchor()) }
     }
 
     fun updateWeeklyTheme(text: String) {
         val book = currentBook()
         store.setWeeklyTheme(book.id, text)
         _uiState.update { it.copy(weeklyTheme = text) }
+    }
+
+    fun refreshSchedulePreview() {
+        syncEditableContent()
     }
 
     fun moveItemToToday(item: String) {
@@ -450,7 +454,7 @@ class BookViewModel(
                         weeklyTheme = store.weeklyTheme(book.id),
                         todayPlanItems = imported.todo,
                         todayCompletedItems = imported.done,
-                        schedulePreviewEntries = monthEntriesForAnchor(),
+                        schedulePreviewEntries = yearEntriesForAnchor(),
                     )
                 }
             }
@@ -462,7 +466,7 @@ class BookViewModel(
                         weeklyTheme = store.weeklyTheme(book.id),
                         todayPlanItems = imported.todo,
                         todayCompletedItems = imported.done,
-                        schedulePreviewEntries = monthEntriesForAnchor(),
+                        schedulePreviewEntries = yearEntriesForAnchor(),
                     )
                 }
             }
@@ -523,12 +527,11 @@ class BookViewModel(
         store.saveScheduleEntries(updated)
     }
 
-    private fun monthEntriesForAnchor(): List<ScheduleEntry> {
+    private fun yearEntriesForAnchor(): List<ScheduleEntry> {
         val year = store.calendarAnchorYear()
-        val month = store.calendarAnchorMonth().coerceIn(1, 12)
         return store.scheduleEntries()
-            .filter { it.year == year && it.month == month }
-            .sortedBy { it.day }
+            .filter { it.year == year }
+            .sortedWith(compareBy({ it.month }, { it.day }, { it.title.lowercase() }))
     }
 
     private data class PlanningContext(
