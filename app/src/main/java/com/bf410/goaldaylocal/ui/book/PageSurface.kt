@@ -2103,21 +2103,13 @@ private fun DiarySection(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            listOf("📎 记忆", "🌿 心情", "📸 片段").forEach { sticker ->
-                Text(
-                    sticker,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF7B6A5A),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x12B59072))
-                        .border(1.dp, Color(0x1EB59072), RoundedCornerShape(99.dp))
-                        .padding(horizontal = 7.dp, vertical = 3.dp),
-                )
-            }
-        }
         Text(text = prompt, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6E665D))
+        DiaryBlockRail(
+            state = currentDiaryState(),
+            todoItems = todayPlanItems,
+            doneItems = todayCompletedItems,
+            editing = editingDiary?.title == title,
+        )
         DiaryLinkedTargetStrip(
             doneItems = todayCompletedItems,
             todoItems = todayPlanItems,
@@ -2310,6 +2302,58 @@ private fun LocalDate.toEpochMillis(): Long =
 
 private fun Long.toLocalDate(): LocalDate =
     Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
+
+@Composable
+private fun DiaryBlockRail(
+    state: StructuredDiary,
+    todoItems: List<String>,
+    doneItems: List<String>,
+    editing: Boolean,
+) {
+    val textBlocks = listOf(state.todayDone, state.workTasks, state.smallJoy, state.canImprove, state.photoText)
+        .count { it.isNotBlank() }
+    val imageBlocks = state.imageUris.size
+    val targetBlocks = (todoItems + doneItems).map(String::trim).filter(String::isNotBlank).distinct().size
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0x15E88FAE))
+            .border(0.7.dp, Color(0x22E88FAE), RoundedCornerShape(12.dp))
+            .padding(horizontal = 7.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DiaryBlockPill("TEXT", "$textBlocks", GoaldayDesign.InkPrimary, Modifier.weight(1f))
+        DiaryBlockPill("IMAGE", "$imageBlocks", Color(0xFFB07A8F), Modifier.weight(1f))
+        DiaryBlockPill("TARGET", "$targetBlocks", GoaldayDesign.Positive, Modifier.weight(1f))
+        Text(
+            if (editing) "编辑中" else "预览",
+            style = MaterialTheme.typography.labelSmall,
+            color = GoaldayDesign.InkMuted,
+        )
+    }
+}
+
+@Composable
+private fun DiaryBlockPill(
+    label: String,
+    count: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(Color.White.copy(alpha = 0.74f))
+            .padding(horizontal = 7.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(count, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+    }
+}
 
 private fun exportHandbookScheduleLongImage(
     context: Context,
@@ -2654,13 +2698,11 @@ private fun StructuredDiaryEditor(
 ) {
     val dateLabel = remember(state.dateIso) { diaryDateLabel(state.date) }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            dateLabel,
-            style = MaterialTheme.typography.labelLarge,
-            color = Color(0xFF3A342E),
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .clickable { onPickDate() },
+        DiaryEditorToolbar(
+            dateLabel = dateLabel,
+            onPickDate = onPickDate,
+            onAddImage = onAddImage,
+            onDone = onDone,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -2693,11 +2735,64 @@ private fun StructuredDiaryEditor(
                 onRemoveImage = onRemoveImage,
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onAddImage) { Text("添加图片") }
-            TextButton(onClick = onDone) { Text("完成") }
+    }
+}
+
+@Composable
+private fun DiaryEditorToolbar(
+    dateLabel: String,
+    onPickDate: () -> Unit,
+    onAddImage: () -> Unit,
+    onDone: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0x18F1A5B6))
+            .border(0.7.dp, Color(0x28E88FAE), RoundedCornerShape(12.dp))
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(dateLabel, style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable { onPickDate() })
+            Text(
+                "完成",
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(GoaldayDesign.PrimaryAction)
+                    .clickable { onDone() }
+                    .padding(horizontal = 9.dp, vertical = 4.dp),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+            DiaryToolChip("文字块", GoaldayDesign.InkSecondary) {}
+            DiaryToolChip("图片块", Color(0xFFB07A8F), onAddImage)
+            DiaryToolChip("目标块", GoaldayDesign.Positive) {}
         }
     }
+}
+
+@Composable
+private fun DiaryToolChip(
+    label: String,
+    color: Color,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelSmall,
+        color = color,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(Color.White.copy(alpha = 0.72f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    )
 }
 
 @Composable
