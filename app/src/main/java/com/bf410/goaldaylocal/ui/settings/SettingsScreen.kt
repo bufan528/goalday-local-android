@@ -36,6 +36,25 @@ fun SettingsScreen() {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text("本地设置", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 18.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFFFECF3), RoundedCornerShape(24.dp))
+                .padding(18.dp),
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Goalday Local", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D))
+                Text("全部模板、手账、日程功能本地可用。无服务器依赖，不设置付费锁。", color = Color(0xFF6C3F50))
+                Text("数据保存在本机 MMKV，可用下面的备份功能手动导出。", color = Color(0xFF7A6E66))
+            }
+        }
+        SettingCard(
+            title = "离线功能清单",
+            subtitle = "主题中心、任务池、手账翻页、日程 todo/done、富文本日记、备份恢复均为本地功能。",
+            onClick = {
+                Toast.makeText(context, "当前版本已按本地离线模式运行", Toast.LENGTH_SHORT).show()
+            },
+        )
         SettingCard(
             title = "立即备份",
             subtitle = "把当前本地数据复制到：${manager.backupRootPath()}",

@@ -36,3 +36,14 @@ The readable asset layer shows the reference app is built around:
 - Expanded `InspirationTemplates` into a larger topic-center-like catalog.
 - Updated `InspirationScreen` to show colored topic cards and schedule/record type labels.
 - Kept implementation original; reference APK code/assets are not copied into app source.
+
+## Clean-room boundary
+
+This project uses the reference APK only to understand product structure and visible UX behavior.
+
+- Do not copy third-party APK code into this repository.
+- Do not copy third-party paid assets into this repository.
+- Do not implement payment bypasses for the reference APK.
+- Implement equivalent local/offline behavior from scratch in this app.
+
+The intended product direction is an offline, no-server Goalday-style planner where templates, handbook pages, schedule assignment, todo/done tracking, diary editing, and backups are available locally.
