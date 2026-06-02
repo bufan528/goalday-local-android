@@ -765,7 +765,7 @@ private fun HandbookReplicaPage(
     } else {
         0
     }
-    val dayBlocks = List(6) { offset ->
+    val dayBlocks = List(3) { offset ->
         val day = ((start + offset) % monthLength) + 1
         val dayEntries = sorted.filter { it.day == day }
         DaySpreadBlock(
@@ -774,8 +774,8 @@ private fun HandbookReplicaPage(
             todo = dayEntries.filterNot { it.completed }.take(3),
         )
     }
-    val leftBlocks = dayBlocks.take(3)
-    val rightBlocks = dayBlocks.drop(3).take(3)
+    val leftBlocks = dayBlocks
+    val rightBlocks = dayBlocks
     val fallbackLeftDone = todayCompletedItems.take(3)
     val fallbackRightTodo = todayPlanItems.take(3)
     var draftText by remember(page.title) { mutableStateOf("") }
@@ -837,7 +837,7 @@ private fun HandbookReplicaPage(
                     DaySpreadSection(
                         day = block.day,
                         done = if (idx == 0 && block.done.isEmpty()) fallbackLeftDone else block.done.map { it.title },
-                        todo = block.todo.map { it.title },
+                        todoCount = block.todo.size,
                         accent = GoaldayDesign.Positive,
                     )
                 }
@@ -892,6 +892,9 @@ private fun HandbookReplicaPage(
                             if (!entry.id.startsWith("fallback_")) {
                                 editingId = entry.id
                                 editingText = entry.title
+                            } else {
+                                onAddSchedule(entry.title, anchorMonth, entry.day)
+                                saveHint = "已放入${entry.day}日"
                             }
                         },
                         onTextChange = { editingText = it },
@@ -903,7 +906,12 @@ private fun HandbookReplicaPage(
                             }
                         },
                         onToggleCompleted = { entry ->
-                            if (!entry.id.startsWith("fallback_")) onToggleScheduleCompleted(entry.id)
+                            if (!entry.id.startsWith("fallback_")) {
+                                onToggleScheduleCompleted(entry.id)
+                            } else {
+                                onAddSchedule(entry.title, anchorMonth, entry.day)
+                                saveHint = "已放入${entry.day}日"
+                            }
                         },
                     )
                 }
@@ -1072,7 +1080,7 @@ private fun BoxScope.HandbookMonthHeader(
 private fun DaySpreadSection(
     day: Int,
     done: List<String>,
-    todo: List<String>,
+    todoCount: Int,
     accent: Color,
 ) {
     Column(
@@ -1088,16 +1096,13 @@ private fun DaySpreadSection(
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("done", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
-            Text("todo", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+            Text("todo $todoCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
         }
         done.take(2).forEach { line ->
             Text("✓ $line", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary, textDecoration = TextDecoration.LineThrough, maxLines = 1)
         }
         if (done.isEmpty()) {
             Text("○", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
-        }
-        todo.take(1).forEach { line ->
-            Text("· $line", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary, maxLines = 1)
         }
     }
 }
