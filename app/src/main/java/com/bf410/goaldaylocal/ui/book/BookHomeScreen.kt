@@ -47,7 +47,9 @@ import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.PlanPage
+import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.SchedulePage
+import com.bf410.goaldaylocal.data.TargetItemMeta
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
 import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
@@ -571,6 +573,7 @@ private fun BookDetailView(
     }
     val segmentPageIndex = filteredPages.indexOfFirst { it.title == currentPage.title }.coerceAtLeast(0)
     var segmentSwipeDistance by remember(book.id) { mutableStateOf(0f) }
+    var openedTargetDetail by remember(book.id, currentPage.title) { mutableStateOf<String?>(null) }
 
     fun switchSegment(next: BookSegment) {
         segment = next
@@ -578,12 +581,13 @@ private fun BookDetailView(
         if (firstIndex >= 0) viewModel.setPage(firstIndex)
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 8.dp),
     ) {
-        GoaldayTopBar(
+        Column(Modifier.fillMaxSize()) {
+            GoaldayTopBar(
             leftTitle = if (handbookMode) "手账本" else "14周",
             rightPrimaryText = if (handbookMode) "离线手账" else "完成",
             onRightPrimaryClick = {
@@ -597,7 +601,7 @@ private fun BookDetailView(
                     Text("⚙管理", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onToggleManagePanel))
                 }
             },
-        )
+            )
         if (!handbookMode) {
             GoaldaySegmentBar(
                 items = BookSegment.entries.map { it.label },
@@ -759,6 +763,7 @@ private fun BookDetailView(
                         onToggleScheduleCompleted = viewModel::toggleScheduleCompletedFromHandbook,
                         onUpdateTargetNote = viewModel::updateTargetItemNote,
                         onUpdateTargetDeadline = viewModel::updateTargetItemDeadline,
+                        onOpenTargetDetail = { openedTargetDetail = it },
                         shellStyle = ShellStyle.BOOK,
                         handbookMode = true,
                         onFlipNext = { if (uiState.selectedPageIndex < book.pages.lastIndex) viewModel.setPage(uiState.selectedPageIndex + 1) },
@@ -807,10 +812,33 @@ private fun BookDetailView(
                 onToggleScheduleCompleted = viewModel::toggleScheduleCompletedFromHandbook,
                 onUpdateTargetNote = viewModel::updateTargetItemNote,
                 onUpdateTargetDeadline = viewModel::updateTargetItemDeadline,
+                onOpenTargetDetail = { openedTargetDetail = it },
                 shellStyle = if (forcedSegment == BookSegment.DIARY || currentPage is DiaryPage) ShellStyle.BOOK else ShellStyle.LIGHT,
                 handbookMode = handbookMode,
                 onFlipNext = { if (uiState.selectedPageIndex < book.pages.lastIndex) viewModel.setPage(uiState.selectedPageIndex + 1) },
                 onFlipPrevious = { if (uiState.selectedPageIndex > 0) viewModel.setPage(uiState.selectedPageIndex - 1) },
+            )
+        }
+        }
+        val targetPage = currentPage as? TargetPage
+        val targetItems = targetPage?.let { (it.items + uiState.customPageItems).distinct() }.orEmpty()
+        val targetItem = openedTargetDetail?.takeIf { it in targetItems }
+        if (targetPage != null && targetItem != null) {
+            TargetDetailRouteOverlay(
+                pageTitle = targetPage.title,
+                item = targetItem,
+                itemIndex = targetItems.indexOf(targetItem).coerceAtLeast(0),
+                itemCount = targetItems.size,
+                checked = viewModel.isChecked(targetPage.title, targetItem),
+                meta = uiState.targetItemMeta[targetItem] ?: TargetItemMeta(),
+                scheduledEntries = uiState.schedulePreviewEntries
+                    .filter { it.title == targetItem }
+                    .sortedWith(compareBy<ScheduleEntry>({ it.month }, { it.day }, { it.timeText })),
+                onClose = { openedTargetDetail = null },
+                onToggleChecked = { viewModel.toggleChecked(targetPage.title, targetItem) },
+                onUpdateNote = { viewModel.updateTargetItemNote(targetItem, it) },
+                onUpdateDeadline = { viewModel.updateTargetItemDeadline(targetItem, it) },
+                onAddToSchedule = { day -> viewModel.addItemToSchedule(targetItem, day) },
             )
         }
     }
@@ -819,6 +847,156 @@ private fun BookDetailView(
 private fun monthLabelForPage(title: String, fallback: String): String {
     val regex = Regex("(\\d{1,2}月)")
     return regex.find(title)?.value ?: fallback
+}
+
+@Composable
+private fun TargetDetailRouteOverlay(
+    pageTitle: String,
+    item: String,
+    itemIndex: Int,
+    itemCount: Int,
+    checked: Boolean,
+    meta: TargetItemMeta,
+    scheduledEntries: List<ScheduleEntry>,
+    onClose: () -> Unit,
+    onToggleChecked: () -> Unit,
+    onUpdateNote: (String) -> Unit,
+    onUpdateDeadline: (Int?) -> Unit,
+    onAddToSchedule: (Int) -> Unit,
+) {
+    val today = java.time.LocalDate.now().dayOfMonth
+    val tomorrow = today + 1
+    val weekend = today + (7 - java.time.LocalDate.now().dayOfWeek.value).coerceAtLeast(1)
+    var noteDraft by remember(item, meta.note) { mutableStateOf(meta.note) }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xDDF8EFE5))
+            .clickable(onClick = onClose),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .fillMaxHeight(0.86f)
+                .clip(RoundedCornerShape(28.dp))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFFFFFEFC), Color(0xFFFFF7EE), Color(0xFFF0DDC9)),
+                    ),
+                )
+                .border(1.dp, Color(0x30A88966), RoundedCornerShape(28.dp))
+                .clickable {}
+                .padding(18.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.weight(1f)) {
+                    Text("目标详情", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelMedium)
+                    Text(item, color = Color(0xFF2F261D), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                    Text("$pageTitle · 目标 ${itemIndex + 1}/$itemCount", color = Color(0xFF7A7065), style = MaterialTheme.typography.bodySmall)
+                }
+                Text(
+                    "关闭",
+                    color = Color(0xFF6F5B4B),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x12000000))
+                        .clickable(onClick = onClose)
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                DetailPill(if (checked) "已完成" else "未完成", active = checked, onClick = onToggleChecked)
+                DetailPill("排入今天", active = false) { onAddToSchedule(today) }
+                DetailPill("排入明天", active = false) { onAddToSchedule(tomorrow) }
+                DetailPill("排入周末", active = false) { onAddToSchedule(weekend) }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFFFFFEFC))
+                    .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(16.dp))
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text("执行备注", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                OutlinedTextField(
+                    value = noteDraft,
+                    onValueChange = {
+                        noteDraft = it
+                        onUpdateNote(it)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 4,
+                    placeholder = { Text("写下做法、灵感、阻碍或复盘") },
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFFFFFEFC))
+                    .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(16.dp))
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text("截止日", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(meta.deadlineDay?.let { "当前截止：${it}日" } ?: "当前未设置截止日", color = Color(0xFF7A7065), style = MaterialTheme.typography.bodySmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    DetailPill("今天", active = meta.deadlineDay == today) { onUpdateDeadline(today) }
+                    DetailPill("明天", active = meta.deadlineDay == tomorrow) { onUpdateDeadline(tomorrow) }
+                    DetailPill("周末", active = meta.deadlineDay == weekend) { onUpdateDeadline(weekend) }
+                    DetailPill("清除", active = false) { onUpdateDeadline(null) }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFFFFFEFC))
+                    .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(16.dp))
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text("已排期", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                if (scheduledEntries.isEmpty()) {
+                    Text("还没有排入日程", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.bodySmall)
+                } else {
+                    scheduledEntries.take(8).forEach { entry ->
+                        Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text("${entry.month}月${entry.day}日", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelMedium)
+                            Text(entry.timeText.ifBlank { if (entry.completed) "done" else "todo" }, color = if (entry.completed) Color(0xFF6F8E68) else Color(0xFFE88FAE), style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailPill(
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        color = if (active) Color.White else Color(0xFF6F5B4B),
+        style = MaterialTheme.typography.labelMedium,
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(if (active) Color(0xFF6F8E68) else Color(0x14000000))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+    )
 }
 
 private fun matchesSegment(page: BookPage, segment: BookSegment): Boolean =

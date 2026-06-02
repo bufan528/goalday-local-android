@@ -669,6 +669,7 @@ fun ActivePageLayer(
     onToggleScheduleCompleted: (String) -> Unit,
     onUpdateTargetNote: (String, String) -> Unit,
     onUpdateTargetDeadline: (String, Int?) -> Unit,
+    onOpenTargetDetail: (String) -> Unit,
     pendingCommand: RichEditorCommand?,
     onCommand: (RichEditorCommand) -> Unit,
     contentMode: PageContentMode,
@@ -750,7 +751,7 @@ fun ActivePageLayer(
             },
         ) {
             when (page) {
-                is TargetPage -> TargetDetailReplicaPage(page.title, page.items, customPageItems, tint, schedulePreviewEntries, targetItemMeta, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, onUpdateTargetNote, onUpdateTargetDeadline)
+                is TargetPage -> TargetDetailReplicaPage(page.title, page.items, customPageItems, tint, schedulePreviewEntries, targetItemMeta, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, onUpdateTargetNote, onUpdateTargetDeadline, onOpenTargetDetail)
                 is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), BookStrings.addSchedule, true, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
                 is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), BookStrings.addPlan, false, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
                 is DiaryPage -> DiarySection(page.title, page.prompt, tint, diaryDraft, todayPlanItems, todayCompletedItems, pendingCommand, onCommand, onDiaryChange, contentMode, onContentModeChange)
@@ -1802,6 +1803,7 @@ private fun TargetDetailReplicaPage(
     onAddToSchedule: (String, Int) -> Unit,
     onUpdateTargetNote: (String, String) -> Unit,
     onUpdateTargetDeadline: (String, Int?) -> Unit,
+    onOpenTargetDetail: (String) -> Unit,
 ) {
     val items = remember(baseItems, customItems) { (baseItems + customItems).distinct() }
     var draft by remember(pageTitle) { mutableStateOf("") }
@@ -1876,7 +1878,10 @@ private fun TargetDetailReplicaPage(
                                 Text(if (checked) "✓" else "□", color = if (checked) GoaldayDesign.Positive else GoaldayDesign.InkMuted, modifier = Modifier.clickable { onToggleChecked(pageTitle, item) })
                                 Text("目标 ${index + 1}", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
                             }
-                            Text("排入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onAddToSchedule(item, todayDay) })
+                            Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text("详情", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onOpenTargetDetail(item) })
+                                Text("排入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onAddToSchedule(item, todayDay) })
+                            }
                         }
                         TargetScheduleMeta(entries = scheduledEntries)
                         BasicTextField(

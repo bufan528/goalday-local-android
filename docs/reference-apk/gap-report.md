@@ -2,7 +2,7 @@
 
 Reference APK: `docs/reference-apk/goalday-reference-base.apk`
 
-Current app status after the config-style topic catalog pass: local/offline planner with three root tabs, bookshelf-style library, featured physical handbook cover, config-style topic templates with cover keys/target keys/categories/longer target lists, topic detail surface, save-as-book flow, standalone target-detail-style book pages with progress/schedule metadata plus persistent notes/deadline days, handbook page turn, opened-handbook double-page paper chrome with center spine/page-edge depth, book-spread schedule page with task pool/todo/done columns, schedule time/repeat fields, repeat interval and end-date controls, repeat group editing, Android system calendar range/source selection/import preview, structured diary editor with text/image/target block rail and image blocks, target-linked diary chips, explicit diary date picker, diary and handbook schedule long-image export/share, small/large schedule widgets, quick diary widget, immediate schedule widget refresh hooks, and backup settings.
+Current app status after the target detail route pass: local/offline planner with three root tabs, bookshelf-style library, featured physical handbook cover, config-style topic templates with cover keys/target keys/categories/longer target lists, topic detail surface, save-as-book flow, standalone target-detail-style book pages with progress/schedule metadata plus persistent notes/deadline days, full-screen target detail overlay with completion/note/deadline/schedule controls, handbook page turn, opened-handbook double-page paper chrome with center spine/page-edge depth, book-spread schedule page with task pool/todo/done columns, schedule time/repeat fields, repeat interval and end-date controls, repeat group editing, Android system calendar range/source selection/import preview, structured diary editor with text/image/target block rail and image blocks, target-linked diary chips, explicit diary date picker, diary and handbook schedule long-image export/share, small/large schedule widgets, quick diary widget, immediate schedule widget refresh hooks, and backup settings.
 
 Deep audit: `docs/reference-apk/deep-gap-audit.md`
 
@@ -54,7 +54,7 @@ Resource/layout signals:
 | --- | --- | --- | --- |
 | Root navigation | 3 tabs: book/calendar/setting | Now aligned to 3 tabs | Low |
 | Topic center | Config-driven topic catalog, covers, long target lists, topic detail | Local templates now carry id/cover key/target key/category and longer target lists with cover-style cards, but still use generated visuals instead of bundled cover-image assets | Medium |
-| Target detail | Dedicated target detail screen, checkbox/edit fields, save-as-own | Topic detail and book target pages now use structured target cards with progress, schedule metadata, persistent notes/deadline days, completion, editing, deletion for custom items, and quick schedule actions | Medium |
+| Target detail | Dedicated target detail screen, checkbox/edit fields, save-as-own | Topic detail and book target pages now use structured target cards plus a full-screen target detail overlay with completion, note, deadline, and schedule controls | Medium-low |
 | Schedule planner | Monthly schedule, day/week views, repeat/move target, calendar dialog | Local calendar, handbook drag, book-spread schedule page, time fields, repeat labels, repeat interval/end-date expansion, repeat group editing, and system-calendar import exist | Medium-low |
 | Handbook/book | Book activity plus in-book schedule/diary fragments | Bookshelf-style library, page-turn book, opened-handbook double-page paper chrome, and book-spread schedule page exist, but diary/target pages still need parity work | Medium-low |
 | Diary | Rich editor, text/image/target/topic-target blocks, date picker, media picker | Structured diary pages support text/image/target block rail, image blocks, mood/work/done/improvement sections, explicit date picker, and target-linked chips from today's plans/completions | Medium |
@@ -66,12 +66,12 @@ Resource/layout signals:
 
 ## Priority Plan
 
-1. **Target detail parity**: add a dedicated full-screen target detail route.
-2. **Diary editor parity**: add true rich-text formatting and topic-target blocks.
-3. **Book/handbook visual parity**: continue page-content polish inside the opened-book surface and reduce generic panel styling.
-4. **Export/print parity**: add a dedicated preview screen before share/export/print.
-5. **Topic visual parity**: replace generated topic-cover cards with stronger original cover illustration styles.
+1. **Diary editor parity**: add true rich-text formatting and topic-target blocks.
+2. **Book/handbook visual parity**: continue page-content polish inside the opened-book surface and reduce generic panel styling.
+3. **Export/print parity**: add a dedicated preview screen before share/export/print.
+4. **Topic visual parity**: replace generated topic-cover cards with stronger original cover illustration styles.
+5. **Target detail parity**: add save-as-own and richer per-target sections.
 
 ## Immediate Next Fix
 
-The largest remaining product mismatch is now **dedicated detail flows**. Topic templates now carry config-style metadata and longer lists, but target detail and diary editing are still merged into generic book pages instead of reference-style full flows.
+The largest remaining product mismatch is now **diary/editor depth**. Target cards now have a full-screen detail overlay, but diary editing is still a simplified Compose block system instead of the reference app's richer text/image/target/topic-target editor.
