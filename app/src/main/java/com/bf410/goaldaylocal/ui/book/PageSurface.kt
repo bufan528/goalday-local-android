@@ -1976,6 +1976,10 @@ private fun DiarySection(
             onContentModeChange(PageContentMode.EditingDiary(title))
         }
     }
+    fun currentDiaryState(): StructuredDiary =
+        StructuredDiary.fromRaw(diaryDraft).let { saved ->
+            if (editingDiary?.title == title) structured else saved
+        }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -2024,12 +2028,13 @@ private fun DiarySection(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = {
-                val currentState = StructuredDiary.fromRaw(diaryDraft).let { saved ->
-                    if (editingDiary?.title == title) structured else saved
-                }
-                val uri = exportDiaryLongImage(context, title, currentState)
+                val uri = exportDiaryLongImage(context, title, currentDiaryState())
                 exportHint = if (uri != null) "已导出长图" else "导出失败"
             }) { Text("导出长图") }
+            TextButton(onClick = {
+                val uri = exportDiaryLongImage(context, title, currentDiaryState())
+                exportHint = if (uri != null && shareDiaryLongImage(context, uri)) "已打开分享" else "分享失败"
+            }) { Text("分享长图") }
             if (exportHint.isNotBlank()) {
                 Text(exportHint, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A7065))
             }
@@ -2136,6 +2141,17 @@ private fun exportDiaryLongImage(
     val bitmap = renderDiaryLongImage(context, title, state)
     saveBitmapToPictures(context, bitmap, "Goalday_${System.currentTimeMillis()}.png")
 }.getOrNull()
+
+private fun shareDiaryLongImage(context: Context, uri: Uri): Boolean =
+    runCatching {
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "image/png"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(shareIntent, "分享 Goalday 长图"))
+        true
+    }.getOrDefault(false)
 
 private fun renderDiaryLongImage(
     context: Context,
