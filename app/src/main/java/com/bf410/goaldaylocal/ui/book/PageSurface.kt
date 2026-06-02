@@ -857,6 +857,7 @@ private fun HandbookReplicaPage(
             weeklyTheme = weeklyTheme,
             onWeeklyThemeChange = onWeeklyThemeChange,
             rangeLabel = visibleRangeLabel,
+            visibleDays = visibleDays,
             canShiftPrevious = start > 0,
             canShiftNext = start < maxStart,
             onPreviousRange = { windowStart = (start - 3).coerceAtLeast(0) },
@@ -1143,18 +1144,15 @@ private fun BoxScope.HandbookMonthHeader(
     weeklyTheme: String,
     onWeeklyThemeChange: (String) -> Unit,
     rangeLabel: String,
+    visibleDays: List<Int>,
     canShiftPrevious: Boolean,
     canShiftNext: Boolean,
     onPreviousRange: () -> Unit,
     onNextRange: () -> Unit,
 ) {
     val monthModel = remember(year, month) { YearMonth.of(year, month) }
-    val weekdays = listOf("M", "T", "W", "T", "F", "S", "S")
-    val firstWeekDays = remember(monthModel) {
-        List(7) { offset ->
-            monthModel.atDay((offset + 1).coerceAtMost(monthModel.lengthOfMonth()))
-        }
-    }
+    val today = LocalDate.now()
+    val visibleDaySet = remember(visibleDays) { visibleDays.toSet() }
     Column(
         modifier = Modifier
             .align(Alignment.TopCenter)
@@ -1201,30 +1199,37 @@ private fun BoxScope.HandbookMonthHeader(
                     )
                 }
             }
-            Row(
+            Column(
                 modifier = Modifier
                     .weight(1.12f)
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                     .background(Color(0x08E88FAE))
                     .border(0.35.dp, Color(0x10E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 4.dp, vertical = 3.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                firstWeekDays.forEachIndexed { index, date ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(weekdays[index], style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
-                        Text(
-                            date.dayOfMonth.toString(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (date.dayOfMonth == LocalDate.now().dayOfMonth && date.monthValue == LocalDate.now().monthValue) {
-                                GoaldayDesign.Pink
-                            } else {
-                                GoaldayDesign.InkSecondary
-                            },
-                            fontWeight = FontWeight.SemiBold,
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(1.dp), verticalAlignment = Alignment.CenterVertically) {
+                    (1..monthModel.lengthOfMonth()).forEach { day ->
+                        val visible = day in visibleDaySet
+                        val isToday = today.year == year && today.monthValue == month && today.dayOfMonth == day
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(if (visible) 9.dp else 5.dp)
+                                .clip(RoundedCornerShape(99.dp))
+                                .background(
+                                    when {
+                                        visible -> GoaldayDesign.Pink
+                                        isToday -> GoaldayDesign.InkPrimary.copy(alpha = 0.45f)
+                                        else -> Color(0x1A000000)
+                                    },
+                                ),
                         )
                     }
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("1", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                    Text(monthModel.lengthOfMonth().toString(), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                 }
             }
             Text(
