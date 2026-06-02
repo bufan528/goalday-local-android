@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +49,8 @@ fun BookShell(
     val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 4.dp else 10.dp
     val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 2.dp else 8.dp
     val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 30.dp else 20.dp
+    val pageInsetH = if (shellStyle == ShellStyle.BOOK) 14.dp else 8.dp
+    val pageInsetV = if (shellStyle == ShellStyle.BOOK) 15.dp else 10.dp
 
     Box(
         modifier = modifier
@@ -215,9 +218,9 @@ fun BookShell(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = if (shellStyle == ShellStyle.BOOK) 14.dp else 8.dp, vertical = if (shellStyle == ShellStyle.BOOK) 15.dp else 10.dp)
+                .padding(horizontal = pageInsetH, vertical = pageInsetV)
                 .clip(innerShape)
-                .background(Color(0xFFFFFFFF))
+                .background(if (shellStyle == ShellStyle.BOOK) Color(0xFFFFFCF6) else Color(0xFFFFFFFF))
                 .then(
                     if (shellStyle == ShellStyle.BOOK) {
                         Modifier.border(1.5.dp, Color(0x40A7896E), innerShape)
@@ -228,6 +231,11 @@ fun BookShell(
         )
 
         if (shellStyle == ShellStyle.BOOK) {
+            OpenBookPaperChrome(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = pageInsetH, vertical = pageInsetV),
+            )
             repeat(5) { layer ->
                 val offset = 2 + layer
                 Box(
@@ -316,6 +324,131 @@ fun BookShell(
                 .width(edgeZoneWidth)
                 .fillMaxHeight()
                 .clickable(enabled = canTurnNext && turnEnabled, onClick = onTapNext),
+        )
+    }
+}
+
+@Composable
+private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
+    val pageShape = RoundedCornerShape(28.dp)
+    Box(
+        modifier = modifier
+            .clip(pageShape)
+            .background(Color(0xFFFFFCF6)),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .fillMaxHeight()
+                .fillMaxWidth(0.5f)
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            Color(0xFFFFFEFA),
+                            Color(0xFFFFFAEF),
+                            Color(0xFFF3E1CD),
+                        ),
+                        start = Offset.Zero,
+                        end = Offset(680f, 420f),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .fillMaxHeight()
+                .fillMaxWidth(0.5f)
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            Color(0xFFF3E1CD),
+                            Color(0xFFFFFAEF),
+                            Color(0xFFFFFFFF),
+                        ),
+                        start = Offset.Zero,
+                        end = Offset(680f, 420f),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(34.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color(0x22000000),
+                            Color(0x14A88966),
+                            Color(0x00FFFFFF),
+                            Color(0x18A88966),
+                            Color(0x22000000),
+                        ),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(2.dp)
+                .fillMaxHeight()
+                .background(Color(0x33A88966)),
+        )
+        repeat(9) { index ->
+            val top = 42 + index * 34
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = top.dp, end = 3.dp)
+                    .width((5 + index % 3).dp)
+                    .height(1.dp)
+                    .background(Color(0x33B99A7D)),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = (top + 2).dp, start = 3.dp)
+                    .width((4 + index % 2).dp)
+                    .height(1.dp)
+                    .background(Color(0x24B99A7D)),
+            )
+        }
+        repeat(4) { layer ->
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = layer.dp, y = layer.dp)
+                    .padding(end = (6 + layer).dp, bottom = (5 + layer).dp)
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, Color(0x44C5AA8D), Color(0x66FFF9EF)),
+                        ),
+                    ),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(40.dp)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0x66FFFFFF), Color.Transparent),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(44.dp)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Transparent, Color(0x22B88A58)),
+                    ),
+                ),
         )
     }
 }

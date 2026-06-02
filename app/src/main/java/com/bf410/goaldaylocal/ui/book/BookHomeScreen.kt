@@ -700,23 +700,24 @@ private fun BookDetailView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .clip(RoundedCornerShape(24.dp))
                     .background(
-                        Brush.verticalGradient(
+                        Brush.radialGradient(
                             listOf(
-                                Color(0xFFF3E6D8),
-                                Color(0xFFEBD9C6),
-                                Color(0xFFE0C8B0),
+                                Color(0xFFFFF8F1),
+                                Color(0xFFF1DECC),
+                                Color(0xFFE4C8B2),
                             ),
+                            center = Offset(520f, 260f),
+                            radius = 900f,
                         ),
                     )
-                    .padding(vertical = 8.dp),
+                    .padding(top = 6.dp, bottom = 10.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.95f)
-                        .fillMaxHeight(0.84f),
+                        .fillMaxWidth(0.98f)
+                        .fillMaxHeight(0.9f),
                 ) {
                     BookReader(
                         bookId = book.id,
