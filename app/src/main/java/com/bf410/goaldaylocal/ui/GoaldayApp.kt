@@ -39,6 +39,7 @@ import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
 import com.bf410.goaldaylocal.START_TARGET_DIARY
+import com.tencent.mmkv.MMKV
 
 private enum class RootTab(val label: String, val iconText: String) {
     BOOK("手账", "▣"),
@@ -55,6 +56,8 @@ fun GoaldayApp(startTarget: String? = null) {
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()
+    val mmkv = remember { MMKV.defaultMMKV() }
+    var showGuide by remember { mutableStateOf(!mmkv.decodeBool(KEY_GUIDE_SEEN, false)) }
 
     val canGoBackInsideApp = !bookUiState.inLibraryMode || tab != RootTab.BOOK
     val allowEdgeBackSwipe = canGoBackInsideApp
@@ -154,8 +157,18 @@ fun GoaldayApp(startTarget: String? = null) {
                             onFocusConsumed = {},
                         )
                         RootTab.BOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = bookEntryMode)
-                        RootTab.SETTINGS -> SettingsScreen()
+                        RootTab.SETTINGS -> SettingsScreen(
+                            onShowGuide = { showGuide = true },
+                        )
                     }
+                }
+                if (showGuide) {
+                    GuideOverlay(
+                        onClose = {
+                            mmkv.encode(KEY_GUIDE_SEEN, true)
+                            showGuide = false
+                        },
+                    )
                 }
             }
         }

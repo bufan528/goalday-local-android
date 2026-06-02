@@ -52,8 +52,8 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 | Scope | Estimate | Reason |
 | --- | ---: | --- |
 | Useful offline planner functionality | 78-84% | Core local scheduling, handbook, typed diary blocks, export preview, config-style templates, target detail overlay, polished widgets, richer backup/settings, and import exist. |
-| Reference/video visual parity | 59-67% | Opened-book shell, topic-cover cards, target detail route, diary item rows, export preview, widget visuals, settings density, and topic cover art improved. |
-| APK structure parity excluding account/VIP/pay | 69-75% | Many module names have local equivalents; diary, export, widgets, settings, and topic covers have deeper local surfaces, while onboarding remains absent. |
+| Reference/video visual parity | 60-68% | Opened-book shell, topic-cover cards, target detail route, diary item rows, export preview, widget visuals, settings density, topic cover art, and onboarding improved. |
+| APK structure parity excluding account/VIP/pay | 70-76% | Many module names have local equivalents; diary, export, widgets, settings, topic covers, and first-run guide have deeper local surfaces. |
 | Full APK parity including account/VIP/pay/server | 28-35% | Those online/business flows are intentionally out of scope for the local app. |
 
 ## Biggest Remaining Gaps
@@ -71,11 +71,11 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 
 ## Recommended Next Implementation Order
 
-1. Add optional first-run guide/onboarding.
-2. Move topic metadata closer to config-driven loading if needed.
-3. Add widget color/style configuration if needed.
-4. Add richer diary editor chrome and optional inline formatting.
-5. Add target save-as-own behavior and richer per-target sections.
+1. Move topic metadata closer to config-driven loading if needed.
+2. Add widget color/style configuration if needed.
+3. Add richer diary editor chrome and optional inline formatting.
+4. Add target save-as-own behavior and richer per-target sections.
+5. Polish guide animations or route-aware callouts if needed.
 
 ## Practical Conclusion
 

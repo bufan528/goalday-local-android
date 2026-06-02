@@ -100,6 +100,7 @@ Recent local changes improved the biggest visible gaps:
 - Schedule widgets, large schedule widget, and quick diary widget exist and refresh from local data. The latest widget pass adds richer gradient backgrounds, status pills, colored schedule dots, clearer empty states, and a stronger quick-diary add surface.
 - Settings now has denser rows, backup storage status, backup history, restore confirmation, and a persisted font-size menu.
 - Topic cover cards now share a local original cover-art system with category-aware palettes, book-spine treatment, cover stamps, and paper-line details across both inspiration entry points.
+- A first-run guide overlay now covers goals, schedule placement, diary blocks, and long-image export. Settings can reopen the guide.
 
 The remaining gap is now mostly product depth and polish, not missing core offline functionality.
 
@@ -107,8 +108,8 @@ The remaining gap is now mostly product depth and polish, not missing core offli
 
 | Rank | Area | APK Evidence | Local App Status | Remaining Gap |
 | --- | --- | --- | --- | --- |
-| 1 | Guide/onboarding | `GuideActivity`, guide icons/views, Lottie assets | No dedicated guided first-run/tutorial layer | Need optional first-run guide for adding targets, schedule scrolling, diary writing, and handbook use. |
-| 2 | Topic center asset completion | 33 cover PNGs, 28 target text files, bilingual topic config | Local templates now use a shared original category-aware cover-art system, but not bitmap cover assets or config parsing | Need closer config-driven topic loading and optional generated bitmap cover assets if visual delta remains obvious. |
+| 1 | Topic center asset completion | 33 cover PNGs, 28 target text files, bilingual topic config | Local templates now use a shared original category-aware cover-art system, but not bitmap cover assets or config parsing | Need closer config-driven topic loading and optional generated bitmap cover assets if visual delta remains obvious. |
+| 2 | Guide/onboarding polish | `GuideActivity`, guide icons/views, Lottie assets | First-run guide overlay exists with local illustrations and can be reopened from settings | Need route-aware callouts or animation only if the simple guide still feels too static. |
 | 3 | Widget configuration completion | `diary_add_widget_configure`, `widget_schedule_add_color`, mid/large widget resources, unlock widget signals | Widgets now have richer backgrounds, status pills, colored dots, clearer empty states, and quick-diary date/action chrome | Need an actual widget color/style configuration surface and more exact compact/mid/large presets. |
 | 4 | Settings/backup completion | `activity_setting`, `bg_setting_item`, `bg_setting_fontsize_menu`, `ll_backup`, menu foreground assets | Settings now has denser rows, backup history, restore confirmation, storage status, and font-size menu | Need global application of font size and any exact setting menu art if required. |
 | 5 | Diary editor polish | Rich editor bundle and nested target child diary item layouts | Persistent typed blocks exist; rich editor wrapper exists but is not wired into block editing | Need inline formatting toolbar, child target block nesting, and closer image/text/target row chrome. |
@@ -120,23 +121,22 @@ The remaining gap is now mostly product depth and polish, not missing core offli
 | Scope | Estimate | Reason |
 | --- | ---: | --- |
 | Useful offline planner functionality | 78-84% | Core schedule, book, topic, diary, target detail, polished widgets, import, richer backup/settings, and export preview exist. |
-| Reference/video visual parity | 59-67% | Main book/diary/export/widget/settings surfaces and topic cover visuals improved, but onboarding remains absent. |
-| APK structure parity excluding account/VIP/pay/server | 69-75% | Most local module equivalents exist; remaining gaps are onboarding, config-driven topic loading, widget configuration, and finer editor polish. |
+| Reference/video visual parity | 60-68% | Main book/diary/export/widget/settings/topic/onboarding surfaces improved; remaining gaps are finer asset/config/detail polish. |
+| APK structure parity excluding account/VIP/pay/server | 70-76% | Most local module equivalents exist; remaining gaps are config-driven topic loading, widget configuration, and finer editor polish. |
 | Full APK parity including account/VIP/pay/server | 28-35% | Account/VIP/pay/login/coupon/server flows remain intentionally excluded from this offline app. |
 
 ## Recommended Next Implementation
 
-1. Guide/onboarding pass:
-   - Add optional first-run guide using local illustrations/animations rather than APK-copied assets.
-   - Cover adding targets, schedule scrolling, diary writing, and handbook use.
-
-2. Topic completion:
+1. Topic completion:
    - Move topic metadata closer to config-driven loading if needed.
    - Add generated bitmap cover assets only if the current code-native cover art still looks too generic.
 
-3. Widget configuration completion:
+2. Widget configuration completion:
    - Add a widget configuration surface or in-app widget settings section for color/style.
    - Add more exact compact/mid/large presets if needed.
+
+3. Diary editor polish:
+   - Add richer editor chrome, inline formatting controls, and target child nesting if needed.
 
 4. Settings completion:
    - Apply persisted font-size preference globally if required.
@@ -144,4 +144,4 @@ The remaining gap is now mostly product depth and polish, not missing core offli
 
 ## Practical Conclusion
 
-After the latest diary, export, widget, settings, and topic-cover changes, the app is close enough in core offline workflow that the next high-impact work should not be another diary/export tweak. The remaining visible difference is strongest in first-run guidance, with widget configuration and finer editor chrome behind that.
+After the latest diary, export, widget, settings, topic-cover, and onboarding changes, the app is close enough in core offline workflow that the next high-impact work should not be another diary/export tweak. The remaining visible difference is now mostly config depth and polish: topic loading, widget configuration, richer diary editor chrome, and target-detail options.

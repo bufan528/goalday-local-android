@@ -50,7 +50,9 @@ private data class FontSizeOption(
 )
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    onShowGuide: () -> Unit = {},
+) {
     val context = LocalContext.current
     val manager = remember { BackupManager(context) }
     val mmkv = remember { MMKV.defaultMMKV() }
@@ -92,6 +94,12 @@ fun SettingsScreen() {
                 onClick = {
                     Toast.makeText(context, "当前版本已按本地离线模式运行", Toast.LENGTH_SHORT).show()
                 },
+            )
+            SettingRow(
+                title = "新手引导",
+                subtitle = "重新查看目标、日程、日记、导出四步引导。",
+                meta = "打开",
+                onClick = onShowGuide,
             )
             FontSizeMenu(
                 options = fontOptions,
