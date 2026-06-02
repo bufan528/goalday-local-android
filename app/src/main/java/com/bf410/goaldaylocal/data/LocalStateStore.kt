@@ -1,6 +1,7 @@
 package com.bf410.goaldaylocal.data
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.tencent.mmkv.MMKV
 import org.json.JSONArray
 import org.json.JSONObject
@@ -57,17 +58,17 @@ class LocalStateStore(
 
     fun scheduleEntries(): List<ScheduleEntry> {
         val raw = mmkv.decodeString(KEY_SCHEDULES, "[]") ?: "[]"
-        val array = JSONArray(raw)
+        val array = runCatching { JSONArray(raw) }.getOrElse { JSONArray() }
         return buildList {
             repeat(array.length()) { index ->
-                val item = array.getJSONObject(index)
-                add(
+                runCatching {
+                    val item = array.getJSONObject(index)
                     ScheduleEntry(
-                        id = item.getString("id"),
-                        title = item.getString("title"),
-                        year = item.getInt("year"),
-                        month = item.getInt("month"),
-                        day = item.getInt("day"),
+                        id = item.optString("id").ifBlank { UUID.randomUUID().toString() },
+                        title = item.optString("title").ifBlank { "未命名日程" },
+                        year = item.optInt("year", LocalDate.now().year),
+                        month = item.optInt("month", LocalDate.now().monthValue).coerceIn(1, 12),
+                        day = item.optInt("day", LocalDate.now().dayOfMonth).coerceIn(1, 31),
                         note = item.optString("note"),
                         timeText = item.optString("timeText"),
                         repeatRule = item.optString("repeatRule"),
@@ -77,8 +78,8 @@ class LocalStateStore(
                         completed = decodeScheduleStatus(item).let { status ->
                             status == ScheduleStatus.DONE
                         },
-                    ),
-                )
+                    )
+                }.getOrNull()?.let(::add)
             }
         }
     }
@@ -143,11 +144,9 @@ class LocalStateStore(
 
     fun customPageItems(bookId: String, pageTitle: String): List<String> {
         val raw = mmkv.decodeString(pageItemsKey(bookId, pageTitle), "[]") ?: "[]"
-        val array = JSONArray(raw)
+        val array = runCatching { JSONArray(raw) }.getOrElse { JSONArray() }
         return buildList {
-            repeat(array.length()) { index ->
-                add(array.getString(index))
-            }
+            repeat(array.length()) { index -> array.optString(index).takeIf(String::isNotBlank)?.let(::add) }
         }
     }
 
@@ -240,19 +239,19 @@ class LocalStateStore(
 
     fun customBooks(): List<TopicBook> {
         val raw = mmkv.decodeString(KEY_CUSTOM_BOOKS, "[]") ?: "[]"
-        val array = JSONArray(raw)
+        val array = runCatching { JSONArray(raw) }.getOrElse { JSONArray() }
         return buildList {
             repeat(array.length()) { index ->
-                val item = array.getJSONObject(index)
-                add(
+                runCatching {
+                    val item = array.getJSONObject(index)
                     TopicBook(
-                        id = item.getString("id"),
-                        title = item.getString("title"),
-                        subtitle = item.getString("subtitle"),
-                        color = Color(item.getInt("color")),
-                        pages = decodePages(item.getJSONArray("pages")),
-                    ),
-                )
+                        id = item.optString("id").ifBlank { "custom_${UUID.randomUUID()}" },
+                        title = item.optString("title").ifBlank { "未命名手账" },
+                        subtitle = item.optString("subtitle"),
+                        color = Color(item.optInt("color", 0xFFF2C0A5.toInt())),
+                        pages = decodePages(item.optJSONArray("pages") ?: JSONArray()),
+                    )
+                }.getOrNull()?.let(::add)
             }
         }
     }
@@ -325,9 +324,9 @@ class LocalStateStore(
 
     private fun decodeStringList(key: String): List<String> {
         val raw = mmkv.decodeString(key, "[]") ?: "[]"
-        val array = JSONArray(raw)
+        val array = runCatching { JSONArray(raw) }.getOrElse { JSONArray() }
         return buildList {
-            repeat(array.length()) { index -> add(array.getString(index)) }
+            repeat(array.length()) { index -> array.optString(index).takeIf(String::isNotBlank)?.let(::add) }
         }
     }
 
@@ -382,14 +381,17 @@ class LocalStateStore(
     private fun decodePages(array: JSONArray): List<BookPage> =
         buildList {
             repeat(array.length()) { index ->
-                val item = array.getJSONObject(index)
-                val title = item.getString("title")
-                when (item.getString("type")) {
-                    "target" -> add(TargetPage(title, item.toStringList("items")))
-                    "plan" -> add(PlanPage(title, item.toStringList("items")))
-                    "schedule" -> add(SchedulePage(title, item.toStringList("items")))
-                    "diary" -> add(DiaryPage(title, item.optString("prompt", "")))
-                }
+                runCatching {
+                    val item = array.getJSONObject(index)
+                    val title = item.optString("title").ifBlank { "未命名页面" }
+                    when (item.optString("type")) {
+                        "target" -> TargetPage(title, item.toStringList("items"))
+                        "plan" -> PlanPage(title, item.toStringList("items"))
+                        "schedule" -> SchedulePage(title, item.toStringList("items"))
+                        "diary" -> DiaryPage(title, item.optString("prompt", "写下这一页最重要的记录。"))
+                        else -> DiaryPage(title, "写下这一页最重要的记录。")
+                    }
+                }.getOrNull()?.let(::add)
             }
         }
 
@@ -410,4 +412,4 @@ private fun JSONObject.toStringList(key: String): List<String> {
     }
 }
 
-private fun Color.toArgbCompat(): Int = value.toLong().toInt()
+private fun Color.toArgbCompat(): Int = toArgb()
