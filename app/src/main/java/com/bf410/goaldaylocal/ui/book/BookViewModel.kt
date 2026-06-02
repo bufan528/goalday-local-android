@@ -406,6 +406,14 @@ class BookViewModel(
     fun renameCurrentPage(title: String) {
         val trimmed = title.trim()
         if (trimmed.isBlank() || !isCurrentBookCustom()) return
+        val current = currentBook()
+        val oldPage = currentPage()
+        store.migratePageScopedData(
+            bookId = current.id,
+            oldTitle = oldPage.title,
+            newTitle = trimmed,
+            checkedItems = checkedItemsForPage(oldPage),
+        )
         updateCurrentBookPages { pages ->
             pages.toMutableList().also { list ->
                 list[_uiState.value.selectedPageIndex] = renamePage(list[_uiState.value.selectedPageIndex], trimmed)
@@ -641,6 +649,14 @@ class BookViewModel(
             is PlanPage -> page.copy(title = title)
             is SchedulePage -> page.copy(title = title)
             is DiaryPage -> page.copy(title = title)
+        }
+
+    private fun checkedItemsForPage(page: BookPage): List<String> =
+        when (page) {
+            is TargetPage -> page.items + store.customPageItems(currentBook().id, page.title)
+            is PlanPage -> page.items + store.customPageItems(currentBook().id, page.title)
+            is SchedulePage -> page.items + store.customPageItems(currentBook().id, page.title)
+            is DiaryPage -> emptyList()
         }
 
     companion object {

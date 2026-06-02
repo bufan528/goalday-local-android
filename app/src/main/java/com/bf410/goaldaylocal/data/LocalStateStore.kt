@@ -158,6 +158,26 @@ class LocalStateStore(
         encodeStringList(todayDoneKey(bookId, pageTitle), items)
     }
 
+    fun migratePageScopedData(
+        bookId: String,
+        oldTitle: String,
+        newTitle: String,
+        checkedItems: List<String> = emptyList(),
+    ) {
+        if (oldTitle == newTitle) return
+        moveRawString(diaryKey(bookId, oldTitle), diaryKey(bookId, newTitle))
+        moveRawString(pageItemsKey(bookId, oldTitle), pageItemsKey(bookId, newTitle))
+        moveRawString(todayPlanKey(bookId, oldTitle), todayPlanKey(bookId, newTitle))
+        moveRawString(todayDoneKey(bookId, oldTitle), todayDoneKey(bookId, newTitle))
+        checkedItems.distinct().forEach { item ->
+            val oldKey = checkKey(bookId, oldTitle, item)
+            if (mmkv.decodeBool(oldKey, false)) {
+                mmkv.encode(checkKey(bookId, newTitle, item), true)
+                mmkv.removeValueForKey(oldKey)
+            }
+        }
+    }
+
     fun customBooks(): List<TopicBook> {
         val raw = mmkv.decodeString(KEY_CUSTOM_BOOKS, "[]") ?: "[]"
         val array = JSONArray(raw)
@@ -252,6 +272,15 @@ class LocalStateStore(
         val array = JSONArray()
         items.forEach(array::put)
         mmkv.encode(key, array.toString())
+    }
+
+    private fun moveRawString(oldKey: String, newKey: String) {
+        val oldValue = mmkv.decodeString(oldKey, null) ?: return
+        val newValue = mmkv.decodeString(newKey, null)
+        if (newValue.isNullOrBlank() || newValue == "[]") {
+            mmkv.encode(newKey, oldValue)
+        }
+        mmkv.removeValueForKey(oldKey)
     }
 
     private fun decodeScheduleStatus(item: JSONObject): ScheduleStatus {
