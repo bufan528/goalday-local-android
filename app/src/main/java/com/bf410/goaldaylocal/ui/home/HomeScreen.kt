@@ -68,6 +68,7 @@ fun HomeScreen(
     onOpenCalendar: () -> Unit,
     onOpenCalendarForDay: (Int) -> Unit,
     onOpenHandbook: () -> Unit,
+    onOpenDiary: () -> Unit,
     onOpenInspiration: () -> Unit,
 ) {
     val state by calendarViewModel.uiState.collectAsState()
@@ -214,6 +215,7 @@ fun HomeScreen(
                 TextNav("日历", Modifier.weight(1f), onOpenCalendar)
                 TextNav("灵感", Modifier.weight(1f), onOpenInspiration)
                 TextNav("手账", Modifier.weight(1f), onOpenHandbook)
+                TextNav("日记", Modifier.weight(1f), onOpenDiary)
             }
             if (hint.isNotBlank()) {
                 Text(hint, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
