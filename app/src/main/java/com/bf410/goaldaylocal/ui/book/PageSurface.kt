@@ -847,6 +847,8 @@ private fun HandbookReplicaPage(
     var dragPosition by remember(pageIndex) { mutableStateOf(Offset.Zero) }
     var activePoolDropDay by remember(pageIndex) { mutableStateOf<Int?>(null) }
     var activeDoneDropDay by remember(pageIndex) { mutableStateOf<Int?>(null) }
+    val context = LocalContext.current
+    var exportHint by remember(pageIndex) { mutableStateOf("") }
     fun clearPoolDrag() {
         draggingPoolItem = null
         activePoolDropDay = null
@@ -862,6 +864,11 @@ private fun HandbookReplicaPage(
         if (saveHint.isBlank()) return@LaunchedEffect
         delay(1200)
         saveHint = ""
+    }
+    LaunchedEffect(exportHint) {
+        if (exportHint.isBlank()) return@LaunchedEffect
+        delay(1400)
+        exportHint = ""
     }
 
     Box(
@@ -897,6 +904,43 @@ private fun HandbookReplicaPage(
                 draftDay = day
             },
         )
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 33.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "导出",
+                color = Color(0xFF8B6F78),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0x18E88FAE))
+                    .clickable {
+                        val uri = exportHandbookScheduleLongImage(context, anchorYear, anchorMonth, visibleDays, sorted, weeklyTheme)
+                        exportHint = if (uri != null) "已导出" else "导出失败"
+                    }
+                    .padding(horizontal = 7.dp, vertical = 3.dp),
+            )
+            Text(
+                "分享",
+                color = Color(0xFF8B6F78),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0x18E88FAE))
+                    .clickable {
+                        val uri = exportHandbookScheduleLongImage(context, anchorYear, anchorMonth, visibleDays, sorted, weeklyTheme)
+                        exportHint = if (uri != null && shareLongImage(context, uri)) "已打开分享" else "分享失败"
+                    }
+                    .padding(horizontal = 7.dp, vertical = 3.dp),
+            )
+            if (exportHint.isNotBlank()) {
+                Text(exportHint, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A7065))
+            }
+        }
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -2033,7 +2077,7 @@ private fun DiarySection(
             }) { Text("导出长图") }
             TextButton(onClick = {
                 val uri = exportDiaryLongImage(context, title, currentDiaryState())
-                exportHint = if (uri != null && shareDiaryLongImage(context, uri)) "已打开分享" else "分享失败"
+                exportHint = if (uri != null && shareLongImage(context, uri)) "已打开分享" else "分享失败"
             }) { Text("分享长图") }
             if (exportHint.isNotBlank()) {
                 Text(exportHint, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A7065))
@@ -2133,6 +2177,101 @@ private fun diaryDateLabel(date: LocalDate): String {
     return "${date.monthValue}月${date.dayOfMonth}日 · $weekday"
 }
 
+private fun exportHandbookScheduleLongImage(
+    context: Context,
+    year: Int,
+    month: Int,
+    days: List<Int>,
+    entries: List<ScheduleEntry>,
+    weeklyTheme: String,
+): Uri? = runCatching {
+    val bitmap = renderHandbookScheduleLongImage(year, month, days, entries, weeklyTheme)
+    saveBitmapToPictures(context, bitmap, "Goalday_schedule_${System.currentTimeMillis()}.png")
+}.getOrNull()
+
+private fun renderHandbookScheduleLongImage(
+    year: Int,
+    month: Int,
+    days: List<Int>,
+    entries: List<ScheduleEntry>,
+    weeklyTheme: String,
+): Bitmap {
+    val width = 1080
+    val padding = 72f
+    val contentWidth = width - padding * 2
+    val estimatedHeight = 820 + days.size * 420
+    val bitmap = Bitmap.createBitmap(width, estimatedHeight, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    canvas.drawColor(0xFFFFFBF6.toInt())
+    val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF2F2922.toInt()
+        textSize = 48f
+        isFakeBoldText = true
+    }
+    val subtitlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF8B7A68.toInt()
+        textSize = 28f
+    }
+    val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFB07A8F.toInt()
+        textSize = 30f
+        isFakeBoldText = true
+    }
+    val bodyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF3A342E.toInt()
+        textSize = 30f
+    }
+    val cardPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFF7EFE6.toInt()
+    }
+    var y = 86f
+    canvas.drawText("Goalday 日程手账", padding, y, titlePaint)
+    y += 48f
+    val range = days.firstOrNull()?.let { first ->
+        val last = days.lastOrNull() ?: first
+        "$year 年 $month 月 $first-$last 日"
+    } ?: "$year 年 $month 月"
+    canvas.drawText(range, padding, y, subtitlePaint)
+    y += 54f
+    if (weeklyTheme.isNotBlank()) {
+        y = drawExportSection(canvas, "本周主题", weeklyTheme, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
+    }
+    days.forEach { day ->
+        val dayEntries = entries.filter { it.day == day }
+        val todo = dayEntries.filterNot { it.completed }
+        val done = dayEntries.filter { it.completed }
+        val body = buildString {
+            appendLine("todo")
+            if (todo.isEmpty()) {
+                appendLine("○ 暂无待办")
+            } else {
+                todo.take(8).forEach { entry ->
+                    val time = entry.timeText.takeIf { it.isNotBlank() }?.let { "$it " }.orEmpty()
+                    appendLine("○ $time${entry.title}")
+                }
+            }
+            appendLine()
+            appendLine("done")
+            if (done.isEmpty()) {
+                appendLine("✓ 暂无完成")
+            } else {
+                done.take(8).forEach { entry ->
+                    val time = entry.timeText.takeIf { it.isNotBlank() }?.let { "$it " }.orEmpty()
+                    appendLine("✓ $time${entry.title}")
+                }
+            }
+        }
+        y = drawExportSection(canvas, "${month}月${day}日", body.trim(), padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
+    }
+    val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFB7A893.toInt()
+        textSize = 24f
+    }
+    y += 42f
+    canvas.drawText("Goalday Local", padding, y, footerPaint)
+    return Bitmap.createBitmap(bitmap, 0, 0, width, (y + 72f).toInt().coerceAtMost(bitmap.height))
+}
+
 private fun exportDiaryLongImage(
     context: Context,
     title: String,
@@ -2142,7 +2281,7 @@ private fun exportDiaryLongImage(
     saveBitmapToPictures(context, bitmap, "Goalday_${System.currentTimeMillis()}.png")
 }.getOrNull()
 
-private fun shareDiaryLongImage(context: Context, uri: Uri): Boolean =
+private fun shareLongImage(context: Context, uri: Uri): Boolean =
     runCatching {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
