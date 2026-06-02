@@ -22,6 +22,7 @@ The readable asset layer shows the reference app is built around:
 - A rich editor web asset bundle: `editor.html`, `rich_editor.js`, `style.css`.
 - Lottie onboarding/empty-state assets under `assets/lottie/`.
 - Schedule and target resource names such as `rv_schedule`, `rv_target`, `ll_import_calendar`, `target_detail_options`, `schedule_empty_hints`, `ic_double_schedule`, and `ic_unlimited_schedule`.
+- Main tab resources expose a compact three-tab structure: book, calendar, and setting.
 
 ## UX implications for this app
 
@@ -31,6 +32,7 @@ The readable asset layer shows the reference app is built around:
 - Imported template items should land in the handbook task pool so they can be assigned to dates.
 - The planner should support the video workflow: collect tasks first, drag into dates, then drag completed items into done.
 - Calendar integration and richer diary/media editing are reference-app gaps to address later.
+- The bottom navigation should stay compact. Topic center, target details, and handbook flows belong inside the book area rather than being separate root tabs.
 
 ## Current implementation response
 

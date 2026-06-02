@@ -10,13 +10,6 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AutoStories
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Lightbulb
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -34,7 +27,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -44,29 +36,24 @@ import com.bf410.goaldaylocal.ui.book.BookHomeScreen
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.calendar.CalendarScreen
 import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
-import com.bf410.goaldaylocal.ui.home.HomeScreen
-import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
 
-private enum class RootTab(val label: String, val icon: ImageVector) {
-    HOME("首页", Icons.Outlined.Home),
-    CALENDAR("日历", Icons.Outlined.CalendarMonth),
-    INSPIRATION("灵感", Icons.Outlined.Lightbulb),
-    HANDBOOK("手账", Icons.Outlined.AutoStories),
-    SETTINGS("设置", Icons.Outlined.Settings),
+private enum class RootTab(val label: String, val iconText: String) {
+    BOOK("手账", "▣"),
+    CALENDAR("日历", "□"),
+    SETTINGS("设置", "○"),
 }
 
 @Composable
 fun GoaldayApp() {
-    var tab by rememberSaveable { mutableStateOf(RootTab.HOME) }
-    var pendingCalendarFocusDay by rememberSaveable { mutableStateOf<Int?>(null) }
+    var tab by rememberSaveable { mutableStateOf(RootTab.BOOK) }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()
 
-    val canGoBackInsideApp = !bookUiState.inLibraryMode || tab != RootTab.HOME
-    val allowEdgeBackSwipe = canGoBackInsideApp && tab != RootTab.HANDBOOK
+    val canGoBackInsideApp = !bookUiState.inLibraryMode || tab != RootTab.BOOK
+    val allowEdgeBackSwipe = canGoBackInsideApp
     val density = LocalDensity.current
     val edgeWidthPx = with(density) { 28.dp.toPx() }
     val triggerDistancePx = with(density) { 72.dp.toPx() }
@@ -76,7 +63,7 @@ fun GoaldayApp() {
     fun navigateBackInsideApp() {
         when {
             !bookUiState.inLibraryMode -> bookViewModel.openLibrary()
-            tab != RootTab.HOME -> tab = RootTab.HOME
+            tab != RootTab.BOOK -> tab = RootTab.BOOK
         }
     }
 
@@ -85,9 +72,7 @@ fun GoaldayApp() {
     }
 
     LaunchedEffect(tab) {
-        if (tab == RootTab.HANDBOOK) {
-            bookViewModel.refreshSchedulePreview()
-        }
+        if (tab == RootTab.BOOK) bookViewModel.refreshSchedulePreview()
     }
 
     MaterialTheme {
@@ -103,7 +88,7 @@ fun GoaldayApp() {
                         NavigationBarItem(
                             selected = selected,
                             onClick = { tab = item },
-                            icon = { Icon(imageVector = item.icon, contentDescription = item.label) },
+                            icon = { Text(item.iconText, color = if (selected) GoaldayDesign.Pink else Color(0xFF9E958A)) },
                             label = { Text(item.label) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = GoaldayDesign.Pink,
@@ -154,26 +139,12 @@ fun GoaldayApp() {
                     label = "root-tab-switch",
                 ) { currentTab ->
                     when (currentTab) {
-                        RootTab.HOME -> HomeScreen(
-                            calendarViewModel = calendarViewModel,
-                            onOpenCalendar = { tab = RootTab.CALENDAR },
-                            onOpenCalendarForDay = { day ->
-                                pendingCalendarFocusDay = day
-                                tab = RootTab.CALENDAR
-                            },
-                            onOpenHandbook = { tab = RootTab.HANDBOOK },
-                            onOpenInspiration = { tab = RootTab.INSPIRATION },
-                        )
                         RootTab.CALENDAR -> CalendarScreen(
                             viewModel = calendarViewModel,
-                            focusDay = pendingCalendarFocusDay,
-                            onFocusConsumed = { pendingCalendarFocusDay = null },
+                            focusDay = null,
+                            onFocusConsumed = {},
                         )
-                        RootTab.INSPIRATION -> InspirationScreen(
-                            viewModel = bookViewModel,
-                            onOpenHandbook = { tab = RootTab.HANDBOOK },
-                        )
-                        RootTab.HANDBOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.HANDBOOK)
+                        RootTab.BOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.PLANNER)
                         RootTab.SETTINGS -> SettingsScreen()
                     }
                 }
