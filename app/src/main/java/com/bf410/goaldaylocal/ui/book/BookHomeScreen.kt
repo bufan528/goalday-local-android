@@ -251,70 +251,97 @@ private fun LibraryView(
     onOpenBook: (Int) -> Unit,
     onCreateBook: () -> Unit,
 ) {
+    val primaryBook = books.firstOrNull()
+    val shelfBooks = books.drop(1)
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 4.dp),
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFFF8EFE5),
+                        Color(0xFFF6E8DA),
+                        Color(0xFFF1DDCC),
+                    ),
+                ),
+            )
+            .padding(top = 12.dp),
     ) {
-        Text(
-            text = BookStrings.appTitle,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 18.dp),
-        )
-        Text(
-            text = BookStrings.librarySubtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF6F675D),
-        )
-        Spacer(Modifier.height(16.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = BookStrings.librarySummary.format(books.size, customBookCount),
-                color = Color(0xFF6F675D),
-            )
-            Text(
-                text = BookStrings.createBook,
-                color = Color(0xFF8F684F),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0x1A8F684F))
-                    .clickable(onClick = onCreateBook)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-            )
-        }
-        Spacer(Modifier.height(18.dp))
-        Column(
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            modifier = Modifier.verticalScroll(rememberScrollState()),
-        ) {
-            books.forEachIndexed { index, book ->
-                LibraryBookCoverCard(
-                    book = book,
-                    selected = index == 0,
-                    onClick = { onOpenBook(index) },
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = BookStrings.appTitle,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF2A211A),
+                )
+                Text(
+                    text = BookStrings.librarySummary.format(books.size, customBookCount),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFF7A6657),
                 )
             }
+            Text(
+                text = BookStrings.createBook,
+                color = Color.White,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0xFF2F2923))
+                    .clickable(onClick = onCreateBook)
+                    .padding(horizontal = 13.dp, vertical = 8.dp),
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = BookStrings.librarySubtitle,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFF6F675D),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color(0x66FFFDF8))
+                .padding(horizontal = 12.dp, vertical = 9.dp),
+        )
+        Spacer(Modifier.height(14.dp))
+        Column(
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            primaryBook?.let { book ->
+                FeaturedHandbookCover(
+                    book = book,
+                    onClick = { onOpenBook(0) },
+                )
+            }
+            BookShelfRow(
+                books = shelfBooks,
+                indexOffset = 1,
+                onOpenBook = onOpenBook,
+            )
+            AddBookShelfCard(onCreateBook = onCreateBook)
         }
     }
 }
 
 @Composable
-private fun LibraryBookCoverCard(
+private fun FeaturedHandbookCover(
     book: TopicBook,
-    selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val coverShape = RoundedCornerShape(24.dp)
+    val coverShape = RoundedCornerShape(30.dp)
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(148.dp)
-            .shadow(12.dp, coverShape, clip = false)
+            .height(230.dp)
+            .shadow(24.dp, coverShape, clip = false)
             .clip(coverShape)
             .background(
                 Brush.linearGradient(
@@ -332,12 +359,23 @@ private fun LibraryBookCoverCard(
     ) {
         Box(
             modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.radialGradient(
+                        listOf(Color(0x55FFFFFF), Color.Transparent),
+                        center = Offset(700f, 80f),
+                        radius = 620f,
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
                 .align(Alignment.CenterStart)
-                .width(38.dp)
+                .width(48.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
-                        listOf(Color(0x502F261D), Color(0x22FFFFFF), Color.Transparent),
+                        listOf(Color(0x662F261D), Color(0x22FFFFFF), Color.Transparent),
                     ),
                 ),
         )
@@ -346,10 +384,10 @@ private fun LibraryBookCoverCard(
             color = Color(0xCCFFFFFF),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .graphicsLayer { rotationZ = -90f }
-                .padding(bottom = 2.dp),
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .graphicsLayer { rotationZ = -90f }
+                    .padding(bottom = 7.dp),
         )
         repeat(4) { layer ->
             Box(
@@ -367,27 +405,133 @@ private fun LibraryBookCoverCard(
         }
         Column(
             modifier = Modifier
-                .padding(start = 56.dp, top = 22.dp, end = 28.dp, bottom = 18.dp)
+                .padding(start = 70.dp, top = 26.dp, end = 28.dp, bottom = 22.dp)
                 .fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text(book.title, style = MaterialTheme.typography.titleLarge, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("LOCAL HANDBOOK", style = MaterialTheme.typography.labelSmall, color = Color(0xAA2F261D), fontWeight = FontWeight.SemiBold)
+                Text(book.title, style = MaterialTheme.typography.headlineSmall, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
                 Text(book.subtitle, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF4B3D31))
             }
             Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Text("${book.pages.size} ${BookStrings.pageUnit}", style = MaterialTheme.typography.labelLarge, color = Color(0xFF5D4B3D))
                 Text(
-                    if (selected) "默认手账" else BookStrings.openBook,
-                    color = Color(0xFF5D4B3D),
+                    "打开这本",
+                    color = Color.White,
                     style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x26FFFFFF))
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                        .background(Color(0xFF2F2923))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun BookShelfRow(
+    books: List<TopicBook>,
+    indexOffset: Int,
+    onOpenBook: (Int) -> Unit,
+) {
+    if (books.isEmpty()) return
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("书架", color = Color(0xFF3A2D24), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        books.chunked(3).forEachIndexed { rowIndex, row ->
+            Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(9.dp),
+                    verticalAlignment = Alignment.Bottom,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(154.dp),
+                ) {
+                    row.forEachIndexed { columnIndex, book ->
+                        ShelfBookCover(
+                            book = book,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onOpenBook(indexOffset + rowIndex * 3 + columnIndex) },
+                        )
+                    }
+                    repeat(3 - row.size) {
+                        Spacer(Modifier.weight(1f))
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFFD3A681), Color(0xFF8F6042)),
+                            ),
+                        ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShelfBookCover(
+    book: TopicBook,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val shape = RoundedCornerShape(16.dp, 16.dp, 9.dp, 9.dp)
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .shadow(8.dp, shape, clip = false)
+            .clip(shape)
+            .background(
+                Brush.linearGradient(
+                    listOf(book.color.copy(alpha = 0.96f), book.color.copy(alpha = 0.76f), Color(0xFFFFFAF2)),
+                    start = Offset.Zero,
+                    end = Offset(280f, 520f),
+                ),
+            )
+            .border(0.8.dp, Color(0x38FFFFFF), shape)
+            .clickable(onClick = onClick)
+            .padding(10.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .width(16.dp)
+                .fillMaxHeight()
+                .background(Color(0x332F261D), RoundedCornerShape(99.dp)),
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 20.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(book.title, color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 3)
+            Text("${book.pages.size}页", color = Color(0xFF5D4B3D), style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+@Composable
+private fun AddBookShelfCard(onCreateBook: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(68.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0x7AFFFDF8))
+            .border(1.dp, Color(0x30A8795E), RoundedCornerShape(18.dp))
+            .clickable(onClick = onCreateBook)
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("+ 新建一本手账", color = Color(0xFF6F4D3A), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
     }
 }
 

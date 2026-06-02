@@ -2,7 +2,7 @@
 
 Reference APK: `docs/reference-apk/goalday-reference-base.apk`
 
-Current app status after the deep gap audit: local/offline planner with three root tabs, topic-style book covers, template center, topic detail surface, save-as-book flow, standalone target-detail-style book pages, handbook page turn, task pool, schedule todo/done, schedule time/repeat fields, repeat interval and end-date controls, repeat group editing, Android system calendar range/source selection/import preview, structured diary editor with image blocks, target-linked diary chips, explicit diary date picker, diary and handbook schedule long-image export/share, small/large schedule widgets, quick diary widget, immediate schedule widget refresh hooks, and backup settings.
+Current app status after the first book-visual rebuild: local/offline planner with three root tabs, bookshelf-style library, featured physical handbook cover, expanded topic/template catalog, topic detail surface, save-as-book flow, standalone target-detail-style book pages, handbook page turn, task pool, schedule todo/done, schedule time/repeat fields, repeat interval and end-date controls, repeat group editing, Android system calendar range/source selection/import preview, structured diary editor with image blocks, target-linked diary chips, explicit diary date picker, diary and handbook schedule long-image export/share, small/large schedule widgets, quick diary widget, immediate schedule widget refresh hooks, and backup settings.
 
 Deep audit: `docs/reference-apk/deep-gap-audit.md`
 
@@ -51,10 +51,10 @@ Resource/layout signals:
 | Area | Reference APK | Current App | Gap |
 | --- | --- | --- | --- |
 | Root navigation | 3 tabs: book/calendar/setting | Now aligned to 3 tabs | Low |
-| Topic center | Config-driven topic catalog, covers, target lists, topic detail | Template catalog plus topic-detail-style surface and save-as-book flow, but no full cover/target asset model | Medium-high |
+| Topic center | Config-driven topic catalog, covers, target lists, topic detail | Expanded local template catalog plus topic-detail-style surface and save-as-book flow, but no full cover-image asset model | Medium |
 | Target detail | Dedicated target detail screen, checkbox/edit fields, save-as-own | Topic detail and book target pages now use structured target cards with completion, editing, deletion for custom items, and add-to-today schedule action | Medium-high |
 | Schedule planner | Monthly schedule, day/week views, repeat/move target, calendar dialog | Local calendar, handbook drag, time fields, repeat labels, repeat interval/end-date expansion, repeat group editing, and system-calendar import exist | Medium |
-| Handbook/book | Book activity plus in-book schedule/diary fragments | Page-turn book exists but visual density, page style, and page hierarchy are still far from the reference | High |
+| Handbook/book | Book activity plus in-book schedule/diary fragments | Bookshelf-style library and page-turn book exist, but opened-page density and in-book schedule hierarchy still need parity work | Medium-high |
 | Diary | Rich editor, text/image/target/topic-target blocks, date picker, media picker | Structured diary pages support image blocks, mood/work/done/improvement sections, explicit date picker, and target-linked chips from today's plans/completions | Medium-high |
 | Calendar import | Dedicated system calendar import activity and permissions | Android CalendarContract import supports current/3-month/6-month ranges, source selection, preview, and source calendar names from the calendar tab | Low |
 | Long image/print | Long image display and print/export page | Diary long-image export/share and handbook schedule export/share exist; full print preview still missing | Medium |
@@ -64,9 +64,9 @@ Resource/layout signals:
 
 ## Priority Plan
 
-1. **Book/handbook visual parity**: rebuild the library and opened-book surfaces to look like a real book product.
-2. **Topic catalog parity**: move templates toward config-driven local data with 25-30 topic entries and cover-like visuals.
-3. **In-book schedule parity**: rebuild the schedule page around task pool, dated page area, done area, and compact controls.
+1. **In-book schedule parity**: rebuild the schedule page around task pool, dated page area, done area, and compact controls.
+2. **Book/handbook visual parity**: continue opened-book surface polish and reduce generic panel styling.
+3. **Topic catalog parity**: move templates toward config-driven local data with cover-like visuals.
 4. **Target detail parity**: add richer note/deadline/section behavior and a dedicated full-screen target detail flow.
 5. **Diary editor parity**: add richer block editing for text/image/target/topic-target entries.
 6. **Export/print parity**: add a dedicated preview screen before share/export/print.
