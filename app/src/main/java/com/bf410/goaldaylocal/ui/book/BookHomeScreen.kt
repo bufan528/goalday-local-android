@@ -109,6 +109,9 @@ fun BookHomeScreen(
                         clearSourceAfterApply = clearSource,
                     )
                 },
+                onSaveAsBook = { template, items ->
+                    viewModel.createTemplateBook(template.title, template.subtitle, template.color, items)
+                },
             )
         }
 
@@ -166,6 +169,10 @@ fun BookHomeScreen(
                                 pushToToday = pushToToday,
                                 clearSourceAfterApply = clearSource,
                             )
+                            showInspiration = false
+                        },
+                        onSaveAsBook = { template, items ->
+                            viewModel.createTemplateBook(template.title, template.subtitle, template.color, items)
                             showInspiration = false
                         },
                     )
@@ -697,6 +704,7 @@ private fun InspirationCenterView(
     onSelect: (Int) -> Unit,
     onBack: () -> Unit,
     onApply: (List<String>, Boolean, Boolean) -> Unit,
+    onSaveAsBook: (InspirationTemplate, List<String>) -> Unit,
 ) {
     val selected = templates[selectedIndex.coerceIn(0, templates.lastIndex)]
     var checkedStates by remember(selected.title) { mutableStateOf(List(selected.items.size) { true }) }
@@ -784,38 +792,88 @@ private fun InspirationCenterView(
                 .padding(14.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(selected.title, style = MaterialTheme.typography.titleLarge, color = Color(0xFF2F261D))
-                editableItems.forEachIndexed { index, item ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(126.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            Brush.linearGradient(
+                                listOf(selected.color.copy(alpha = 0.94f), selected.color.copy(alpha = 0.70f), Color.White.copy(alpha = 0.22f)),
+                                start = Offset.Zero,
+                                end = Offset(800f, 520f),
+                            ),
+                        )
+                        .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(20.dp))
+                        .padding(16.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.align(Alignment.BottomStart),
+                        verticalArrangement = Arrangement.spacedBy(5.dp),
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(16.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(if (checkedStates.getOrNull(index) == true) Color(0xFF96C08B) else Color(0xFFF1ECE4))
-                                .clickable {
-                                    checkedStates = checkedStates.toMutableList().also { list ->
-                                        list[index] = !list[index]
-                                    }
-                                },
-                        )
-                        OutlinedTextField(
-                            value = item,
-                            onValueChange = { value ->
-                                editableItems = editableItems.toMutableList().also { list -> list[index] = value }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                        )
+                        Text(selected.title, style = MaterialTheme.typography.titleLarge, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+                        Text(selected.subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF4B3D31))
+                        Text(if (selected.linkToSchedule) "可导入任务池 · 可保存成手账本" else "适合复盘记录 · 可保存成手账本", style = MaterialTheme.typography.labelSmall, color = Color(0xFF5D4B3D))
                     }
                 }
-                Spacer(Modifier.height(4.dp))
+                Text("目标详情", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+                editableItems.chunked(2).forEachIndexed { rowIndex, rowItems ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        rowItems.forEachIndexed { columnIndex, item ->
+                            val index = rowIndex * 2 + columnIndex
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (checkedStates.getOrNull(index) == true) Color(0x0FE88FAE) else Color(0x08A68B71))
+                                    .border(0.6.dp, if (checkedStates.getOrNull(index) == true) Color(0x35E88FAE) else Color(0x12000000), RoundedCornerShape(12.dp))
+                                    .padding(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(5.dp),
+                            ) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(if (checkedStates.getOrNull(index) == true) Color(0xFF96C08B) else Color(0xFFF1ECE4))
+                                            .clickable {
+                                                checkedStates = checkedStates.toMutableList().also { list ->
+                                                    list[index] = !list[index]
+                                                }
+                                            },
+                                    )
+                                    Text("目标 ${index + 1}", color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall)
+                                }
+                                OutlinedTextField(
+                                    value = item,
+                                    onValueChange = { value ->
+                                        editableItems = editableItems.toMutableList().also { list -> list[index] = value }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                )
+                            }
+                        }
+                        if (rowItems.size == 1) {
+                            Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+                if (editableItems.size < 18) {
+                    Text(
+                        "＋ 添加目标",
+                        color = Color(0xFFE88FAE),
+                        modifier = Modifier
+                            .clickable {
+                                editableItems = editableItems + "新目标"
+                                checkedStates = checkedStates + true
+                            }
+                            .padding(vertical = 4.dp),
+                    )
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     ActionChip(
-                        label = if (pushToToday) "应用到To do:开" else "应用到To do:关",
+                        label = if (pushToToday) "导入任务池:开" else "导入任务池:关",
                         color = Color(0xFF8F684F),
                         onClick = { pushToToday = !pushToToday },
                     )
@@ -825,42 +883,23 @@ private fun InspirationCenterView(
                         onClick = { clearSourceAfterApply = !clearSourceAfterApply },
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    templates.take(4).forEachIndexed { idx, card ->
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(64.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(
-                                    Brush.linearGradient(
-                                        when (idx % 4) {
-                                            0 -> listOf(Color(0xFF788B4F), Color(0xFF4E6633))
-                                            1 -> listOf(Color(0xFF8A6847), Color(0xFF61482F))
-                                            2 -> listOf(Color(0xFF7C5A4A), Color(0xFF5E4236))
-                                            else -> listOf(Color(0xFF5D4B3D), Color(0xFF3E3228))
-                                        },
-                                    ),
-                                )
-                                .clickable { onSelect(idx) }
-                                .padding(7.dp),
-                        ) {
-                            Text(
-                                text = card.title,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.White,
-                                modifier = Modifier.align(Alignment.BottomStart),
-                            )
-                        }
-                    }
+                val picked = editableItems.filterIndexed { index, value ->
+                    checkedStates.getOrNull(index) == true && value.isNotBlank()
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    Button(
+                        onClick = { onApply(picked, pushToToday, clearSourceAfterApply) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("应用到当前页") }
+                    Button(
+                        onClick = { onSaveAsBook(selected, picked) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("保存成手账本") }
                 }
                 Button(
-                    onClick = {
-                        val picked = editableItems.filterIndexed { index, _ -> checkedStates.getOrNull(index) == true }
-                        onApply(picked, pushToToday, clearSourceAfterApply)
-                    },
+                    onClick = { onApply(picked, true, false) },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("应用到当前页") }
+                ) { Text("导入任务池") }
             }
         }
     }

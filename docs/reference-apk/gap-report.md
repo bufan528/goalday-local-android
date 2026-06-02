@@ -2,15 +2,15 @@
 
 Reference APK: `docs/reference-apk/goalday-reference-base.apk`
 
-Current app status after `b52f441`: local/offline planner with three root tabs, topic-style book covers, template center, handbook page turn, task pool, schedule todo/done, rich diary editor, and backup settings.
+Current app status after the topic-detail pass: local/offline planner with three root tabs, topic-style book covers, template center, topic detail surface, save-as-book flow, handbook page turn, task pool, schedule todo/done, rich diary editor, and backup settings.
 
 ## Overall Gap
 
-Estimated completion against the reference APK's useful offline planner surface: **about 35-40%**.
+Estimated completion against the reference APK's useful offline planner surface: **about 40-45%**.
 
 This excludes account, VIP, payment, coupon, third-party login, webview marketing, and online commerce flows because the local app should not need them.
 
-If those online/business flows are included, current completion is closer to **25-30%**.
+If those online/business flows are included, current completion is closer to **30-35%**.
 
 ## Reference APK Structure Found
 
@@ -47,8 +47,8 @@ Resource/layout signals:
 | Area | Reference APK | Current App | Gap |
 | --- | --- | --- | --- |
 | Root navigation | 3 tabs: book/calendar/setting | Now aligned to 3 tabs | Low |
-| Topic center | Config-driven topic catalog, covers, target lists, topic detail | Template catalog exists, no full detail page | Medium |
-| Target detail | Dedicated target detail screen, checkbox/edit fields, save-as-own | Basic checklist pages only | High |
+| Topic center | Config-driven topic catalog, covers, target lists, topic detail | Template catalog plus topic-detail-style surface and save-as-book flow | Medium-low |
+| Target detail | Dedicated target detail screen, checkbox/edit fields, save-as-own | Editable target grid exists in topic detail; standalone target screen still missing | Medium-high |
 | Schedule planner | Monthly schedule, day/week views, repeat/move target, calendar dialog | Local calendar and handbook drag exist, repeat/time import weak | High |
 | Handbook/book | Book activity plus in-book schedule/diary fragments | Page-turn book exists but visual density and page types still rough | Medium-high |
 | Diary | Rich editor, text/image/target/topic-target blocks, date picker, media picker | Rich text draft exists, media blocks missing | High |
@@ -60,14 +60,13 @@ Resource/layout signals:
 
 ## Priority Plan
 
-1. **Topic detail page**: selecting a template should open a detail view with cover, target list, selectable items, and actions: import to task pool, save as own book, open handbook.
-2. **Target detail editor**: add a structured target/checklist page with multiple editable target slots and completion checkboxes.
-3. **Schedule repeat/time model**: add time slots and repeat options to local schedules.
-4. **Calendar import**: implement optional Android system calendar import into the local schedule repository.
-5. **Diary media blocks**: add image block support and date picker to diary pages.
-6. **Long image export**: export handbook/diary pages as an image file.
-7. **Widgets**: local schedule widget and quick diary add widget.
+1. **Target detail editor**: add a standalone structured target/checklist page with multiple editable target slots and completion checkboxes.
+2. **Schedule repeat/time model**: add time slots and repeat options to local schedules.
+3. **Calendar import**: implement optional Android system calendar import into the local schedule repository.
+4. **Diary media blocks**: add image block support and date picker to diary pages.
+5. **Long image export**: export handbook/diary pages as an image file.
+6. **Widgets**: local schedule widget and quick diary add widget.
 
 ## Immediate Next Fix
 
-The largest remaining visible mismatch is **topic detail + target detail**. The current inspiration center imports selected items but does not feel like a real reference-app topic flow. The next implementation should replace the plain draft panel with a topic-detail-style surface.
+The largest remaining visible mismatch is now **standalone target detail + schedule repeat/time behavior**. Topic detail exists, but target pages inside books still need to feel like dedicated target editors rather than plain checklist pages.
