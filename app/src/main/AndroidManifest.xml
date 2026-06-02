@@ -23,6 +23,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.widget.ScheduleWidgetConfigureActivity"
+            android:exported="true"
+            android:theme="@style/Theme.GoaldayLocal" />
+
         <receiver
             android:name=".ui.widget.ScheduleWidgetProvider"
             android:exported="true">

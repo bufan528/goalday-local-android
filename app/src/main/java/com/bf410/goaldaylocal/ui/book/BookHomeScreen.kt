@@ -868,6 +868,15 @@ private fun TargetDetailRouteOverlay(
     val tomorrow = today + 1
     val weekend = today + (7 - java.time.LocalDate.now().dayOfWeek.value).coerceAtLeast(1)
     var noteDraft by remember(item, meta.note) { mutableStateOf(meta.note) }
+    var actionHint by remember(item) { mutableStateOf("") }
+    fun appendDetailNote(line: String) {
+        val next = buildList {
+            noteDraft.lines().map(String::trim).filter(String::isNotBlank).forEach(::add)
+            if (line !in this) add(line)
+        }.joinToString("\n")
+        noteDraft = next
+        onUpdateNote(next)
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -913,6 +922,39 @@ private fun TargetDetailRouteOverlay(
                 DetailPill("排入今天", active = false) { onAddToSchedule(today) }
                 DetailPill("排入明天", active = false) { onAddToSchedule(tomorrow) }
                 DetailPill("排入周末", active = false) { onAddToSchedule(weekend) }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFFFFFEFC))
+                    .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(16.dp))
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text("目标选项", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text("本地保存", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelSmall)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    DetailPill("保存为我的目标", active = false) {
+                        appendDetailNote("我的目标：$item")
+                        actionHint = "已写入目标备注"
+                    }
+                    DetailPill("生成下一步", active = false) {
+                        appendDetailNote("下一步：为「$item」安排一个 15 分钟行动")
+                        actionHint = "已生成下一步"
+                    }
+                    DetailPill("加入复盘", active = false) {
+                        appendDetailNote("复盘：本周检查「$item」推进情况")
+                        onAddToSchedule(weekend)
+                        actionHint = "已排入周末复盘"
+                    }
+                }
+                if (actionHint.isNotBlank()) {
+                    Text(actionHint, color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall)
+                }
             }
 
             Column(
@@ -1161,7 +1203,10 @@ private fun InspirationCenterView(
                 }
                 Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Text("目标详情", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
-                    Text("target: ${selected.targetKey}", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("catalog: ${selected.catalogPath.substringAfterLast('/')}", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                        Text("target: ${selected.targetAssetPath.substringAfterLast('/')}", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                    }
                 }
                 editableItems.chunked(2).forEachIndexed { rowIndex, rowItems ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {

@@ -15,6 +15,57 @@ import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.tencent.mmkv.MMKV
 import java.time.LocalDate
 
+enum class ScheduleWidgetStyle(
+    val raw: String,
+    val label: String,
+    val title: String,
+    val backgroundColor: Int,
+    val titleColor: Int,
+    val subtitleColor: Int,
+    val accentColor: Int,
+    val doneColor: Int,
+    val doneTextColor: Int,
+) {
+    SOFT(
+        raw = "soft",
+        label = "柔和手账",
+        title = "Goalday 今日",
+        backgroundColor = Color.rgb(255, 248, 239),
+        titleColor = Color.rgb(47, 41, 34),
+        subtitleColor = Color.rgb(139, 122, 104),
+        accentColor = Color.rgb(180, 94, 122),
+        doneColor = Color.rgb(57, 167, 109),
+        doneTextColor = Color.rgb(102, 115, 103),
+    ),
+    CLEAN(
+        raw = "clean",
+        label = "清爽白底",
+        title = "今日日程",
+        backgroundColor = Color.rgb(255, 255, 255),
+        titleColor = Color.rgb(34, 34, 34),
+        subtitleColor = Color.rgb(112, 112, 112),
+        accentColor = Color.rgb(65, 121, 184),
+        doneColor = Color.rgb(72, 150, 102),
+        doneTextColor = Color.rgb(96, 110, 100),
+    ),
+    CONTRAST(
+        raw = "contrast",
+        label = "高对比",
+        title = "GOALDAY",
+        backgroundColor = Color.rgb(47, 41, 34),
+        titleColor = Color.rgb(255, 250, 243),
+        subtitleColor = Color.rgb(224, 207, 184),
+        accentColor = Color.rgb(255, 193, 111),
+        doneColor = Color.rgb(131, 210, 155),
+        doneTextColor = Color.rgb(205, 221, 204),
+    );
+
+    companion object {
+        fun fromRaw(raw: String?): ScheduleWidgetStyle =
+            entries.firstOrNull { it.raw == raw } ?: SOFT
+    }
+}
+
 class ScheduleWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
         context: Context,
@@ -22,14 +73,17 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
         appWidgetIds: IntArray,
     ) {
         appWidgetIds.forEach { widgetId ->
-            appWidgetManager.updateAppWidget(widgetId, buildRemoteViews(context))
+            appWidgetManager.updateAppWidget(widgetId, buildRemoteViews(context, widgetId))
         }
     }
 
     companion object {
-        fun buildRemoteViews(context: Context): RemoteViews =
+        const val KEY_WIDGET_STYLE_PREFIX = "schedule_widget_style_"
+
+        fun buildRemoteViews(context: Context, widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID): RemoteViews =
             buildScheduleViews(
                 context = context,
+                widgetId = widgetId,
                 layoutId = R.layout.widget_schedule,
                 sectionId = null,
                 rowIds = listOf(
@@ -49,9 +103,10 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
                 ),
             )
 
-        fun buildLargeRemoteViews(context: Context): RemoteViews =
+        fun buildLargeRemoteViews(context: Context, widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID): RemoteViews =
             buildScheduleViews(
                 context = context,
+                widgetId = widgetId,
                 layoutId = R.layout.widget_schedule_large,
                 sectionId = R.id.widget_section_today,
                 rowIds = listOf(
@@ -79,6 +134,7 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
 
         private fun buildScheduleViews(
             context: Context,
+            widgetId: Int,
             layoutId: Int,
             sectionId: Int?,
             rowIds: List<Int>,
@@ -93,7 +149,14 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
             val todo = entries.filterNot { it.completed }
             val done = entries.count { it.completed }
             val views = RemoteViews(context.packageName, layoutId)
-            views.setTextViewText(R.id.widget_title, "Goalday 今日")
+            val style = ScheduleWidgetStyle.fromRaw(MMKV.defaultMMKV().decodeString("$KEY_WIDGET_STYLE_PREFIX$widgetId", null))
+            views.setInt(R.id.widget_root, "setBackgroundColor", style.backgroundColor)
+            views.setTextViewText(R.id.widget_title, style.title)
+            views.setTextColor(R.id.widget_title, style.titleColor)
+            views.setTextColor(R.id.widget_subtitle, style.subtitleColor)
+            views.setTextColor(R.id.widget_status_pill, style.accentColor)
+            views.setTextColor(R.id.widget_footer, style.subtitleColor)
+            sectionId?.let { id -> views.setTextColor(id, style.accentColor) }
             views.setTextViewText(R.id.widget_subtitle, "${today.monthValue}月${today.dayOfMonth}日 · 待办 ${todo.size} · 完成 $done")
             views.setTextViewText(R.id.widget_status_pill, if (todo.isEmpty()) "清爽" else "${todo.size} todo")
             val displayEntries = entries.take(taskIds.size)
@@ -105,9 +168,9 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
                     views.setViewVisibility(rowIds[index], View.VISIBLE)
                     val time = entry.timeText.takeIf { it.isNotBlank() }?.let { "$it " }.orEmpty()
                     views.setTextViewText(dotIds[index], "●")
-                    views.setTextColor(dotIds[index], if (entry.completed) Color.rgb(57, 167, 109) else Color.rgb(232, 143, 174))
+                    views.setTextColor(dotIds[index], if (entry.completed) style.doneColor else style.accentColor)
                     views.setTextViewText(id, "$time${entry.title}")
-                    views.setTextColor(id, if (entry.completed) Color.rgb(102, 115, 103) else Color.rgb(58, 52, 46))
+                    views.setTextColor(id, if (entry.completed) style.doneTextColor else style.titleColor)
                 }
             }
             if (entries.isEmpty()) {

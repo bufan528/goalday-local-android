@@ -7,11 +7,11 @@ import android.content.Context
 object WidgetRefresh {
     fun refreshScheduleWidgets(context: Context) {
         val manager = AppWidgetManager.getInstance(context)
-        refreshProvider(context, manager, ScheduleWidgetProvider::class.java) {
-            ScheduleWidgetProvider.buildRemoteViews(context)
+        refreshProvider(context, manager, ScheduleWidgetProvider::class.java) { id ->
+            ScheduleWidgetProvider.buildRemoteViews(context, id)
         }
-        refreshProvider(context, manager, LargeScheduleWidgetProvider::class.java) {
-            ScheduleWidgetProvider.buildLargeRemoteViews(context)
+        refreshProvider(context, manager, LargeScheduleWidgetProvider::class.java) { id ->
+            ScheduleWidgetProvider.buildLargeRemoteViews(context, id)
         }
     }
 
@@ -19,9 +19,9 @@ object WidgetRefresh {
         context: Context,
         manager: AppWidgetManager,
         providerClass: Class<*>,
-        buildViews: () -> android.widget.RemoteViews,
+        buildViews: (Int) -> android.widget.RemoteViews,
     ) {
         val ids = manager.getAppWidgetIds(ComponentName(context, providerClass))
-        ids.forEach { id -> manager.updateAppWidget(id, buildViews()) }
+        ids.forEach { id -> manager.updateAppWidget(id, buildViews(id)) }
     }
 }

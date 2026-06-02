@@ -10,6 +10,9 @@ data class InspirationTemplate(
     val coverKey: String,
     val targetKey: String,
     val category: String,
+    val catalogPath: String,
+    val coverAssetPath: String,
+    val targetAssetPath: String,
     val linkToSchedule: Boolean = true,
     val items: List<String>,
 ) {
@@ -270,6 +273,9 @@ internal object InspirationTemplates {
             coverKey = coverKey,
             targetKey = "${coverKey}_target",
             category = category,
+            catalogPath = "local/topic_center_config.json",
+            coverAssetPath = "local/cover/$coverKey",
+            targetAssetPath = "local/topictarget/${coverKey}_target.txt",
             linkToSchedule = linkToSchedule,
             items = items.distinct(),
         )
