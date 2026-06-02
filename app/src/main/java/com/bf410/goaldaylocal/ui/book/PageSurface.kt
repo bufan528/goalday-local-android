@@ -91,8 +91,10 @@ import com.bf410.goaldaylocal.ui.replica.DualLaneExecutionBoard
 import com.bf410.goaldaylocal.ui.replica.ExecutionBoardHeader
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileOutputStream
@@ -1995,6 +1997,7 @@ private fun ReferencePlannerBoard(
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun DiarySection(
     title: String,
     prompt: String,
@@ -2011,7 +2014,9 @@ private fun DiarySection(
     val editingDiary = contentMode as? PageContentMode.EditingDiary
     var structured by remember(title, diaryDraft) { mutableStateOf(StructuredDiary.fromRaw(diaryDraft)) }
     var exportHint by remember(title) { mutableStateOf("") }
+    var showDatePicker by remember(title) { mutableStateOf(false) }
     val context = LocalContext.current
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = structured.date.toEpochMillis())
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) {
             runCatching {
@@ -2058,6 +2063,7 @@ private fun DiarySection(
             StructuredDiaryEditor(
                 state = structured,
                 onStateChange = { structured = it },
+                onPickDate = { showDatePicker = true },
                 onAddImage = { imagePicker.launch(arrayOf("image/*")) },
                 onRemoveImage = { uri ->
                     structured = structured.withoutImageUri(uri)
@@ -2083,6 +2089,26 @@ private fun DiarySection(
                 )
             }
         }
+        if (showDatePicker) {
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val millis = datePickerState.selectedDateMillis
+                        if (millis != null) {
+                            structured = structured.withDate(millis.toLocalDate())
+                            onDiaryChange(structured.toRaw())
+                        }
+                        showDatePicker = false
+                    }) { Text("确定") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) { Text("取消") }
+                },
+            ) {
+                DatePicker(state = datePickerState)
+            }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = {
                 val uri = exportDiaryLongImage(context, title, currentDiaryState())
@@ -2101,6 +2127,7 @@ private fun DiarySection(
 }
 
 private data class StructuredDiary(
+    val dateIso: String,
     val moodTags: String,
     val todayDone: String,
     val workTasks: String,
@@ -2121,6 +2148,12 @@ private data class StructuredDiary(
             .filter { it.isNotBlank() && !it.startsWith(DIARY_IMAGE_PREFIX) }
             .joinToString("\n")
 
+    val date: LocalDate
+        get() = runCatching { LocalDate.parse(dateIso) }.getOrElse { LocalDate.now() }
+
+    fun withDate(date: LocalDate): StructuredDiary =
+        copy(dateIso = date.toString())
+
     fun withPhotoText(text: String): StructuredDiary =
         copy(photoNotes = mergeDiaryPhotoNotes(text, imageUris))
 
@@ -2137,6 +2170,8 @@ private data class StructuredDiary(
         copy(workTasks = appendUniqueDiaryLine(workTasks, item))
 
     fun toRaw(): String = buildString {
+        appendLine("# 日期")
+        appendLine(dateIso)
         appendLine("# 心情标签")
         appendLine(moodTags.trim())
         appendLine("# 今日完成")
@@ -2153,7 +2188,7 @@ private data class StructuredDiary(
 
     companion object {
         fun fromRaw(raw: String): StructuredDiary {
-            if (raw.isBlank()) return StructuredDiary("", "", "", "", "", "")
+            if (raw.isBlank()) return StructuredDiary(LocalDate.now().toString(), "", "", "", "", "", "")
             fun section(name: String, next: String?): String {
                 val start = raw.indexOf("# $name")
                 if (start < 0) return ""
@@ -2164,6 +2199,7 @@ private data class StructuredDiary(
                 return raw.substring(bodyStart, bodyEnd).trim()
             }
             return StructuredDiary(
+                dateIso = section("日期", "心情标签").ifBlank { LocalDate.now().toString() },
                 moodTags = section("心情标签", "今日完成"),
                 todayDone = section("今日完成", "工作任务"),
                 workTasks = section("工作任务", "小幸福"),
@@ -2203,6 +2239,12 @@ private fun diaryDateLabel(date: LocalDate): String {
     }
     return "${date.monthValue}月${date.dayOfMonth}日 · $weekday"
 }
+
+private fun LocalDate.toEpochMillis(): Long =
+    atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+private fun Long.toLocalDate(): LocalDate =
+    Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
 
 private fun exportHandbookScheduleLongImage(
     context: Context,
@@ -2355,7 +2397,7 @@ private fun renderDiaryLongImage(
     var y = 86f
     canvas.drawText(title.ifBlank { "Goalday 日记" }, padding, y, titlePaint)
     y += 48f
-    canvas.drawText(diaryDateLabel(LocalDate.now()), padding, y, subtitlePaint)
+    canvas.drawText(diaryDateLabel(state.date), padding, y, subtitlePaint)
     y += 54f
     if (state.moodTags.isNotBlank()) {
         y = drawExportSection(canvas, "心情标签", state.moodTags, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
@@ -2540,13 +2582,21 @@ private fun DiaryLinkedTargetChip(
 private fun StructuredDiaryEditor(
     state: StructuredDiary,
     onStateChange: (StructuredDiary) -> Unit,
+    onPickDate: () -> Unit,
     onAddImage: () -> Unit,
     onRemoveImage: (String) -> Unit,
     onDone: () -> Unit,
 ) {
-    val dateLabel = remember { diaryDateLabel(LocalDate.now()) }
+    val dateLabel = remember(state.dateIso) { diaryDateLabel(state.date) }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(dateLabel, style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text(
+            dateLabel,
+            style = MaterialTheme.typography.labelLarge,
+            color = Color(0xFF3A342E),
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .clickable { onPickDate() },
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 OutlinedTextField(
@@ -2590,7 +2640,7 @@ private fun StructuredDiaryPreview(
     state: StructuredDiary,
     onAddImage: () -> Unit,
 ) {
-    val dateLabel = remember { diaryDateLabel(LocalDate.now()) }
+    val dateLabel = remember(state.dateIso) { diaryDateLabel(state.date) }
     val moodItems = remember(state.moodTags) {
         state.moodTags.split(',', '，', ' ').map(String::trim).filter(String::isNotBlank).take(6)
     }

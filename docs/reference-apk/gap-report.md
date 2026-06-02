@@ -2,11 +2,11 @@
 
 Reference APK: `docs/reference-apk/goalday-reference-base.apk`
 
-Current app status after the diary-link pass: local/offline planner with three root tabs, topic-style book covers, template center, topic detail surface, save-as-book flow, standalone target-detail-style book pages, handbook page turn, task pool, schedule todo/done, schedule time/repeat fields, Android system calendar import, structured diary editor with image blocks and target-linked diary chips, diary and handbook schedule long-image export/share, small/large schedule widgets, quick diary widget, immediate schedule widget refresh hooks, and backup settings.
+Current app status after the diary-date pass: local/offline planner with three root tabs, topic-style book covers, template center, topic detail surface, save-as-book flow, standalone target-detail-style book pages, handbook page turn, task pool, schedule todo/done, schedule time/repeat fields, Android system calendar import, structured diary editor with image blocks, target-linked diary chips, explicit diary date picker, diary and handbook schedule long-image export/share, small/large schedule widgets, quick diary widget, immediate schedule widget refresh hooks, and backup settings.
 
 ## Overall Gap
 
-Estimated completion against the reference APK's useful offline planner surface: **about 88-90%**.
+Estimated completion against the reference APK's useful offline planner surface: **about 90-92%**.
 
 This excludes account, VIP, payment, coupon, third-party login, webview marketing, and online commerce flows because the local app should not need them.
 
@@ -51,7 +51,7 @@ Resource/layout signals:
 | Target detail | Dedicated target detail screen, checkbox/edit fields, save-as-own | Topic detail and book target pages now use structured target cards with completion, editing, deletion for custom items, and add-to-today schedule action | Medium |
 | Schedule planner | Monthly schedule, day/week views, repeat/move target, calendar dialog | Local calendar, handbook drag, time fields, repeat labels, local repeat expansion, and system-calendar import exist | Medium |
 | Handbook/book | Book activity plus in-book schedule/diary fragments | Page-turn book exists but visual density and page types still rough | Medium-high |
-| Diary | Rich editor, text/image/target/topic-target blocks, date picker, media picker | Structured diary pages support image blocks, mood/work/done/improvement sections, dynamic date labels, and target-linked chips from today's plans/completions | Medium-low |
+| Diary | Rich editor, text/image/target/topic-target blocks, date picker, media picker | Structured diary pages support image blocks, mood/work/done/improvement sections, explicit date picker, and target-linked chips from today's plans/completions | Low |
 | Calendar import | Dedicated system calendar import activity and permissions | Current-month Android CalendarContract import exists from the calendar tab | Medium-low |
 | Long image/print | Long image display and print/export page | Diary long-image export/share and handbook schedule export/share exist; full print preview still missing | Low |
 | Widgets | Diary add widget, mid/large schedule widgets | Today schedule widget, large schedule widget, quick diary widget, and schedule refresh hooks exist | Low |
@@ -60,13 +60,13 @@ Resource/layout signals:
 
 ## Priority Plan
 
-1. **Diary polish**: add optional explicit date picker and richer topic-linked blocks.
-2. **Calendar import polish**: add selectable calendars, import preview, and broader range import if needed.
-3. **Schedule polish**: add a richer repeat editor and per-occurrence edit behavior if needed.
+1. **Calendar import polish**: add selectable calendars, import preview, and broader range import if needed.
+2. **Schedule polish**: add a richer repeat editor and per-occurrence edit behavior if needed.
+3. **Diary polish**: add richer topic-linked blocks if needed.
 4. **Long image polish**: add dedicated preview screen before share/export if needed.
 5. **Widget polish**: add visual previews/configuration if needed.
 6. **Target detail polish**: add richer note/deadline fields if the local workflow needs them.
 
 ## Immediate Next Fix
 
-The largest remaining visible mismatch is now **import/schedule polish + diary date/topic refinement**. Core local schedule, diary, import, export/share, widget surfaces, and first-pass diary target links exist, but the app still lacks selectable calendar import, a richer repeat editor, and explicit diary date/topic controls.
+The largest remaining visible mismatch is now **import/schedule polish**. Core local schedule, diary, import, export/share, widget surfaces, diary target links, and diary date controls exist, but the app still lacks selectable calendar import and a richer repeat editor.
