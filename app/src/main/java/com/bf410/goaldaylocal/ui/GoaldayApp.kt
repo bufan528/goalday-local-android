@@ -38,6 +38,7 @@ import com.bf410.goaldaylocal.ui.calendar.CalendarScreen
 import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
+import com.bf410.goaldaylocal.START_TARGET_DIARY
 
 private enum class RootTab(val label: String, val iconText: String) {
     BOOK("手账", "▣"),
@@ -46,8 +47,11 @@ private enum class RootTab(val label: String, val iconText: String) {
 }
 
 @Composable
-fun GoaldayApp() {
+fun GoaldayApp(startTarget: String? = null) {
     var tab by rememberSaveable { mutableStateOf(RootTab.BOOK) }
+    var bookEntryMode by rememberSaveable(startTarget) {
+        mutableStateOf(if (startTarget == START_TARGET_DIARY) BookEntryMode.DIARY else BookEntryMode.PLANNER)
+    }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()
@@ -87,7 +91,12 @@ fun GoaldayApp() {
                         val selected = tab == item
                         NavigationBarItem(
                             selected = selected,
-                            onClick = { tab = item },
+                            onClick = {
+                                tab = item
+                                if (item == RootTab.BOOK) {
+                                    bookEntryMode = BookEntryMode.PLANNER
+                                }
+                            },
                             icon = { Text(item.iconText, color = if (selected) GoaldayDesign.Pink else Color(0xFF9E958A)) },
                             label = { Text(item.label) },
                             colors = NavigationBarItemDefaults.colors(
@@ -144,7 +153,7 @@ fun GoaldayApp() {
                             focusDay = null,
                             onFocusConsumed = {},
                         )
-                        RootTab.BOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.PLANNER)
+                        RootTab.BOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = bookEntryMode)
                         RootTab.SETTINGS -> SettingsScreen()
                     }
                 }

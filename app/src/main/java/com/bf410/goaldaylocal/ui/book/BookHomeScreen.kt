@@ -71,6 +71,7 @@ enum class BookEntryMode {
     PLANNER,
     INSPIRATION,
     HANDBOOK,
+    DIARY,
 }
 
 @Composable
@@ -90,7 +91,7 @@ fun BookHomeScreen(
     val hasBooks = uiState.books.isNotEmpty()
     val safeBookIndex = uiState.selectedBookIndex.coerceIn(0, (uiState.books.lastIndex).coerceAtLeast(0))
     LaunchedEffect(entryMode, hasBooks, uiState.selectedBookIndex) {
-        if (entryMode == BookEntryMode.HANDBOOK && hasBooks && uiState.selectedBookIndex != 0) {
+        if ((entryMode == BookEntryMode.HANDBOOK || entryMode == BookEntryMode.DIARY) && hasBooks && uiState.selectedBookIndex != 0) {
             viewModel.selectBook(0)
         }
     }
@@ -115,7 +116,7 @@ fun BookHomeScreen(
             )
         }
 
-        BookEntryMode.HANDBOOK -> {
+        BookEntryMode.HANDBOOK, BookEntryMode.DIARY -> {
             if (!hasBooks) return
             if (uiState.selectedBookIndex != 0) return
             val book = uiState.books[safeBookIndex]
@@ -136,8 +137,8 @@ fun BookHomeScreen(
                 onShowEditBook = { showEditBookDialog = true },
                 onToggleManagePanel = { },
                 showManagePanel = false,
-                forcedSegment = null,
-                bookOnlyMode = true,
+                forcedSegment = if (entryMode == BookEntryMode.DIARY) BookSegment.DIARY else null,
+                bookOnlyMode = entryMode == BookEntryMode.HANDBOOK,
                 onShowInspiration = { },
             )
         }
