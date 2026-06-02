@@ -786,6 +786,7 @@ private fun HandbookReplicaPage(
     }
     val leftBlocks = dayBlocks
     val rightBlocks = dayBlocks
+    val visibleDays = rightBlocks.map { it.day }
     val visibleRangeLabel = "${dayBlocks.first().day}-${dayBlocks.last().day}日"
     val fallbackLeftDone = todayCompletedItems.take(3)
     val fallbackRightTodo = todayPlanItems.take(3)
@@ -793,7 +794,12 @@ private fun HandbookReplicaPage(
     val visiblePoolItems = todayPlanItems.filterNot { it in scheduledTitles }.take(3)
     var draftText by remember(page.title) { mutableStateOf("") }
     var draftDay by remember(page.title) { mutableStateOf(rightBlocks.firstOrNull()?.day ?: 1) }
-    val selectedDraftDay = draftDay.coerceIn(1, monthLength)
+    LaunchedEffect(visibleDays) {
+        if (draftDay !in visibleDays) {
+            draftDay = visibleDays.firstOrNull() ?: 1
+        }
+    }
+    val selectedDraftDay = if (draftDay in visibleDays) draftDay else visibleDays.firstOrNull() ?: 1
     var editingId by remember(pageIndex) { mutableStateOf<String?>(null) }
     var editingText by remember(pageIndex) { mutableStateOf("") }
     var saveHint by remember(pageIndex) { mutableStateOf("") }
