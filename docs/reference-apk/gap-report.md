@@ -6,6 +6,8 @@ Current app status after the target detail route pass: local/offline planner wit
 
 Latest residual audit after diary blocks and export preview: `docs/reference-apk/residual-parity-audit-2026-06-02.md`.
 
+Latest open differences after guide overlay: `docs/reference-apk/open-differences-2026-06-02.md`.
+
 Deep audit: `docs/reference-apk/deep-gap-audit.md`
 
 Current parity audit: `docs/reference-apk/current-parity-audit.md`
