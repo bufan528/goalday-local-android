@@ -15,6 +15,7 @@ import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -46,12 +47,14 @@ import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.home.HomeScreen
 import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+import com.bf410.goaldaylocal.ui.settings.SettingsScreen
 
 private enum class RootTab(val label: String, val icon: ImageVector) {
     HOME("首页", Icons.Outlined.Home),
     CALENDAR("日历", Icons.Outlined.CalendarMonth),
     INSPIRATION("灵感", Icons.Outlined.Lightbulb),
     HANDBOOK("手账", Icons.Outlined.AutoStories),
+    SETTINGS("设置", Icons.Outlined.Settings),
 }
 
 @Composable
@@ -171,6 +174,7 @@ fun GoaldayApp() {
                             onOpenHandbook = { tab = RootTab.HANDBOOK },
                         )
                         RootTab.HANDBOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = BookEntryMode.HANDBOOK)
+                        RootTab.SETTINGS -> SettingsScreen()
                     }
                 }
             }

@@ -30,7 +30,9 @@ fun SettingsScreen() {
     var latestBackup by remember { mutableStateOf(manager.latestBackupPath()) }
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text("本地设置", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 18.dp))

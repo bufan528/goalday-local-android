@@ -1,12 +1,15 @@
 package com.bf410.goaldaylocal.data
 
 import androidx.compose.ui.graphics.Color
+import java.time.LocalDate
 
 object SampleLibrary {
+    private val currentYear: Int = LocalDate.now().year
+
     val books = listOf(
         TopicBook(
             id = "goalday-2026",
-            title = "2026 GOALDAY",
+            title = "$currentYear GOALDAY",
             subtitle = "月度日程本",
             color = Color(0xFFBBD1AD),
             pages = (1..12).map { month ->
