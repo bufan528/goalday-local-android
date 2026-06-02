@@ -578,8 +578,9 @@ fun CalendarScreen(
             initialNote = "",
             initialTimeText = "",
             initialRepeatRule = "",
+            allowSeriesEdit = false,
             onDismiss = { showAddDialog = false },
-            onConfirm = { title, day, note, timeText, repeatRule ->
+            onConfirm = { title, day, note, timeText, repeatRule, _ ->
                 viewModel.addSchedule(title, day, note, timeText, repeatRule)
                 selectedDay = day
                 showAddDialog = false
@@ -597,11 +598,12 @@ fun CalendarScreen(
             initialNote = entry.note,
             initialTimeText = entry.timeText,
             initialRepeatRule = entry.repeatRule,
+            allowSeriesEdit = entry.repeatGroupId.isNotBlank(),
             onDismiss = { editingEntry = null },
-            onConfirm = { title, day, note, timeText, repeatRule ->
-                viewModel.updateSchedule(entry.id, title, day, note, timeText, repeatRule)
+            onConfirm = { title, day, note, timeText, repeatRule, applySeries ->
+                viewModel.updateSchedule(entry.id, title, day, note, timeText, repeatRule, applySeries)
                 editingEntry = null
-                toast = "已保存"
+                toast = if (applySeries) "已保存整组重复" else "已保存"
             },
         )
     }
@@ -872,14 +874,16 @@ private fun ScheduleDialog(
     initialNote: String,
     initialTimeText: String,
     initialRepeatRule: String,
+    allowSeriesEdit: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (title: String, day: Int, note: String, timeText: String, repeatRule: String) -> Unit,
+    onConfirm: (title: String, day: Int, note: String, timeText: String, repeatRule: String, applySeries: Boolean) -> Unit,
 ) {
     var draftTitle by remember(initialTitle) { mutableStateOf(initialTitle) }
     var draftDay by remember(initialDay) { mutableStateOf(initialDay.toString()) }
     var draftNote by remember(initialNote) { mutableStateOf(initialNote) }
     var draftTime by remember(initialTimeText) { mutableStateOf(initialTimeText) }
     var draftRepeatRule by remember(initialRepeatRule) { mutableStateOf(initialRepeatRule) }
+    var applySeries by remember(allowSeriesEdit, initialTitle) { mutableStateOf(false) }
     val repeatOptions = listOf("" to "不重复", "daily" to "每天", "weekly" to "每周", "monthly" to "每月")
 
     AlertDialog(
@@ -921,6 +925,24 @@ private fun ScheduleDialog(
                         )
                     }
                 }
+                if (allowSeriesEdit) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(false to "仅本次", true to "整组").forEach { (value, label) ->
+                            Text(
+                                label,
+                                color = if (applySeries == value) Color.White else GoaldayDesign.InkSecondary,
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier
+                                    .background(
+                                        if (applySeries == value) GoaldayDesign.PrimaryAction else GoaldayDesign.SurfaceSoft,
+                                        RoundedCornerShape(GoaldayDesign.RadiusPill),
+                                    )
+                                    .clickable { applySeries = value }
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                            )
+                        }
+                    }
+                }
                 OutlinedTextField(
                     value = draftNote,
                     onValueChange = { draftNote = it },
@@ -933,7 +955,7 @@ private fun ScheduleDialog(
                 val t = draftTitle.trim()
                 val d = draftDay.toIntOrNull()?.coerceIn(1, maxDay) ?: initialDay
                 val normalizedTime = draftTime.trim()
-                if (t.isNotBlank()) onConfirm(t, d, draftNote.trim(), normalizedTime, draftRepeatRule)
+                if (t.isNotBlank()) onConfirm(t, d, draftNote.trim(), normalizedTime, draftRepeatRule, applySeries)
             }) { Text("保存") }
         },
         dismissButton = {

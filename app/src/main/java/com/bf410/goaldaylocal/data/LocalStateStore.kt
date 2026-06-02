@@ -71,6 +71,7 @@ class LocalStateStore(
                         note = item.optString("note"),
                         timeText = item.optString("timeText"),
                         repeatRule = item.optString("repeatRule"),
+                        repeatGroupId = item.optString("repeatGroupId"),
                         completed = decodeScheduleStatus(item).let { status ->
                             status == ScheduleStatus.DONE
                         },
@@ -93,6 +94,7 @@ class LocalStateStore(
                     .put("note", entry.note)
                     .put("timeText", entry.timeText)
                     .put("repeatRule", entry.repeatRule)
+                    .put("repeatGroupId", entry.repeatGroupId)
                     .put("status", entry.status.name)
                     .put("completed", entry.completed),
             )
@@ -108,6 +110,7 @@ class LocalStateStore(
         note: String = "",
         timeText: String = "",
         repeatRule: String = "",
+        repeatGroupId: String = "",
     ) {
         val updated = scheduleEntries() + ScheduleEntry(
             id = UUID.randomUUID().toString(),
@@ -118,6 +121,7 @@ class LocalStateStore(
             note = note,
             timeText = timeText,
             repeatRule = repeatRule,
+            repeatGroupId = repeatGroupId,
         )
         saveScheduleEntries(updated)
     }

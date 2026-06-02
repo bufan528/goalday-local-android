@@ -28,6 +28,7 @@ class ScheduleRepository private constructor(
         note: String = "",
         timeText: String = "",
         repeatRule: String = "",
+        repeatGroupId: String = "",
         status: ScheduleStatus = ScheduleStatus.PLANNED,
     ): ScheduleEntry {
         val entry = ScheduleEntry(
@@ -39,6 +40,7 @@ class ScheduleRepository private constructor(
             note = note,
             timeText = timeText,
             repeatRule = repeatRule,
+            repeatGroupId = repeatGroupId,
             completed = status == ScheduleStatus.DONE,
         )
         saveEntries(entries() + entry)

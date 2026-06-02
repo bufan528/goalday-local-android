@@ -76,6 +76,7 @@ class CalendarViewModel(
         repeatRule: String = "",
     ): String {
         val current = _uiState.value
+        val repeatGroupId = if (repeatRule.isNotBlank()) java.util.UUID.randomUUID().toString() else ""
         val entry = scheduleRepository.addEntry(
             title = title,
             year = current.year,
@@ -84,6 +85,7 @@ class CalendarViewModel(
             note = note,
             timeText = timeText,
             repeatRule = repeatRule,
+            repeatGroupId = repeatGroupId,
         )
         expandRepeatingEntry(entry)
         refreshEntries()
@@ -121,15 +123,26 @@ class CalendarViewModel(
         note: String,
         timeText: String? = null,
         repeatRule: String? = null,
+        applySeries: Boolean = false,
     ) {
         val current = _uiState.value
-        val updated = scheduleRepository.entries().map { entry ->
+        val all = scheduleRepository.entries()
+        val target = all.firstOrNull { it.id == id }
+        val targetGroupId = target?.repeatGroupId.orEmpty()
+        val updated = all.map { entry ->
             if (entry.id == id) {
                 entry.copy(
                     title = title.trim(),
                     year = current.year,
                     month = current.month,
                     day = day,
+                    note = note.trim(),
+                    timeText = timeText?.trim() ?: entry.timeText,
+                    repeatRule = repeatRule ?: entry.repeatRule,
+                )
+            } else if (applySeries && targetGroupId.isNotBlank() && entry.repeatGroupId == targetGroupId) {
+                entry.copy(
+                    title = title.trim(),
                     note = note.trim(),
                     timeText = timeText?.trim() ?: entry.timeText,
                     repeatRule = repeatRule ?: entry.repeatRule,
