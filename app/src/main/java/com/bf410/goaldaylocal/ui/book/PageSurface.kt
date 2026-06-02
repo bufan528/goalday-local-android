@@ -724,7 +724,7 @@ fun ActivePageLayer(
             },
         ) {
             when (page) {
-                is TargetPage -> EditableBulletPage(page.title, page.items, customPageItems, tint, BookStrings.addTarget, false, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
+                is TargetPage -> TargetDetailReplicaPage(page.title, page.items, customPageItems, tint, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule)
                 is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), BookStrings.addSchedule, true, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
                 is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), BookStrings.addPlan, false, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
                 is DiaryPage -> DiarySection(page.title, page.prompt, tint, diaryDraft, pendingCommand, onCommand, onDiaryChange, contentMode, onContentModeChange)
@@ -1647,6 +1647,150 @@ private fun HandbookEntryLine(
                 )
                 Text("✎", style = MaterialTheme.typography.labelSmall, color = Color(0xFFAAA39A), modifier = Modifier.padding(top = 1.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun TargetDetailReplicaPage(
+    pageTitle: String,
+    baseItems: List<String>,
+    customItems: List<String>,
+    tint: Color,
+    isChecked: (String, String) -> Boolean,
+    onToggleChecked: (String, String) -> Unit,
+    onAddCustomItem: (String) -> Unit,
+    onRemoveCustomItem: (String) -> Unit,
+    onRenameCustomItem: (String, String) -> Unit,
+    onAddToSchedule: (String, Int) -> Unit,
+) {
+    val items = remember(baseItems, customItems) { (baseItems + customItems).distinct() }
+    var draft by remember(pageTitle) { mutableStateOf("") }
+    var editingItem by remember(pageTitle) { mutableStateOf<String?>(null) }
+    var editingText by remember(pageTitle) { mutableStateOf("") }
+    val todayDay = LocalDate.now().dayOfMonth
+
+    Column(
+        modifier = Modifier.verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(104.dp)
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
+                .background(
+                    Brush.linearGradient(
+                        listOf(tint.copy(alpha = 0.86f), tint.copy(alpha = 0.48f), Color.White.copy(alpha = 0.34f)),
+                        start = Offset.Zero,
+                        end = Offset(760f, 460f),
+                    ),
+                )
+                .border(0.8.dp, Color(0x33FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusM))
+                .padding(14.dp),
+        ) {
+            Column(
+                modifier = Modifier.align(Alignment.BottomStart),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                Text(pageTitle, style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                Text("目标详情 · 勾选完成 · 一键排入今日日程", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary)
+            }
+        }
+
+        items.chunked(2).forEachIndexed { rowIndex, rowItems ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                rowItems.forEachIndexed { columnIndex, item ->
+                    val index = rowIndex * 2 + columnIndex
+                    val checked = isChecked(pageTitle, item)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .background(if (checked) GoaldayDesign.GreenSoft else Color(0xFFFFFEFC))
+                            .border(0.6.dp, if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .padding(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                    ) {
+                        Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(if (checked) "✓" else "□", color = if (checked) GoaldayDesign.Positive else GoaldayDesign.InkMuted, modifier = Modifier.clickable { onToggleChecked(pageTitle, item) })
+                                Text("目标 ${index + 1}", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                            }
+                            Text("排入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onAddToSchedule(item, todayDay) })
+                        }
+                        if (editingItem == item) {
+                            BasicTextField(
+                                value = editingText,
+                                onValueChange = { editingText = it },
+                                singleLine = true,
+                                textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = {
+                                    if (item in customItems) onRenameCustomItem(item, editingText)
+                                    editingItem = null
+                                }),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0x08000000), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 5.dp, vertical = 3.dp),
+                            )
+                            Text("保存", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
+                                if (item in customItems) onRenameCustomItem(item, editingText)
+                                editingItem = null
+                            })
+                        } else {
+                            Text(
+                                item,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (checked) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
+                                textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
+                                maxLines = 2,
+                                modifier = Modifier.clickable {
+                                    if (item in customItems) {
+                                        editingItem = item
+                                        editingText = item
+                                    }
+                                },
+                            )
+                            if (item in customItems) {
+                                Text("删除", color = GoaldayDesign.Danger, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onRemoveCustomItem(item) })
+                            }
+                        }
+                    }
+                }
+                if (rowItems.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                .background(Color(0xFFFFFEFC))
+                .border(0.6.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BasicTextField(
+                value = draft,
+                onValueChange = { draft = it },
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+                modifier = Modifier.weight(1f),
+                decorationBox = { inner ->
+                    if (draft.isBlank()) Text("新增一个目标", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                    inner()
+                },
+            )
+            Text("添加", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelMedium, modifier = Modifier.clickable {
+                val text = draft.trim()
+                if (text.isNotBlank()) {
+                    onAddCustomItem(text)
+                    draft = ""
+                }
+            })
         }
     }
 }
