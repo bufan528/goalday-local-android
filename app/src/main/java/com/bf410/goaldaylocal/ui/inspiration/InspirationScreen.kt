@@ -31,9 +31,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.bf410.goaldaylocal.ui.book.InspirationTemplate
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.book.InspirationTemplates
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
@@ -60,7 +62,7 @@ fun InspirationScreen(
     var inputText by rememberSaveable { mutableStateOf("") }
 
     val selectedTemplate = InspirationTemplates.all[selectedTemplateIndex.coerceIn(0, InspirationTemplates.all.lastIndex)]
-    val draftItems = remember(selectedTemplate.title) {
+    val draftItems = remember(selectedTemplate.id) {
         mutableStateListOf<InspirationDraftItem>().apply {
             addAll(selectedTemplate.items.map { InspirationDraftItem(it, selected = true) })
         }
@@ -104,15 +106,12 @@ fun InspirationScreen(
 
         if (mode == InspirationMode.CENTER) {
             InspirationTemplates.all.forEachIndexed { index, template ->
-                val cardColor = template.color
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(104.dp)
+                        .height(116.dp)
                         .background(
-                            Brush.horizontalGradient(
-                                listOf(cardColor.copy(alpha = 0.96f), cardColor.copy(alpha = 0.78f)),
-                            ),
+                            inspirationCoverBrush(template, index),
                             RoundedCornerShape(10.dp),
                         )
                         .border(if (index == selectedTemplateIndex) 2.dp else 0.dp, Color(0x66FFFFFF), RoundedCornerShape(10.dp))
@@ -125,6 +124,11 @@ fun InspirationScreen(
                         .padding(horizontal = 12.dp, vertical = 9.dp),
                     verticalArrangement = Arrangement.SpaceBetween,
                 ) {
+                    Text(
+                        "${template.category} · ${template.targetCount}项 · ${template.coverKey}",
+                        color = Color(0xE8FFFFFF),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
                     Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                         Text(template.title, color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                         Text(
@@ -137,7 +141,7 @@ fun InspirationScreen(
                         )
                     }
                     Text(template.subtitle, color = Color(0xE8FFFFFF), style = MaterialTheme.typography.bodySmall)
-                    Text("预览 ${template.items.take(3).joinToString(" · ")}", color = Color(0xDFFFFFFF), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                    Text("预览 ${template.items.take(4).joinToString(" · ")}", color = Color(0xDFFFFFFF), style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 }
             }
         }
@@ -152,7 +156,7 @@ fun InspirationScreen(
         ) {
             Text(
                 text = when (mode) {
-                    InspirationMode.CENTER -> selectedTemplate.title
+                    InspirationMode.CENTER -> "${selectedTemplate.title} · ${selectedTemplate.targetCount}项"
                     InspirationMode.SAVE -> "已导入任务池"
                     InspirationMode.FLIP -> "翻页"
                 },
@@ -249,4 +253,20 @@ fun InspirationScreen(
             Text("已保存内容可在手账中翻页查看", color = Color(0xFF7E756B), style = MaterialTheme.typography.bodySmall)
         }
     }
+}
+
+private fun inspirationCoverBrush(template: InspirationTemplate, index: Int): Brush {
+    val deep = when (index % 6) {
+        0 -> Color(0xFF5F6F3D)
+        1 -> Color(0xFF754E5E)
+        2 -> Color(0xFF6F523D)
+        3 -> Color(0xFF445A72)
+        4 -> Color(0xFF566B5B)
+        else -> Color(0xFF574B6B)
+    }
+    return Brush.linearGradient(
+        listOf(template.color.copy(alpha = 0.98f), template.color.copy(alpha = 0.80f), deep),
+        start = Offset.Zero,
+        end = Offset(760f, 460f),
+    )
 }

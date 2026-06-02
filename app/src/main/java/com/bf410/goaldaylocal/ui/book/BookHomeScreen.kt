@@ -859,8 +859,8 @@ private fun InspirationCenterView(
     onSaveAsBook: (InspirationTemplate, List<String>) -> Unit,
 ) {
     val selected = templates[selectedIndex.coerceIn(0, templates.lastIndex)]
-    var checkedStates by remember(selected.title) { mutableStateOf(List(selected.items.size) { true }) }
-    var editableItems by remember(selected.title) { mutableStateOf(selected.items) }
+    var checkedStates by remember(selected.id) { mutableStateOf(List(selected.items.size) { true }) }
+    var editableItems by remember(selected.id) { mutableStateOf(selected.items) }
     var pushToToday by remember { mutableStateOf(true) }
     var clearSourceAfterApply by remember { mutableStateOf(false) }
 
@@ -905,18 +905,9 @@ private fun InspirationCenterView(
                     Box(
                         modifier = Modifier
                             .width(190.dp)
-                            .height(108.dp)
+                            .height(118.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                Brush.verticalGradient(
-                                    when (index % 4) {
-                                        0 -> listOf(Color(0xFF7E8E55), Color(0xFF4D6032))
-                                        1 -> listOf(Color(0xFF86674B), Color(0xFF5B3F2D))
-                                        2 -> listOf(Color(0xFF6F5A7D), Color(0xFF4E3F5A))
-                                        else -> listOf(Color(0xFF5E6F8A), Color(0xFF3C4F69))
-                                    },
-                                ),
-                            )
+                            .background(templateCoverBrush(item, index))
                             .border(
                                 width = if (index == selectedIndex) 2.dp else 1.dp,
                                 color = if (index == selectedIndex) Color.White else Color.White.copy(alpha = 0.35f),
@@ -925,12 +916,23 @@ private fun InspirationCenterView(
                             .clickable { onSelect(index) }
                             .padding(12.dp),
                     ) {
+                        TopicCoverDecor(item = item, index = index)
+                        Text(
+                            "${item.targetCount}项",
+                            color = Color(0xEFFFFFFF),
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .clip(RoundedCornerShape(99.dp))
+                                .background(Color(0x22FFFFFF))
+                                .padding(horizontal = 7.dp, vertical = 2.dp),
+                        )
                         Column(
                             modifier = Modifier.align(Alignment.BottomStart),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            Text(item.title, color = Color.White, style = MaterialTheme.typography.titleSmall)
-                            Text(item.subtitle, color = Color.White.copy(alpha = 0.90f), style = MaterialTheme.typography.labelSmall)
+                            Text(item.title, color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text("${item.category} · ${item.coverKey}", color = Color.White.copy(alpha = 0.84f), style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -939,36 +941,50 @@ private fun InspirationCenterView(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .weight(1f)
                 .clip(RoundedCornerShape(24.dp))
                 .background(Color(0xF9FFFFFF))
                 .padding(14.dp),
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(126.dp)
+                        .height(140.dp)
                         .clip(RoundedCornerShape(20.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(selected.color.copy(alpha = 0.94f), selected.color.copy(alpha = 0.70f), Color.White.copy(alpha = 0.22f)),
-                                start = Offset.Zero,
-                                end = Offset(800f, 520f),
-                            ),
-                        )
+                        .background(templateCoverBrush(selected, selectedIndex))
                         .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(20.dp))
                         .padding(16.dp),
                 ) {
+                    TopicCoverDecor(item = selected, index = selectedIndex)
+                    Text(
+                        "${selected.category} · ${selected.targetCount} 个目标",
+                        color = Color(0xEFFFFFFF),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(Color(0x22FFFFFF))
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                    )
                     Column(
                         modifier = Modifier.align(Alignment.BottomStart),
                         verticalArrangement = Arrangement.spacedBy(5.dp),
                     ) {
-                        Text(selected.title, style = MaterialTheme.typography.titleLarge, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
-                        Text(selected.subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF4B3D31))
-                        Text(if (selected.linkToSchedule) "可导入任务池 · 可保存成手账本" else "适合复盘记录 · 可保存成手账本", style = MaterialTheme.typography.labelSmall, color = Color(0xFF5D4B3D))
+                        Text(selected.title, style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.SemiBold)
+                        Text(selected.subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xEFFFFFFF))
+                        Text(if (selected.linkToSchedule) "可导入任务池 · 可保存成手账本" else "适合复盘记录 · 可保存成手账本", style = MaterialTheme.typography.labelSmall, color = Color(0xDFFFFFFF))
                     }
                 }
-                Text("目标详情", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+                Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text("目标详情", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+                    Text("target: ${selected.targetKey}", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                }
                 editableItems.chunked(2).forEachIndexed { rowIndex, rowItems ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         rowItems.forEachIndexed { columnIndex, item ->
@@ -1011,7 +1027,7 @@ private fun InspirationCenterView(
                         }
                     }
                 }
-                if (editableItems.size < 18) {
+                if (editableItems.size < 60) {
                     Text(
                         "＋ 添加目标",
                         color = Color(0xFFE88FAE),
@@ -1054,6 +1070,74 @@ private fun InspirationCenterView(
                 ) { Text("导入任务池") }
             }
         }
+    }
+}
+
+private fun templateCoverBrush(template: InspirationTemplate, index: Int): Brush {
+    val deep = when (index % 6) {
+        0 -> Color(0xFF5F6F3D)
+        1 -> Color(0xFF754E5E)
+        2 -> Color(0xFF6F523D)
+        3 -> Color(0xFF445A72)
+        4 -> Color(0xFF566B5B)
+        else -> Color(0xFF574B6B)
+    }
+    return Brush.linearGradient(
+        listOf(
+            template.color.copy(alpha = 0.98f),
+            template.color.copy(alpha = 0.82f),
+            deep,
+        ),
+        start = Offset.Zero,
+        end = Offset(720f, 520f),
+    )
+}
+
+@Composable
+private fun TopicCoverDecor(
+    item: InspirationTemplate,
+    index: Int,
+) {
+    Box(Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .width(26.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0x332F261D), Color(0x18FFFFFF), Color.Transparent),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 12.dp, end = 12.dp)
+                .size((28 + (index % 3) * 6).dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(Color.White.copy(alpha = 0.18f)),
+        )
+        repeat(3) { layer ->
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = (10 + layer * 8).dp, end = (12 + layer * 18).dp)
+                    .width((42 + layer * 8).dp)
+                    .height(1.dp)
+                    .background(Color.White.copy(alpha = 0.22f)),
+            )
+        }
+        Text(
+            item.coverKey.uppercase().take(14),
+            color = Color.White.copy(alpha = 0.32f),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .graphicsLayer { rotationZ = -90f }
+                .padding(bottom = 2.dp),
+        )
     }
 }
 

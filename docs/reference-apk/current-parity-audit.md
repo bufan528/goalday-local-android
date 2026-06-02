@@ -47,16 +47,16 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 
 | Scope | Estimate | Reason |
 | --- | ---: | --- |
-| Useful offline planner functionality | 68-74% | Core local scheduling, handbook, diary, templates, widgets, backup, and import exist. |
-| Reference/video visual parity | 42-50% | Opened-book shell improved, but topic covers, target detail, diary item layouts, and print preview still differ. |
-| APK structure parity excluding account/VIP/pay | 55-62% | Many module names have local equivalents, but several are still merged into generic Compose screens. |
+| Useful offline planner functionality | 70-76% | Core local scheduling, handbook, diary, config-style templates, widgets, backup, and import exist. |
+| Reference/video visual parity | 44-52% | Opened-book shell and topic-cover cards improved, but target detail, diary item layouts, and print preview still differ. |
+| APK structure parity excluding account/VIP/pay | 58-64% | Many module names have local equivalents, but several are still merged into generic Compose screens. |
 | Full APK parity including account/VIP/pay/server | 28-35% | Those online/business flows are intentionally out of scope for the local app. |
 
 ## Biggest Remaining Gaps
 
 | Priority | Area | Reference APK Signal | Current App | Remaining Gap |
 | --- | --- | --- | --- | --- |
-| P0 | Topic center data depth | Config JSON, 33 covers, 28 target files | Handwritten `InspirationTemplates` with shortened item lists | Need local config-style catalog with full-length target lists and generated/original cover system. |
+| P1 | Topic center visual assets | Config JSON, 33 covers, 28 target files | `InspirationTemplates` now has id/cover key/target key/category and longer local lists, but visuals are generated cover-style cards | Need stronger original cover illustrations or asset-backed cover model. |
 | P0 | Target detail flow | Dedicated `TargetDetailActivity`, target detail item names/options | Target cards inside book pages | Need full-screen target detail route with sections, per-target detail editing, progress, schedule links, and save-as-own behavior. |
 | P0 | Diary model | Rich editor bundle and diary image/text/target/topic-target item layouts | Compose structured diary with images and target chips | Need richer block model: text block, image block, target block, topic-target block, inline formatting toolbar. |
 | P1 | Book page content parity | `BookActivity`, in-book schedule/diary fragments | Better shell and handbook schedule page | Need page contents to stop looking like generic panels, especially target and diary pages. |
@@ -67,12 +67,12 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 
 ## Recommended Next Implementation Order
 
-1. Build a config-style topic catalog in the local app: id, title, color, cover key, target key, link-to-schedule, and long target list.
-2. Add a dedicated full-screen target detail view that opens from topic/book target cards.
-3. Extend diary storage/UI to separate block types instead of encoding most content in one raw diary string.
-4. Add a dedicated long-image/print preview screen shared by diary and handbook exports.
+1. Add a dedicated full-screen target detail view that opens from topic/book target cards.
+2. Extend diary storage/UI to separate block types instead of encoding most content in one raw diary string.
+3. Add a dedicated long-image/print preview screen shared by diary and handbook exports.
+4. Strengthen original topic cover illustrations or add a local asset-backed cover model.
 5. Polish widgets/settings after the main in-app flow is closer.
 
 ## Practical Conclusion
 
-The current app is no longer "almost completely different"; it now has a similar offline product skeleton. But compared with the APK/video, it is still missing the reference app's data richness and dedicated detail flows. The next high-impact change should be the topic catalog and target detail route, not another small visual tweak.
+The current app is no longer "almost completely different"; it now has a similar offline product skeleton. But compared with the APK/video, it is still missing the reference app's dedicated detail flows and richer diary/export surfaces. The next high-impact change should be the target detail route, not another small visual tweak.
