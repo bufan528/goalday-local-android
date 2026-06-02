@@ -3344,6 +3344,7 @@ private fun StructuredDiaryEditor(
     onDone: () -> Unit,
 ) {
     val dateLabel = remember(state.dateIso) { diaryDateLabel(state.date) }
+    var richEditorExpanded by remember(state.dateIso) { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         DiaryEditorToolbar(
             dateLabel = dateLabel,
@@ -3363,18 +3364,45 @@ private fun StructuredDiaryEditor(
                 .padding(horizontal = 9.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text("富文本记录", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
-            RichDiaryEditor(
-                html = state.richHtml,
-                placeholder = "写一段更自由的日记，支持加粗、标题、引用和列表。",
-                pendingCommand = pendingCommand,
-                onHtmlChange = { html -> onStateChange(state.withRichHtml(html)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(138.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFFFFAF3)),
-            )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("富文本记录", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
+                Text(
+                    if (richEditorExpanded) "收起" else "打开富文本编辑器",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GoaldayDesign.Pink,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x12E88FAE))
+                        .clickable { richEditorExpanded = !richEditorExpanded }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            }
+            if (richEditorExpanded) {
+                RichDiaryEditor(
+                    html = state.richHtml,
+                    placeholder = "写一段更自由的日记，支持加粗、标题、引用和列表。",
+                    pendingCommand = pendingCommand,
+                    onHtmlChange = { html -> onStateChange(state.withRichHtml(html)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(138.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFFFFAF3)),
+                )
+            } else {
+                Text(
+                    plainTextFromHtml(state.richHtml).ifBlank { "点击后加载富文本编辑器，普通日记块不受影响。" },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GoaldayDesign.InkMuted,
+                    maxLines = 3,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFFFFAF3))
+                        .clickable { richEditorExpanded = true }
+                        .padding(horizontal = 9.dp, vertical = 8.dp),
+                )
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {

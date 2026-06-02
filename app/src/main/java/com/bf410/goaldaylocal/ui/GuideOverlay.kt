@@ -14,11 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -144,16 +139,6 @@ private fun GuideIllustration(
     page: GuidePage,
     index: Int,
 ) {
-    val transition = rememberInfiniteTransition(label = "guide-pulse")
-    val pulse = transition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.88f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1100),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "guide-pulse-alpha",
-    )
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -206,7 +191,7 @@ private fun GuideIllustration(
                 .padding(top = 16.dp, end = 20.dp)
                 .size(44.dp)
                 .clip(RoundedCornerShape(99.dp))
-                .background(GoaldayDesign.PrimaryAction.copy(alpha = pulse.value)),
+                .background(GoaldayDesign.PrimaryAction.copy(alpha = 0.88f)),
         ) {
             Text("${index + 1}", color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Center))
         }
@@ -218,7 +203,7 @@ private fun GuideIllustration(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .clip(RoundedCornerShape(99.dp))
-                .background(GoaldayDesign.Pink.copy(alpha = pulse.value))
+                .background(GoaldayDesign.Pink.copy(alpha = 0.78f))
                 .padding(horizontal = 10.dp, vertical = 5.dp),
         )
         Text(
