@@ -26,7 +26,39 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
-        fun buildRemoteViews(context: Context): RemoteViews {
+        fun buildRemoteViews(context: Context): RemoteViews =
+            buildScheduleViews(
+                context = context,
+                layoutId = R.layout.widget_schedule,
+                taskIds = listOf(
+                    R.id.widget_task_1,
+                    R.id.widget_task_2,
+                    R.id.widget_task_3,
+                    R.id.widget_task_4,
+                ),
+            )
+
+        fun buildLargeRemoteViews(context: Context): RemoteViews =
+            buildScheduleViews(
+                context = context,
+                layoutId = R.layout.widget_schedule_large,
+                taskIds = listOf(
+                    R.id.widget_task_1,
+                    R.id.widget_task_2,
+                    R.id.widget_task_3,
+                    R.id.widget_task_4,
+                    R.id.widget_task_5,
+                    R.id.widget_task_6,
+                    R.id.widget_task_7,
+                    R.id.widget_task_8,
+                ),
+            )
+
+        private fun buildScheduleViews(
+            context: Context,
+            layoutId: Int,
+            taskIds: List<Int>,
+        ): RemoteViews {
             val today = LocalDate.now()
             val entries = LocalStateStore(MMKV.defaultMMKV())
                 .scheduleEntries()
@@ -34,16 +66,10 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
                 .sortedWith(compareBy<ScheduleEntry>({ it.completed }, { it.timeText }, { it.title.lowercase() }))
             val todo = entries.filterNot { it.completed }
             val done = entries.count { it.completed }
-            val views = RemoteViews(context.packageName, R.layout.widget_schedule)
+            val views = RemoteViews(context.packageName, layoutId)
             views.setTextViewText(R.id.widget_title, "Goalday 今日")
             views.setTextViewText(R.id.widget_subtitle, "${today.monthValue}月${today.dayOfMonth}日 · 待办 ${todo.size} · 完成 $done")
-            val taskIds = listOf(
-                R.id.widget_task_1,
-                R.id.widget_task_2,
-                R.id.widget_task_3,
-                R.id.widget_task_4,
-            )
-            val displayEntries = entries.take(4)
+            val displayEntries = entries.take(taskIds.size)
             taskIds.forEachIndexed { index, id ->
                 val entry = displayEntries.getOrNull(index)
                 if (entry == null) {

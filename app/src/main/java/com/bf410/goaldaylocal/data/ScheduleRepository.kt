@@ -1,5 +1,7 @@
 package com.bf410.goaldaylocal.data
 
+import com.bf410.goaldaylocal.GoaldayApplication
+import com.bf410.goaldaylocal.ui.widget.WidgetRefresh
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +17,7 @@ class ScheduleRepository private constructor(
     fun saveEntries(entries: List<ScheduleEntry>) {
         store.saveScheduleEntries(entries)
         notifyChanged()
+        GoaldayApplication.appContext?.let(WidgetRefresh::refreshScheduleWidgets)
     }
 
     fun addEntry(
