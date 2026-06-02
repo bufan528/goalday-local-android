@@ -292,6 +292,28 @@ class BookViewModel(
         syncEditableContent()
     }
 
+    fun moveScheduleDayFromHandbook(entryId: String, month: Int, day: Int) {
+        if (entryId.isBlank()) return
+        val year = store.calendarAnchorYear()
+        val safeMonth = month.coerceIn(1, 12)
+        val maxDay = YearMonth.of(year, safeMonth).lengthOfMonth()
+        val safeDay = day.coerceIn(1, maxDay)
+        val updated = scheduleRepository.entries().map { entry ->
+            if (entry.id == entryId) {
+                entry.copy(
+                    year = year,
+                    month = safeMonth,
+                    day = safeDay,
+                    completed = false,
+                )
+            } else {
+                entry
+            }
+        }
+        scheduleRepository.saveEntries(updated)
+        syncEditableContent()
+    }
+
     fun toggleScheduleCompletedFromHandbook(entryId: String) {
         if (entryId.isBlank()) return
         val updated = scheduleRepository.entries().map { entry ->

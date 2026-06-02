@@ -639,6 +639,7 @@ fun ActivePageLayer(
     onRestoreItemFromToday: (String) -> Unit,
     onRestoreItemFromCompleted: (String) -> Unit,
     onUpdateScheduleTitle: (String, String) -> Unit,
+    onMoveScheduleDay: (String, Int, Int) -> Unit,
     onToggleScheduleCompleted: (String) -> Unit,
     pendingCommand: RichEditorCommand?,
     onCommand: (RichEditorCommand) -> Unit,
@@ -661,6 +662,7 @@ fun ActivePageLayer(
             onAddSchedule = onAddScheduleFromHandbook,
             onWeeklyThemeChange = onWeeklyThemeChange,
             onUpdateScheduleTitle = onUpdateScheduleTitle,
+            onMoveScheduleDay = onMoveScheduleDay,
             onToggleScheduleCompleted = onToggleScheduleCompleted,
             turnProgress = turnProgress,
             turnDirection = turnDirection,
@@ -742,6 +744,7 @@ private fun HandbookReplicaPage(
     onAddSchedule: (String, Int, Int) -> Unit,
     onWeeklyThemeChange: (String) -> Unit,
     onUpdateScheduleTitle: (String, String) -> Unit,
+    onMoveScheduleDay: (String, Int, Int) -> Unit,
     onToggleScheduleCompleted: (String) -> Unit,
     turnProgress: Float,
     turnDirection: TurnDirection?,
@@ -825,6 +828,7 @@ private fun HandbookReplicaPage(
     }
     fun clearTodoDrag() {
         draggingTodoEntry = null
+        activePoolDropDay = null
         activeDoneDropDay = null
         dragPosition = Offset.Zero
     }
@@ -1010,23 +1014,31 @@ private fun HandbookReplicaPage(
                             if (!entry.id.startsWith("fallback_")) {
                                 draggingTodoEntry = entry
                                 dragPosition = position
+                                activePoolDropDay = todoDropBounds.entries.firstOrNull { it.value.contains(position) }?.key
                                 activeDoneDropDay = doneDropBounds.entries.firstOrNull { it.value.contains(position) }?.key
                             }
                         },
                         onEntryDrag = { delta ->
                             dragPosition += delta
+                            activePoolDropDay = todoDropBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
                             activeDoneDropDay = doneDropBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
                         },
                         onEntryDragEnd = {
                             val entry = draggingTodoEntry
-                            val targetDay = activeDoneDropDay
+                            val doneTargetDay = activeDoneDropDay
+                            val todoTargetDay = activePoolDropDay
                             when {
-                                entry != null && targetDay == entry.day -> {
+                                entry != null && doneTargetDay == entry.day -> {
                                     onToggleScheduleCompleted(entry.id)
-                                    saveHint = "已放入${targetDay}日 done"
+                                    saveHint = "已放入${doneTargetDay}日 done"
                                 }
-                                entry != null && targetDay != null -> saveHint = "请拖到同日期 done"
-                                entry != null -> saveHint = "未命中 done"
+                                entry != null && todoTargetDay != null && todoTargetDay != entry.day -> {
+                                    onMoveScheduleDay(entry.id, anchorMonth, todoTargetDay)
+                                    draftDay = todoTargetDay
+                                    saveHint = "已拖到${todoTargetDay}日"
+                                }
+                                entry != null && doneTargetDay != null -> saveHint = "请拖到同日期 done"
+                                entry != null -> saveHint = "未命中日期或 done"
                             }
                             clearTodoDrag()
                         },
