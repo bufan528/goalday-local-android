@@ -746,7 +746,7 @@ fun ActivePageLayer(
             },
         ) {
             when (page) {
-                is TargetPage -> TargetDetailReplicaPage(page.title, page.items, customPageItems, tint, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule)
+                is TargetPage -> TargetDetailReplicaPage(page.title, page.items, customPageItems, tint, schedulePreviewEntries, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule)
                 is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), BookStrings.addSchedule, true, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
                 is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), BookStrings.addPlan, false, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
                 is DiaryPage -> DiarySection(page.title, page.prompt, tint, diaryDraft, todayPlanItems, todayCompletedItems, pendingCommand, onCommand, onDiaryChange, contentMode, onContentModeChange)
@@ -1788,6 +1788,7 @@ private fun TargetDetailReplicaPage(
     baseItems: List<String>,
     customItems: List<String>,
     tint: Color,
+    schedulePreviewEntries: List<ScheduleEntry>,
     isChecked: (String, String) -> Boolean,
     onToggleChecked: (String, String) -> Unit,
     onAddCustomItem: (String) -> Unit,
@@ -1800,6 +1801,18 @@ private fun TargetDetailReplicaPage(
     var editingItem by remember(pageTitle) { mutableStateOf<String?>(null) }
     var editingText by remember(pageTitle) { mutableStateOf("") }
     val todayDay = LocalDate.now().dayOfMonth
+    val tomorrowDay = todayDay + 1
+    val weekendDay = todayDay + (7 - LocalDate.now().dayOfWeek.value).coerceAtLeast(1)
+    val completedCount = items.count { isChecked(pageTitle, it) }
+    val scheduledByTitle = remember(schedulePreviewEntries, items) {
+        items.associateWith { item ->
+            schedulePreviewEntries
+                .filter { it.title == item }
+                .sortedWith(compareBy<ScheduleEntry>({ it.month }, { it.day }, { it.timeText }))
+                .take(3)
+        }
+    }
+    val scheduledCount = scheduledByTitle.count { it.value.isNotEmpty() }
 
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -1825,7 +1838,12 @@ private fun TargetDetailReplicaPage(
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Text(pageTitle, style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-                Text("目标详情 · 勾选完成 · 一键排入今日日程", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary)
+                Text("目标档案 · $completedCount/${items.size} 完成 · $scheduledCount 已排期", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary)
+                TargetProgressBar(
+                    completed = completedCount,
+                    total = items.size,
+                    tint = GoaldayDesign.Positive,
+                )
             }
         }
 
@@ -1834,6 +1852,7 @@ private fun TargetDetailReplicaPage(
                 rowItems.forEachIndexed { columnIndex, item ->
                     val index = rowIndex * 2 + columnIndex
                     val checked = isChecked(pageTitle, item)
+                    val scheduledEntries = scheduledByTitle[item].orEmpty()
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -1850,6 +1869,7 @@ private fun TargetDetailReplicaPage(
                             }
                             Text("排入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onAddToSchedule(item, todayDay) })
                         }
+                        TargetScheduleMeta(entries = scheduledEntries)
                         if (editingItem == item) {
                             BasicTextField(
                                 value = editingText,
@@ -1888,6 +1908,11 @@ private fun TargetDetailReplicaPage(
                                 Text("删除", color = GoaldayDesign.Danger, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onRemoveCustomItem(item) })
                             }
                         }
+                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                            TargetScheduleChip("今天") { onAddToSchedule(item, todayDay) }
+                            TargetScheduleChip("明天") { onAddToSchedule(item, tomorrowDay) }
+                            TargetScheduleChip("周末") { onAddToSchedule(item, weekendDay) }
+                        }
                     }
                 }
                 if (rowItems.size == 1) Spacer(Modifier.weight(1f))
@@ -1924,6 +1949,66 @@ private fun TargetDetailReplicaPage(
             })
         }
     }
+}
+
+@Composable
+private fun TargetProgressBar(
+    completed: Int,
+    total: Int,
+    tint: Color,
+) {
+    val progress = if (total <= 0) 0f else completed.toFloat() / total.toFloat()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(7.dp)
+            .clip(RoundedCornerShape(99.dp))
+            .background(Color(0x44FFFFFF)),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(progress.coerceIn(0f, 1f))
+                .clip(RoundedCornerShape(99.dp))
+                .background(tint.copy(alpha = 0.72f)),
+        )
+    }
+}
+
+@Composable
+private fun TargetScheduleMeta(entries: List<ScheduleEntry>) {
+    val text = if (entries.isEmpty()) {
+        "未排期"
+    } else {
+        entries.joinToString(" · ") { entry ->
+            val time = entry.timeText.takeIf { it.isNotBlank() }?.let { " $it" }.orEmpty()
+            "${entry.month}/${entry.day}$time"
+        }
+    }
+    Text(
+        text,
+        color = if (entries.isEmpty()) GoaldayDesign.InkMuted else GoaldayDesign.Positive,
+        style = MaterialTheme.typography.labelSmall,
+        maxLines = 1,
+    )
+}
+
+@Composable
+private fun TargetScheduleChip(
+    label: String,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        color = GoaldayDesign.Pink,
+        style = MaterialTheme.typography.labelSmall,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(Color(0x18E88FAE))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 6.dp, vertical = 3.dp),
+    )
 }
 
 @Composable
