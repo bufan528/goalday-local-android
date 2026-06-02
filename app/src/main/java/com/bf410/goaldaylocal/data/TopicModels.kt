@@ -10,6 +10,11 @@ data class TopicBook(
     val pages: List<BookPage>,
 )
 
+data class TargetItemMeta(
+    val note: String = "",
+    val deadlineDay: Int? = null,
+)
+
 sealed interface BookPage {
     val title: String
 }

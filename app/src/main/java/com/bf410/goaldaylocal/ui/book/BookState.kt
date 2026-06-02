@@ -2,6 +2,7 @@ package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.runtime.Immutable
 import com.bf410.goaldaylocal.data.ScheduleEntry
+import com.bf410.goaldaylocal.data.TargetItemMeta
 import com.bf410.goaldaylocal.data.TopicBook
 
 @Immutable
@@ -16,6 +17,7 @@ data class BookUiState(
     val todayPlanItems: List<String>,
     val todayCompletedItems: List<String>,
     val schedulePreviewEntries: List<ScheduleEntry>,
+    val targetItemMeta: Map<String, TargetItemMeta>,
     val customBookCount: Int,
     val inLibraryMode: Boolean,
 )

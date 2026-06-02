@@ -178,6 +178,30 @@ class LocalStateStore(
         encodeStringList(todayDoneKey(bookId, pageTitle), items)
     }
 
+    fun targetItemMeta(bookId: String, pageTitle: String, item: String): TargetItemMeta {
+        val raw = mmkv.decodeString(targetMetaKey(bookId, pageTitle, item), null) ?: return TargetItemMeta()
+        val json = runCatching { JSONObject(raw) }.getOrNull() ?: return TargetItemMeta()
+        return TargetItemMeta(
+            note = json.optString("note"),
+            deadlineDay = json.optInt("deadlineDay", 0).takeIf { it > 0 },
+        )
+    }
+
+    fun setTargetItemMeta(bookId: String, pageTitle: String, item: String, meta: TargetItemMeta) {
+        val key = targetMetaKey(bookId, pageTitle, item)
+        if (meta.note.isBlank() && meta.deadlineDay == null) {
+            mmkv.removeValueForKey(key)
+            return
+        }
+        mmkv.encode(
+            key,
+            JSONObject()
+                .put("note", meta.note)
+                .put("deadlineDay", meta.deadlineDay ?: 0)
+                .toString(),
+        )
+    }
+
     fun migratePageScopedData(
         bookId: String,
         oldTitle: String,
@@ -195,6 +219,7 @@ class LocalStateStore(
                 mmkv.encode(checkKey(bookId, newTitle, item), true)
                 mmkv.removeValueForKey(oldKey)
             }
+            moveRawString(targetMetaKey(bookId, oldTitle, item), targetMetaKey(bookId, newTitle, item))
         }
     }
 
@@ -209,6 +234,7 @@ class LocalStateStore(
         mmkv.removeValueForKey(todayDoneKey(bookId, pageTitle))
         checkedItems.distinct().forEach { item ->
             mmkv.removeValueForKey(checkKey(bookId, pageTitle, item))
+            mmkv.removeValueForKey(targetMetaKey(bookId, pageTitle, item))
         }
     }
 
@@ -293,6 +319,9 @@ class LocalStateStore(
 
     private fun todayDoneKey(bookId: String, pageTitle: String): String =
         "today_done_${bookId}_${pageTitle.hashCode()}"
+
+    private fun targetMetaKey(bookId: String, pageTitle: String, item: String): String =
+        "target_meta_${bookId}_${pageTitle.hashCode()}_${item.hashCode()}"
 
     private fun decodeStringList(key: String): List<String> {
         val raw = mmkv.decodeString(key, "[]") ?: "[]"

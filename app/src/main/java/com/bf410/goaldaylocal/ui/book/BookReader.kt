@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.ScheduleEntry
+import com.bf410.goaldaylocal.data.TargetItemMeta
 
 @Composable
 fun BookReader(
@@ -32,6 +33,7 @@ fun BookReader(
     todayPlanItems: List<String>,
     todayCompletedItems: List<String>,
     schedulePreviewEntries: List<ScheduleEntry>,
+    targetItemMeta: Map<String, TargetItemMeta>,
     onToggleSaved: () -> Unit,
     isChecked: (String, String) -> Boolean,
     onToggleChecked: (String, String) -> Unit,
@@ -52,6 +54,8 @@ fun BookReader(
     onUpdateScheduleTitle: (String, String) -> Unit,
     onMoveScheduleDay: (String, Int, Int) -> Unit,
     onToggleScheduleCompleted: (String) -> Unit,
+    onUpdateTargetNote: (String, String) -> Unit,
+    onUpdateTargetDeadline: (String, Int?) -> Unit,
     shellStyle: ShellStyle = ShellStyle.LIGHT,
     handbookMode: Boolean = false,
     onFlipNext: () -> Unit,
@@ -131,6 +135,7 @@ fun BookReader(
                 todayPlanItems = todayPlanItems,
                 todayCompletedItems = todayCompletedItems,
                 schedulePreviewEntries = schedulePreviewEntries,
+                targetItemMeta = targetItemMeta,
                 onToggleSaved = onToggleSaved,
                 isChecked = isChecked,
                 onToggleChecked = onToggleChecked,
@@ -151,6 +156,8 @@ fun BookReader(
                 onUpdateScheduleTitle = onUpdateScheduleTitle,
                 onMoveScheduleDay = onMoveScheduleDay,
                 onToggleScheduleCompleted = onToggleScheduleCompleted,
+                onUpdateTargetNote = onUpdateTargetNote,
+                onUpdateTargetDeadline = onUpdateTargetDeadline,
                 pendingCommand = diaryCommand,
                 onCommand = { diaryCommand = it },
                 contentMode = contentMode,

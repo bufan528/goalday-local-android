@@ -14,6 +14,7 @@ import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.ScheduleRepository
 import com.bf410.goaldaylocal.data.ScheduleStatus
 import com.bf410.goaldaylocal.data.SchedulePage
+import com.bf410.goaldaylocal.data.TargetItemMeta
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
 import com.tencent.mmkv.MMKV
@@ -49,6 +50,7 @@ class BookViewModel(
             todayPlanItems = emptyList(),
             todayCompletedItems = emptyList(),
             schedulePreviewEntries = yearEntriesForAnchor(),
+            targetItemMeta = emptyMap(),
             customBookCount = store.customBooks().size,
             inLibraryMode = true,
         ),
@@ -161,6 +163,9 @@ class BookViewModel(
         if (!supportsCustomItems()) return
         val updated = _uiState.value.customPageItems.filterNot { it == item }
         store.saveCustomPageItems(currentBook().id, currentPage().title, updated)
+        if (currentPage() is TargetPage) {
+            store.setTargetItemMeta(currentBook().id, currentPage().title, item, TargetItemMeta())
+        }
         _uiState.update { it.copy(customPageItems = updated) }
     }
 
@@ -172,7 +177,32 @@ class BookViewModel(
             if (item == oldItem) trimmed else item
         }.distinct()
         store.saveCustomPageItems(currentBook().id, currentPage().title, updated)
+        if (currentPage() is TargetPage) {
+            val meta = store.targetItemMeta(currentBook().id, currentPage().title, oldItem)
+            store.setTargetItemMeta(currentBook().id, currentPage().title, trimmed, meta)
+            store.setTargetItemMeta(currentBook().id, currentPage().title, oldItem, TargetItemMeta())
+        }
         _uiState.update { it.copy(customPageItems = updated) }
+    }
+
+    fun updateTargetItemNote(item: String, note: String) {
+        val page = currentPage() as? TargetPage ?: return
+        val normalized = item.trim()
+        if (normalized.isBlank()) return
+        val bookId = currentBook().id
+        val current = store.targetItemMeta(bookId, page.title, normalized)
+        store.setTargetItemMeta(bookId, page.title, normalized, current.copy(note = note.trim()))
+        syncEditableContent()
+    }
+
+    fun updateTargetItemDeadline(item: String, deadlineDay: Int?) {
+        val page = currentPage() as? TargetPage ?: return
+        val normalized = item.trim()
+        if (normalized.isBlank()) return
+        val bookId = currentBook().id
+        val current = store.targetItemMeta(bookId, page.title, normalized)
+        store.setTargetItemMeta(bookId, page.title, normalized, current.copy(deadlineDay = deadlineDay?.coerceIn(1, 31)))
+        syncEditableContent()
     }
 
     fun addItemToSchedule(item: String, day: Int) {
@@ -573,11 +603,16 @@ class BookViewModel(
                         todayPlanItems = (storedPool + imported.todo).distinct(),
                         todayCompletedItems = imported.done,
                         schedulePreviewEntries = yearEntriesForAnchor(),
+                        targetItemMeta = emptyMap(),
                     )
                 }
             }
             is PlanPage, is TargetPage, is SchedulePage -> {
                 val storedPool = store.todayPlanItems(book.id, page.title)
+                val pageItems = when (page) {
+                    is TargetPage -> page.items + store.customPageItems(book.id, page.title)
+                    else -> emptyList()
+                }
                 _uiState.update {
                     it.copy(
                         diaryDraft = "",
@@ -586,6 +621,9 @@ class BookViewModel(
                         todayPlanItems = (storedPool + imported.todo).distinct(),
                         todayCompletedItems = imported.done,
                         schedulePreviewEntries = yearEntriesForAnchor(),
+                        targetItemMeta = pageItems.distinct().associateWith { item ->
+                            store.targetItemMeta(book.id, page.title, item)
+                        },
                     )
                 }
             }
