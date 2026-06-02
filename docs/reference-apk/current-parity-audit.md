@@ -4,6 +4,8 @@ Reference APK: `docs/reference-apk/goalday-reference-base.apk`
 
 Date: 2026-06-02
 
+Latest delta: `docs/reference-apk/deep-parity-delta-2026-06-02.md`
+
 ## Boundary
 
 This audit treats the APK as a product and UX reference only. The APK contains `assets/libjiagu*.so`, so direct code recovery is not a reliable or appropriate implementation path. The local app should continue as a clean-room, offline implementation: no copied APK code, no copied protected/paid assets, and no payment/protection bypass.

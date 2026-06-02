@@ -8,6 +8,8 @@ Deep audit: `docs/reference-apk/deep-gap-audit.md`
 
 Current parity audit: `docs/reference-apk/current-parity-audit.md`
 
+Latest deep parity delta: `docs/reference-apk/deep-parity-delta-2026-06-02.md`
+
 ## Overall Gap
 
 Estimated completion against the reference APK's useful offline planner surface: **about 68-74%**.
