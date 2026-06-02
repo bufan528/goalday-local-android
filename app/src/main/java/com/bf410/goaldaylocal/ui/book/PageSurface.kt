@@ -2,6 +2,7 @@ package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,14 +46,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -803,6 +810,16 @@ private fun HandbookReplicaPage(
     var editingId by remember(pageIndex) { mutableStateOf<String?>(null) }
     var editingText by remember(pageIndex) { mutableStateOf("") }
     var saveHint by remember(pageIndex) { mutableStateOf("") }
+    var spreadOrigin by remember(pageIndex) { mutableStateOf(Offset.Zero) }
+    val todoDropBounds = remember(pageIndex) { mutableMapOf<Int, Rect>() }
+    var draggingPoolItem by remember(pageIndex) { mutableStateOf<String?>(null) }
+    var dragPosition by remember(pageIndex) { mutableStateOf(Offset.Zero) }
+    var activePoolDropDay by remember(pageIndex) { mutableStateOf<Int?>(null) }
+    fun clearPoolDrag() {
+        draggingPoolItem = null
+        activePoolDropDay = null
+        dragPosition = Offset.Zero
+    }
     LaunchedEffect(saveHint) {
         if (saveHint.isBlank()) return@LaunchedEffect
         delay(1200)
@@ -817,6 +834,9 @@ private fun HandbookReplicaPage(
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha
+            }
+            .onGloballyPositioned { coordinates ->
+                spreadOrigin = coordinates.boundsInRoot().topLeft
             }
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
@@ -898,6 +918,31 @@ private fun HandbookReplicaPage(
                         onAddSchedule(text, anchorMonth, selectedDraftDay)
                         saveHint = "已放入${selectedDraftDay}日"
                     },
+                    onPoolDragStart = { text, position ->
+                        draggingPoolItem = text
+                        dragPosition = position
+                        activePoolDropDay = todoDropBounds.entries.firstOrNull { it.value.contains(position) }?.key
+                    },
+                    onPoolDrag = { delta ->
+                        dragPosition += delta
+                        activePoolDropDay = todoDropBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
+                    },
+                    onPoolDragEnd = {
+                        val text = draggingPoolItem
+                        val targetDay = activePoolDropDay
+                        if (text != null && targetDay != null) {
+                            onAddSchedule(text, anchorMonth, targetDay)
+                            draftDay = targetDay
+                            saveHint = "已拖入${targetDay}日"
+                        } else if (text != null) {
+                            saveHint = "未命中日期"
+                        }
+                        clearPoolDrag()
+                    },
+                    onPoolDragCancel = {
+                        saveHint = "已取消拖放"
+                        clearPoolDrag()
+                    },
                     onDone = {
                         val text = draftText.trim()
                         if (text.isNotBlank()) {
@@ -919,6 +964,8 @@ private fun HandbookReplicaPage(
                         },
                         editingId = editingId,
                         editingText = editingText,
+                        activeDrop = activePoolDropDay == block.day,
+                        onBounds = { rect -> todoDropBounds[block.day] = rect },
                         onStartEdit = { entry ->
                             if (!entry.id.startsWith("fallback_")) {
                                 editingId = entry.id
@@ -947,6 +994,24 @@ private fun HandbookReplicaPage(
                     )
                 }
             }
+        }
+
+        draggingPoolItem?.let { text ->
+            val localX = (dragPosition.x - spreadOrigin.x).toInt()
+            val localY = (dragPosition.y - spreadOrigin.y).toInt()
+            Text(
+                text,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White,
+                maxLines = 1,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset { IntOffset(localX, localY) }
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .background(GoaldayDesign.Pink)
+                    .border(0.8.dp, Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .padding(horizontal = 7.dp, vertical = 4.dp),
+            )
         }
 
         Box(
@@ -1200,6 +1265,10 @@ private fun HandbookQuickAddRow(
     onSelectDay: (Int) -> Unit,
     poolItems: List<String>,
     onPickPoolItem: (String) -> Unit,
+    onPoolDragStart: (String, Offset) -> Unit,
+    onPoolDrag: (Offset) -> Unit,
+    onPoolDragEnd: () -> Unit,
+    onPoolDragCancel: () -> Unit,
     onDone: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -1256,11 +1325,23 @@ private fun HandbookQuickAddRow(
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text("待安排", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                 poolItems.forEach { item ->
+                    var rowOrigin by remember(item) { mutableStateOf(Offset.Zero) }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                             .background(Color(0x08E88FAE))
+                            .onGloballyPositioned { coordinates ->
+                                rowOrigin = coordinates.boundsInRoot().topLeft
+                            }
+                            .pointerInput(item) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { start -> onPoolDragStart(item, rowOrigin + start) },
+                                    onDrag = { _, dragAmount -> onPoolDrag(dragAmount) },
+                                    onDragEnd = onPoolDragEnd,
+                                    onDragCancel = onPoolDragCancel,
+                                )
+                            }
                             .clickable { onPickPoolItem(item) }
                             .padding(horizontal = 5.dp, vertical = 2.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1281,6 +1362,8 @@ private fun DaySpreadEditableSection(
     entries: List<ScheduleEntry>,
     editingId: String?,
     editingText: String,
+    activeDrop: Boolean,
+    onBounds: (Rect) -> Unit,
     onStartEdit: (ScheduleEntry) -> Unit,
     onTextChange: (String) -> Unit,
     onCommit: (ScheduleEntry) -> Unit,
@@ -1291,7 +1374,9 @@ private fun DaySpreadEditableSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .border(0.35.dp, Color(0x0A000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(if (activeDrop) GoaldayDesign.PinkSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
+            .border(if (activeDrop) 0.9.dp else 0.35.dp, if (activeDrop) GoaldayDesign.Pink else Color(0x0A000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) }
             .padding(horizontal = 5.dp, vertical = 3.dp),
         verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
