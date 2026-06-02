@@ -24,6 +24,13 @@ data class CalendarUiState(
     val theme: String,
 )
 
+data class CalendarImportCandidate(
+    val title: String,
+    val day: Int,
+    val note: String,
+    val timeText: String,
+)
+
 class CalendarViewModel(
     private val store: LocalStateStore,
     private val scheduleRepository: ScheduleRepository,
@@ -133,6 +140,43 @@ class CalendarViewModel(
         }
         scheduleRepository.saveEntries(updated)
         refreshEntries()
+    }
+
+    fun importSystemCalendarEvents(events: List<CalendarImportCandidate>): Int {
+        val current = _uiState.value
+        val existing = scheduleRepository.entries()
+        val maxDay = YearMonth.of(current.year, current.month).lengthOfMonth()
+        val additions = events
+            .mapNotNull { event ->
+                val title = event.title.trim()
+                if (title.isBlank()) {
+                    null
+                } else {
+                    ScheduleEntry(
+                        id = java.util.UUID.randomUUID().toString(),
+                        title = title,
+                        year = current.year,
+                        month = current.month,
+                        day = event.day.coerceIn(1, maxDay),
+                        note = event.note.trim(),
+                        timeText = event.timeText.trim(),
+                    )
+                }
+            }
+            .distinctBy { "${it.title}|${it.year}|${it.month}|${it.day}|${it.timeText}" }
+            .filterNot { candidate ->
+                existing.any { saved ->
+                    saved.title == candidate.title &&
+                        saved.year == candidate.year &&
+                        saved.month == candidate.month &&
+                        saved.day == candidate.day &&
+                        saved.timeText == candidate.timeText
+                }
+            }
+        if (additions.isEmpty()) return 0
+        scheduleRepository.saveEntries(existing + additions)
+        refreshEntries()
+        return additions.size
     }
 
     fun moveScheduleToDay(id: String, day: Int) {

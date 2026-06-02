@@ -1,5 +1,12 @@
 package com.bf410.goaldaylocal.ui.calendar
 
+import android.Manifest
+import android.content.ContentUris
+import android.content.Context
+import android.content.pm.PackageManager
+import android.provider.CalendarContract
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -44,16 +51,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.core.content.ContextCompat
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
+import java.time.Instant
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.DayOfWeek
+import java.time.YearMonth
+import java.time.ZoneId
 import kotlinx.coroutines.delay
 
 @Composable
@@ -76,6 +87,24 @@ fun CalendarScreen(
     var activeDoneDrop by remember { mutableStateOf(false) }
     var doneDropBounds by remember { mutableStateOf(Rect.Zero) }
     val dropSlotBounds = remember { mutableStateMapOf<String, Rect>() }
+    val context = LocalContext.current
+
+    fun importCurrentMonthCalendar() {
+        val imported = viewModel.importSystemCalendarEvents(
+            readSystemCalendarEvents(context, state.year, state.month),
+        )
+        toast = if (imported == 0) "没有可导入的新日历事件" else "已导入 $imported 条系统日历"
+    }
+
+    val calendarPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            importCurrentMonthCalendar()
+        } else {
+            toast = "未获得系统日历权限"
+        }
+    }
 
     val maxDay = YearMonth.of(state.year, state.month).lengthOfMonth()
     selectedDay = selectedDay.coerceIn(1, maxDay)
@@ -149,6 +178,28 @@ fun CalendarScreen(
             Text("‹ 上月", color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable { viewModel.previousMonth() })
             Text("${state.year}年${state.month}月", color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.Medium)
             Text("下月 ›", color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable { viewModel.nextMonth() })
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            Text(
+                "导入系统日历",
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .background(GoaldayDesign.PrimaryAction, RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .clickable {
+                        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
+                        if (granted) {
+                            importCurrentMonthCalendar()
+                        } else {
+                            calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
+                        }
+                    }
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            )
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -688,6 +739,61 @@ private fun scheduleMetaText(entry: ScheduleEntry): String =
             .trim()
             .takeIf { it.isNotBlank() },
     ).joinToString(" · ")
+
+private fun readSystemCalendarEvents(
+    context: Context,
+    year: Int,
+    month: Int,
+): List<CalendarImportCandidate> {
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+        return emptyList()
+    }
+    val zone = ZoneId.systemDefault()
+    val targetMonth = YearMonth.of(year, month)
+    val startMillis = targetMonth.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
+    val endMillis = targetMonth.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1L
+    val uriBuilder = CalendarContract.Instances.CONTENT_URI.buildUpon()
+    ContentUris.appendId(uriBuilder, startMillis)
+    ContentUris.appendId(uriBuilder, endMillis)
+    val projection = arrayOf(
+        CalendarContract.Instances.TITLE,
+        CalendarContract.Instances.BEGIN,
+        CalendarContract.Instances.DESCRIPTION,
+        CalendarContract.Instances.ALL_DAY,
+    )
+    return context.contentResolver.query(
+        uriBuilder.build(),
+        projection,
+        null,
+        null,
+        "${CalendarContract.Instances.BEGIN} ASC",
+    )?.use { cursor ->
+        buildList {
+            val titleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.TITLE)
+            val beginIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.BEGIN)
+            val descriptionIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.DESCRIPTION)
+            val allDayIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.ALL_DAY)
+            while (cursor.moveToNext()) {
+                val begin = cursor.getLong(beginIndex)
+                val dateTime = Instant.ofEpochMilli(begin).atZone(zone)
+                val date = dateTime.toLocalDate()
+                if (date.year != year || date.monthValue != month) continue
+                val title = cursor.getString(titleIndex)?.trim().orEmpty().ifBlank { "无标题日程" }
+                val description = cursor.getString(descriptionIndex)?.trim().orEmpty()
+                val allDay = cursor.getInt(allDayIndex) == 1
+                val timeText = if (allDay) "" else "%02d:%02d".format(dateTime.hour, dateTime.minute)
+                add(
+                    CalendarImportCandidate(
+                        title = title,
+                        day = date.dayOfMonth,
+                        note = listOf("系统日历", description).filter { it.isNotBlank() }.joinToString(" · "),
+                        timeText = timeText,
+                    ),
+                )
+            }
+        }
+    } ?: emptyList()
+}
 
 @Composable
 private fun ScheduleDialog(
