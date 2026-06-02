@@ -42,6 +42,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.data.BookPage
@@ -54,6 +55,7 @@ import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
 import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
+import org.json.JSONObject
 
 private val bookPalette = listOf(
     Color(0xFFF2C0A5),
@@ -1069,6 +1071,27 @@ private fun resolveSegment(page: BookPage): BookSegment =
         is SchedulePage -> BookSegment.WEEK
     }
 
+private data class TopicCatalogStatus(
+    val label: String,
+)
+
+private fun loadTopicCatalogStatus(
+    context: android.content.Context,
+    path: String,
+): TopicCatalogStatus =
+    runCatching {
+        val assetName = path.removePrefix("assets/")
+        val raw = context.assets.open(assetName).bufferedReader().use { it.readText() }
+        val roots = JSONObject(raw).getJSONObject("roots")
+        val rootNames = roots.keys().asSequence().toList()
+        val topicCount = rootNames.sumOf { root ->
+            roots.getJSONObject(root).optJSONArray("topics")?.length() ?: 0
+        }
+        TopicCatalogStatus("${rootNames.joinToString("/")} · $topicCount topics")
+    }.getOrElse {
+        TopicCatalogStatus("fallback")
+    }
+
 @Composable
 private fun InspirationCenterView(
     templates: List<InspirationTemplate>,
@@ -1083,6 +1106,10 @@ private fun InspirationCenterView(
     var editableItems by remember(selected.id) { mutableStateOf(selected.items) }
     var pushToToday by remember { mutableStateOf(true) }
     var clearSourceAfterApply by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val catalogStatus = remember(selected.catalogPath) {
+        loadTopicCatalogStatus(context, selected.catalogPath)
+    }
 
     Column(
         modifier = Modifier
@@ -1204,7 +1231,7 @@ private fun InspirationCenterView(
                 Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Text("目标详情", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("catalog: ${selected.catalogPath.substringAfterLast('/')}", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                        Text("catalog: ${selected.catalogPath.substringAfterLast('/')} · ${catalogStatus.label}", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
                         Text("target: ${selected.targetAssetPath.substringAfterLast('/')}", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
                     }
                 }

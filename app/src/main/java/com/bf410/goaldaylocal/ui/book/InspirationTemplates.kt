@@ -273,9 +273,9 @@ internal object InspirationTemplates {
             coverKey = coverKey,
             targetKey = "${coverKey}_target",
             category = category,
-            catalogPath = "local/topic_center_config.json",
-            coverAssetPath = "local/cover/$coverKey",
-            targetAssetPath = "local/topictarget/${coverKey}_target.txt",
+            catalogPath = "assets/topic_center_config.json",
+            coverAssetPath = "compose/cover/$coverKey",
+            targetAssetPath = "compose/topictarget/${coverKey}_target.txt",
             linkToSchedule = linkToSchedule,
             items = items.distinct(),
         )

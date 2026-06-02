@@ -87,6 +87,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import com.bf410.goaldaylocal.data.BookPage
@@ -2767,17 +2768,27 @@ private fun LongImagePreviewDialog(
 ) {
     val context = LocalContext.current
     var actionHint by remember(preview) { mutableStateOf("") }
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
+                .fillMaxSize()
                 .background(Color(0xFFFFFCF7))
-                .border(1.dp, Color(0x2AB7A893), RoundedCornerShape(18.dp))
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+                .padding(horizontal = 14.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.White.copy(alpha = 0.86f))
+                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(preview.title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
                     Text(preview.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
@@ -2795,10 +2806,10 @@ private fun LongImagePreviewDialog(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(360.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .weight(1f)
+                    .clip(RoundedCornerShape(16.dp))
                     .background(Color(0xFFF2ECE3))
-                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(12.dp))
+                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(16.dp))
                     .verticalScroll(rememberScrollState()),
             ) {
                 Image(
@@ -2809,11 +2820,20 @@ private fun LongImagePreviewDialog(
                 )
             }
             Text(
-                "${preview.bitmap.width} × ${preview.bitmap.height}px",
+                "长图预览 · ${preview.bitmap.width} × ${preview.bitmap.height}px",
                 style = MaterialTheme.typography.labelSmall,
                 color = GoaldayDesign.InkMuted,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.White.copy(alpha = 0.86f))
+                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 10.dp, vertical = 9.dp),
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 LongImageActionChip("保存", GoaldayDesign.Positive) {
                     actionHint = if (saveLongImagePreview(context, preview) != null) "已保存到相册" else "保存失败"
                 }

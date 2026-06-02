@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "source": "goalday-local-clean-room",
+  "roots": {
+    "cn": {
+      "title": "灵感中心",
+      "coverRoot": "compose/cover",
+      "targetRoot": "compose/topictarget",
+      "topics": [
+        {
+          "id": "wish_2026",
+          "title": "2026年愿望清单",
+          "category": "年度",
+          "cover": "2026",
+          "target": "2026_target",
+          "schedule": true
+        },
+        {
+          "id": "life_list",
+          "title": "人生体验清单",
+          "category": "体验",
+          "cover": "life",
+          "target": "life_target",
+          "schedule": true
+        },
+        {
+          "id": "topic_week",
+          "title": "主题周计划",
+          "category": "周计划",
+          "cover": "topicweek",
+          "target": "topicweek_target",
+          "schedule": true
+        },
+        {
+          "id": "five_year_diary",
+          "title": "五年日记",
+          "category": "日记",
+          "cover": "five_year_diary",
+          "target": "five_year_diary_target",
+          "schedule": false
+        }
+      ]
+    },
+    "en": {
+      "title": "Inspiration Center",
+      "coverRoot": "compose/cover",
+      "targetRoot": "compose/topictarget",
+      "topics": []
+    }
+  }
+}
