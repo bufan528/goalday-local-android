@@ -579,10 +579,11 @@ fun CalendarScreen(
             initialTimeText = "",
             initialRepeatRule = "",
             initialRepeatInterval = 1,
+            initialRepeatEndDate = "",
             allowSeriesEdit = false,
             onDismiss = { showAddDialog = false },
-            onConfirm = { title, day, note, timeText, repeatRule, repeatInterval, _ ->
-                viewModel.addSchedule(title, day, note, timeText, repeatRule, repeatInterval)
+            onConfirm = { title, day, note, timeText, repeatRule, repeatInterval, repeatEndDate, _ ->
+                viewModel.addSchedule(title, day, note, timeText, repeatRule, repeatInterval, repeatEndDate)
                 selectedDay = day
                 showAddDialog = false
                 toast = "已新增任务"
@@ -600,10 +601,11 @@ fun CalendarScreen(
             initialTimeText = entry.timeText,
             initialRepeatRule = entry.repeatRule,
             initialRepeatInterval = entry.repeatInterval,
+            initialRepeatEndDate = entry.repeatEndDate,
             allowSeriesEdit = entry.repeatGroupId.isNotBlank(),
             onDismiss = { editingEntry = null },
-            onConfirm = { title, day, note, timeText, repeatRule, repeatInterval, applySeries ->
-                viewModel.updateSchedule(entry.id, title, day, note, timeText, repeatRule, repeatInterval, applySeries)
+            onConfirm = { title, day, note, timeText, repeatRule, repeatInterval, repeatEndDate, applySeries ->
+                viewModel.updateSchedule(entry.id, title, day, note, timeText, repeatRule, repeatInterval, repeatEndDate, applySeries)
                 editingEntry = null
                 toast = if (applySeries) "已保存整组重复" else "已保存"
             },
@@ -745,21 +747,23 @@ private fun mergeTimeSlot(note: String, slot: String): String {
     return if (cleaned.isBlank()) "时段:$slot" else "时段:$slot $cleaned"
 }
 
-private fun repeatRuleLabel(rule: String, interval: Int): String {
+private fun repeatRuleLabel(rule: String, interval: Int, endDate: String): String {
     val safeInterval = interval.coerceAtLeast(1)
-    return when (rule) {
+    val base = when (rule) {
         "daily" -> if (safeInterval == 1) "每天" else "每${safeInterval}天"
         "weekly" -> if (safeInterval == 1) "每周" else "每${safeInterval}周"
         "monthly" -> if (safeInterval == 1) "每月" else "每${safeInterval}月"
         else -> ""
     }
+    val shortEndDate = endDate.takeIf { it.length == 10 }?.let { "${it.substring(5, 7)}/${it.substring(8, 10)}" } ?: endDate
+    return if (base.isBlank() || shortEndDate.isBlank()) base else "$base 至$shortEndDate"
 }
 
 private fun scheduleMetaText(entry: ScheduleEntry): String =
     listOfNotNull(
         entry.timeText.takeIf { it.isNotBlank() },
         parseTimeSlot(entry.note),
-        repeatRuleLabel(entry.repeatRule, entry.repeatInterval).takeIf { it.isNotBlank() },
+        repeatRuleLabel(entry.repeatRule, entry.repeatInterval, entry.repeatEndDate).takeIf { it.isNotBlank() },
         entry.note
             .replace(Regex("时段:(上午|下午|晚上)"), "")
             .trim()
@@ -880,9 +884,10 @@ private fun ScheduleDialog(
     initialTimeText: String,
     initialRepeatRule: String,
     initialRepeatInterval: Int,
+    initialRepeatEndDate: String,
     allowSeriesEdit: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (title: String, day: Int, note: String, timeText: String, repeatRule: String, repeatInterval: Int, applySeries: Boolean) -> Unit,
+    onConfirm: (title: String, day: Int, note: String, timeText: String, repeatRule: String, repeatInterval: Int, repeatEndDate: String, applySeries: Boolean) -> Unit,
 ) {
     var draftTitle by remember(initialTitle) { mutableStateOf(initialTitle) }
     var draftDay by remember(initialDay) { mutableStateOf(initialDay.toString()) }
@@ -890,6 +895,7 @@ private fun ScheduleDialog(
     var draftTime by remember(initialTimeText) { mutableStateOf(initialTimeText) }
     var draftRepeatRule by remember(initialRepeatRule) { mutableStateOf(initialRepeatRule) }
     var draftRepeatInterval by remember(initialRepeatInterval) { mutableStateOf(initialRepeatInterval.coerceAtLeast(1).toString()) }
+    var draftRepeatEndDate by remember(initialRepeatEndDate) { mutableStateOf(initialRepeatEndDate) }
     var applySeries by remember(allowSeriesEdit, initialTitle) { mutableStateOf(false) }
     val repeatOptions = listOf("" to "不重复", "daily" to "每天", "weekly" to "每周", "monthly" to "每月")
 
@@ -948,6 +954,12 @@ private fun ScheduleDialog(
                         },
                         singleLine = true,
                     )
+                    OutlinedTextField(
+                        value = draftRepeatEndDate,
+                        onValueChange = { input -> draftRepeatEndDate = input.filter { it.isDigit() || it == '-' }.take(10) },
+                        label = { Text("结束日期，可空 yyyy-MM-dd") },
+                        singleLine = true,
+                    )
                 }
                 if (allowSeriesEdit) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -980,7 +992,8 @@ private fun ScheduleDialog(
                 val d = draftDay.toIntOrNull()?.coerceIn(1, maxDay) ?: initialDay
                 val normalizedTime = draftTime.trim()
                 val interval = if (draftRepeatRule.isBlank()) 1 else draftRepeatInterval.toIntOrNull()?.coerceIn(1, 30) ?: 1
-                if (t.isNotBlank()) onConfirm(t, d, draftNote.trim(), normalizedTime, draftRepeatRule, interval, applySeries)
+                val endDate = if (draftRepeatRule.isBlank()) "" else draftRepeatEndDate.trim()
+                if (t.isNotBlank()) onConfirm(t, d, draftNote.trim(), normalizedTime, draftRepeatRule, interval, endDate, applySeries)
             }) { Text("保存") }
         },
         dismissButton = {

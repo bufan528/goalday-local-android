@@ -15,6 +15,7 @@ data class ScheduleEntry(
     val timeText: String = "",
     val repeatRule: String = "",
     val repeatInterval: Int = 1,
+    val repeatEndDate: String = "",
     val repeatGroupId: String = "",
     val completed: Boolean = false,
 ) {

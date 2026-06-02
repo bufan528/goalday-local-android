@@ -29,6 +29,7 @@ class ScheduleRepository private constructor(
         timeText: String = "",
         repeatRule: String = "",
         repeatInterval: Int = 1,
+        repeatEndDate: String = "",
         repeatGroupId: String = "",
         status: ScheduleStatus = ScheduleStatus.PLANNED,
     ): ScheduleEntry {
@@ -42,6 +43,7 @@ class ScheduleRepository private constructor(
             timeText = timeText,
             repeatRule = repeatRule,
             repeatInterval = repeatInterval.coerceAtLeast(1),
+            repeatEndDate = repeatEndDate,
             repeatGroupId = repeatGroupId,
             completed = status == ScheduleStatus.DONE,
         )

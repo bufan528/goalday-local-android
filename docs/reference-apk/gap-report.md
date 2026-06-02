@@ -2,7 +2,7 @@
 
 Reference APK: `docs/reference-apk/goalday-reference-base.apk`
 
-Current app status after the repeat-interval pass: local/offline planner with three root tabs, topic-style book covers, template center, topic detail surface, save-as-book flow, standalone target-detail-style book pages, handbook page turn, task pool, schedule todo/done, schedule time/repeat fields, repeat interval controls, repeat group editing, Android system calendar import preview, structured diary editor with image blocks, target-linked diary chips, explicit diary date picker, diary and handbook schedule long-image export/share, small/large schedule widgets, quick diary widget, immediate schedule widget refresh hooks, and backup settings.
+Current app status after the repeat-end-date pass: local/offline planner with three root tabs, topic-style book covers, template center, topic detail surface, save-as-book flow, standalone target-detail-style book pages, handbook page turn, task pool, schedule todo/done, schedule time/repeat fields, repeat interval and end-date controls, repeat group editing, Android system calendar import preview, structured diary editor with image blocks, target-linked diary chips, explicit diary date picker, diary and handbook schedule long-image export/share, small/large schedule widgets, quick diary widget, immediate schedule widget refresh hooks, and backup settings.
 
 ## Overall Gap
 
@@ -49,7 +49,7 @@ Resource/layout signals:
 | Root navigation | 3 tabs: book/calendar/setting | Now aligned to 3 tabs | Low |
 | Topic center | Config-driven topic catalog, covers, target lists, topic detail | Template catalog plus topic-detail-style surface and save-as-book flow | Medium-low |
 | Target detail | Dedicated target detail screen, checkbox/edit fields, save-as-own | Topic detail and book target pages now use structured target cards with completion, editing, deletion for custom items, and add-to-today schedule action | Medium |
-| Schedule planner | Monthly schedule, day/week views, repeat/move target, calendar dialog | Local calendar, handbook drag, time fields, repeat labels, repeat interval expansion, repeat group editing, and system-calendar import exist | Low |
+| Schedule planner | Monthly schedule, day/week views, repeat/move target, calendar dialog | Local calendar, handbook drag, time fields, repeat labels, repeat interval/end-date expansion, repeat group editing, and system-calendar import exist | Low |
 | Handbook/book | Book activity plus in-book schedule/diary fragments | Page-turn book exists but visual density and page types still rough | Medium-high |
 | Diary | Rich editor, text/image/target/topic-target blocks, date picker, media picker | Structured diary pages support image blocks, mood/work/done/improvement sections, explicit date picker, and target-linked chips from today's plans/completions | Low |
 | Calendar import | Dedicated system calendar import activity and permissions | Current-month Android CalendarContract import with preview and source calendar name exists from the calendar tab | Low |
@@ -60,8 +60,8 @@ Resource/layout signals:
 
 ## Priority Plan
 
-1. **Schedule polish**: add repeat end-date controls if needed.
-2. **Calendar import polish**: add selectable calendars and broader range import if needed.
+1. **Calendar import polish**: add selectable calendars and broader range import if needed.
+2. **Schedule polish**: add richer repeat-series regeneration if needed.
 3. **Diary polish**: add richer topic-linked blocks if needed.
 4. **Long image polish**: add dedicated preview screen before share/export if needed.
 5. **Widget polish**: add visual previews/configuration if needed.
@@ -69,4 +69,4 @@ Resource/layout signals:
 
 ## Immediate Next Fix
 
-The largest remaining visible mismatch is now **optional import filters + repeat end-date fine tuning**. Core local schedule, repeat interval generation, diary, import preview, export/share, widget surfaces, diary target links, diary date controls, and repeat group editing exist, but the app still lacks selectable calendar filters and repeat end-date controls.
+The largest remaining visible mismatch is now **optional import filters + repeat-series regeneration polish**. Core local schedule, repeat interval/end-date generation, diary, import preview, export/share, widget surfaces, diary target links, diary date controls, and repeat group editing exist, but the app still lacks selectable calendar filters and a dedicated repeat-series rebuild preview.
