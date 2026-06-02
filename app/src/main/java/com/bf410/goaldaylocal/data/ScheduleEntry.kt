@@ -12,6 +12,8 @@ data class ScheduleEntry(
     val month: Int,
     val day: Int,
     val note: String = "",
+    val timeText: String = "",
+    val repeatRule: String = "",
     val completed: Boolean = false,
 ) {
     val status: ScheduleStatus

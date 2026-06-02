@@ -76,8 +76,6 @@ fun CalendarScreen(
     var activeDoneDrop by remember { mutableStateOf(false) }
     var doneDropBounds by remember { mutableStateOf(Rect.Zero) }
     val dropSlotBounds = remember { mutableStateMapOf<String, Rect>() }
-    var editingEntryId by remember { mutableStateOf<String?>(null) }
-    var editingText by remember { mutableStateOf("") }
 
     val maxDay = YearMonth.of(state.year, state.month).lengthOfMonth()
     selectedDay = selectedDay.coerceIn(1, maxDay)
@@ -179,31 +177,6 @@ fun CalendarScreen(
         }
 
         BoardCard(title = "${state.month}月${selectedDay}日 · 今日执行", subtitle = "待办 ${todoEntries.size} / 已完成 ${doneEntries.size}") {
-            if (editingEntryId != null) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    Text(
-                        "完成",
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier
-                            .background(GoaldayDesign.PrimaryAction, RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .clickable {
-                                val targetId = editingEntryId
-                                val target = dayEntries.firstOrNull { it.id == targetId }
-                                if (target != null) {
-                                    val nextTitle = editingText.trim()
-                                    if (nextTitle.isNotBlank()) {
-                                        viewModel.updateSchedule(target.id, nextTitle, target.day, target.note)
-                                        toast = "已保存编辑"
-                                    }
-                                }
-                                editingEntryId = null
-                                editingText = ""
-                            }
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
-                    )
-                }
-            }
             grabbedPoolEntry?.let { g ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("已抓取：${g.title}（点上/下/晚投放）", color = Color(0xFFB07A8F), style = MaterialTheme.typography.labelSmall)
@@ -353,34 +326,26 @@ fun CalendarScreen(
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.clickable { viewModel.toggleScheduleCompleted(entry.id) },
                     )
-                    Text(
-                        entry.title,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (entry.completed) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
-                        textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
-                        modifier = Modifier.weight(1f),
-                    )
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                        Text(
+                            entry.title,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (entry.completed) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
+                            textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                        )
+                        scheduleMetaText(entry).takeIf { it.isNotBlank() }?.let { meta ->
+                            Text(meta, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        }
+                    }
                     Text(
                         "✎",
                         color = GoaldayDesign.InkSecondary,
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.clickable {
-                            editingEntryId = entry.id
-                            editingText = entry.title
+                            editingEntry = entry
                         },
                     )
                     Text("🗑", color = GoaldayDesign.Danger, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { viewModel.removeSchedule(entry.id) })
-                }
-                if (editingEntryId == entry.id) {
-                    BasicTextField(
-                        value = editingText,
-                        onValueChange = { editingText = it },
-                        textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0x10000000), RoundedCornerShape(GoaldayDesign.RadiusS))
-                            .padding(horizontal = 8.dp, vertical = 6.dp),
-                    )
                 }
             }
             Text(
@@ -458,7 +423,12 @@ fun CalendarScreen(
                 ) {
                     Text("○", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
                     Text("${entry.day}日", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(30.dp))
-                    Text(entry.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                        Text(entry.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall)
+                        scheduleMetaText(entry).takeIf { it.isNotBlank() }?.let { meta ->
+                            Text(meta, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        }
+                    }
                     Text("长按抓取", color = Color(0xFFB07A8F), style = MaterialTheme.typography.labelSmall)
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         DropToSlotChip("上") {
@@ -550,9 +520,11 @@ fun CalendarScreen(
             initialTitle = "",
             initialDay = selectedDay,
             initialNote = "",
+            initialTimeText = "",
+            initialRepeatRule = "",
             onDismiss = { showAddDialog = false },
-            onConfirm = { title, day, note ->
-                viewModel.addSchedule(title, day, note)
+            onConfirm = { title, day, note, timeText, repeatRule ->
+                viewModel.addSchedule(title, day, note, timeText, repeatRule)
                 selectedDay = day
                 showAddDialog = false
                 toast = "已新增任务"
@@ -567,9 +539,11 @@ fun CalendarScreen(
             initialTitle = entry.title,
             initialDay = entry.day,
             initialNote = entry.note,
+            initialTimeText = entry.timeText,
+            initialRepeatRule = entry.repeatRule,
             onDismiss = { editingEntry = null },
-            onConfirm = { title, day, note ->
-                viewModel.updateSchedule(entry.id, title, day, note)
+            onConfirm = { title, day, note, timeText, repeatRule ->
+                viewModel.updateSchedule(entry.id, title, day, note, timeText, repeatRule)
                 editingEntry = null
                 toast = "已保存"
             },
@@ -697,6 +671,24 @@ private fun mergeTimeSlot(note: String, slot: String): String {
     return if (cleaned.isBlank()) "时段:$slot" else "时段:$slot $cleaned"
 }
 
+private fun repeatRuleLabel(rule: String): String = when (rule) {
+    "daily" -> "每天"
+    "weekly" -> "每周"
+    "monthly" -> "每月"
+    else -> ""
+}
+
+private fun scheduleMetaText(entry: ScheduleEntry): String =
+    listOfNotNull(
+        entry.timeText.takeIf { it.isNotBlank() },
+        parseTimeSlot(entry.note),
+        repeatRuleLabel(entry.repeatRule).takeIf { it.isNotBlank() },
+        entry.note
+            .replace(Regex("时段:(上午|下午|晚上)"), "")
+            .trim()
+            .takeIf { it.isNotBlank() },
+    ).joinToString(" · ")
+
 @Composable
 private fun ScheduleDialog(
     title: String,
@@ -704,12 +696,17 @@ private fun ScheduleDialog(
     initialTitle: String,
     initialDay: Int,
     initialNote: String,
+    initialTimeText: String,
+    initialRepeatRule: String,
     onDismiss: () -> Unit,
-    onConfirm: (title: String, day: Int, note: String) -> Unit,
+    onConfirm: (title: String, day: Int, note: String, timeText: String, repeatRule: String) -> Unit,
 ) {
     var draftTitle by remember(initialTitle) { mutableStateOf(initialTitle) }
     var draftDay by remember(initialDay) { mutableStateOf(initialDay.toString()) }
     var draftNote by remember(initialNote) { mutableStateOf(initialNote) }
+    var draftTime by remember(initialTimeText) { mutableStateOf(initialTimeText) }
+    var draftRepeatRule by remember(initialRepeatRule) { mutableStateOf(initialRepeatRule) }
+    val repeatOptions = listOf("" to "不重复", "daily" to "每天", "weekly" to "每周", "monthly" to "每月")
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -729,6 +726,28 @@ private fun ScheduleDialog(
                     singleLine = true,
                 )
                 OutlinedTextField(
+                    value = draftTime,
+                    onValueChange = { input -> draftTime = input.filter { it.isDigit() || it == ':' }.take(5) },
+                    label = { Text("时间，例如 09:30") },
+                    singleLine = true,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    repeatOptions.forEach { (rule, label) ->
+                        Text(
+                            label,
+                            color = if (draftRepeatRule == rule) Color.White else GoaldayDesign.InkSecondary,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier
+                                .background(
+                                    if (draftRepeatRule == rule) GoaldayDesign.PrimaryAction else GoaldayDesign.SurfaceSoft,
+                                    RoundedCornerShape(GoaldayDesign.RadiusPill),
+                                )
+                                .clickable { draftRepeatRule = rule }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        )
+                    }
+                }
+                OutlinedTextField(
                     value = draftNote,
                     onValueChange = { draftNote = it },
                     label = { Text("备注") },
@@ -739,7 +758,8 @@ private fun ScheduleDialog(
             TextButton(onClick = {
                 val t = draftTitle.trim()
                 val d = draftDay.toIntOrNull()?.coerceIn(1, maxDay) ?: initialDay
-                if (t.isNotBlank()) onConfirm(t, d, draftNote.trim())
+                val normalizedTime = draftTime.trim()
+                if (t.isNotBlank()) onConfirm(t, d, draftNote.trim(), normalizedTime, draftRepeatRule)
             }) { Text("保存") }
         },
         dismissButton = {

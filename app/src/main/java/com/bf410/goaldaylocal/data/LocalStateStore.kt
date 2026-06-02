@@ -69,6 +69,8 @@ class LocalStateStore(
                         month = item.getInt("month"),
                         day = item.getInt("day"),
                         note = item.optString("note"),
+                        timeText = item.optString("timeText"),
+                        repeatRule = item.optString("repeatRule"),
                         completed = decodeScheduleStatus(item).let { status ->
                             status == ScheduleStatus.DONE
                         },
@@ -89,6 +91,8 @@ class LocalStateStore(
                     .put("month", entry.month)
                     .put("day", entry.day)
                     .put("note", entry.note)
+                    .put("timeText", entry.timeText)
+                    .put("repeatRule", entry.repeatRule)
                     .put("status", entry.status.name)
                     .put("completed", entry.completed),
             )
@@ -102,6 +106,8 @@ class LocalStateStore(
         month: Int,
         day: Int,
         note: String = "",
+        timeText: String = "",
+        repeatRule: String = "",
     ) {
         val updated = scheduleEntries() + ScheduleEntry(
             id = UUID.randomUUID().toString(),
@@ -110,6 +116,8 @@ class LocalStateStore(
             month = month,
             day = day,
             note = note,
+            timeText = timeText,
+            repeatRule = repeatRule,
         )
         saveScheduleEntries(updated)
     }

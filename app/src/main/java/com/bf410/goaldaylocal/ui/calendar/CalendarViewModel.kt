@@ -10,6 +10,7 @@ import com.bf410.goaldaylocal.data.ScheduleRepository
 import com.bf410.goaldaylocal.data.ScheduleStatus
 import com.tencent.mmkv.MMKV
 import java.time.LocalDate
+import java.time.YearMonth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
@@ -60,7 +61,13 @@ class CalendarViewModel(
         if (current.month == 12) setMonth(current.year + 1, 1) else setMonth(current.year, current.month + 1)
     }
 
-    fun addSchedule(title: String, day: Int, note: String): String {
+    fun addSchedule(
+        title: String,
+        day: Int,
+        note: String,
+        timeText: String = "",
+        repeatRule: String = "",
+    ): String {
         val current = _uiState.value
         val entry = scheduleRepository.addEntry(
             title = title,
@@ -68,7 +75,10 @@ class CalendarViewModel(
             month = current.month,
             day = day,
             note = note,
+            timeText = timeText,
+            repeatRule = repeatRule,
         )
+        expandRepeatingEntry(entry)
         refreshEntries()
         return entry.id
     }
@@ -97,7 +107,14 @@ class CalendarViewModel(
         refreshEntries()
     }
 
-    fun updateSchedule(id: String, title: String, day: Int, note: String) {
+    fun updateSchedule(
+        id: String,
+        title: String,
+        day: Int,
+        note: String,
+        timeText: String? = null,
+        repeatRule: String? = null,
+    ) {
         val current = _uiState.value
         val updated = scheduleRepository.entries().map { entry ->
             if (entry.id == id) {
@@ -107,6 +124,8 @@ class CalendarViewModel(
                     month = current.month,
                     day = day,
                     note = note.trim(),
+                    timeText = timeText?.trim() ?: entry.timeText,
+                    repeatRule = repeatRule ?: entry.repeatRule,
                 )
             } else {
                 entry
@@ -173,10 +192,60 @@ class CalendarViewModel(
         _uiState.update { it.copy(entries = monthEntries(current.year, current.month)) }
     }
 
+    private fun expandRepeatingEntry(entry: ScheduleEntry) {
+        val additions = when (entry.repeatRule) {
+            "daily" -> {
+                val maxDay = YearMonth.of(entry.year, entry.month).lengthOfMonth()
+                ((entry.day + 1)..maxDay).map { day ->
+                    entry.copy(id = java.util.UUID.randomUUID().toString(), day = day, completed = false)
+                }
+            }
+            "weekly" -> {
+                val maxDay = YearMonth.of(entry.year, entry.month).lengthOfMonth()
+                generateSequence(entry.day + 7) { it + 7 }
+                    .takeWhile { it <= maxDay }
+                    .map { day -> entry.copy(id = java.util.UUID.randomUUID().toString(), day = day, completed = false) }
+                    .toList()
+            }
+            "monthly" -> {
+                generateSequence(YearMonth.of(entry.year, entry.month).plusMonths(1)) { it.plusMonths(1) }
+                    .take(11)
+                    .mapNotNull { month ->
+                        if (entry.day <= month.lengthOfMonth()) {
+                            entry.copy(
+                                id = java.util.UUID.randomUUID().toString(),
+                                year = month.year,
+                                month = month.monthValue,
+                                completed = false,
+                            )
+                        } else {
+                            null
+                        }
+                    }
+                    .toList()
+            }
+            else -> emptyList()
+        }
+        if (additions.isEmpty()) return
+        val existing = scheduleRepository.entries()
+        val uniqueAdditions = additions.filterNot { candidate ->
+            existing.any { saved ->
+                saved.title == candidate.title &&
+                    saved.year == candidate.year &&
+                    saved.month == candidate.month &&
+                    saved.day == candidate.day &&
+                    saved.timeText == candidate.timeText
+            }
+        }
+        if (uniqueAdditions.isNotEmpty()) {
+            scheduleRepository.saveEntries(existing + uniqueAdditions)
+        }
+    }
+
     private fun monthEntries(year: Int, month: Int): List<ScheduleEntry> =
         scheduleRepository.entries()
             .filter { it.year == year && it.month == month }
-            .sortedBy { it.day }
+            .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.timeText }, { it.completed }, { it.title.lowercase() }))
 
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
