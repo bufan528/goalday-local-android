@@ -26,6 +26,8 @@ data class CalendarUiState(
 
 data class CalendarImportCandidate(
     val title: String,
+    val year: Int = 0,
+    val month: Int = 0,
     val day: Int,
     val note: String,
     val timeText: String,
@@ -169,18 +171,20 @@ class CalendarViewModel(
     fun importSystemCalendarEvents(events: List<CalendarImportCandidate>): Int {
         val current = _uiState.value
         val existing = scheduleRepository.entries()
-        val maxDay = YearMonth.of(current.year, current.month).lengthOfMonth()
         val additions = events
             .mapNotNull { event ->
                 val title = event.title.trim()
                 if (title.isBlank()) {
                     null
                 } else {
+                    val eventYear = event.year.takeIf { it > 0 } ?: current.year
+                    val eventMonth = event.month.takeIf { it in 1..12 } ?: current.month
+                    val maxDay = YearMonth.of(eventYear, eventMonth).lengthOfMonth()
                     ScheduleEntry(
                         id = java.util.UUID.randomUUID().toString(),
                         title = title,
-                        year = current.year,
-                        month = current.month,
+                        year = eventYear,
+                        month = eventMonth,
                         day = event.day.coerceIn(1, maxDay),
                         note = event.note.trim(),
                         timeText = event.timeText.trim(),

@@ -80,7 +80,9 @@ fun CalendarScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var showImportPreview by remember { mutableStateOf(false) }
     var showImportSourcePicker by remember { mutableStateOf(false) }
+    var showImportRangeDialog by remember { mutableStateOf(false) }
     var importPreviewEvents by remember { mutableStateOf<List<CalendarImportCandidate>>(emptyList()) }
+    var importRangeMonths by remember { mutableIntStateOf(1) }
     var selectedImportCalendars by remember { mutableStateOf<Set<String>>(emptySet()) }
     var toast by remember { mutableStateOf("") }
     var grabbedPoolEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
@@ -93,8 +95,9 @@ fun CalendarScreen(
     val dropSlotBounds = remember { mutableStateMapOf<String, Rect>() }
     val context = LocalContext.current
 
-    fun prepareCalendarImportPreview() {
-        val events = readSystemCalendarEvents(context, state.year, state.month)
+    fun prepareCalendarImportPreview(rangeMonths: Int) {
+        importRangeMonths = rangeMonths
+        val events = readSystemCalendarEvents(context, state.year, state.month, rangeMonths)
         importPreviewEvents = events
         if (events.isEmpty()) {
             toast = "没有可导入的新日历事件"
@@ -110,7 +113,7 @@ fun CalendarScreen(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
         if (granted) {
-            prepareCalendarImportPreview()
+            showImportRangeDialog = true
         } else {
             toast = "未获得系统日历权限"
         }
@@ -203,7 +206,7 @@ fun CalendarScreen(
                     .clickable {
                         val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
                         if (granted) {
-                            prepareCalendarImportPreview()
+                            showImportRangeDialog = true
                         } else {
                             calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
                         }
@@ -621,6 +624,7 @@ fun CalendarScreen(
         CalendarImportPreviewDialog(
             year = state.year,
             month = state.month,
+            rangeMonths = importRangeMonths,
             events = importPreviewEvents,
             onDismiss = { showImportPreview = false },
             onConfirm = {
@@ -631,9 +635,21 @@ fun CalendarScreen(
         )
     }
 
+    if (showImportRangeDialog) {
+        CalendarImportRangeDialog(
+            selectedMonths = importRangeMonths,
+            onDismiss = { showImportRangeDialog = false },
+            onConfirm = { months ->
+                showImportRangeDialog = false
+                prepareCalendarImportPreview(months)
+            },
+        )
+    }
+
     if (showImportSourcePicker) {
         CalendarImportSourceDialog(
             events = importPreviewEvents,
+            rangeMonths = importRangeMonths,
             selectedCalendars = selectedImportCalendars,
             onToggle = { calendar ->
                 selectedImportCalendars = if (calendar in selectedImportCalendars) {
@@ -804,8 +820,48 @@ private fun scheduleMetaText(entry: ScheduleEntry): String =
     ).joinToString(" · ")
 
 @Composable
+private fun CalendarImportRangeDialog(
+    selectedMonths: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit,
+) {
+    var draftMonths by remember(selectedMonths) { mutableIntStateOf(selectedMonths.coerceIn(1, 6)) }
+    val options = listOf(1 to "本月", 3 to "未来3个月", 6 to "未来6个月")
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("导入范围") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                options.forEach { (months, label) ->
+                    Text(
+                        label,
+                        color = if (draftMonths == months) Color.White else GoaldayDesign.InkSecondary,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                if (draftMonths == months) GoaldayDesign.PrimaryAction else GoaldayDesign.SurfaceSoft,
+                                RoundedCornerShape(GoaldayDesign.RadiusS),
+                            )
+                            .clickable { draftMonths = months }
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(draftMonths) }) { Text("读取") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("取消") }
+        },
+    )
+}
+
+@Composable
 private fun CalendarImportSourceDialog(
     events: List<CalendarImportCandidate>,
+    rangeMonths: Int,
     selectedCalendars: Set<String>,
     onToggle: (String) -> Unit,
     onSelectAll: () -> Unit,
@@ -825,7 +881,8 @@ private fun CalendarImportSourceDialog(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text("本月找到 ${events.size} 条系统日历事件", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                val rangeText = if (rangeMonths <= 1) "本月" else "未来${rangeMonths}个月"
+                Text("$rangeText 找到 ${events.size} 条系统日历事件", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                 sourceCounts.forEach { (source, count) ->
                     val selected = source in selectedCalendars
                     Row(
@@ -867,6 +924,7 @@ private fun CalendarImportSourceDialog(
 private fun CalendarImportPreviewDialog(
     year: Int,
     month: Int,
+    rangeMonths: Int,
     events: List<CalendarImportCandidate>,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
@@ -879,7 +937,8 @@ private fun CalendarImportPreviewDialog(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
-                Text("${year}年${month}月 · ${events.size} 条系统日历", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                val rangeText = if (rangeMonths <= 1) "${year}年${month}月" else "${year}年${month}月起 · ${rangeMonths}个月"
+                Text("$rangeText · ${events.size} 条系统日历", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                 events.take(12).forEach { event ->
                     Column(
                         modifier = Modifier
@@ -889,7 +948,12 @@ private fun CalendarImportPreviewDialog(
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         val time = event.timeText.takeIf { it.isNotBlank() }?.let { " $it" }.orEmpty()
-                        Text("${event.day}日$time · ${event.title}", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall)
+                        val dateText = if (rangeMonths <= 1) {
+                            "${event.day}日"
+                        } else {
+                            "${event.year}年${event.month}月${event.day}日"
+                        }
+                        Text("$dateText$time · ${event.title}", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall)
                         if (event.note.isNotBlank()) {
                             Text(event.note, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                         }
@@ -916,6 +980,7 @@ private fun readSystemCalendarEvents(
     context: Context,
     year: Int,
     month: Int,
+    rangeMonths: Int,
 ): List<CalendarImportCandidate> {
     if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
         return emptyList()
@@ -923,7 +988,8 @@ private fun readSystemCalendarEvents(
     val zone = ZoneId.systemDefault()
     val targetMonth = YearMonth.of(year, month)
     val startMillis = targetMonth.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
-    val endMillis = targetMonth.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1L
+    val safeRangeMonths = rangeMonths.coerceIn(1, 6)
+    val endMillis = targetMonth.plusMonths(safeRangeMonths.toLong()).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1L
     val uriBuilder = CalendarContract.Instances.CONTENT_URI.buildUpon()
     ContentUris.appendId(uriBuilder, startMillis)
     ContentUris.appendId(uriBuilder, endMillis)
@@ -951,7 +1017,8 @@ private fun readSystemCalendarEvents(
                 val begin = cursor.getLong(beginIndex)
                 val dateTime = Instant.ofEpochMilli(begin).atZone(zone)
                 val date = dateTime.toLocalDate()
-                if (date.year != year || date.monthValue != month) continue
+                val eventMonth = YearMonth.of(date.year, date.monthValue)
+                if (eventMonth.isBefore(targetMonth) || !eventMonth.isBefore(targetMonth.plusMonths(safeRangeMonths.toLong()))) continue
                 val title = cursor.getString(titleIndex)?.trim().orEmpty().ifBlank { "无标题日程" }
                 val description = cursor.getString(descriptionIndex)?.trim().orEmpty()
                 val calendarName = cursor.getString(calendarNameIndex)?.trim().orEmpty()
@@ -960,6 +1027,8 @@ private fun readSystemCalendarEvents(
                 add(
                     CalendarImportCandidate(
                         title = title,
+                        year = date.year,
+                        month = date.monthValue,
                         day = date.dayOfMonth,
                         note = listOf("系统日历", calendarName, description).filter { it.isNotBlank() }.joinToString(" · "),
                         timeText = timeText,
