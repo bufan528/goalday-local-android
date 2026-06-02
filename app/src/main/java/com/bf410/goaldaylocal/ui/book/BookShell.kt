@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +22,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 
@@ -54,7 +58,7 @@ fun BookShell(
             .background(
                 if (shellStyle == ShellStyle.BOOK) {
                     Brush.linearGradient(
-                        listOf(Color(0xFF9A633B), Color(0xFFE9CCAE), Color(0xFF8E5C36)),
+                        listOf(Color(0xFFBF8797), Color(0xFFFFF2F6), Color(0xFFD8A2AE), Color(0xFF9F6674)),
                         start = Offset.Zero,
                         end = Offset(900f, 700f),
                     )
@@ -71,9 +75,19 @@ fun BookShell(
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color(0xD355341F), Color(0xB06F472D), Color(0x7C7A5032), Color.Transparent),
+                            listOf(Color(0xC55A3440), Color(0x9A8A5361), Color(0x70C58E9E), Color.Transparent),
                         ),
                     ),
+            )
+            Text(
+                "GOALDAY",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFFFDECF1),
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .graphicsLayer { rotationZ = -90f }
+                    .padding(bottom = 2.dp),
             )
             Box(
                 modifier = Modifier
@@ -83,10 +97,25 @@ fun BookShell(
                     .fillMaxHeight()
                     .background(
                         Brush.verticalGradient(
-                            listOf(Color(0x66FDE8D2), Color(0x44FADFC6), Color(0x66FDE8D2)),
+                            listOf(Color(0x66FFF7FA), Color(0x55F5C8D5), Color(0x66FFF7FA)),
                         ),
                     ),
             )
+            repeat(7) { index ->
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(start = 12.dp, top = (42 + index * 38).dp)
+                        .width(5.dp)
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0x554C2630), Color(0x66FFF8FB), Color(0x334C2630)),
+                            ),
+                        ),
+                )
+            }
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -95,7 +124,7 @@ fun BookShell(
                     .padding(horizontal = 18.dp)
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color(0x55EBD8C6), Color(0x88FFF8EE), Color(0x55EBD8C6)),
+                            listOf(Color(0x55E8B8C4), Color(0xAAFFF8FA), Color(0x55E8B8C4)),
                         ),
                     ),
             )
@@ -108,7 +137,7 @@ fun BookShell(
                     .clip(RoundedCornerShape(99.dp))
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color(0x66EFE3D6), Color(0x99FFF8EE), Color(0x66EFE3D6)),
+                            listOf(Color(0x66F3C8D2), Color(0xCCFFF9FB), Color(0x66F3C8D2)),
                         ),
                     ),
             )
@@ -130,7 +159,7 @@ fun BookShell(
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color(0x7A6A442C), Color(0x4C8C6141), Color(0x2D744B2F), Color.Transparent),
+                            listOf(Color(0x765A3440), Color(0x4C8A5361), Color(0x2DC58E9E), Color.Transparent),
                         ),
                     ),
             )
@@ -141,7 +170,7 @@ fun BookShell(
                     .height(28.dp)
                     .background(
                         Brush.verticalGradient(
-                            listOf(Color(0xFFD05A69), Color(0xFF842230)),
+                            listOf(Color(0xFFE88FAE), Color(0xFFA94F6C)),
                         ),
                     ),
             )

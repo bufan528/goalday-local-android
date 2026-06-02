@@ -445,13 +445,28 @@ private fun BookDetailView(
                 fontWeight = FontWeight.SemiBold,
             )
             Spacer(Modifier.height(6.dp))
-            Text(
-                currentPage.title,
-                modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFF1F1D1A),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+            ) {
+                book.pages.forEachIndexed { index, item ->
+                    val selected = index == uiState.selectedPageIndex
+                    Text(
+                        text = monthLabelForPage(item.title, fallback = item.title),
+                        color = if (selected) Color.White else Color(0xFF6E6258),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(if (selected) Color(0xFFE88FAE) else Color(0x20FFFFFF))
+                            .border(0.6.dp, if (selected) Color(0xFFFFF5F8) else Color(0x20A68B71), RoundedCornerShape(99.dp))
+                            .clickable { viewModel.setPage(index) }
+                            .padding(horizontal = 11.dp, vertical = 5.dp),
+                    )
+                }
+            }
             Spacer(Modifier.height(6.dp))
         }
         if (handbookMode) {

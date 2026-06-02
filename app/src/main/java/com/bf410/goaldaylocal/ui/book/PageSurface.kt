@@ -801,7 +801,19 @@ private fun HandbookReplicaPage(
             }
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        HandbookPaperRuling()
+        HandbookMonthHeader(
+            year = anchorYear,
+            month = anchorMonth,
+            pageIndex = pageIndex,
+            pageCount = pageCount,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 34.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
@@ -949,6 +961,110 @@ private fun HandbookReplicaPage(
                     .padding(start = 4.dp, bottom = 2.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun BoxScope.HandbookPaperRuling() {
+    repeat(9) { index ->
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = (54 + index * 24).dp)
+                .fillMaxWidth()
+                .height(0.45.dp)
+                .background(Color(0x09000000)),
+        )
+    }
+    repeat(2) { index ->
+        Box(
+            modifier = Modifier
+                .align(if (index == 0) Alignment.CenterStart else Alignment.CenterEnd)
+                .padding(horizontal = 8.dp)
+                .width(0.6.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Transparent, Color(0x10E88FAE), Color.Transparent),
+                    ),
+                ),
+        )
+    }
+}
+
+@Composable
+private fun BoxScope.HandbookMonthHeader(
+    year: Int,
+    month: Int,
+    pageIndex: Int,
+    pageCount: Int,
+) {
+    val monthModel = remember(year, month) { YearMonth.of(year, month) }
+    val weekdays = listOf("M", "T", "W", "T", "F", "S", "S")
+    val firstWeekDays = remember(monthModel) {
+        List(7) { offset ->
+            monthModel.atDay((offset + 1).coerceAtMost(monthModel.lengthOfMonth()))
+        }
+    }
+    Row(
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(modifier = Modifier.weight(0.88f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(
+                "$year GOALDAY",
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.InkMuted,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.alpha(0.86f),
+            )
+            Text(
+                "${month}月计划",
+                style = MaterialTheme.typography.titleSmall,
+                color = GoaldayDesign.InkPrimary,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+            )
+        }
+        Row(
+            modifier = Modifier
+                .weight(1.12f)
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                .background(Color(0x08E88FAE))
+                .border(0.35.dp, Color(0x10E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
+                .padding(horizontal = 4.dp, vertical = 3.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            firstWeekDays.forEachIndexed { index, date ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(weekdays[index], style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                    Text(
+                        date.dayOfMonth.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (date.dayOfMonth == LocalDate.now().dayOfMonth && date.monthValue == LocalDate.now().monthValue) {
+                            GoaldayDesign.Pink
+                        } else {
+                            GoaldayDesign.InkSecondary
+                        },
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+        }
+        Text(
+            "${pageIndex + 1}/$pageCount",
+            style = MaterialTheme.typography.labelSmall,
+            color = GoaldayDesign.InkMuted,
+            modifier = Modifier
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(Color(0x0D000000))
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+        )
     }
 }
 
