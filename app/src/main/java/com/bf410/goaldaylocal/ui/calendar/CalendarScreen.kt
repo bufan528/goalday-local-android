@@ -79,7 +79,9 @@ fun CalendarScreen(
     var editingEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var showImportPreview by remember { mutableStateOf(false) }
+    var showImportSourcePicker by remember { mutableStateOf(false) }
     var importPreviewEvents by remember { mutableStateOf<List<CalendarImportCandidate>>(emptyList()) }
+    var selectedImportCalendars by remember { mutableStateOf<Set<String>>(emptySet()) }
     var toast by remember { mutableStateOf("") }
     var grabbedPoolEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
     var draggingPoolEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
@@ -96,6 +98,9 @@ fun CalendarScreen(
         importPreviewEvents = events
         if (events.isEmpty()) {
             toast = "没有可导入的新日历事件"
+        } else if (events.map { importCalendarName(it) }.distinct().size > 1) {
+            selectedImportCalendars = events.map { importCalendarName(it) }.toSet()
+            showImportSourcePicker = true
         } else {
             showImportPreview = true
         }
@@ -625,6 +630,34 @@ fun CalendarScreen(
             },
         )
     }
+
+    if (showImportSourcePicker) {
+        CalendarImportSourceDialog(
+            events = importPreviewEvents,
+            selectedCalendars = selectedImportCalendars,
+            onToggle = { calendar ->
+                selectedImportCalendars = if (calendar in selectedImportCalendars) {
+                    selectedImportCalendars - calendar
+                } else {
+                    selectedImportCalendars + calendar
+                }
+            },
+            onSelectAll = {
+                selectedImportCalendars = importPreviewEvents.map { importCalendarName(it) }.toSet()
+            },
+            onDismiss = { showImportSourcePicker = false },
+            onConfirm = {
+                val filtered = importPreviewEvents.filter { importCalendarName(it) in selectedImportCalendars }
+                if (filtered.isEmpty()) {
+                    toast = "请选择至少一个日历来源"
+                } else {
+                    importPreviewEvents = filtered
+                    showImportSourcePicker = false
+                    showImportPreview = true
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -771,6 +804,66 @@ private fun scheduleMetaText(entry: ScheduleEntry): String =
     ).joinToString(" · ")
 
 @Composable
+private fun CalendarImportSourceDialog(
+    events: List<CalendarImportCandidate>,
+    selectedCalendars: Set<String>,
+    onToggle: (String) -> Unit,
+    onSelectAll: () -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val sourceCounts = events
+        .groupingBy { importCalendarName(it) }
+        .eachCount()
+        .toList()
+        .sortedBy { it.first }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("选择日历来源") },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text("本月找到 ${events.size} 条系统日历事件", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                sourceCounts.forEach { (source, count) ->
+                    val selected = source in selectedCalendars
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                if (selected) GoaldayDesign.PinkSoft else GoaldayDesign.SurfaceSoft,
+                                RoundedCornerShape(GoaldayDesign.RadiusS),
+                            )
+                            .border(
+                                if (selected) 1.dp else 0.5.dp,
+                                if (selected) GoaldayDesign.PrimaryAction else Color(0x12000000),
+                                RoundedCornerShape(GoaldayDesign.RadiusS),
+                            )
+                            .clickable { onToggle(source) }
+                            .padding(horizontal = 9.dp, vertical = 7.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(source, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall)
+                        Text("${count}条", color = if (selected) GoaldayDesign.PrimaryAction else GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text("预览") }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(onClick = onSelectAll) { Text("全选") }
+                TextButton(onClick = onDismiss) { Text("取消") }
+            }
+        },
+    )
+}
+
+@Composable
 private fun CalendarImportPreviewDialog(
     year: Int,
     month: Int,
@@ -815,6 +908,9 @@ private fun CalendarImportPreviewDialog(
         },
     )
 }
+
+private fun importCalendarName(event: CalendarImportCandidate): String =
+    event.calendarName.ifBlank { "默认日历" }
 
 private fun readSystemCalendarEvents(
     context: Context,
@@ -867,6 +963,7 @@ private fun readSystemCalendarEvents(
                         day = date.dayOfMonth,
                         note = listOf("系统日历", calendarName, description).filter { it.isNotBlank() }.joinToString(" · "),
                         timeText = timeText,
+                        calendarName = calendarName,
                     ),
                 )
             }

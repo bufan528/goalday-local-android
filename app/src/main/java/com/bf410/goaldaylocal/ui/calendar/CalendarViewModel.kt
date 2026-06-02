@@ -29,6 +29,7 @@ data class CalendarImportCandidate(
     val day: Int,
     val note: String,
     val timeText: String,
+    val calendarName: String = "",
 )
 
 class CalendarViewModel(
