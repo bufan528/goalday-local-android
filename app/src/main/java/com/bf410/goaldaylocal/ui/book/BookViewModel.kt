@@ -190,6 +190,30 @@ class BookViewModel(
         _uiState.update { it.copy(schedulePreviewEntries = yearEntriesForAnchor()) }
     }
 
+    fun addScheduleFromHandbook(item: String, month: Int, day: Int) {
+        val title = item.trim()
+        if (title.isBlank()) return
+        val year = store.calendarAnchorYear()
+        val safeMonth = month.coerceIn(1, 12)
+        val maxDay = YearMonth.of(year, safeMonth).lengthOfMonth()
+        val safeDay = day.coerceIn(1, maxDay)
+        val duplicated = store.scheduleEntries().any { entry ->
+            entry.title == title &&
+                entry.year == year &&
+                entry.month == safeMonth &&
+                entry.day == safeDay
+        }
+        if (duplicated) return
+        store.addScheduleEntry(
+            title = title,
+            year = year,
+            month = safeMonth,
+            day = safeDay,
+            note = currentBook().title,
+        )
+        syncEditableContent()
+    }
+
     fun updateWeeklyTheme(text: String) {
         val book = currentBook()
         store.setWeeklyTheme(book.id, text)

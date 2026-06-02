@@ -625,6 +625,7 @@ fun ActivePageLayer(
     onRemoveCustomItem: (String) -> Unit,
     onRenameCustomItem: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
+    onAddScheduleFromHandbook: (String, Int, Int) -> Unit,
     onWeeklyThemeChange: (String) -> Unit,
     onMoveItemToToday: (String) -> Unit,
     onMoveItemToCompleted: (String) -> Unit,
@@ -649,6 +650,7 @@ fun ActivePageLayer(
             todayPlanItems = todayPlanItems,
             todayCompletedItems = todayCompletedItems,
             schedulePreviewEntries = schedulePreviewEntries,
+            onAddSchedule = onAddScheduleFromHandbook,
             onUpdateScheduleTitle = onUpdateScheduleTitle,
             onToggleScheduleCompleted = onToggleScheduleCompleted,
             turnProgress = turnProgress,
@@ -727,6 +729,7 @@ private fun HandbookReplicaPage(
     todayPlanItems: List<String>,
     todayCompletedItems: List<String>,
     schedulePreviewEntries: List<ScheduleEntry>,
+    onAddSchedule: (String, Int, Int) -> Unit,
     onUpdateScheduleTitle: (String, String) -> Unit,
     onToggleScheduleCompleted: (String) -> Unit,
     turnProgress: Float,
@@ -775,6 +778,9 @@ private fun HandbookReplicaPage(
     val rightBlocks = dayBlocks.drop(3).take(3)
     val fallbackLeftDone = todayCompletedItems.take(3)
     val fallbackRightTodo = todayPlanItems.take(3)
+    var draftText by remember(page.title) { mutableStateOf("") }
+    var draftDay by remember(page.title) { mutableStateOf(rightBlocks.firstOrNull()?.day ?: 1) }
+    val selectedDraftDay = draftDay.coerceIn(1, monthLength)
     var editingId by remember(pageIndex) { mutableStateOf<String?>(null) }
     var editingText by remember(pageIndex) { mutableStateOf("") }
     var saveHint by remember(pageIndex) { mutableStateOf("") }
@@ -843,6 +849,21 @@ private fun HandbookReplicaPage(
                     )
                     Text("待计划", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, modifier = Modifier.alpha(0.85f))
                 }
+                HandbookQuickAddRow(
+                    value = draftText,
+                    onValueChange = { draftText = it },
+                    days = rightBlocks.map { it.day },
+                    selectedDay = selectedDraftDay,
+                    onSelectDay = { draftDay = it },
+                    onDone = {
+                        val text = draftText.trim()
+                        if (text.isNotBlank()) {
+                            onAddSchedule(text, anchorMonth, selectedDraftDay)
+                            draftText = ""
+                            saveHint = "已加入${selectedDraftDay}日"
+                        }
+                    },
+                )
                 rightBlocks.forEachIndexed { idx, block ->
                     DaySpreadEditableSection(
                         day = block.day,
@@ -961,6 +982,68 @@ private fun DaySpreadSection(
         }
         todo.take(1).forEach { line ->
             Text("· $line", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun HandbookQuickAddRow(
+    value: String,
+    onValueChange: (String) -> Unit,
+    days: List<Int>,
+    selectedDay: Int,
+    onSelectDay: (Int) -> Unit,
+    onDone: () -> Unit,
+) {
+    val focusRequester = remember { FocusRequester() }
+    fun submitAndKeepFocus() {
+        onDone()
+        focusRequester.requestFocus()
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester),
+            textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { submitAndKeepFocus() }),
+            decorationBox = { inner ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(0.35.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("＋", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink)
+                    Box(Modifier.weight(1f)) {
+                        if (value.isBlank()) {
+                            Text("写入计划", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
+                        }
+                        inner()
+                    }
+                    Text("加入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, modifier = Modifier.clickable(onClick = ::submitAndKeepFocus))
+                }
+            },
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            days.forEach { day ->
+                Text(
+                    "${day}日",
+                    color = if (day == selectedDay) Color.White else GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .background(if (day == selectedDay) GoaldayDesign.Pink else Color(0x0F000000), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .clickable { onSelectDay(day) }
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+            }
         }
     }
 }
