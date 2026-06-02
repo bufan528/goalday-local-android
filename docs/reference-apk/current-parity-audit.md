@@ -51,9 +51,9 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 
 | Scope | Estimate | Reason |
 | --- | ---: | --- |
-| Useful offline planner functionality | 77-83% | Core local scheduling, handbook, typed diary blocks, export preview, config-style templates, target detail overlay, polished widgets, backup, and import exist. |
-| Reference/video visual parity | 55-63% | Opened-book shell, topic-cover cards, target detail route, diary item rows, export preview, and widget visuals improved, but settings still differ. |
-| APK structure parity excluding account/VIP/pay | 66-72% | Many module names have local equivalents; diary has item-level blocks, export has preview/print actions, and widgets are richer, but settings/configuration are still simplified. |
+| Useful offline planner functionality | 78-84% | Core local scheduling, handbook, typed diary blocks, export preview, config-style templates, target detail overlay, polished widgets, richer backup/settings, and import exist. |
+| Reference/video visual parity | 57-65% | Opened-book shell, topic-cover cards, target detail route, diary item rows, export preview, widget visuals, and settings density improved. |
+| APK structure parity excluding account/VIP/pay | 68-74% | Many module names have local equivalents; diary, export, widgets, and settings have deeper local surfaces, while topic/guide assets remain simplified. |
 | Full APK parity including account/VIP/pay/server | 28-35% | Those online/business flows are intentionally out of scope for the local app. |
 
 ## Biggest Remaining Gaps
@@ -67,14 +67,14 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 | P1 | Monthly schedule split | `fragment_monthly_schedule`, schedule item variants | Calendar page plus handbook spread | Need a clearer monthly board/detail split and closer schedule-item density. |
 | P1 | Print/export route | `LongImageDisplayActivity`, `PrintPage`, iText | Diary/handbook now open a long-image preview sheet with save/share/print and quick-save fallback | Need a dedicated full-screen route only if more preview controls are required. |
 | P1 | Widgets configuration | diary add, mid schedule, large schedule widgets, widget color/config signals | Widgets now have richer backgrounds, status pills, colored dots, clearer empty states, and quick diary date/action chrome | Need actual color/style configuration if matching widget setup flow is required. |
-| P1 | Settings/backup density | `BackupActivity`, `SettingActivity` | Basic local backup/settings | Need backup history, restore confirmation, storage path/status, and denser settings rows. |
+| P1 | Settings/backup completion | `BackupActivity`, `SettingActivity` | Settings now has denser rows, backup history, restore confirmation, storage status, and persisted font-size menu | Need global application of font-size preference if required. |
 
 ## Recommended Next Implementation Order
 
-1. Add richer settings/backup rows, backup history, restore confirmation, and storage status.
-2. Add widget color/style configuration if needed.
-3. Add richer diary editor chrome and optional inline formatting.
-4. Strengthen original topic cover illustrations or add a local asset-backed cover model.
+1. Strengthen original topic cover illustrations or add a local asset-backed cover model.
+2. Add optional first-run guide/onboarding.
+3. Add widget color/style configuration if needed.
+4. Add richer diary editor chrome and optional inline formatting.
 5. Add target save-as-own behavior and richer per-target sections.
 
 ## Practical Conclusion
