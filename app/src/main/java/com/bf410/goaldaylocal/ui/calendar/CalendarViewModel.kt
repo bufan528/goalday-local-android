@@ -74,6 +74,7 @@ class CalendarViewModel(
         note: String,
         timeText: String = "",
         repeatRule: String = "",
+        repeatInterval: Int = 1,
     ): String {
         val current = _uiState.value
         val repeatGroupId = if (repeatRule.isNotBlank()) java.util.UUID.randomUUID().toString() else ""
@@ -85,6 +86,7 @@ class CalendarViewModel(
             note = note,
             timeText = timeText,
             repeatRule = repeatRule,
+            repeatInterval = repeatInterval,
             repeatGroupId = repeatGroupId,
         )
         expandRepeatingEntry(entry)
@@ -123,6 +125,7 @@ class CalendarViewModel(
         note: String,
         timeText: String? = null,
         repeatRule: String? = null,
+        repeatInterval: Int? = null,
         applySeries: Boolean = false,
     ) {
         val current = _uiState.value
@@ -139,6 +142,7 @@ class CalendarViewModel(
                     note = note.trim(),
                     timeText = timeText?.trim() ?: entry.timeText,
                     repeatRule = repeatRule ?: entry.repeatRule,
+                    repeatInterval = repeatInterval ?: entry.repeatInterval,
                 )
             } else if (applySeries && targetGroupId.isNotBlank() && entry.repeatGroupId == targetGroupId) {
                 entry.copy(
@@ -146,6 +150,7 @@ class CalendarViewModel(
                     note = note.trim(),
                     timeText = timeText?.trim() ?: entry.timeText,
                     repeatRule = repeatRule ?: entry.repeatRule,
+                    repeatInterval = repeatInterval ?: entry.repeatInterval,
                 )
             } else {
                 entry
@@ -250,22 +255,25 @@ class CalendarViewModel(
     }
 
     private fun expandRepeatingEntry(entry: ScheduleEntry) {
+        val interval = entry.repeatInterval.coerceAtLeast(1)
         val additions = when (entry.repeatRule) {
             "daily" -> {
                 val maxDay = YearMonth.of(entry.year, entry.month).lengthOfMonth()
-                ((entry.day + 1)..maxDay).map { day ->
-                    entry.copy(id = java.util.UUID.randomUUID().toString(), day = day, completed = false)
-                }
+                generateSequence(entry.day + interval) { it + interval }
+                    .takeWhile { it <= maxDay }
+                    .map { day -> entry.copy(id = java.util.UUID.randomUUID().toString(), day = day, completed = false) }
+                    .toList()
             }
             "weekly" -> {
                 val maxDay = YearMonth.of(entry.year, entry.month).lengthOfMonth()
-                generateSequence(entry.day + 7) { it + 7 }
+                generateSequence(entry.day + 7 * interval) { it + 7 * interval }
                     .takeWhile { it <= maxDay }
                     .map { day -> entry.copy(id = java.util.UUID.randomUUID().toString(), day = day, completed = false) }
                     .toList()
             }
             "monthly" -> {
-                generateSequence(YearMonth.of(entry.year, entry.month).plusMonths(1)) { it.plusMonths(1) }
+                val monthStep = interval.toLong()
+                generateSequence(YearMonth.of(entry.year, entry.month).plusMonths(monthStep)) { it.plusMonths(monthStep) }
                     .take(11)
                     .mapNotNull { month ->
                         if (entry.day <= month.lengthOfMonth()) {
