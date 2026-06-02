@@ -876,8 +876,18 @@ private fun HandbookReplicaPage(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
-            .background(GoaldayDesign.Surface)
-            .border(0.5.dp, Color(0x10000000), RoundedCornerShape(GoaldayDesign.RadiusL))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(
+                        Color(0xFFFFFCF6),
+                        Color(0xFFFFF8EE),
+                        Color(0xFFF7EADA),
+                        Color(0xFFFFF8EE),
+                        Color(0xFFFFFCF6),
+                    ),
+                ),
+            )
+            .border(0.8.dp, Color(0x1FA88966), RoundedCornerShape(GoaldayDesign.RadiusL))
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha
@@ -887,6 +897,32 @@ private fun HandbookReplicaPage(
             }
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .fillMaxHeight()
+                .fillMaxWidth(0.5f)
+                .padding(top = 52.dp, end = 5.dp)
+                .clip(RoundedCornerShape(14.dp, 4.dp, 14.dp, 4.dp))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xDFFFFDF8), Color(0xCCFFF8EE)),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .fillMaxHeight()
+                .fillMaxWidth(0.5f)
+                .padding(top = 52.dp, start = 5.dp)
+                .clip(RoundedCornerShape(4.dp, 14.dp, 4.dp, 14.dp))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xEFFFFDF8), Color(0xDFFFF7EF)),
+                    ),
+                ),
+        )
         HandbookPaperRuling()
         HandbookMonthHeader(
             year = anchorYear,
@@ -959,14 +995,15 @@ private fun HandbookReplicaPage(
                         .padding(horizontal = 3.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(
-                        "done",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = GoaldayDesign.InkPrimary,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.alpha(0.92f),
+                    SectionStamp(
+                        label = "DONE",
+                        color = GoaldayDesign.Positive,
                     )
-                    Text("已执行", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, modifier = Modifier.alpha(0.85f))
+                    Text(
+                        "已执行",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = GoaldayDesign.InkMuted,
+                    )
                 }
                 leftBlocks.forEachIndexed { idx, block ->
                     DaySpreadSection(
@@ -989,14 +1026,15 @@ private fun HandbookReplicaPage(
                         .padding(horizontal = 3.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(
-                        "todo",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = GoaldayDesign.InkPrimary,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.alpha(0.92f),
+                    SectionStamp(
+                        label = "TODO",
+                        color = GoaldayDesign.Pink,
                     )
-                    Text("待计划", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, modifier = Modifier.alpha(0.85f))
+                    Text(
+                        "待计划",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = GoaldayDesign.InkMuted,
+                    )
                 }
                 HandbookQuickAddRow(
                     value = draftText,
@@ -1368,6 +1406,23 @@ private fun BoxScope.HandbookMonthHeader(
 }
 
 @Composable
+private fun SectionStamp(
+    label: String,
+    color: Color,
+) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelSmall,
+        color = Color.White,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(color)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+    )
+}
+
+@Composable
 private fun DaySpreadSection(
     day: Int,
     done: List<String>,
@@ -1379,22 +1434,18 @@ private fun DaySpreadSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (activeDrop) GoaldayDesign.GreenSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
-            .border(if (activeDrop) 0.9.dp else 0.35.dp, if (activeDrop) GoaldayDesign.Positive else Color(0x0A000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(if (activeDrop) GoaldayDesign.GreenSoft else Color(0x42FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .border(if (activeDrop) 0.9.dp else 0.45.dp, if (activeDrop) GoaldayDesign.Positive else Color(0x16A88966), RoundedCornerShape(GoaldayDesign.RadiusS))
             .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) }
-            .padding(horizontal = 5.dp, vertical = 3.dp),
-        verticalArrangement = Arrangement.spacedBy(1.dp),
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
-            Text("done ${done.size}", style = MaterialTheme.typography.labelSmall, color = accent.copy(alpha = 0.88f))
-        }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("done", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
-            Text("todo $todoCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+            Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+            Text("完成 ${done.size} · 待办 $todoCount", style = MaterialTheme.typography.labelSmall, color = accent.copy(alpha = 0.88f))
         }
         done.take(2).forEach { line ->
-            Text("✓ $line", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary, textDecoration = TextDecoration.LineThrough, maxLines = 1)
+            Text("✓ $line", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary, textDecoration = TextDecoration.LineThrough, maxLines = 1, modifier = Modifier.padding(start = 2.dp))
         }
         repeat((3 - done.take(2).size).coerceAtLeast(0)) { index ->
             EmptyHandbookSlot(
@@ -1436,7 +1487,19 @@ private fun HandbookQuickAddRow(
         focusRequester.requestFocus()
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(Color(0x35FFEAF1))
+            .border(0.45.dp, Color(0x20E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .padding(horizontal = 6.dp, vertical = 5.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("待安排池", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+            Text("点选或长按拖入日期", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+        }
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -1451,7 +1514,9 @@ private fun HandbookQuickAddRow(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(0.35.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .background(Color(0x88FFFFFF))
+                        .border(0.35.dp, Color(0x18E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = 6.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1464,7 +1529,7 @@ private fun HandbookQuickAddRow(
                         inner()
                     }
                     Text("入池", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable(onClick = ::addToPoolAndKeepFocus))
-                    Text("加入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, modifier = Modifier.clickable(onClick = ::submitAndKeepFocus))
+                    Text("排入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable(onClick = ::submitAndKeepFocus))
                 }
             },
         )
@@ -1483,14 +1548,14 @@ private fun HandbookQuickAddRow(
         }
         if (poolItems.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("待安排 · 长按拖入日期", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                 poolItems.forEach { item ->
                     var rowOrigin by remember(item) { mutableStateOf(Offset.Zero) }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                            .background(Color(0x08E88FAE))
+                            .background(Color(0x66FFFFFF))
+                            .border(0.35.dp, Color(0x10E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
                             .onGloballyPositioned { coordinates ->
                                 rowOrigin = coordinates.boundsInRoot().topLeft
                             }
@@ -1539,15 +1604,15 @@ private fun DaySpreadEditableSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (activeDrop) GoaldayDesign.PinkSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
-            .border(if (activeDrop) 0.9.dp else 0.35.dp, if (activeDrop) GoaldayDesign.Pink else Color(0x0A000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(if (activeDrop) GoaldayDesign.PinkSoft else Color(0x42FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .border(if (activeDrop) 0.9.dp else 0.45.dp, if (activeDrop) GoaldayDesign.Pink else Color(0x16A88966), RoundedCornerShape(GoaldayDesign.RadiusS))
             .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) }
-            .padding(horizontal = 5.dp, vertical = 3.dp),
-        verticalArrangement = Arrangement.spacedBy(1.dp),
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
-            Text("d${doneCount}/t${todoCount}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB07A8F))
+            Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+            Text("待办 $todoCount · 完成 $doneCount", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB07A8F))
         }
         repeat(4) { idx ->
             val entry = entries.getOrNull(idx)
