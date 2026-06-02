@@ -747,7 +747,7 @@ fun ActivePageLayer(
                 is TargetPage -> TargetDetailReplicaPage(page.title, page.items, customPageItems, tint, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule)
                 is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), BookStrings.addSchedule, true, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
                 is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), BookStrings.addPlan, false, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
-                is DiaryPage -> DiarySection(page.title, page.prompt, tint, diaryDraft, pendingCommand, onCommand, onDiaryChange, contentMode, onContentModeChange)
+                is DiaryPage -> DiarySection(page.title, page.prompt, tint, diaryDraft, todayPlanItems, todayCompletedItems, pendingCommand, onCommand, onDiaryChange, contentMode, onContentModeChange)
             }
         }
         Spacer(Modifier.height(24.dp))
@@ -2000,6 +2000,8 @@ private fun DiarySection(
     prompt: String,
     tint: Color,
     diaryDraft: String,
+    todayPlanItems: List<String>,
+    todayCompletedItems: List<String>,
     pendingCommand: RichEditorCommand?,
     onCommand: (RichEditorCommand) -> Unit,
     onDiaryChange: (String) -> Unit,
@@ -2024,6 +2026,11 @@ private fun DiarySection(
         StructuredDiary.fromRaw(diaryDraft).let { saved ->
             if (editingDiary?.title == title) structured else saved
         }
+    fun applyLinkedTarget(item: String, completed: Boolean) {
+        structured = if (completed) structured.withCompletedTarget(item) else structured.withWorkTarget(item)
+        onDiaryChange(structured.toRaw())
+        onContentModeChange(PageContentMode.EditingDiary(title))
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -2041,6 +2048,12 @@ private fun DiarySection(
             }
         }
         Text(text = prompt, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6E665D))
+        DiaryLinkedTargetStrip(
+            doneItems = todayCompletedItems,
+            todoItems = todayPlanItems,
+            onPickDone = { applyLinkedTarget(it, true) },
+            onPickTodo = { applyLinkedTarget(it, false) },
+        )
         if (editingDiary?.title == title) {
             StructuredDiaryEditor(
                 state = structured,
@@ -2117,6 +2130,12 @@ private data class StructuredDiary(
     fun withoutImageUri(uri: String): StructuredDiary =
         copy(photoNotes = mergeDiaryPhotoNotes(photoText, imageUris.filterNot { it == uri }))
 
+    fun withCompletedTarget(item: String): StructuredDiary =
+        copy(todayDone = appendUniqueDiaryLine(todayDone, item))
+
+    fun withWorkTarget(item: String): StructuredDiary =
+        copy(workTasks = appendUniqueDiaryLine(workTasks, item))
+
     fun toRaw(): String = buildString {
         appendLine("# 心情标签")
         appendLine(moodTags.trim())
@@ -2163,6 +2182,14 @@ private fun mergeDiaryPhotoNotes(text: String, imageUris: List<String>): String 
         text.lines().map(String::trim).filter(String::isNotBlank).forEach(::add)
         imageUris.distinct().forEach { uri -> add("$DIARY_IMAGE_PREFIX$uri") }
     }.joinToString("\n")
+
+private fun appendUniqueDiaryLine(raw: String, item: String): String {
+    val normalized = item.trim()
+    if (normalized.isBlank()) return raw
+    val lines = raw.lines().map(String::trim).filter(String::isNotBlank)
+    if (normalized in lines) return raw
+    return (lines + normalized).joinToString("\n")
+}
 
 private fun diaryDateLabel(date: LocalDate): String {
     val weekday = when (date.dayOfWeek) {
@@ -2450,6 +2477,63 @@ private fun saveBitmapToPictures(context: Context, bitmap: Bitmap, fileName: Str
         }
         Uri.fromFile(file)
     }
+}
+
+@Composable
+private fun DiaryLinkedTargetStrip(
+    doneItems: List<String>,
+    todoItems: List<String>,
+    onPickDone: (String) -> Unit,
+    onPickTodo: (String) -> Unit,
+) {
+    val done = doneItems.map(String::trim).filter(String::isNotBlank).distinct().take(3)
+    val todo = todoItems.map(String::trim).filter(String::isNotBlank).filterNot { it in done }.distinct().take(3)
+    if (done.isEmpty() && todo.isEmpty()) return
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0x10E88FAE))
+            .border(0.7.dp, Color(0x20E88FAE), RoundedCornerShape(10.dp))
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Text("关联目标", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A6B5F), fontWeight = FontWeight.Medium)
+        if (done.isNotEmpty()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+                done.forEach { item ->
+                    DiaryLinkedTargetChip("✓ $item", GoaldayDesign.Positive, Modifier.weight(1f)) { onPickDone(item) }
+                }
+            }
+        }
+        if (todo.isNotEmpty()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+                todo.forEach { item ->
+                    DiaryLinkedTargetChip("○ $item", Color(0xFFB07A8F), Modifier.weight(1f)) { onPickTodo(item) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DiaryLinkedTargetChip(
+    text: String,
+    color: Color,
+    modifier: Modifier,
+    onClick: () -> Unit,
+) {
+    Text(
+        text,
+        color = color,
+        style = MaterialTheme.typography.labelSmall,
+        maxLines = 1,
+        modifier = modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(Color.White.copy(alpha = 0.72f))
+            .clickable { onClick() }
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+    )
 }
 
 @Composable

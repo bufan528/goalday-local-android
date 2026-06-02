@@ -2,11 +2,11 @@
 
 Reference APK: `docs/reference-apk/goalday-reference-base.apk`
 
-Current app status after the handbook-export pass: local/offline planner with three root tabs, topic-style book covers, template center, topic detail surface, save-as-book flow, standalone target-detail-style book pages, handbook page turn, task pool, schedule todo/done, schedule time/repeat fields, Android system calendar import, structured diary editor with image blocks, diary and handbook schedule long-image export/share, small/large schedule widgets, quick diary widget, immediate schedule widget refresh hooks, and backup settings.
+Current app status after the diary-link pass: local/offline planner with three root tabs, topic-style book covers, template center, topic detail surface, save-as-book flow, standalone target-detail-style book pages, handbook page turn, task pool, schedule todo/done, schedule time/repeat fields, Android system calendar import, structured diary editor with image blocks and target-linked diary chips, diary and handbook schedule long-image export/share, small/large schedule widgets, quick diary widget, immediate schedule widget refresh hooks, and backup settings.
 
 ## Overall Gap
 
-Estimated completion against the reference APK's useful offline planner surface: **about 85-88%**.
+Estimated completion against the reference APK's useful offline planner surface: **about 88-90%**.
 
 This excludes account, VIP, payment, coupon, third-party login, webview marketing, and online commerce flows because the local app should not need them.
 
@@ -51,7 +51,7 @@ Resource/layout signals:
 | Target detail | Dedicated target detail screen, checkbox/edit fields, save-as-own | Topic detail and book target pages now use structured target cards with completion, editing, deletion for custom items, and add-to-today schedule action | Medium |
 | Schedule planner | Monthly schedule, day/week views, repeat/move target, calendar dialog | Local calendar, handbook drag, time fields, repeat labels, local repeat expansion, and system-calendar import exist | Medium |
 | Handbook/book | Book activity plus in-book schedule/diary fragments | Page-turn book exists but visual density and page types still rough | Medium-high |
-| Diary | Rich editor, text/image/target/topic-target blocks, date picker, media picker | Structured diary pages now support real image blocks from Android document picker, mood/work/done/improvement sections, and dynamic date labels | Medium |
+| Diary | Rich editor, text/image/target/topic-target blocks, date picker, media picker | Structured diary pages support image blocks, mood/work/done/improvement sections, dynamic date labels, and target-linked chips from today's plans/completions | Medium-low |
 | Calendar import | Dedicated system calendar import activity and permissions | Current-month Android CalendarContract import exists from the calendar tab | Medium-low |
 | Long image/print | Long image display and print/export page | Diary long-image export/share and handbook schedule export/share exist; full print preview still missing | Low |
 | Widgets | Diary add widget, mid/large schedule widgets | Today schedule widget, large schedule widget, quick diary widget, and schedule refresh hooks exist | Low |
@@ -60,7 +60,7 @@ Resource/layout signals:
 
 ## Priority Plan
 
-1. **Diary polish**: add target/topic-linked diary blocks and optional explicit date picker.
+1. **Diary polish**: add optional explicit date picker and richer topic-linked blocks.
 2. **Calendar import polish**: add selectable calendars, import preview, and broader range import if needed.
 3. **Schedule polish**: add a richer repeat editor and per-occurrence edit behavior if needed.
 4. **Long image polish**: add dedicated preview screen before share/export if needed.
@@ -69,4 +69,4 @@ Resource/layout signals:
 
 ## Immediate Next Fix
 
-The largest remaining visible mismatch is now **richer diary links + import/schedule polish**. Core local schedule, diary, import, export/share, and widget surfaces exist, but the app still lacks reference-style target/topic-linked diary blocks and a richer calendar import/repeat editing flow.
+The largest remaining visible mismatch is now **import/schedule polish + diary date/topic refinement**. Core local schedule, diary, import, export/share, widget surfaces, and first-pass diary target links exist, but the app still lacks selectable calendar import, a richer repeat editor, and explicit diary date/topic controls.
