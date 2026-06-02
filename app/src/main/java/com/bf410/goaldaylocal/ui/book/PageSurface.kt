@@ -1,5 +1,11 @@
 package com.bf410.goaldaylocal.ui.book
 
+import android.content.Intent
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -52,7 +58,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -60,6 +68,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import com.bf410.goaldaylocal.data.BookPage
@@ -1944,6 +1953,17 @@ private fun DiarySection(
 ) {
     val editingDiary = contentMode as? PageContentMode.EditingDiary
     var structured by remember(title, diaryDraft) { mutableStateOf(StructuredDiary.fromRaw(diaryDraft)) }
+    val context = LocalContext.current
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            structured = structured.withImageUri(uri.toString())
+            onDiaryChange(structured.toRaw())
+            onContentModeChange(PageContentMode.EditingDiary(title))
+        }
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1965,6 +1985,11 @@ private fun DiarySection(
             StructuredDiaryEditor(
                 state = structured,
                 onStateChange = { structured = it },
+                onAddImage = { imagePicker.launch(arrayOf("image/*")) },
+                onRemoveImage = { uri ->
+                    structured = structured.withoutImageUri(uri)
+                    onDiaryChange(structured.toRaw())
+                },
                 onDone = {
                     onDiaryChange(structured.toRaw())
                     onContentModeChange(PageContentMode.Browsing)
@@ -1976,7 +2001,13 @@ private fun DiarySection(
                     onContentModeChange(pageContentModeForTap(DiaryPage(title, prompt)))
                 },
             ) {
-                StructuredDiaryPreview(state = StructuredDiary.fromRaw(diaryDraft))
+                StructuredDiaryPreview(
+                    state = StructuredDiary.fromRaw(diaryDraft),
+                    onAddImage = {
+                        onContentModeChange(PageContentMode.EditingDiary(title))
+                        imagePicker.launch(arrayOf("image/*"))
+                    },
+                )
             }
         }
         Text(text = BookStrings.diaryLocalOnly, style = MaterialTheme.typography.labelSmall, color = tint.copy(alpha = 0.62f))
@@ -1991,6 +2022,28 @@ private data class StructuredDiary(
     val canImprove: String,
     val photoNotes: String,
 ) {
+    val imageUris: List<String>
+        get() = photoNotes.lines()
+            .map(String::trim)
+            .filter { it.startsWith(DIARY_IMAGE_PREFIX) }
+            .map { it.removePrefix(DIARY_IMAGE_PREFIX).trim() }
+            .filter(String::isNotBlank)
+
+    val photoText: String
+        get() = photoNotes.lines()
+            .map(String::trim)
+            .filter { it.isNotBlank() && !it.startsWith(DIARY_IMAGE_PREFIX) }
+            .joinToString("\n")
+
+    fun withPhotoText(text: String): StructuredDiary =
+        copy(photoNotes = mergeDiaryPhotoNotes(text, imageUris))
+
+    fun withImageUri(uri: String): StructuredDiary =
+        copy(photoNotes = mergeDiaryPhotoNotes(photoText, (imageUris + uri).distinct()))
+
+    fun withoutImageUri(uri: String): StructuredDiary =
+        copy(photoNotes = mergeDiaryPhotoNotes(photoText, imageUris.filterNot { it == uri }))
+
     fun toRaw(): String = buildString {
         appendLine("# 心情标签")
         appendLine(moodTags.trim())
@@ -2030,14 +2083,38 @@ private data class StructuredDiary(
     }
 }
 
+private const val DIARY_IMAGE_PREFIX = "image:"
+
+private fun mergeDiaryPhotoNotes(text: String, imageUris: List<String>): String =
+    buildList {
+        text.lines().map(String::trim).filter(String::isNotBlank).forEach(::add)
+        imageUris.distinct().forEach { uri -> add("$DIARY_IMAGE_PREFIX$uri") }
+    }.joinToString("\n")
+
+private fun diaryDateLabel(date: LocalDate): String {
+    val weekday = when (date.dayOfWeek) {
+        DayOfWeek.MONDAY -> "周一"
+        DayOfWeek.TUESDAY -> "周二"
+        DayOfWeek.WEDNESDAY -> "周三"
+        DayOfWeek.THURSDAY -> "周四"
+        DayOfWeek.FRIDAY -> "周五"
+        DayOfWeek.SATURDAY -> "周六"
+        DayOfWeek.SUNDAY -> "周日"
+    }
+    return "${date.monthValue}月${date.dayOfMonth}日 · $weekday"
+}
+
 @Composable
 private fun StructuredDiaryEditor(
     state: StructuredDiary,
     onStateChange: (StructuredDiary) -> Unit,
+    onAddImage: () -> Unit,
+    onRemoveImage: (String) -> Unit,
     onDone: () -> Unit,
 ) {
+    val dateLabel = remember { diaryDateLabel(LocalDate.now()) }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("4月4日 · 周四", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text(dateLabel, style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), modifier = Modifier.align(Alignment.CenterHorizontally))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 OutlinedTextField(
@@ -2060,21 +2137,34 @@ private fun StructuredDiaryEditor(
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 DiaryEditField("🍀 小幸福", state.smallJoy) { onStateChange(state.copy(smallJoy = it)) }
                 DiaryEditField("📝 可改进", state.canImprove) { onStateChange(state.copy(canImprove = it)) }
-                DiaryEditField("📷 图片描述", state.photoNotes) { onStateChange(state.copy(photoNotes = it)) }
+                DiaryEditField("📷 图片描述", state.photoText) { onStateChange(state.withPhotoText(it)) }
             }
         }
-        TextButton(onClick = onDone) { Text("完成") }
+        if (state.imageUris.isNotEmpty()) {
+            DiaryImageStrip(
+                imageUris = state.imageUris,
+                onRemoveImage = onRemoveImage,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onAddImage) { Text("添加图片") }
+            TextButton(onClick = onDone) { Text("完成") }
+        }
     }
 }
 
 @Composable
-private fun StructuredDiaryPreview(state: StructuredDiary) {
+private fun StructuredDiaryPreview(
+    state: StructuredDiary,
+    onAddImage: () -> Unit,
+) {
+    val dateLabel = remember { diaryDateLabel(LocalDate.now()) }
     val moodItems = remember(state.moodTags) {
         state.moodTags.split(',', '，', ' ').map(String::trim).filter(String::isNotBlank).take(6)
     }
-    val photos = state.photoNotes.lines().map(String::trim).filter(String::isNotBlank)
+    val photos = state.photoText.lines().map(String::trim).filter(String::isNotBlank)
     Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-        Text("4月4日 · 周四", style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text(dateLabel, style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), modifier = Modifier.align(Alignment.CenterHorizontally))
         if (moodItems.isNotEmpty()) {
             Text(
                 moodItems.joinToString("  ") { "#$it" },
@@ -2099,6 +2189,19 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
                     }
                 }
             }
+        }
+        if (state.imageUris.isNotEmpty()) {
+            DiaryImageStrip(imageUris = state.imageUris, onRemoveImage = null)
+        } else if (photos.isEmpty()) {
+            Text(
+                "＋ 添加图片",
+                color = Color(0xFFB07A8F),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .clickable { onAddImage() }
+                    .padding(horizontal = 4.dp, vertical = 2.dp),
+            )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -2151,6 +2254,76 @@ private fun StructuredDiaryPreview(state: StructuredDiary) {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DiaryImageStrip(
+    imageUris: List<String>,
+    onRemoveImage: ((String) -> Unit)?,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+        imageUris.take(3).forEach { uri ->
+            DiaryImageTile(
+                uri = uri,
+                onRemove = onRemoveImage?.let { remove -> { remove(uri) } },
+                modifier = Modifier.weight(1f),
+            )
+        }
+        repeat((3 - imageUris.take(3).size).coerceAtLeast(0)) {
+            Spacer(Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun DiaryImageTile(
+    uri: String,
+    onRemove: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val bitmap = remember(uri) {
+        runCatching {
+            context.contentResolver.openInputStream(Uri.parse(uri))?.use { stream ->
+                BitmapFactory.decodeStream(stream)
+            }
+        }.getOrNull()
+    }
+    Box(
+        modifier = modifier
+            .height(76.dp)
+            .clip(RoundedCornerShape(9.dp))
+            .background(Color(0xFFF2EFE9))
+            .border(1.dp, Color(0xFFE6DED2), RoundedCornerShape(9.dp)),
+    ) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            Text(
+                "图片不可读",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF8B7A68),
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
+        onRemove?.let { remove ->
+            Text(
+                "删除",
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .background(Color(0xAA1F1B17), RoundedCornerShape(bottomStart = 8.dp))
+                    .clickable { remove() }
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+            )
         }
     }
 }
