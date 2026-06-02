@@ -10,6 +10,7 @@ import com.bf410.goaldaylocal.data.LocalStateStore
 import com.bf410.goaldaylocal.data.PlanPage
 import com.bf410.goaldaylocal.data.SampleLibrary
 import com.bf410.goaldaylocal.data.ScheduleEntry
+import com.bf410.goaldaylocal.data.ScheduleStatus
 import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
@@ -284,7 +285,11 @@ class BookViewModel(
     fun toggleScheduleCompletedFromHandbook(entryId: String) {
         if (entryId.isBlank()) return
         val updated = store.scheduleEntries().map { entry ->
-            if (entry.id == entryId) entry.copy(completed = !entry.completed) else entry
+            if (entry.id == entryId) {
+                entry.withStatus(if (entry.status == ScheduleStatus.DONE) ScheduleStatus.PLANNED else ScheduleStatus.DONE)
+            } else {
+                entry
+            }
         }
         store.saveScheduleEntries(updated)
         syncEditableContent()
@@ -520,7 +525,7 @@ class BookViewModel(
         val updated = existing.map { entry ->
             if (!matched && entry.year == year && entry.month == month && entry.day == day && entry.title == normalized) {
                 matched = true
-                entry.copy(completed = completed)
+                entry.withStatus(if (completed) ScheduleStatus.DONE else ScheduleStatus.PLANNED)
             } else {
                 entry
             }

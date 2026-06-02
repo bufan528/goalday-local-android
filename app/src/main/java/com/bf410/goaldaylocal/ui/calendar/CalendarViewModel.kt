@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.bf410.goaldaylocal.data.LocalStateStore
 import com.bf410.goaldaylocal.data.ScheduleEntry
+import com.bf410.goaldaylocal.data.ScheduleStatus
 import com.tencent.mmkv.MMKV
 import java.time.LocalDate
 import java.util.UUID
@@ -77,7 +78,11 @@ class CalendarViewModel(
 
     fun toggleScheduleCompleted(id: String) {
         val updated = store.scheduleEntries().map { entry ->
-            if (entry.id == id) entry.copy(completed = !entry.completed) else entry
+            if (entry.id == id) {
+                entry.withStatus(if (entry.status == ScheduleStatus.DONE) ScheduleStatus.PLANNED else ScheduleStatus.DONE)
+            } else {
+                entry
+            }
         }
         store.saveScheduleEntries(updated)
         refreshEntries()

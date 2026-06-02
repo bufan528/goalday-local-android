@@ -1,5 +1,10 @@
 package com.bf410.goaldaylocal.data
 
+enum class ScheduleStatus {
+    PLANNED,
+    DONE,
+}
+
 data class ScheduleEntry(
     val id: String,
     val title: String,
@@ -8,4 +13,10 @@ data class ScheduleEntry(
     val day: Int,
     val note: String = "",
     val completed: Boolean = false,
-)
+) {
+    val status: ScheduleStatus
+        get() = if (completed) ScheduleStatus.DONE else ScheduleStatus.PLANNED
+
+    fun withStatus(status: ScheduleStatus): ScheduleEntry =
+        copy(completed = status == ScheduleStatus.DONE)
+}

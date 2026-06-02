@@ -69,7 +69,9 @@ class LocalStateStore(
                         month = item.getInt("month"),
                         day = item.getInt("day"),
                         note = item.optString("note"),
-                        completed = item.optBoolean("completed", false),
+                        completed = decodeScheduleStatus(item).let { status ->
+                            status == ScheduleStatus.DONE
+                        },
                     ),
                 )
             }
@@ -87,6 +89,7 @@ class LocalStateStore(
                     .put("month", entry.month)
                     .put("day", entry.day)
                     .put("note", entry.note)
+                    .put("status", entry.status.name)
                     .put("completed", entry.completed),
             )
         }
@@ -249,6 +252,12 @@ class LocalStateStore(
         val array = JSONArray()
         items.forEach(array::put)
         mmkv.encode(key, array.toString())
+    }
+
+    private fun decodeScheduleStatus(item: JSONObject): ScheduleStatus {
+        val rawStatus = item.optString("status", "")
+        return ScheduleStatus.entries.firstOrNull { it.name == rawStatus }
+            ?: if (item.optBoolean("completed", false)) ScheduleStatus.DONE else ScheduleStatus.PLANNED
     }
 
     private fun encodePages(pages: List<BookPage>): JSONArray {
