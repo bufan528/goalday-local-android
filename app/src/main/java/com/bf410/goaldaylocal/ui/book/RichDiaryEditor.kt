@@ -16,6 +16,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 data class RichEditorCommand(
     val name: String,
     val value: String? = null,
+    val nonce: Long = System.nanoTime(),
 )
 
 @SuppressLint("SetJavaScriptEnabled")

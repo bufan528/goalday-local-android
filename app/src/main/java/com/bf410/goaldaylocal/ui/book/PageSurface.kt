@@ -2417,6 +2417,8 @@ private fun DiarySection(
                     structured = structured.withoutImageUri(uri)
                     onDiaryChange(structured.toRaw())
                 },
+                pendingCommand = pendingCommand,
+                onCommand = onCommand,
                 onDone = {
                     onDiaryChange(structured.toRaw())
                     onContentModeChange(PageContentMode.Browsing)
@@ -2493,6 +2495,7 @@ private data class StructuredDiary(
     val smallJoy: String,
     val canImprove: String,
     val photoNotes: String,
+    val richHtml: String,
     val blocksRaw: String,
 ) {
     val imageUris: List<String>
@@ -2520,6 +2523,9 @@ private data class StructuredDiary(
 
     fun withPhotoText(text: String): StructuredDiary =
         copy(photoNotes = mergeDiaryPhotoNotes(text, imageUris))
+
+    fun withRichHtml(html: String): StructuredDiary =
+        copy(richHtml = html)
 
     fun withImageUri(uri: String): StructuredDiary =
         copy(photoNotes = mergeDiaryPhotoNotes(photoText, (imageUris + uri).distinct()))
@@ -2580,6 +2586,11 @@ private data class StructuredDiary(
         appendLine(canImprove.trim())
         appendLine("# 图片")
         append(photoNotes.trim())
+        if (richHtml.isNotBlank()) {
+            appendLine()
+            appendLine("# 富文本")
+            append(escapeDiaryBlockText(richHtml.trim()))
+        }
         if (blocksRaw.isNotBlank()) {
             appendLine()
             appendLine("# 日记块")
@@ -2589,25 +2600,27 @@ private data class StructuredDiary(
 
     companion object {
         fun fromRaw(raw: String): StructuredDiary {
-            if (raw.isBlank()) return StructuredDiary(LocalDate.now().toString(), "", "", "", "", "", "", "")
-            fun section(name: String, next: String?): String {
+            if (raw.isBlank()) return StructuredDiary(LocalDate.now().toString(), "", "", "", "", "", "", "", "")
+            fun section(name: String, nextMarkers: List<String> = emptyList()): String {
                 val start = raw.indexOf("# $name")
                 if (start < 0) return ""
                 val bodyStart = raw.indexOf('\n', start).takeIf { it >= 0 }?.plus(1) ?: return ""
-                val bodyEnd = next?.let { marker ->
-                    raw.indexOf("# $marker", bodyStart).takeIf { it >= 0 }
-                } ?: raw.length
+                val bodyEnd = nextMarkers
+                    .mapNotNull { marker -> raw.indexOf("# $marker", bodyStart).takeIf { it >= 0 } }
+                    .minOrNull()
+                    ?: raw.length
                 return raw.substring(bodyStart, bodyEnd).trim()
             }
             return StructuredDiary(
-                dateIso = section("日期", "心情标签").ifBlank { LocalDate.now().toString() },
-                moodTags = section("心情标签", "今日完成"),
-                todayDone = section("今日完成", "工作任务"),
-                workTasks = section("工作任务", "小幸福"),
-                smallJoy = section("小幸福", "可改进"),
-                canImprove = section("可改进", "图片"),
-                photoNotes = section("图片", "日记块"),
-                blocksRaw = section("日记块", null),
+                dateIso = section("日期", listOf("心情标签")).ifBlank { LocalDate.now().toString() },
+                moodTags = section("心情标签", listOf("今日完成")),
+                todayDone = section("今日完成", listOf("工作任务")),
+                workTasks = section("工作任务", listOf("小幸福")),
+                smallJoy = section("小幸福", listOf("可改进")),
+                canImprove = section("可改进", listOf("图片")),
+                photoNotes = section("图片", listOf("富文本", "日记块")),
+                richHtml = unescapeDiaryBlockText(section("富文本", listOf("日记块"))),
+                blocksRaw = section("日记块"),
             )
         }
     }
@@ -3134,6 +3147,9 @@ private fun renderDiaryLongImage(
     if (state.photoText.isNotBlank()) {
         y = drawExportSection(canvas, "图片描述", state.photoText, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
     }
+    if (state.richHtml.isNotBlank()) {
+        y = drawExportSection(canvas, "富文本记录", plainTextFromHtml(state.richHtml), padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
+    }
     state.blocks.take(8).forEach { block ->
         val body = buildString {
             append(block.mainText.ifBlank { "空内容" })
@@ -3323,6 +3339,8 @@ private fun StructuredDiaryEditor(
     onAddTextBlock: () -> Unit,
     onAddTopicTargetBlock: () -> Unit,
     onRemoveImage: (String) -> Unit,
+    pendingCommand: RichEditorCommand?,
+    onCommand: (RichEditorCommand) -> Unit,
     onDone: () -> Unit,
 ) {
     val dateLabel = remember(state.dateIso) { diaryDateLabel(state.date) }
@@ -3333,8 +3351,31 @@ private fun StructuredDiaryEditor(
             onAddImage = onAddImage,
             onAddTextBlock = onAddTextBlock,
             onAddTopicTargetBlock = onAddTopicTargetBlock,
+            onCommand = onCommand,
             onDone = onDone,
         )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFFFFFEFC))
+                .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(12.dp))
+                .padding(horizontal = 9.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text("富文本记录", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
+            RichDiaryEditor(
+                html = state.richHtml,
+                placeholder = "写一段更自由的日记，支持加粗、标题、引用和列表。",
+                pendingCommand = pendingCommand,
+                onHtmlChange = { html -> onStateChange(state.withRichHtml(html)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(138.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFFFFFAF3)),
+            )
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 OutlinedTextField(
@@ -3383,6 +3424,7 @@ private fun DiaryEditorToolbar(
     onAddImage: () -> Unit,
     onAddTextBlock: () -> Unit,
     onAddTopicTargetBlock: () -> Unit,
+    onCommand: (RichEditorCommand) -> Unit,
     onDone: () -> Unit,
 ) {
     Column(
@@ -3412,6 +3454,10 @@ private fun DiaryEditorToolbar(
             DiaryToolChip("文字块", GoaldayDesign.InkSecondary, onAddTextBlock)
             DiaryToolChip("图片块", Color(0xFFB07A8F), onAddImage)
             DiaryToolChip("目标块", GoaldayDesign.Positive, onAddTopicTargetBlock)
+            DiaryToolChip("B", GoaldayDesign.InkPrimary) { onCommand(RichEditorCommand("bold")) }
+            DiaryToolChip("H1", Color(0xFF8F684F)) { onCommand(RichEditorCommand("formatBlock", "h1")) }
+            DiaryToolChip("引用", Color(0xFF9EAADB)) { onCommand(RichEditorCommand("formatBlock", "blockquote")) }
+            DiaryToolChip("列表", GoaldayDesign.Positive) { onCommand(RichEditorCommand("insertUnorderedList")) }
         }
     }
 }
@@ -3570,6 +3616,20 @@ private fun diaryBlockTypeBackground(type: DiaryBlockType): Color =
         DiaryBlockType.TOPIC_TARGET -> Color(0x16E88FAE)
     }
 
+private fun plainTextFromHtml(html: String): String =
+    html
+        .replace(Regex("(?i)<br\\s*/?>"), "\n")
+        .replace(Regex("(?i)</(p|div|h1|h2|blockquote|li)>"), "\n")
+        .replace(Regex("<[^>]+>"), "")
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .lines()
+        .map(String::trim)
+        .filter(String::isNotBlank)
+        .joinToString("\n")
+
 @Composable
 private fun diaryBlockTextStyle(block: DiaryEntryBlock): TextStyle {
     val base = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary)
@@ -3630,6 +3690,9 @@ private fun StructuredDiaryPreview(
                     .clickable { onAddImage() }
                     .padding(horizontal = 4.dp, vertical = 2.dp),
             )
+        }
+        if (state.richHtml.isNotBlank()) {
+            DiaryBlock("富文本记录", plainTextFromHtml(state.richHtml))
         }
         DiaryTypedBlockPreview(blocks = state.blocks)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
