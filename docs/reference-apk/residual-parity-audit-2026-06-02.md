@@ -97,7 +97,7 @@ Recent local changes improved the biggest visible gaps:
 - Target detail route exists with completion, note, deadline, and schedule actions.
 - Diary now has persistent typed blocks for text, target, and topic-target entries.
 - Diary and handbook long-image export now have a preview sheet with save/share/print actions.
-- Schedule widgets, large schedule widget, and quick diary widget exist and refresh from local data.
+- Schedule widgets, large schedule widget, and quick diary widget exist and refresh from local data. The latest widget pass adds richer gradient backgrounds, status pills, colored schedule dots, clearer empty states, and a stronger quick-diary add surface.
 
 The remaining gap is now mostly product depth and polish, not missing core offline functionality.
 
@@ -105,8 +105,8 @@ The remaining gap is now mostly product depth and polish, not missing core offli
 
 | Rank | Area | APK Evidence | Local App Status | Remaining Gap |
 | --- | --- | --- | --- | --- |
-| 1 | Widget configuration and polish | `diary_add_widget_configure`, `widget_schedule_add_color`, mid/large widget resources, unlock widget signals | Three widgets exist, but layouts are simple title/subtitle/text rows with no configuration screen | Need widget color/style configuration, richer empty states, compact row variants, and clearer diary-add widget behavior. |
-| 2 | Settings/backup density | `activity_setting`, `bg_setting_item`, `bg_setting_fontsize_menu`, `ll_backup`, menu foreground assets | Settings page has offline note, backup, restore latest, and path display | Need backup history, restore confirmation, storage status, font-size menu, denser setting rows, and clearer destructive-action handling. |
+| 1 | Settings/backup density | `activity_setting`, `bg_setting_item`, `bg_setting_fontsize_menu`, `ll_backup`, menu foreground assets | Settings page has offline note, backup, restore latest, and path display | Need backup history, restore confirmation, storage status, font-size menu, denser setting rows, and clearer destructive-action handling. |
+| 2 | Widget configuration completion | `diary_add_widget_configure`, `widget_schedule_add_color`, mid/large widget resources, unlock widget signals | Widgets now have richer backgrounds, status pills, colored dots, clearer empty states, and quick-diary date/action chrome | Need an actual widget color/style configuration surface and more exact compact/mid/large presets. |
 | 3 | Topic center asset fidelity | 33 cover PNGs, 28 target text files, bilingual topic config | Local templates have ids/cover keys/target keys/categories and longer lists, but generated cover-style visuals | Need original asset-backed or newly generated cover illustrations and closer config-driven topic loading. |
 | 4 | Guide/onboarding | `GuideActivity`, guide icons/views, Lottie assets | No dedicated guided first-run/tutorial layer | Need optional first-run guide for adding targets, schedule scrolling, diary writing, and handbook use. |
 | 5 | Diary editor polish | Rich editor bundle and nested target child diary item layouts | Persistent typed blocks exist; rich editor wrapper exists but is not wired into block editing | Need inline formatting toolbar, child target block nesting, and closer image/text/target row chrome. |
@@ -117,24 +117,22 @@ The remaining gap is now mostly product depth and polish, not missing core offli
 
 | Scope | Estimate | Reason |
 | --- | ---: | --- |
-| Useful offline planner functionality | 76-82% | Core schedule, book, topic, diary, target detail, widgets, import, backup, and export preview exist. |
-| Reference/video visual parity | 53-61% | Main book/diary/export surfaces improved, but widgets/settings/topic covers/onboarding remain simpler. |
-| APK structure parity excluding account/VIP/pay/server | 65-71% | Most local module equivalents exist; remaining gaps are configuration screens and asset-backed polish. |
+| Useful offline planner functionality | 77-83% | Core schedule, book, topic, diary, target detail, polished widgets, import, backup, and export preview exist. |
+| Reference/video visual parity | 55-63% | Main book/diary/export surfaces and widget visuals improved, but settings/topic covers/onboarding remain simpler. |
+| APK structure parity excluding account/VIP/pay/server | 66-72% | Most local module equivalents exist; remaining gaps are settings depth, widget configuration, and asset-backed polish. |
 | Full APK parity including account/VIP/pay/server | 28-35% | Account/VIP/pay/login/coupon/server flows remain intentionally excluded from this offline app. |
 
 ## Recommended Next Implementation
 
-1. Widget parity pass:
-   - Add richer widget backgrounds and row states.
-   - Add colored schedule dots and better empty-state hints.
-   - Add a widget configuration surface or in-app widget settings section for color/style.
-   - Make quick diary widget route more explicit and closer to `diary_add_widget`.
-
-2. Settings/backup parity pass:
+1. Settings/backup parity pass:
    - Add backup history list.
    - Add restore confirmation dialog.
    - Add storage status and backup count.
    - Add font-size setting UI matching the APK `bg_setting_fontsize_menu` signal.
+
+2. Widget configuration completion:
+   - Add a widget configuration surface or in-app widget settings section for color/style.
+   - Add more exact compact/mid/large presets if needed.
 
 3. Topic/guide pass:
    - Replace generated topic cover cards with original generated bitmap cover assets or a stronger local asset system.
@@ -142,4 +140,4 @@ The remaining gap is now mostly product depth and polish, not missing core offli
 
 ## Practical Conclusion
 
-After the latest diary and export changes, the app is close enough in core offline workflow that the next high-impact work should not be another diary/export tweak. The remaining visible difference is that the reference APK feels like a finished product around the edges: configurable widgets, dense settings/backup, first-run guidance, and stronger topic cover assets.
+After the latest diary, export, and widget visual changes, the app is close enough in core offline workflow that the next high-impact work should not be another diary/export tweak. The remaining visible difference is that the reference APK feels like a finished product around the edges: dense settings/backup, widget configuration, first-run guidance, and stronger topic cover assets.

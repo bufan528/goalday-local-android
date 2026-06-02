@@ -28,7 +28,9 @@ class QuickDiaryWidgetProvider : AppWidgetProvider() {
             val today = LocalDate.now()
             val views = RemoteViews(context.packageName, R.layout.widget_quick_diary)
             views.setTextViewText(R.id.quick_diary_title, "记录今天")
-            views.setTextViewText(R.id.quick_diary_subtitle, "${today.monthValue}月${today.dayOfMonth}日 · 打开日记页")
+            views.setTextViewText(R.id.quick_diary_subtitle, "打开日记页 · 本地保存")
+            views.setTextViewText(R.id.quick_diary_date, "${today.monthValue}/${today.dayOfMonth}")
+            views.setTextViewText(R.id.quick_diary_hint, "补一条文字、目标或图片块")
             views.setOnClickPendingIntent(R.id.quick_diary_root, openDiaryPendingIntent(context))
             views.setOnClickPendingIntent(R.id.quick_diary_action, openDiaryPendingIntent(context))
             return views

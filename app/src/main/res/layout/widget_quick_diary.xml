@@ -3,36 +3,74 @@
     android:id="@+id/quick_diary_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/widget_quick_diary_background"
     android:orientation="vertical"
-    android:padding="14dp"
-    android:background="@drawable/widget_schedule_background">
+    android:padding="13dp">
 
-    <TextView
-        android:id="@+id/quick_diary_title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="记录今天"
-        android:textColor="#2F2922"
-        android:textSize="17sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/quick_diary_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="记录今天"
+                android:textColor="#2F2922"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/quick_diary_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="#8B7A68"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/quick_diary_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/widget_schedule_status_background"
+            android:paddingLeft="8dp"
+            android:paddingTop="4dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="4dp"
+            android:textColor="#B45E7A"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/quick_diary_subtitle"
+        android:id="@+id/quick_diary_hint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:textColor="#8B7A68"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/widget_schedule_empty_background"
+        android:padding="9dp"
+        android:text="补一条文字、目标或图片块"
+        android:textColor="#7A6E66"
         android:textSize="12sp" />
 
     <TextView
         android:id="@+id/quick_diary_action"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="9dp"
         android:background="@drawable/widget_quick_diary_button"
-        android:paddingLeft="12dp"
+        android:paddingLeft="13dp"
         android:paddingTop="6dp"
-        android:paddingRight="12dp"
+        android:paddingRight="13dp"
         android:paddingBottom="6dp"
         android:text="写日记"
         android:textColor="#FFFFFF"

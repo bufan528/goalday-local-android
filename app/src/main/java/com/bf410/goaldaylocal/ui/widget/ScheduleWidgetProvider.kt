@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.view.View
 import android.widget.RemoteViews
 import com.bf410.goaldaylocal.MainActivity
@@ -30,11 +31,21 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
             buildScheduleViews(
                 context = context,
                 layoutId = R.layout.widget_schedule,
+                sectionId = null,
+                rowIds = listOf(
+                    R.id.widget_row_1,
+                    R.id.widget_row_2,
+                    R.id.widget_row_3,
+                ),
+                dotIds = listOf(
+                    R.id.widget_dot_1,
+                    R.id.widget_dot_2,
+                    R.id.widget_dot_3,
+                ),
                 taskIds = listOf(
                     R.id.widget_task_1,
                     R.id.widget_task_2,
                     R.id.widget_task_3,
-                    R.id.widget_task_4,
                 ),
             )
 
@@ -42,21 +53,36 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
             buildScheduleViews(
                 context = context,
                 layoutId = R.layout.widget_schedule_large,
+                sectionId = R.id.widget_section_today,
+                rowIds = listOf(
+                    R.id.widget_row_1,
+                    R.id.widget_row_2,
+                    R.id.widget_row_3,
+                    R.id.widget_row_4,
+                    R.id.widget_row_5,
+                ),
+                dotIds = listOf(
+                    R.id.widget_dot_1,
+                    R.id.widget_dot_2,
+                    R.id.widget_dot_3,
+                    R.id.widget_dot_4,
+                    R.id.widget_dot_5,
+                ),
                 taskIds = listOf(
                     R.id.widget_task_1,
                     R.id.widget_task_2,
                     R.id.widget_task_3,
                     R.id.widget_task_4,
                     R.id.widget_task_5,
-                    R.id.widget_task_6,
-                    R.id.widget_task_7,
-                    R.id.widget_task_8,
                 ),
             )
 
         private fun buildScheduleViews(
             context: Context,
             layoutId: Int,
+            sectionId: Int?,
+            rowIds: List<Int>,
+            dotIds: List<Int>,
             taskIds: List<Int>,
         ): RemoteViews {
             val today = LocalDate.now()
@@ -69,16 +95,19 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, layoutId)
             views.setTextViewText(R.id.widget_title, "Goalday 今日")
             views.setTextViewText(R.id.widget_subtitle, "${today.monthValue}月${today.dayOfMonth}日 · 待办 ${todo.size} · 完成 $done")
+            views.setTextViewText(R.id.widget_status_pill, if (todo.isEmpty()) "清爽" else "${todo.size} todo")
             val displayEntries = entries.take(taskIds.size)
             taskIds.forEachIndexed { index, id ->
                 val entry = displayEntries.getOrNull(index)
                 if (entry == null) {
-                    views.setViewVisibility(id, View.GONE)
+                    views.setViewVisibility(rowIds[index], View.GONE)
                 } else {
-                    views.setViewVisibility(id, View.VISIBLE)
+                    views.setViewVisibility(rowIds[index], View.VISIBLE)
                     val time = entry.timeText.takeIf { it.isNotBlank() }?.let { "$it " }.orEmpty()
-                    val marker = if (entry.completed) "✓" else "○"
-                    views.setTextViewText(id, "$marker $time${entry.title}")
+                    views.setTextViewText(dotIds[index], "●")
+                    views.setTextColor(dotIds[index], if (entry.completed) Color.rgb(57, 167, 109) else Color.rgb(232, 143, 174))
+                    views.setTextViewText(id, "$time${entry.title}")
+                    views.setTextColor(id, if (entry.completed) Color.rgb(102, 115, 103) else Color.rgb(58, 52, 46))
                 }
             }
             if (entries.isEmpty()) {
@@ -86,6 +115,7 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
             } else {
                 views.setViewVisibility(R.id.widget_empty, View.GONE)
             }
+            sectionId?.let { id -> views.setViewVisibility(id, if (entries.isEmpty()) View.GONE else View.VISIBLE) }
             views.setOnClickPendingIntent(R.id.widget_root, openAppPendingIntent(context))
             return views
         }
