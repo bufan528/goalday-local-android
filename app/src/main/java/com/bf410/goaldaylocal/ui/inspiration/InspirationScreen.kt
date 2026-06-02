@@ -75,7 +75,7 @@ fun InspirationScreen(
     ) {
         GoaldayTopBar(
             leftTitle = "灵感中心",
-            rightPrimaryText = "直接保存",
+            rightPrimaryText = "导入任务池",
             onRightPrimaryClick = {
                 viewModel.applyInspirationToToday(draftItems.filter { it.selected }.map { it.text })
                 mode = InspirationMode.SAVE
@@ -104,19 +104,14 @@ fun InspirationScreen(
 
         if (mode == InspirationMode.CENTER) {
             InspirationTemplates.all.forEachIndexed { index, template ->
+                val cardColor = template.color
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(92.dp)
+                        .height(104.dp)
                         .background(
                             Brush.horizontalGradient(
-                                when (index % 5) {
-                                    0 -> listOf(Color(0xFF8A9B68), Color(0xFF798A58))
-                                    1 -> listOf(Color(0xFF8D756D), Color(0xFF6C5C56))
-                                    2 -> listOf(Color(0xFF5A6650), Color(0xFF495640))
-                                    3 -> listOf(Color(0xFF967C66), Color(0xFF7D6652))
-                                    else -> listOf(Color(0xFF6F7D61), Color(0xFF5D6952))
-                                },
+                                listOf(cardColor.copy(alpha = 0.96f), cardColor.copy(alpha = 0.78f)),
                             ),
                             RoundedCornerShape(10.dp),
                         )
@@ -130,8 +125,19 @@ fun InspirationScreen(
                         .padding(horizontal = 12.dp, vertical = 9.dp),
                     verticalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(template.title, color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Text(template.title, color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                        Text(
+                            if (template.linkToSchedule) "可排日程" else "复盘记录",
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier
+                                .background(Color(0x22FFFFFF), RoundedCornerShape(99.dp))
+                                .padding(horizontal = 7.dp, vertical = 2.dp),
+                        )
+                    }
                     Text(template.subtitle, color = Color(0xE8FFFFFF), style = MaterialTheme.typography.bodySmall)
+                    Text("预览 ${template.items.take(3).joinToString(" · ")}", color = Color(0xDFFFFFFF), style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 }
             }
         }
@@ -147,7 +153,7 @@ fun InspirationScreen(
             Text(
                 text = when (mode) {
                     InspirationMode.CENTER -> selectedTemplate.title
-                    InspirationMode.SAVE -> "直接保存"
+                    InspirationMode.SAVE -> "已导入任务池"
                     InspirationMode.FLIP -> "翻页"
                 },
                 style = MaterialTheme.typography.titleSmall,
@@ -213,7 +219,7 @@ fun InspirationScreen(
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "保存到本周",
+                    "导入任务池",
                     color = Color.White,
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier
@@ -225,7 +231,7 @@ fun InspirationScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 )
                 Text(
-                    "翻页查看",
+                    "导入并打开手账",
                     color = Color(0xFFE88FAE),
                     modifier = Modifier
                         .clickable {
