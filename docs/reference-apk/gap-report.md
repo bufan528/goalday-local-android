@@ -2,11 +2,11 @@
 
 Reference APK: `docs/reference-apk/goalday-reference-base.apk`
 
-Current app status after the diary-media pass: local/offline planner with three root tabs, topic-style book covers, template center, topic detail surface, save-as-book flow, standalone target-detail-style book pages, handbook page turn, task pool, schedule todo/done, schedule time/repeat fields, Android system calendar import, structured diary editor with image blocks, and backup settings.
+Current app status after the long-image pass: local/offline planner with three root tabs, topic-style book covers, template center, topic detail surface, save-as-book flow, standalone target-detail-style book pages, handbook page turn, task pool, schedule todo/done, schedule time/repeat fields, Android system calendar import, structured diary editor with image blocks, diary long-image export, and backup settings.
 
 ## Overall Gap
 
-Estimated completion against the reference APK's useful offline planner surface: **about 60-65%**.
+Estimated completion against the reference APK's useful offline planner surface: **about 65-70%**.
 
 This excludes account, VIP, payment, coupon, third-party login, webview marketing, and online commerce flows because the local app should not need them.
 
@@ -53,15 +53,15 @@ Resource/layout signals:
 | Handbook/book | Book activity plus in-book schedule/diary fragments | Page-turn book exists but visual density and page types still rough | Medium-high |
 | Diary | Rich editor, text/image/target/topic-target blocks, date picker, media picker | Structured diary pages now support real image blocks from Android document picker, mood/work/done/improvement sections, and dynamic date labels | Medium |
 | Calendar import | Dedicated system calendar import activity and permissions | Current-month Android CalendarContract import exists from the calendar tab | Medium-low |
-| Long image/print | Long image display and print/export page | Not implemented | High |
+| Long image/print | Long image display and print/export page | Diary long-image export exists; full handbook/print preview still missing | Medium |
 | Widgets | Diary add widget, mid/large schedule widgets | Not implemented | High |
 | Backup/settings | Backup/settings activities | Local backup exists | Medium-low |
 | Account/VIP/pay | Login/account/VIP/coupon/pay screens | Intentionally absent | Not required for local version |
 
 ## Priority Plan
 
-1. **Long image export**: export handbook/diary pages as an image file.
-2. **Widgets**: local schedule widget and quick diary add widget.
+1. **Widgets**: local schedule widget and quick diary add widget.
+2. **Long image polish**: add preview/share and export for handbook schedule pages.
 3. **Diary polish**: add target/topic-linked diary blocks and optional explicit date picker.
 4. **Calendar import polish**: add selectable calendars, import preview, and broader range import if needed.
 5. **Schedule polish**: add a richer repeat editor and per-occurrence edit behavior if needed.
@@ -69,4 +69,4 @@ Resource/layout signals:
 
 ## Immediate Next Fix
 
-The largest remaining visible mismatch is now **long image export + widgets**. Diary pages have first-pass image blocks, but the app still lacks reference-style export/print pages and home-screen widgets.
+The largest remaining visible mismatch is now **widgets + export polish**. Diary long-image export exists, but the app still lacks reference-style home-screen widgets and full print/share preview behavior.

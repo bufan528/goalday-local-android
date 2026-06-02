@@ -1,8 +1,17 @@
 package com.bf410.goaldaylocal.ui.book
 
+import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -85,6 +94,8 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.delay
+import java.io.File
+import java.io.FileOutputStream
 
 @Composable
 fun BoxScope.SpineLayer(
@@ -1953,6 +1964,7 @@ private fun DiarySection(
 ) {
     val editingDiary = contentMode as? PageContentMode.EditingDiary
     var structured by remember(title, diaryDraft) { mutableStateOf(StructuredDiary.fromRaw(diaryDraft)) }
+    var exportHint by remember(title) { mutableStateOf("") }
     val context = LocalContext.current
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) {
@@ -2008,6 +2020,18 @@ private fun DiarySection(
                         imagePicker.launch(arrayOf("image/*"))
                     },
                 )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = {
+                val currentState = StructuredDiary.fromRaw(diaryDraft).let { saved ->
+                    if (editingDiary?.title == title) structured else saved
+                }
+                val uri = exportDiaryLongImage(context, title, currentState)
+                exportHint = if (uri != null) "已导出长图" else "导出失败"
+            }) { Text("导出长图") }
+            if (exportHint.isNotBlank()) {
+                Text(exportHint, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A7065))
             }
         }
         Text(text = BookStrings.diaryLocalOnly, style = MaterialTheme.typography.labelSmall, color = tint.copy(alpha = 0.62f))
@@ -2102,6 +2126,175 @@ private fun diaryDateLabel(date: LocalDate): String {
         DayOfWeek.SUNDAY -> "周日"
     }
     return "${date.monthValue}月${date.dayOfMonth}日 · $weekday"
+}
+
+private fun exportDiaryLongImage(
+    context: Context,
+    title: String,
+    state: StructuredDiary,
+): Uri? = runCatching {
+    val bitmap = renderDiaryLongImage(context, title, state)
+    saveBitmapToPictures(context, bitmap, "Goalday_${System.currentTimeMillis()}.png")
+}.getOrNull()
+
+private fun renderDiaryLongImage(
+    context: Context,
+    title: String,
+    state: StructuredDiary,
+): Bitmap {
+    val width = 1080
+    val padding = 72f
+    val contentWidth = width - padding * 2
+    val estimatedHeight = 1500 + state.imageUris.take(3).size * 300 + state.toRaw().length.coerceAtMost(1600)
+    val scratch = Bitmap.createBitmap(width, estimatedHeight.coerceAtLeast(2200), Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(scratch)
+    canvas.drawColor(0xFFFFFBF6.toInt())
+    val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF2F2922.toInt()
+        textSize = 48f
+        isFakeBoldText = true
+    }
+    val subtitlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF8B7A68.toInt()
+        textSize = 28f
+    }
+    val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFB07A8F.toInt()
+        textSize = 30f
+        isFakeBoldText = true
+    }
+    val bodyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF3A342E.toInt()
+        textSize = 30f
+    }
+    val cardPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFF7EFE6.toInt()
+    }
+    var y = 86f
+    canvas.drawText(title.ifBlank { "Goalday 日记" }, padding, y, titlePaint)
+    y += 48f
+    canvas.drawText(diaryDateLabel(LocalDate.now()), padding, y, subtitlePaint)
+    y += 54f
+    if (state.moodTags.isNotBlank()) {
+        y = drawExportSection(canvas, "心情标签", state.moodTags, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
+    }
+    y = drawExportSection(canvas, "今日完成", state.todayDone.ifBlank { "今天完成了什么？" }, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
+    y = drawExportSection(canvas, "工作任务", state.workTasks.ifBlank { "记录待推进的任务。" }, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
+    y = drawExportSection(canvas, "小幸福", state.smallJoy.ifBlank { "记录今天值得保留的一刻。" }, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
+    y = drawExportSection(canvas, "可改进", state.canImprove.ifBlank { "记录下一次可以优化的地方。" }, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
+    if (state.photoText.isNotBlank()) {
+        y = drawExportSection(canvas, "图片描述", state.photoText, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
+    }
+    state.imageUris.take(3).forEachIndexed { index, uri ->
+        y += 12f
+        canvas.drawText("图片 ${index + 1}", padding, y + 32f, labelPaint)
+        y += 52f
+        y = drawExportImage(context, canvas, uri, padding, y, contentWidth, cardPaint)
+    }
+    val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFB7A893.toInt()
+        textSize = 24f
+    }
+    y += 48f
+    canvas.drawText("Goalday Local", padding, y, footerPaint)
+    val finalHeight = (y + 72f).toInt().coerceAtMost(scratch.height)
+    return Bitmap.createBitmap(scratch, 0, 0, width, finalHeight)
+}
+
+private fun drawExportSection(
+    canvas: Canvas,
+    label: String,
+    body: String,
+    x: Float,
+    y: Float,
+    width: Float,
+    labelPaint: Paint,
+    bodyPaint: Paint,
+    cardPaint: Paint,
+): Float {
+    val lines = wrapExportText(body, bodyPaint, width - 44f).ifEmpty { listOf(" ") }
+    val height = 72f + lines.size * 40f
+    val rect = RectF(x, y, x + width, y + height)
+    canvas.drawRoundRect(rect, 22f, 22f, cardPaint)
+    canvas.drawText(label, x + 22f, y + 40f, labelPaint)
+    var lineY = y + 84f
+    lines.forEach { line ->
+        canvas.drawText(line, x + 22f, lineY, bodyPaint)
+        lineY += 40f
+    }
+    return y + height + 24f
+}
+
+private fun drawExportImage(
+    context: Context,
+    canvas: Canvas,
+    uri: String,
+    x: Float,
+    y: Float,
+    width: Float,
+    fallbackPaint: Paint,
+): Float {
+    val source = runCatching {
+        context.contentResolver.openInputStream(Uri.parse(uri))?.use { stream ->
+            BitmapFactory.decodeStream(stream)
+        }
+    }.getOrNull()
+    val maxHeight = 320f
+    val rect = RectF(x, y, x + width, y + maxHeight)
+    canvas.drawRoundRect(rect, 22f, 22f, fallbackPaint)
+    if (source != null) {
+        val ratio = minOf(width / source.width, maxHeight / source.height)
+        val drawWidth = source.width * ratio
+        val drawHeight = source.height * ratio
+        val dest = RectF(x + (width - drawWidth) / 2f, y + (maxHeight - drawHeight) / 2f, x + (width + drawWidth) / 2f, y + (maxHeight + drawHeight) / 2f)
+        canvas.drawBitmap(source, null, dest, null)
+    }
+    return y + maxHeight + 24f
+}
+
+private fun wrapExportText(text: String, paint: Paint, maxWidth: Float): List<String> {
+    val result = mutableListOf<String>()
+    text.lines().forEach { paragraph ->
+        var current = ""
+        paragraph.forEach { char ->
+            val next = current + char
+            if (paint.measureText(next) > maxWidth && current.isNotBlank()) {
+                result += current
+                current = char.toString()
+            } else {
+                current = next
+            }
+        }
+        if (current.isNotBlank()) result += current
+    }
+    return result.take(24)
+}
+
+private fun saveBitmapToPictures(context: Context, bitmap: Bitmap, fileName: String): Uri? {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Goalday")
+            put(MediaStore.Images.Media.IS_PENDING, 1)
+        }
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return null
+        resolver.openOutputStream(uri)?.use { output ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
+        }
+        values.clear()
+        values.put(MediaStore.Images.Media.IS_PENDING, 0)
+        resolver.update(uri, values, null, null)
+        uri
+    } else {
+        val dir = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Goalday").apply { mkdirs() }
+        val file = File(dir, fileName)
+        FileOutputStream(file).use { output ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
+        }
+        Uri.fromFile(file)
+    }
 }
 
 @Composable
