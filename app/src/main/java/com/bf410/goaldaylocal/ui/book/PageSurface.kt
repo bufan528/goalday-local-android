@@ -1989,6 +1989,12 @@ private fun TargetDetailReplicaPage(
                 )
             }
         }
+        TargetLedgerSummary(
+            total = items.size,
+            completed = completedCount,
+            scheduled = scheduledCount,
+            custom = customItems.size,
+        )
 
         items.chunked(2).forEachIndexed { rowIndex, rowItems ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -2126,6 +2132,42 @@ private fun TargetDetailReplicaPage(
 }
 
 @Composable
+private fun TargetLedgerSummary(
+    total: Int,
+    completed: Int,
+    scheduled: Int,
+    custom: Int,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
+        TargetLedgerCell("待整理", (total - completed).coerceAtLeast(0).toString(), Color(0xFFB07A8F), Modifier.weight(1f))
+        TargetLedgerCell("已完成", completed.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
+        TargetLedgerCell("已排期", scheduled.toString(), GoaldayDesign.Pink, Modifier.weight(1f))
+        TargetLedgerCell("自定义", custom.toString(), Color(0xFF8F684F), Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun TargetLedgerCell(
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(color.copy(alpha = 0.11f))
+            .border(0.7.dp, color.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .padding(horizontal = 7.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(value, color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(label, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+    }
+}
+
+@Composable
 private fun TargetProgressBar(
     completed: Int,
     total: Int,
@@ -2251,7 +2293,14 @@ private fun EditableBulletPage(
         ExecutionBoardHeader(
             title = if (isSchedulePage) "日程执行板" else "任务执行板",
         )
-    ReferencePlannerBoard(
+        PlannerLedgerSummary(
+            sourceCount = shownSourceItems.size,
+            todayCount = todayPlanItems.size,
+            doneCount = todayCompletedItems.size,
+            scheduledCount = schedulePreviewEntries.count { !it.completed },
+            tint = tint,
+        )
+        ReferencePlannerBoard(
             sourceItems = shownSourceItems,
             todayItems = todayPlanItems,
             doneItems = todayCompletedItems,
@@ -2262,6 +2311,46 @@ private fun EditableBulletPage(
             onMoveItemToCompleted = onMoveItemToCompleted,
             onRestoreItemFromDone = onRestoreItemFromCompleted,
         )
+    }
+}
+
+@Composable
+private fun PlannerLedgerSummary(
+    sourceCount: Int,
+    todayCount: Int,
+    doneCount: Int,
+    scheduledCount: Int,
+    tint: Color,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        PlannerLedgerCell("任务池", sourceCount, tint, Modifier.weight(1f))
+        PlannerLedgerCell("今日", todayCount, GoaldayDesign.Pink, Modifier.weight(1f))
+        PlannerLedgerCell("已完成", doneCount, GoaldayDesign.Positive, Modifier.weight(1f))
+        PlannerLedgerCell("日程", scheduledCount, Color(0xFF8F684F), Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun PlannerLedgerCell(
+    label: String,
+    value: Int,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(color.copy(alpha = 0.10f))
+            .border(0.7.dp, color.copy(alpha = 0.20f), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .padding(horizontal = 7.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(value.toString(), color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
 
