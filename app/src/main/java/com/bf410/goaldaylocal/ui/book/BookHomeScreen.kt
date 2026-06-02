@@ -1085,7 +1085,7 @@ private fun InspirationCenterView(
                             .width(190.dp)
                             .height(118.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(templateCoverBrush(item, index))
+                            .background(topicCoverBrush(item, index))
                             .border(
                                 width = if (index == selectedIndex) 2.dp else 1.dp,
                                 color = if (index == selectedIndex) Color.White else Color.White.copy(alpha = 0.35f),
@@ -1094,7 +1094,7 @@ private fun InspirationCenterView(
                             .clickable { onSelect(index) }
                             .padding(12.dp),
                     ) {
-                        TopicCoverDecor(item = item, index = index)
+                        TopicCoverArt(template = item, index = index, compact = true)
                         Text(
                             "${item.targetCount}项",
                             color = Color(0xEFFFFFFF),
@@ -1135,11 +1135,11 @@ private fun InspirationCenterView(
                         .fillMaxWidth()
                         .height(140.dp)
                         .clip(RoundedCornerShape(20.dp))
-                        .background(templateCoverBrush(selected, selectedIndex))
+                        .background(topicCoverBrush(selected, selectedIndex))
                         .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(20.dp))
                         .padding(16.dp),
                 ) {
-                    TopicCoverDecor(item = selected, index = selectedIndex)
+                    TopicCoverArt(template = selected, index = selectedIndex)
                     Text(
                         "${selected.category} · ${selected.targetCount} 个目标",
                         color = Color(0xEFFFFFFF),
@@ -1248,74 +1248,6 @@ private fun InspirationCenterView(
                 ) { Text("导入任务池") }
             }
         }
-    }
-}
-
-private fun templateCoverBrush(template: InspirationTemplate, index: Int): Brush {
-    val deep = when (index % 6) {
-        0 -> Color(0xFF5F6F3D)
-        1 -> Color(0xFF754E5E)
-        2 -> Color(0xFF6F523D)
-        3 -> Color(0xFF445A72)
-        4 -> Color(0xFF566B5B)
-        else -> Color(0xFF574B6B)
-    }
-    return Brush.linearGradient(
-        listOf(
-            template.color.copy(alpha = 0.98f),
-            template.color.copy(alpha = 0.82f),
-            deep,
-        ),
-        start = Offset.Zero,
-        end = Offset(720f, 520f),
-    )
-}
-
-@Composable
-private fun TopicCoverDecor(
-    item: InspirationTemplate,
-    index: Int,
-) {
-    Box(Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .width(26.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color(0x332F261D), Color(0x18FFFFFF), Color.Transparent),
-                    ),
-                ),
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 12.dp, end = 12.dp)
-                .size((28 + (index % 3) * 6).dp)
-                .clip(RoundedCornerShape(99.dp))
-                .background(Color.White.copy(alpha = 0.18f)),
-        )
-        repeat(3) { layer ->
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(bottom = (10 + layer * 8).dp, end = (12 + layer * 18).dp)
-                    .width((42 + layer * 8).dp)
-                    .height(1.dp)
-                    .background(Color.White.copy(alpha = 0.22f)),
-            )
-        }
-        Text(
-            item.coverKey.uppercase().take(14),
-            color = Color.White.copy(alpha = 0.32f),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .graphicsLayer { rotationZ = -90f }
-                .padding(bottom = 2.dp),
-        )
     }
 }
 

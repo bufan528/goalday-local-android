@@ -29,15 +29,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.book.InspirationTemplate
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.book.InspirationTemplates
+import com.bf410.goaldaylocal.ui.book.TopicCoverArt
+import com.bf410.goaldaylocal.ui.book.topicCoverBrush
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 
 data class InspirationDraftItem(
@@ -106,14 +106,11 @@ fun InspirationScreen(
 
         if (mode == InspirationMode.CENTER) {
             InspirationTemplates.all.forEachIndexed { index, template ->
-                Column(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(116.dp)
-                        .background(
-                            inspirationCoverBrush(template, index),
-                            RoundedCornerShape(10.dp),
-                        )
+                        .background(topicCoverBrush(template, index), RoundedCornerShape(10.dp))
                         .border(if (index == selectedTemplateIndex) 2.dp else 0.dp, Color(0x66FFFFFF), RoundedCornerShape(10.dp))
                         .clickable {
                             selectedTemplateIndex = index
@@ -122,26 +119,31 @@ fun InspirationScreen(
                             focusedIndex = 0
                         }
                         .padding(horizontal = 12.dp, vertical = 9.dp),
-                    verticalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(
-                        "${template.category} · ${template.targetCount}项 · ${template.coverKey}",
-                        color = Color(0xE8FFFFFF),
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                    Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Text(template.title, color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                    TopicCoverArt(template = template, index = index, compact = true)
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                    ) {
                         Text(
-                            if (template.linkToSchedule) "可排日程" else "复盘记录",
-                            color = Color.White,
+                            "${template.category} · ${template.targetCount}项 · ${template.coverKey}",
+                            color = Color(0xE8FFFFFF),
                             style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier
-                                .background(Color(0x22FFFFFF), RoundedCornerShape(99.dp))
-                                .padding(horizontal = 7.dp, vertical = 2.dp),
                         )
+                        Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(template.title, color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                            Text(
+                                if (template.linkToSchedule) "可排日程" else "复盘记录",
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier
+                                    .background(Color(0x22FFFFFF), RoundedCornerShape(99.dp))
+                                    .padding(horizontal = 7.dp, vertical = 2.dp),
+                            )
+                        }
+                        Text(template.subtitle, color = Color(0xE8FFFFFF), style = MaterialTheme.typography.bodySmall)
+                        Text("预览 ${template.items.take(4).joinToString(" · ")}", color = Color(0xDFFFFFFF), style = MaterialTheme.typography.labelSmall, maxLines = 1)
                     }
-                    Text(template.subtitle, color = Color(0xE8FFFFFF), style = MaterialTheme.typography.bodySmall)
-                    Text("预览 ${template.items.take(4).joinToString(" · ")}", color = Color(0xDFFFFFFF), style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 }
             }
         }
@@ -253,20 +255,4 @@ fun InspirationScreen(
             Text("已保存内容可在手账中翻页查看", color = Color(0xFF7E756B), style = MaterialTheme.typography.bodySmall)
         }
     }
-}
-
-private fun inspirationCoverBrush(template: InspirationTemplate, index: Int): Brush {
-    val deep = when (index % 6) {
-        0 -> Color(0xFF5F6F3D)
-        1 -> Color(0xFF754E5E)
-        2 -> Color(0xFF6F523D)
-        3 -> Color(0xFF445A72)
-        4 -> Color(0xFF566B5B)
-        else -> Color(0xFF574B6B)
-    }
-    return Brush.linearGradient(
-        listOf(template.color.copy(alpha = 0.98f), template.color.copy(alpha = 0.80f), deep),
-        start = Offset.Zero,
-        end = Offset(760f, 460f),
-    )
 }

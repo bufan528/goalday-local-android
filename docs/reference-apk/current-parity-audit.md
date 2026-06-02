@@ -52,15 +52,15 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 | Scope | Estimate | Reason |
 | --- | ---: | --- |
 | Useful offline planner functionality | 78-84% | Core local scheduling, handbook, typed diary blocks, export preview, config-style templates, target detail overlay, polished widgets, richer backup/settings, and import exist. |
-| Reference/video visual parity | 57-65% | Opened-book shell, topic-cover cards, target detail route, diary item rows, export preview, widget visuals, and settings density improved. |
-| APK structure parity excluding account/VIP/pay | 68-74% | Many module names have local equivalents; diary, export, widgets, and settings have deeper local surfaces, while topic/guide assets remain simplified. |
+| Reference/video visual parity | 59-67% | Opened-book shell, topic-cover cards, target detail route, diary item rows, export preview, widget visuals, settings density, and topic cover art improved. |
+| APK structure parity excluding account/VIP/pay | 69-75% | Many module names have local equivalents; diary, export, widgets, settings, and topic covers have deeper local surfaces, while onboarding remains absent. |
 | Full APK parity including account/VIP/pay/server | 28-35% | Those online/business flows are intentionally out of scope for the local app. |
 
 ## Biggest Remaining Gaps
 
 | Priority | Area | Reference APK Signal | Current App | Remaining Gap |
 | --- | --- | --- | --- | --- |
-| P1 | Topic center visual assets | Config JSON, 33 covers, 28 target files | `InspirationTemplates` now has id/cover key/target key/category and longer local lists, but visuals are generated cover-style cards | Need stronger original cover illustrations or asset-backed cover model. |
+| P1 | Topic center completion | Config JSON, 33 covers, 28 target files | `InspirationTemplates` now has id/cover key/target key/category/longer lists plus a shared original category-aware cover-art system | Need closer config-driven loading or bitmap cover assets only if visual delta remains obvious. |
 | P1 | Target detail flow | Dedicated `TargetDetailActivity`, target detail item names/options | Target cards now open a full-screen detail overlay with status, note, deadline, and schedule actions | Need save-as-own behavior and richer per-target sections. |
 | P1 | Diary polish | Rich editor bundle and diary image/text/target/topic-target item layouts | Compose structured diary with images and persistent text/target/topic-target blocks | Need richer editor chrome and inline formatting; image blocks still use the existing image strip. |
 | P1 | Book page content parity | `BookActivity`, in-book schedule/diary fragments | Better shell and handbook schedule page | Need page contents to stop looking like generic panels, especially target and diary pages. |
@@ -71,8 +71,8 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 
 ## Recommended Next Implementation Order
 
-1. Strengthen original topic cover illustrations or add a local asset-backed cover model.
-2. Add optional first-run guide/onboarding.
+1. Add optional first-run guide/onboarding.
+2. Move topic metadata closer to config-driven loading if needed.
 3. Add widget color/style configuration if needed.
 4. Add richer diary editor chrome and optional inline formatting.
 5. Add target save-as-own behavior and richer per-target sections.
