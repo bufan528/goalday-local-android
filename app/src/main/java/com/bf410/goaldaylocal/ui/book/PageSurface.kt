@@ -764,13 +764,19 @@ private fun HandbookReplicaPage(
         .filter { it.month == anchorMonth }
         .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
     val monthLength = YearMonth.of(anchorYear, anchorMonth).lengthOfMonth()
-    val start = if (anchorYear == today.year && anchorMonth == today.monthValue) {
+    val defaultStart = if (anchorYear == today.year && anchorMonth == today.monthValue) {
         (today.dayOfMonth - 1).coerceIn(0, monthLength - 1)
     } else {
         0
     }
+    val maxStart = (monthLength - 3).coerceAtLeast(0)
+    var windowStart by remember(page.title, anchorYear, anchorMonth) { mutableStateOf(defaultStart.coerceIn(0, maxStart)) }
+    val start = windowStart.coerceIn(0, maxStart)
+    LaunchedEffect(page.title, anchorYear, anchorMonth, defaultStart, maxStart) {
+        windowStart = defaultStart.coerceIn(0, maxStart)
+    }
     val dayBlocks = List(3) { offset ->
-        val day = ((start + offset) % monthLength) + 1
+        val day = start + offset + 1
         val dayEntries = sorted.filter { it.day == day }
         DaySpreadBlock(
             day = day,
@@ -780,6 +786,7 @@ private fun HandbookReplicaPage(
     }
     val leftBlocks = dayBlocks
     val rightBlocks = dayBlocks
+    val visibleRangeLabel = "${dayBlocks.first().day}-${dayBlocks.last().day}日"
     val fallbackLeftDone = todayCompletedItems.take(3)
     val fallbackRightTodo = todayPlanItems.take(3)
     val scheduledTitles = sorted.map { it.title }.toSet()
@@ -815,6 +822,11 @@ private fun HandbookReplicaPage(
             pageCount = pageCount,
             weeklyTheme = weeklyTheme,
             onWeeklyThemeChange = onWeeklyThemeChange,
+            rangeLabel = visibleRangeLabel,
+            canShiftPrevious = start > 0,
+            canShiftNext = start < maxStart,
+            onPreviousRange = { windowStart = (start - 3).coerceAtLeast(0) },
+            onNextRange = { windowStart = (start + 3).coerceAtMost(maxStart) },
         )
         Row(
             modifier = Modifier
@@ -1021,6 +1033,11 @@ private fun BoxScope.HandbookMonthHeader(
     pageCount: Int,
     weeklyTheme: String,
     onWeeklyThemeChange: (String) -> Unit,
+    rangeLabel: String,
+    canShiftPrevious: Boolean,
+    canShiftNext: Boolean,
+    onPreviousRange: () -> Unit,
+    onNextRange: () -> Unit,
 ) {
     val monthModel = remember(year, month) { YearMonth.of(year, month) }
     val weekdays = listOf("M", "T", "W", "T", "F", "S", "S")
@@ -1055,6 +1072,25 @@ private fun BoxScope.HandbookMonthHeader(
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                 )
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "‹",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (canShiftPrevious) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
+                        modifier = Modifier
+                            .alpha(if (canShiftPrevious) 1f else 0.35f)
+                            .clickable(enabled = canShiftPrevious, onClick = onPreviousRange),
+                    )
+                    Text(rangeLabel, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
+                    Text(
+                        "›",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (canShiftNext) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
+                        modifier = Modifier
+                            .alpha(if (canShiftNext) 1f else 0.35f)
+                            .clickable(enabled = canShiftNext, onClick = onNextRange),
+                    )
+                }
             }
             Row(
                 modifier = Modifier
