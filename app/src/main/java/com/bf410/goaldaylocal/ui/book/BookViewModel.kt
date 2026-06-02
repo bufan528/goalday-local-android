@@ -225,6 +225,15 @@ class BookViewModel(
         syncEditableContent()
     }
 
+    fun addHandbookPoolItem(item: String) {
+        val title = item.trim()
+        if (title.isBlank()) return
+        val context = resolvePlanningContext() ?: return
+        val updated = (store.todayPlanItems(context.bookId, context.pageTitle) + title).distinct()
+        store.saveTodayPlanItems(context.bookId, context.pageTitle, updated)
+        syncEditableContent()
+    }
+
     fun updateWeeklyTheme(text: String) {
         val book = currentBook()
         store.setWeeklyTheme(book.id, text)
@@ -531,24 +540,27 @@ class BookViewModel(
         val imported = importTodayFromSchedule()
         when (val page = currentPage()) {
             is DiaryPage -> {
+                val planningPage = book.pages.firstOrNull { it is PlanPage || it is TargetPage || it is SchedulePage }
+                val storedPool = planningPage?.let { store.todayPlanItems(book.id, it.title) }.orEmpty()
                 _uiState.update {
                     it.copy(
                         diaryDraft = store.diaryText(book.id, page.title),
                         customPageItems = emptyList(),
                         weeklyTheme = store.weeklyTheme(book.id),
-                        todayPlanItems = imported.todo,
+                        todayPlanItems = (storedPool + imported.todo).distinct(),
                         todayCompletedItems = imported.done,
                         schedulePreviewEntries = yearEntriesForAnchor(),
                     )
                 }
             }
             is PlanPage, is TargetPage, is SchedulePage -> {
+                val storedPool = store.todayPlanItems(book.id, page.title)
                 _uiState.update {
                     it.copy(
                         diaryDraft = "",
                         customPageItems = store.customPageItems(book.id, page.title),
                         weeklyTheme = store.weeklyTheme(book.id),
-                        todayPlanItems = imported.todo,
+                        todayPlanItems = (storedPool + imported.todo).distinct(),
                         todayCompletedItems = imported.done,
                         schedulePreviewEntries = yearEntriesForAnchor(),
                     )

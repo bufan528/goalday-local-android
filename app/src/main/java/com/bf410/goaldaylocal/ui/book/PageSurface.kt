@@ -632,6 +632,7 @@ fun ActivePageLayer(
     onRemoveCustomItem: (String) -> Unit,
     onRenameCustomItem: (String, String) -> Unit,
     onAddToSchedule: (String, Int) -> Unit,
+    onAddHandbookPoolItem: (String) -> Unit,
     onAddScheduleFromHandbook: (String, Int, Int) -> Unit,
     onWeeklyThemeChange: (String) -> Unit,
     onMoveItemToToday: (String) -> Unit,
@@ -659,6 +660,7 @@ fun ActivePageLayer(
             todayCompletedItems = todayCompletedItems,
             schedulePreviewEntries = schedulePreviewEntries,
             weeklyTheme = weeklyTheme,
+            onAddPoolItem = onAddHandbookPoolItem,
             onAddSchedule = onAddScheduleFromHandbook,
             onWeeklyThemeChange = onWeeklyThemeChange,
             onUpdateScheduleTitle = onUpdateScheduleTitle,
@@ -741,6 +743,7 @@ private fun HandbookReplicaPage(
     todayCompletedItems: List<String>,
     schedulePreviewEntries: List<ScheduleEntry>,
     weeklyTheme: String,
+    onAddPoolItem: (String) -> Unit,
     onAddSchedule: (String, Int, Int) -> Unit,
     onWeeklyThemeChange: (String) -> Unit,
     onUpdateScheduleTitle: (String, String) -> Unit,
@@ -790,8 +793,8 @@ private fun HandbookReplicaPage(
         val dayEntries = sorted.filter { it.day == day }
         DaySpreadBlock(
             day = day,
-            done = dayEntries.filter { it.completed }.take(3),
-            todo = dayEntries.filterNot { it.completed }.take(3),
+            done = dayEntries.filter { it.completed }.take(5),
+            todo = dayEntries.filterNot { it.completed }.take(5),
         )
     }
     val leftBlocks = dayBlocks
@@ -801,7 +804,7 @@ private fun HandbookReplicaPage(
     val fallbackLeftDone = todayCompletedItems.take(3)
     val fallbackRightTodo = todayPlanItems.take(3)
     val scheduledTitles = sorted.map { it.title }.toSet()
-    val visiblePoolItems = todayPlanItems.filterNot { it in scheduledTitles }.take(3)
+    val visiblePoolItems = todayPlanItems.filterNot { it in scheduledTitles }.take(6)
     var draftText by remember(page.title) { mutableStateOf("") }
     var draftDay by remember(page.title) { mutableStateOf(rightBlocks.firstOrNull()?.day ?: 1) }
     LaunchedEffect(visibleDays) {
@@ -933,6 +936,11 @@ private fun HandbookReplicaPage(
                     selectedDay = selectedDraftDay,
                     onSelectDay = { draftDay = it },
                     poolItems = visiblePoolItems,
+                    onAddPoolItem = { text ->
+                        onAddPoolItem(text)
+                        draftText = ""
+                        saveHint = "已加入待安排"
+                    },
                     onPickPoolItem = { text ->
                         onAddSchedule(text, anchorMonth, selectedDraftDay)
                         saveHint = "已放入${selectedDraftDay}日"
@@ -1315,8 +1323,15 @@ private fun DaySpreadSection(
         done.take(2).forEach { line ->
             Text("✓ $line", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary, textDecoration = TextDecoration.LineThrough, maxLines = 1)
         }
-        if (done.isEmpty()) {
-            Text("○", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
+        repeat((3 - done.take(2).size).coerceAtLeast(0)) { index ->
+            EmptyHandbookSlot(
+                label = when {
+                    activeDrop && index == 0 -> "释放放入 done"
+                    done.isEmpty() && index == 0 -> "○"
+                    else -> ""
+                },
+                highlight = activeDrop && index == 0,
+            )
         }
     }
 }
@@ -1329,6 +1344,7 @@ private fun HandbookQuickAddRow(
     selectedDay: Int,
     onSelectDay: (Int) -> Unit,
     poolItems: List<String>,
+    onAddPoolItem: (String) -> Unit,
     onPickPoolItem: (String) -> Unit,
     onPoolDragStart: (String, Offset) -> Unit,
     onPoolDrag: (Offset) -> Unit,
@@ -1339,6 +1355,10 @@ private fun HandbookQuickAddRow(
     val focusRequester = remember { FocusRequester() }
     fun submitAndKeepFocus() {
         onDone()
+        focusRequester.requestFocus()
+    }
+    fun addToPoolAndKeepFocus() {
+        onAddPoolItem(value)
         focusRequester.requestFocus()
     }
 
@@ -1369,6 +1389,7 @@ private fun HandbookQuickAddRow(
                         }
                         inner()
                     }
+                    Text("入池", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable(onClick = ::addToPoolAndKeepFocus))
                     Text("加入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, modifier = Modifier.clickable(onClick = ::submitAndKeepFocus))
                 }
             },
@@ -1388,7 +1409,7 @@ private fun HandbookQuickAddRow(
         }
         if (poolItems.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("待安排", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                Text("待安排 · 长按拖入日期", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                 poolItems.forEach { item ->
                     var rowOrigin by remember(item) { mutableStateOf(Offset.Zero) }
                     Row(
@@ -1453,10 +1474,13 @@ private fun DaySpreadEditableSection(
             Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
             Text("d${doneCount}/t${todoCount}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB07A8F))
         }
-        repeat(3) { idx ->
+        repeat(4) { idx ->
             val entry = entries.getOrNull(idx)
             if (entry == null) {
-                Text("○", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
+                EmptyHandbookSlot(
+                    label = if (activeDrop && idx == entries.size.coerceAtMost(3)) "释放到${day}日" else "",
+                    highlight = activeDrop && idx == entries.size.coerceAtMost(3),
+                )
             } else {
                 HandbookEntryLine(
                     slotLabel = "${day}",
@@ -1474,6 +1498,34 @@ private fun DaySpreadEditableSection(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun EmptyHandbookSlot(
+    label: String,
+    highlight: Boolean,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            label.ifBlank { " " },
+            style = MaterialTheme.typography.labelSmall,
+            color = if (highlight) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
+            maxLines = 1,
+            modifier = Modifier.width(54.dp),
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(if (highlight) 1.2.dp else 0.6.dp)
+                .background(if (highlight) GoaldayDesign.Pink else Color(0x16000000)),
+        )
     }
 }
 
