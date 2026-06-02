@@ -178,6 +178,20 @@ class LocalStateStore(
         }
     }
 
+    fun removePageScopedData(
+        bookId: String,
+        pageTitle: String,
+        checkedItems: List<String> = emptyList(),
+    ) {
+        mmkv.removeValueForKey(diaryKey(bookId, pageTitle))
+        mmkv.removeValueForKey(pageItemsKey(bookId, pageTitle))
+        mmkv.removeValueForKey(todayPlanKey(bookId, pageTitle))
+        mmkv.removeValueForKey(todayDoneKey(bookId, pageTitle))
+        checkedItems.distinct().forEach { item ->
+            mmkv.removeValueForKey(checkKey(bookId, pageTitle, item))
+        }
+    }
+
     fun customBooks(): List<TopicBook> {
         val raw = mmkv.decodeString(KEY_CUSTOM_BOOKS, "[]") ?: "[]"
         val array = JSONArray(raw)

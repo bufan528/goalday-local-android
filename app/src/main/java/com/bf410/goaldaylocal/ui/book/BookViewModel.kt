@@ -399,6 +399,14 @@ class BookViewModel(
     fun removeCurrentCustomBook() {
         val currentBook = currentBook()
         if (!currentBook.id.startsWith("custom_")) return
+        currentBook.pages.forEach { page ->
+            store.removePageScopedData(
+                bookId = currentBook.id,
+                pageTitle = page.title,
+                checkedItems = checkedItemsForPage(currentBook.id, page),
+            )
+        }
+        store.removeSavedBook(currentBook.id)
         store.removeCustomBook(currentBook.id)
         refreshBooks(selectBookId = SampleLibrary.books.first().id, openBook = false)
     }
@@ -412,7 +420,7 @@ class BookViewModel(
             bookId = current.id,
             oldTitle = oldPage.title,
             newTitle = trimmed,
-            checkedItems = checkedItemsForPage(oldPage),
+            checkedItems = checkedItemsForPage(current.id, oldPage),
         )
         updateCurrentBookPages { pages ->
             pages.toMutableList().also { list ->
@@ -459,8 +467,15 @@ class BookViewModel(
     }
 
     fun deleteCurrentPage() {
-        if (!isCurrentBookCustom() || currentBook().pages.size <= 1) return
+        val current = currentBook()
+        if (!isCurrentBookCustom() || current.pages.size <= 1) return
         val removedIndex = _uiState.value.selectedPageIndex
+        val removedPage = current.pages[removedIndex]
+        store.removePageScopedData(
+            bookId = current.id,
+            pageTitle = removedPage.title,
+            checkedItems = checkedItemsForPage(current.id, removedPage),
+        )
         updateCurrentBookPages { pages ->
             pages.filterIndexed { index, _ -> index != removedIndex }
         }
@@ -651,11 +666,11 @@ class BookViewModel(
             is DiaryPage -> page.copy(title = title)
         }
 
-    private fun checkedItemsForPage(page: BookPage): List<String> =
+    private fun checkedItemsForPage(bookId: String, page: BookPage): List<String> =
         when (page) {
-            is TargetPage -> page.items + store.customPageItems(currentBook().id, page.title)
-            is PlanPage -> page.items + store.customPageItems(currentBook().id, page.title)
-            is SchedulePage -> page.items + store.customPageItems(currentBook().id, page.title)
+            is TargetPage -> page.items + store.customPageItems(bookId, page.title)
+            is PlanPage -> page.items + store.customPageItems(bookId, page.title)
+            is SchedulePage -> page.items + store.customPageItems(bookId, page.title)
             is DiaryPage -> emptyList()
         }
 
