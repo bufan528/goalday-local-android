@@ -28,7 +28,7 @@ This audit treats the APK as a product and UX reference only. The APK contains `
   - `assets/rich_editor.js`
   - `assets/style.css`
   - `assets/normalize.css`
-- Print/export evidence remains stronger than the current share-only flow:
+- Print/export evidence remains stronger than the current preview-sheet flow:
   - iText PDF resources are bundled.
   - `PrintPage` and `LongImageDisplayActivity` are visible in previous manifest/resource-name extraction.
 - UI resource-name signals still point to dedicated screens and item models:
@@ -49,9 +49,9 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 
 | Scope | Estimate | Reason |
 | --- | ---: | --- |
-| Useful offline planner functionality | 74-80% | Core local scheduling, handbook, typed diary blocks, config-style templates, target detail overlay, widgets, backup, and import exist. |
-| Reference/video visual parity | 50-58% | Opened-book shell, topic-cover cards, target detail route, and diary item rows improved, but print preview/widgets/settings still differ. |
-| APK structure parity excluding account/VIP/pay | 63-69% | Many module names have local equivalents and diary has item-level blocks, but export/settings/widgets are still merged or simplified. |
+| Useful offline planner functionality | 76-82% | Core local scheduling, handbook, typed diary blocks, export preview, config-style templates, target detail overlay, widgets, backup, and import exist. |
+| Reference/video visual parity | 53-61% | Opened-book shell, topic-cover cards, target detail route, diary item rows, and export preview improved, but widgets/settings still differ. |
+| APK structure parity excluding account/VIP/pay | 65-71% | Many module names have local equivalents; diary has item-level blocks and export has preview/print actions, but settings/widgets are still simplified. |
 | Full APK parity including account/VIP/pay/server | 28-35% | Those online/business flows are intentionally out of scope for the local app. |
 
 ## Biggest Remaining Gaps
@@ -63,18 +63,18 @@ The main remaining issue is not whether a feature name exists. The gap is that t
 | P1 | Diary polish | Rich editor bundle and diary image/text/target/topic-target item layouts | Compose structured diary with images and persistent text/target/topic-target blocks | Need richer editor chrome and inline formatting; image blocks still use the existing image strip. |
 | P1 | Book page content parity | `BookActivity`, in-book schedule/diary fragments | Better shell and handbook schedule page | Need page contents to stop looking like generic panels, especially target and diary pages. |
 | P1 | Monthly schedule split | `fragment_monthly_schedule`, schedule item variants | Calendar page plus handbook spread | Need a clearer monthly board/detail split and closer schedule-item density. |
-| P0 | Print/export preview | `LongImageDisplayActivity`, `PrintPage`, iText | Direct export/share from diary/handbook, now including typed diary blocks | Need dedicated preview screen before share/print/export. |
+| P1 | Print/export route | `LongImageDisplayActivity`, `PrintPage`, iText | Diary/handbook now open a long-image preview sheet with save/share/print and quick-save fallback | Need a dedicated full-screen route only if more preview controls are required. |
 | P2 | Widgets visual parity | diary add, mid schedule, large schedule widgets | Widgets exist | Need visual polish, empty states, and closer compact layout. |
 | P2 | Settings/backup density | `BackupActivity`, `SettingActivity` | Basic local backup/settings | Need backup history, restore confirmation, storage path/status, and denser settings rows. |
 
 ## Recommended Next Implementation Order
 
-1. Add a dedicated long-image/print preview screen shared by diary and handbook exports.
-2. Add richer diary editor chrome and optional inline formatting.
-3. Strengthen original topic cover illustrations or add a local asset-backed cover model.
-4. Add target save-as-own behavior and richer per-target sections.
-5. Polish widgets/settings after the main in-app flow is closer.
+1. Polish widget visual states and compact/mid/large widget layouts.
+2. Add richer settings/backup rows, backup history, restore confirmation, and storage status.
+3. Add richer diary editor chrome and optional inline formatting.
+4. Strengthen original topic cover illustrations or add a local asset-backed cover model.
+5. Add target save-as-own behavior and richer per-target sections.
 
 ## Practical Conclusion
 
-The current app is no longer "almost completely different"; it now has a similar offline product skeleton. But compared with the APK/video, it is still missing the reference app's export/print surface and finer editor chrome. The next high-impact change should be the preview/export flow, not another small page-shell tweak.
+The current app is no longer "almost completely different"; it now has a similar offline product skeleton. But compared with the APK/video, it is still missing the reference app's widget/settings density and finer editor chrome. The next high-impact change should be widget/settings polish, not another small page-shell tweak.

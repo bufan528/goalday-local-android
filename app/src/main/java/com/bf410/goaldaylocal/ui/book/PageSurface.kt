@@ -8,9 +8,17 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.os.Build
+import android.os.CancellationSignal
 import android.os.Environment
+import android.os.ParcelFileDescriptor
+import android.print.PrintAttributes
+import android.print.PrintDocumentAdapter
+import android.print.PrintDocumentInfo
+import android.print.PrintManager
+import android.print.PageRange
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -78,6 +86,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import com.bf410.goaldaylocal.data.BookPage
@@ -856,6 +865,7 @@ private fun HandbookReplicaPage(
     var activeDoneDropDay by remember(pageIndex) { mutableStateOf<Int?>(null) }
     val context = LocalContext.current
     var exportHint by remember(pageIndex) { mutableStateOf("") }
+    var longImagePreview by remember(pageIndex) { mutableStateOf<LongImagePreview?>(null) }
     fun clearPoolDrag() {
         draggingPoolItem = null
         activePoolDropDay = null
@@ -955,7 +965,24 @@ private fun HandbookReplicaPage(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "导出",
+                "预览",
+                color = Color(0xFF8B6F78),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0x18E88FAE))
+                    .clickable {
+                        longImagePreview = LongImagePreview(
+                            title = "Goalday 日程手账",
+                            subtitle = "$anchorYear 年 $anchorMonth 月 · $visibleRangeLabel",
+                            filePrefix = "Goalday_schedule",
+                            bitmap = renderHandbookScheduleLongImage(anchorYear, anchorMonth, visibleDays, sorted, weeklyTheme),
+                        )
+                    }
+                    .padding(horizontal = 7.dp, vertical = 3.dp),
+            )
+            Text(
+                "快存",
                 color = Color(0xFF8B6F78),
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
@@ -964,19 +991,6 @@ private fun HandbookReplicaPage(
                     .clickable {
                         val uri = exportHandbookScheduleLongImage(context, anchorYear, anchorMonth, visibleDays, sorted, weeklyTheme)
                         exportHint = if (uri != null) "已导出" else "导出失败"
-                    }
-                    .padding(horizontal = 7.dp, vertical = 3.dp),
-            )
-            Text(
-                "分享",
-                color = Color(0xFF8B6F78),
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0x18E88FAE))
-                    .clickable {
-                        val uri = exportHandbookScheduleLongImage(context, anchorYear, anchorMonth, visibleDays, sorted, weeklyTheme)
-                        exportHint = if (uri != null && shareLongImage(context, uri)) "已打开分享" else "分享失败"
                     }
                     .padding(horizontal = 7.dp, vertical = 3.dp),
             )
@@ -1244,6 +1258,12 @@ private fun HandbookReplicaPage(
                     .padding(start = 4.dp, bottom = 2.dp),
             )
         }
+    }
+    longImagePreview?.let { preview ->
+        LongImagePreviewDialog(
+            preview = preview,
+            onDismiss = { longImagePreview = null },
+        )
     }
 }
 
@@ -2224,6 +2244,7 @@ private fun DiarySection(
     var structured by remember(title, diaryDraft) { mutableStateOf(StructuredDiary.fromRaw(diaryDraft)) }
     var exportHint by remember(title) { mutableStateOf("") }
     var showDatePicker by remember(title) { mutableStateOf(false) }
+    var longImagePreview by remember(title) { mutableStateOf<LongImagePreview?>(null) }
     val context = LocalContext.current
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = structured.date.toEpochMillis())
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
@@ -2324,18 +2345,29 @@ private fun DiarySection(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = {
-                val uri = exportDiaryLongImage(context, title, currentDiaryState())
-                exportHint = if (uri != null) "已导出长图" else "导出失败"
-            }) { Text("导出长图") }
+                val state = currentDiaryState()
+                longImagePreview = LongImagePreview(
+                    title = title.ifBlank { "Goalday 日记" },
+                    subtitle = diaryDateLabel(state.date),
+                    filePrefix = "Goalday_diary",
+                    bitmap = renderDiaryLongImage(context, title, state),
+                )
+            }) { Text("预览长图") }
             TextButton(onClick = {
                 val uri = exportDiaryLongImage(context, title, currentDiaryState())
-                exportHint = if (uri != null && shareLongImage(context, uri)) "已打开分享" else "分享失败"
-            }) { Text("分享长图") }
+                exportHint = if (uri != null) "已导出长图" else "导出失败"
+            }) { Text("快速导出") }
             if (exportHint.isNotBlank()) {
                 Text(exportHint, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A7065))
             }
         }
         Text(text = BookStrings.diaryLocalOnly, style = MaterialTheme.typography.labelSmall, color = tint.copy(alpha = 0.62f))
+    }
+    longImagePreview?.let { preview ->
+        LongImagePreviewDialog(
+            preview = preview,
+            onDismiss = { longImagePreview = null },
+        )
     }
 }
 
@@ -2609,6 +2641,180 @@ private fun exportHandbookScheduleLongImage(
     val bitmap = renderHandbookScheduleLongImage(year, month, days, entries, weeklyTheme)
     saveBitmapToPictures(context, bitmap, "Goalday_schedule_${System.currentTimeMillis()}.png")
 }.getOrNull()
+
+private data class LongImagePreview(
+    val title: String,
+    val subtitle: String,
+    val filePrefix: String,
+    val bitmap: Bitmap,
+)
+
+private fun saveLongImagePreview(context: Context, preview: LongImagePreview): Uri? =
+    saveBitmapToPictures(context, preview.bitmap, "${preview.filePrefix}_${System.currentTimeMillis()}.png")
+
+private fun shareLongImagePreview(context: Context, preview: LongImagePreview): Boolean {
+    val uri = saveLongImagePreview(context, preview) ?: return false
+    return shareLongImage(context, uri)
+}
+
+private fun printLongImagePreview(context: Context, preview: LongImagePreview): Boolean =
+    runCatching {
+        val printManager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
+        printManager.print(
+            preview.title.ifBlank { "Goalday 长图" },
+            BitmapPrintDocumentAdapter(preview.title, preview.bitmap),
+            PrintAttributes.Builder()
+                .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+                .build(),
+        )
+        true
+    }.getOrDefault(false)
+
+private class BitmapPrintDocumentAdapter(
+    private val title: String,
+    private val bitmap: Bitmap,
+) : PrintDocumentAdapter() {
+    override fun onLayout(
+        oldAttributes: PrintAttributes?,
+        newAttributes: PrintAttributes?,
+        cancellationSignal: CancellationSignal?,
+        callback: LayoutResultCallback,
+        extras: android.os.Bundle?,
+    ) {
+        if (cancellationSignal?.isCanceled == true) {
+            callback.onLayoutCancelled()
+            return
+        }
+        callback.onLayoutFinished(
+            PrintDocumentInfo.Builder("${title.ifBlank { "Goalday" }}.pdf")
+                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                .setPageCount(1)
+                .build(),
+            true,
+        )
+    }
+
+    override fun onWrite(
+        pages: Array<out PageRange>?,
+        destination: ParcelFileDescriptor?,
+        cancellationSignal: CancellationSignal?,
+        callback: WriteResultCallback,
+    ) {
+        if (destination == null || cancellationSignal?.isCanceled == true) {
+            callback.onWriteCancelled()
+            return
+        }
+        runCatching {
+            val document = PdfDocument()
+            try {
+                val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
+                val page = document.startPage(pageInfo)
+                page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+                document.finishPage(page)
+                FileOutputStream(destination.fileDescriptor).use { output ->
+                    document.writeTo(output)
+                }
+            } finally {
+                document.close()
+            }
+            callback.onWriteFinished(arrayOf(PageRange.ALL_PAGES))
+        }.onFailure {
+            callback.onWriteFailed(it.message ?: "打印失败")
+        }
+    }
+}
+
+@Composable
+private fun LongImagePreviewDialog(
+    preview: LongImagePreview,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    var actionHint by remember(preview) { mutableStateOf("") }
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(Color(0xFFFFFCF7))
+                .border(1.dp, Color(0x2AB7A893), RoundedCornerShape(18.dp))
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(preview.title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                    Text(preview.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                }
+                Text(
+                    "关闭",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GoaldayDesign.InkMuted,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .clickable { onDismiss() }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(360.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFFF2ECE3))
+                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(12.dp))
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                Image(
+                    bitmap = preview.bitmap.asImageBitmap(),
+                    contentDescription = null,
+                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            Text(
+                "${preview.bitmap.width} × ${preview.bitmap.height}px",
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.InkMuted,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
+                LongImageActionChip("保存", GoaldayDesign.Positive) {
+                    actionHint = if (saveLongImagePreview(context, preview) != null) "已保存到相册" else "保存失败"
+                }
+                LongImageActionChip("分享", Color(0xFFB07A8F)) {
+                    actionHint = if (shareLongImagePreview(context, preview)) "已打开分享" else "分享失败"
+                }
+                LongImageActionChip("打印", GoaldayDesign.InkSecondary) {
+                    actionHint = if (printLongImagePreview(context, preview)) "已打开打印" else "打印失败"
+                }
+                if (actionHint.isNotBlank()) {
+                    Text(actionHint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LongImageActionChip(
+    label: String,
+    color: Color,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelSmall,
+        color = Color.White,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(color)
+            .clickable { onClick() }
+            .padding(horizontal = 11.dp, vertical = 6.dp),
+    )
+}
 
 private fun renderHandbookScheduleLongImage(
     year: Int,
