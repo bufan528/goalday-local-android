@@ -1155,6 +1155,7 @@ private fun HandbookReplicaPage(
                 rightBlocks.forEachIndexed { idx, block ->
                     DaySpreadEditableSection(
                         day = block.day,
+                        visibleDays = visibleDays,
                         entries = if (idx == 0 && block.todo.isEmpty()) {
                             fallbackRightTodo.mapIndexed { i, text ->
                                 ScheduleEntry(id = "fallback_$i", title = text, day = block.day, month = anchorMonth, year = anchorYear, completed = false, note = "")
@@ -1189,6 +1190,13 @@ private fun HandbookReplicaPage(
                             } else {
                                 onAddSchedule(entry.title, anchorMonth, entry.day)
                                 saveHint = "已放入${entry.day}日"
+                            }
+                        },
+                        onMoveEntryToDay = { entry, targetDay ->
+                            if (!entry.id.startsWith("fallback_")) {
+                                onMoveScheduleDay(entry.id, anchorMonth, targetDay)
+                                draftDay = targetDay
+                                saveHint = "已移动到${targetDay}日"
                             }
                         },
                         onEntryDragStart = { entry, position ->
@@ -1849,6 +1857,7 @@ private fun HandbookQuickAddRow(
 @Composable
 private fun DaySpreadEditableSection(
     day: Int,
+    visibleDays: List<Int>,
     entries: List<ScheduleEntry>,
     editingId: String?,
     editingText: String,
@@ -1858,6 +1867,7 @@ private fun DaySpreadEditableSection(
     onTextChange: (String) -> Unit,
     onCommit: (ScheduleEntry) -> Unit,
     onToggleCompleted: (ScheduleEntry) -> Unit,
+    onMoveEntryToDay: (ScheduleEntry, Int) -> Unit,
     onEntryDragStart: (ScheduleEntry, Offset) -> Unit,
     onEntryDrag: (Offset) -> Unit,
     onEntryDragEnd: () -> Unit,
@@ -1886,6 +1896,7 @@ private fun DaySpreadEditableSection(
                     highlight = activeDrop && idx == entries.size.coerceAtMost(2),
                 )
             } else {
+                val dayIndex = visibleDays.indexOf(entry.day)
                 HandbookEntryLine(
                     slotLabel = "${day}",
                     entry = entry,
@@ -1895,6 +1906,14 @@ private fun DaySpreadEditableSection(
                     onTextChange = onTextChange,
                     onCommit = { onCommit(entry) },
                     onToggleCompleted = { onToggleCompleted(entry) },
+                    canMovePrevious = dayIndex > 0 && !entry.id.startsWith("fallback_"),
+                    canMoveNext = dayIndex >= 0 && dayIndex < visibleDays.lastIndex && !entry.id.startsWith("fallback_"),
+                    onMovePrevious = {
+                        visibleDays.getOrNull(dayIndex - 1)?.let { targetDay -> onMoveEntryToDay(entry, targetDay) }
+                    },
+                    onMoveNext = {
+                        visibleDays.getOrNull(dayIndex + 1)?.let { targetDay -> onMoveEntryToDay(entry, targetDay) }
+                    },
                     onDragStart = { position -> onEntryDragStart(entry, position) },
                     onDrag = onEntryDrag,
                     onDragEnd = onEntryDragEnd,
@@ -1952,6 +1971,10 @@ private fun HandbookEntryLine(
     onTextChange: (String) -> Unit,
     onCommit: () -> Unit,
     onToggleCompleted: () -> Unit,
+    canMovePrevious: Boolean,
+    canMoveNext: Boolean,
+    onMovePrevious: () -> Unit,
+    onMoveNext: () -> Unit,
     onDragStart: (Offset) -> Unit,
     onDrag: (Offset) -> Unit,
     onDragEnd: () -> Unit,
@@ -2078,9 +2101,38 @@ private fun HandbookEntryLine(
                     color = statusColor,
                     maxLines = 1,
                 )
+                HandbookMoveTargetButton(
+                    label = "‹",
+                    enabled = canMovePrevious,
+                    onClick = onMovePrevious,
+                )
+                HandbookMoveTargetButton(
+                    label = "›",
+                    enabled = canMoveNext,
+                    onClick = onMoveNext,
+                )
             }
         }
     }
+}
+
+@Composable
+private fun HandbookMoveTargetButton(
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelSmall,
+        color = if (enabled) GoaldayDesign.Pink else GoaldayDesign.InkMuted.copy(alpha = 0.38f),
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(if (enabled) Color.White.copy(alpha = 0.66f) else Color.Transparent)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 1.dp),
+    )
 }
 
 private fun scheduleRepeatLabel(entry: ScheduleEntry): String {
