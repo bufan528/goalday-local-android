@@ -3288,14 +3288,25 @@ private fun shareLongImagePreview(context: Context, preview: LongImagePreview): 
     return shareLongImage(context, uri)
 }
 
-private fun printLongImagePreview(context: Context, preview: LongImagePreview): Boolean =
+private enum class LongImageExportPreset(
+    val label: String,
+    val description: String,
+    val mediaSize: PrintAttributes.MediaSize,
+    val previewInset: Int,
+) {
+    LONG("长图", "原始比例 · 适合保存分享", PrintAttributes.MediaSize.UNKNOWN_PORTRAIT, 0),
+    PHONE("手机", "9:16 预览 · 适合发到社交软件", PrintAttributes.MediaSize.NA_LETTER, 10),
+    PRINT("打印", "A4 PDF · 适合纸质手账", PrintAttributes.MediaSize.ISO_A4, 22),
+}
+
+private fun printLongImagePreview(context: Context, preview: LongImagePreview, preset: LongImageExportPreset): Boolean =
     runCatching {
         val printManager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
         printManager.print(
             preview.title.ifBlank { "Goalday 长图" },
             BitmapPrintDocumentAdapter(preview.title, preview.bitmap),
             PrintAttributes.Builder()
-                .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                .setMediaSize(preset.mediaSize)
                 .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                 .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
                 .build(),
@@ -3364,6 +3375,12 @@ private fun LongImagePreviewDialog(
 ) {
     val context = LocalContext.current
     var actionHint by remember(preview) { mutableStateOf("") }
+    var selectedPreset by remember(preview) { mutableStateOf(LongImageExportPreset.LONG) }
+    var actionHistory by remember(preview) { mutableStateOf(listOf<String>()) }
+    fun recordAction(message: String) {
+        actionHint = message
+        actionHistory = (listOf(message) + actionHistory).take(4)
+    }
     LaunchedEffect(actionHint) {
         if (actionHint.isNotBlank()) {
             delay(1400)
@@ -3396,7 +3413,7 @@ private fun LongImagePreviewDialog(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("PRINT EXPORT", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+                    Text("LONG IMAGE DISPLAY", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
                     Text(preview.title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
                     Text(preview.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                 }
@@ -3419,7 +3436,23 @@ private fun LongImagePreviewDialog(
             ) {
                 LongImageInfoPill("长图", "${preview.bitmap.width}×${preview.bitmap.height}")
                 LongImageInfoPill("格式", "PNG")
+                LongImageInfoPill("预设", selectedPreset.label)
                 LongImageInfoPill("用途", "保存 / 分享 / 打印")
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LongImageExportPreset.entries.forEach { preset ->
+                    LongImagePresetChip(
+                        preset = preset,
+                        selected = preset == selectedPreset,
+                        onClick = { selectedPreset = preset },
+                    )
+                }
             }
             Box(
                 modifier = Modifier
@@ -3434,8 +3467,33 @@ private fun LongImagePreviewDialog(
                     bitmap = preview.bitmap.asImageBitmap(),
                     contentDescription = null,
                     contentScale = ContentScale.FillWidth,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(selectedPreset.previewInset.dp),
                 )
+            }
+            if (actionHistory.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("历史", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                    actionHistory.forEach { item ->
+                        Text(
+                            item,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GoaldayDesign.InkSecondary,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(99.dp))
+                                .background(Color(0x11A88966))
+                                .padding(horizontal = 8.dp, vertical = 3.dp),
+                        )
+                    }
+                }
             }
             Row(
                 modifier = Modifier
@@ -3448,19 +3506,44 @@ private fun LongImagePreviewDialog(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LongImageActionChip("保存", GoaldayDesign.Positive) {
-                    actionHint = if (saveLongImagePreview(context, preview) != null) "已保存到相册" else "保存失败"
+                    recordAction(if (saveLongImagePreview(context, preview) != null) "已保存到相册" else "保存失败")
                 }
                 LongImageActionChip("分享", Color(0xFFB07A8F)) {
-                    actionHint = if (shareLongImagePreview(context, preview)) "已打开分享" else "分享失败"
+                    recordAction(if (shareLongImagePreview(context, preview)) "已打开分享" else "分享失败")
                 }
                 LongImageActionChip("打印", GoaldayDesign.InkSecondary) {
-                    actionHint = if (printLongImagePreview(context, preview)) "已打开打印" else "打印失败"
+                    recordAction(if (printLongImagePreview(context, preview, selectedPreset)) "已打开${selectedPreset.label}打印" else "打印失败")
                 }
                 if (actionHint.isNotBlank()) {
                     Text(actionHint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LongImagePresetChip(
+    preset: LongImageExportPreset,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .width(138.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (selected) Color(0xFFFFEAF1) else Color.White.copy(alpha = 0.72f))
+            .border(
+                width = if (selected) 1.dp else 0.6.dp,
+                color = if (selected) GoaldayDesign.Pink.copy(alpha = 0.36f) else Color(0x18B7A893),
+                shape = RoundedCornerShape(14.dp),
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(preset.label, style = MaterialTheme.typography.labelMedium, color = if (selected) GoaldayDesign.Pink else GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+        Text(preset.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 2)
     }
 }
 
