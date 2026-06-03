@@ -45,6 +45,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -3183,6 +3184,12 @@ private fun LongImagePreviewDialog(
 ) {
     val context = LocalContext.current
     var actionHint by remember(preview) { mutableStateOf("") }
+    LaunchedEffect(actionHint) {
+        if (actionHint.isNotBlank()) {
+            delay(1400)
+            actionHint = ""
+        }
+    }
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -3197,14 +3204,19 @@ private fun LongImagePreviewDialog(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color.White.copy(alpha = 0.86f))
-                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(16.dp))
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0xFFFFFEFC), Color(0xFFFFF2E7), Color(0xFFFFEAF1)),
+                        ),
+                    )
+                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(20.dp))
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("PRINT EXPORT", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
                     Text(preview.title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
                     Text(preview.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                 }
@@ -3217,6 +3229,17 @@ private fun LongImagePreviewDialog(
                         .clickable { onDismiss() }
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LongImageInfoPill("长图", "${preview.bitmap.width}×${preview.bitmap.height}")
+                LongImageInfoPill("格式", "PNG")
+                LongImageInfoPill("用途", "保存 / 分享 / 打印")
             }
             Box(
                 modifier = Modifier
@@ -3234,18 +3257,13 @@ private fun LongImagePreviewDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-            Text(
-                "长图预览 · ${preview.bitmap.width} × ${preview.bitmap.height}px",
-                style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.InkMuted,
-            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .background(Color.White.copy(alpha = 0.86f))
-                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(16.dp))
-                    .padding(horizontal = 10.dp, vertical = 9.dp),
+                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(20.dp))
+                    .padding(horizontal = 10.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -3259,10 +3277,29 @@ private fun LongImagePreviewDialog(
                     actionHint = if (printLongImagePreview(context, preview)) "已打开打印" else "打印失败"
                 }
                 if (actionHint.isNotBlank()) {
-                    Text(actionHint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                    Text(actionHint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LongImageInfoPill(
+    label: String,
+    value: String,
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(Color.White.copy(alpha = 0.78f))
+            .border(0.6.dp, Color(0x18B7A893), RoundedCornerShape(99.dp))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+        Text(value, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
     }
 }
 
