@@ -1659,6 +1659,19 @@ private fun HandbookDoneEntryLine(
                     .padding(horizontal = 4.dp, vertical = 1.dp),
             )
         }
+        val repeatLabel = scheduleRepeatLabel(entry)
+        if (repeatLabel.isNotBlank()) {
+            Text(
+                repeatLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.Positive,
+                maxLines = 1,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color.White.copy(alpha = 0.64f))
+                    .padding(horizontal = 4.dp, vertical = 1.dp),
+            )
+        }
         Text(
             entry.title,
             style = MaterialTheme.typography.bodySmall,
@@ -2037,6 +2050,19 @@ private fun HandbookEntryLine(
                             .padding(horizontal = 4.dp, vertical = 1.dp),
                     )
                 }
+                val repeatLabel = scheduleRepeatLabel(entry)
+                if (repeatLabel.isNotBlank()) {
+                    Text(
+                        repeatLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = statusColor,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(Color.White.copy(alpha = 0.64f))
+                            .padding(horizontal = 4.dp, vertical = 1.dp),
+                    )
+                }
                 Text(
                     entry.title,
                     style = MaterialTheme.typography.bodySmall,
@@ -2055,6 +2081,19 @@ private fun HandbookEntryLine(
             }
         }
     }
+}
+
+private fun scheduleRepeatLabel(entry: ScheduleEntry): String {
+    if (entry.repeatRule.isBlank()) return ""
+    val unit = when (entry.repeatRule) {
+        "daily" -> "天"
+        "weekly" -> "周"
+        "monthly" -> "月"
+        else -> return ""
+    }
+    val interval = entry.repeatInterval.coerceAtLeast(1)
+    val base = if (interval == 1) "重复" else "每$interval$unit"
+    return if (entry.repeatEndDate.isBlank()) base else "$base 至${entry.repeatEndDate}"
 }
 
 @Composable

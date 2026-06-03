@@ -200,9 +200,10 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
                 } else {
                     views.setViewVisibility(rowIds[index], View.VISIBLE)
                     val time = entry.timeText.takeIf { it.isNotBlank() }?.let { "$it " }.orEmpty()
+                    val repeat = widgetRepeatLabel(entry).takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()
                     views.setTextViewText(dotIds[index], "●")
                     views.setTextColor(dotIds[index], if (entry.completed) style.doneColor else style.accentColor)
-                    views.setTextViewText(id, "$time${entry.title}")
+                    views.setTextViewText(id, "$time${entry.title}$repeat")
                     views.setTextColor(id, if (entry.completed) style.doneTextColor else style.titleColor)
                 }
             }
@@ -227,5 +228,16 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
         }
+    }
+}
+
+private fun widgetRepeatLabel(entry: ScheduleEntry): String {
+    if (entry.repeatRule.isBlank()) return ""
+    val interval = entry.repeatInterval.coerceAtLeast(1)
+    return when (entry.repeatRule) {
+        "daily" -> if (interval == 1) "每天" else "每${interval}天"
+        "weekly" -> if (interval == 1) "每周" else "每${interval}周"
+        "monthly" -> if (interval == 1) "每月" else "每${interval}月"
+        else -> ""
     }
 }

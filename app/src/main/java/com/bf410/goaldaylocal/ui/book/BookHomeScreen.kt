@@ -1513,7 +1513,15 @@ private fun TargetScheduledEntryRow(entry: ScheduleEntry) {
         )
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(entry.title, color = Color(0xFF2F261D), style = MaterialTheme.typography.bodySmall, maxLines = 1)
-            Text(entry.note.ifBlank { "Goalday 本地日程" }, color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            val repeatLabel = targetScheduleRepeatLabel(entry)
+            Text(
+                listOf(entry.note.ifBlank { "Goalday 本地日程" }, repeatLabel)
+                    .filter(String::isNotBlank)
+                    .joinToString(" · "),
+                color = Color(0xFF8B7B6B),
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+            )
         }
         Text(
             entry.timeText.ifBlank { if (entry.completed) "done" else "todo" },
@@ -1522,6 +1530,17 @@ private fun TargetScheduledEntryRow(entry: ScheduleEntry) {
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
         )
+    }
+}
+
+private fun targetScheduleRepeatLabel(entry: ScheduleEntry): String {
+    if (entry.repeatRule.isBlank()) return ""
+    val interval = entry.repeatInterval.coerceAtLeast(1)
+    return when (entry.repeatRule) {
+        "daily" -> if (interval == 1) "每天重复" else "每${interval}天重复"
+        "weekly" -> if (interval == 1) "每周重复" else "每${interval}周重复"
+        "monthly" -> if (interval == 1) "每月重复" else "每${interval}月重复"
+        else -> ""
     }
 }
 
