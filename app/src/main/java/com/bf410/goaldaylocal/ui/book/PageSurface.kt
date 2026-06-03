@@ -2630,6 +2630,15 @@ private data class StructuredDiary(
         get() = blocksRaw.lines()
             .mapNotNull(DiaryEntryBlock::fromRawLine)
 
+    val imageBlockUris: List<String>
+        get() = blocks
+            .filter { it.type == DiaryBlockType.IMAGE }
+            .map { it.text.trim() }
+            .filter(String::isNotBlank)
+
+    val legacyImageUris: List<String>
+        get() = imageUris.filterNot { it in imageBlockUris }
+
     fun withDate(date: LocalDate): StructuredDiary =
         copy(dateIso = date.toString())
 
@@ -2639,11 +2648,20 @@ private data class StructuredDiary(
     fun withRichHtml(html: String): StructuredDiary =
         copy(richHtml = html)
 
-    fun withImageUri(uri: String): StructuredDiary =
-        copy(photoNotes = mergeDiaryPhotoNotes(photoText, (imageUris + uri).distinct()))
+    fun withImageUri(uri: String): StructuredDiary {
+        val normalized = uri.trim()
+        if (normalized.isBlank()) return this
+        val next = copy(photoNotes = mergeDiaryPhotoNotes(photoText, (imageUris + normalized).distinct()))
+        return if (normalized in next.imageBlockUris) {
+            next
+        } else {
+            next.withBlocks(next.blocks + DiaryEntryBlock(DiaryBlockType.IMAGE, normalized))
+        }
+    }
 
     fun withoutImageUri(uri: String): StructuredDiary =
         copy(photoNotes = mergeDiaryPhotoNotes(photoText, imageUris.filterNot { it == uri }))
+            .withBlocks(blocks.filterNot { it.type == DiaryBlockType.IMAGE && it.text.trim() == uri })
 
     fun withCompletedTarget(item: String): StructuredDiary =
         copy(todayDone = appendUniqueDiaryLine(todayDone, item))
@@ -2662,20 +2680,42 @@ private data class StructuredDiary(
     fun withTopicTargetBlock(text: String = "专题目标 · 今天推进一步"): StructuredDiary =
         withBlocks(blocks + DiaryEntryBlock(DiaryBlockType.TOPIC_TARGET, text))
 
-    fun withBlockText(index: Int, text: String): StructuredDiary =
-        withBlocks(blocks.mapIndexed { blockIndex, block ->
+    fun withBlockText(index: Int, text: String): StructuredDiary {
+        val oldBlock = blocks.getOrNull(index)
+        val next = withBlocks(blocks.mapIndexed { blockIndex, block ->
             if (blockIndex == index) block.copy(text = text) else block
         })
+        return if (oldBlock?.type == DiaryBlockType.IMAGE) {
+            val oldUri = oldBlock.text.trim()
+            val nextUri = text.trim()
+            next.copy(
+                photoNotes = mergeDiaryPhotoNotes(
+                    next.photoText,
+                    next.imageUris.map { uri -> if (uri == oldUri) nextUri else uri }.filter(String::isNotBlank).distinct(),
+                ),
+            )
+        } else {
+            next
+        }
+    }
 
     fun withBlockStyle(index: Int, style: DiaryBlockStyle): StructuredDiary =
         withBlocks(blocks.mapIndexed { blockIndex, block ->
             if (blockIndex == index) block.copy(style = style) else block
         })
 
-    fun withBlockChild(index: Int): StructuredDiary =
-        withBlocks(blocks.mapIndexed { blockIndex, block ->
+    fun withBlockChild(index: Int): StructuredDiary {
+        val parent = blocks.getOrNull(index) ?: return this
+        if (parent.type == DiaryBlockType.TARGET || parent.type == DiaryBlockType.TOPIC_TARGET) {
+            val next = blocks.toMutableList().apply {
+                add(index + 1, DiaryEntryBlock(DiaryBlockType.TARGET_CHILD, "下一步行动", DiaryBlockStyle.CHECK))
+            }
+            return withBlocks(next)
+        }
+        return withBlocks(blocks.mapIndexed { blockIndex, block ->
             if (blockIndex == index) block.withChildLine() else block
         })
+    }
 
     fun withoutBlock(index: Int): StructuredDiary =
         withBlocks(blocks.filterIndexed { blockIndex, _ -> blockIndex != index })
@@ -2742,8 +2782,10 @@ private const val DIARY_IMAGE_PREFIX = "image:"
 private const val DIARY_BLOCK_SEPARATOR = "|"
 
 private enum class DiaryBlockType(val raw: String, val label: String) {
+    IMAGE("image", "图片"),
     TEXT("text", "文字"),
     TARGET("target", "目标"),
+    TARGET_CHILD("target_child", "子目标"),
     TOPIC_TARGET("topic_target", "专题目标"),
 }
 
@@ -2858,8 +2900,8 @@ private fun DiaryBlockRail(
 ) {
     val textBlocks = listOf(state.todayDone, state.workTasks, state.smallJoy, state.canImprove, state.photoText)
         .count { it.isNotBlank() } + state.blocks.count { it.type == DiaryBlockType.TEXT }
-    val imageBlocks = state.imageUris.size
-    val targetBlocks = state.blocks.count { it.type == DiaryBlockType.TARGET || it.type == DiaryBlockType.TOPIC_TARGET }
+    val imageBlocks = (state.imageBlockUris + state.legacyImageUris).distinct().size
+    val targetBlocks = state.blocks.count { it.type == DiaryBlockType.TARGET || it.type == DiaryBlockType.TARGET_CHILD || it.type == DiaryBlockType.TOPIC_TARGET }
         .takeIf { it > 0 }
         ?: (todoItems + doneItems).map(String::trim).filter(String::isNotBlank).distinct().size
     Row(
@@ -3219,7 +3261,8 @@ private fun renderDiaryLongImage(
     val width = 1080
     val padding = 72f
     val contentWidth = width - padding * 2
-    val estimatedHeight = 1600 + state.imageUris.take(3).size * 300 + state.toRaw().length.coerceAtMost(2200)
+    val exportImageUris = (state.imageBlockUris + state.legacyImageUris).distinct()
+    val estimatedHeight = 1600 + exportImageUris.take(6).size * 360 + state.toRaw().length.coerceAtMost(2200)
     val scratch = Bitmap.createBitmap(width, estimatedHeight.coerceAtLeast(2200), Bitmap.Config.ARGB_8888)
     val canvas = Canvas(scratch)
     canvas.drawColor(0xFFFFFBF6.toInt())
@@ -3263,17 +3306,24 @@ private fun renderDiaryLongImage(
         y = drawExportSection(canvas, "富文本记录", plainTextFromHtml(state.richHtml), padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
     }
     state.blocks.take(8).forEach { block ->
-        val body = buildString {
-            append(block.mainText.ifBlank { "空内容" })
-            block.childLines.forEach { child ->
-                appendLine()
-                append("  - ")
-                append(child)
+        if (block.type == DiaryBlockType.IMAGE) {
+            y += 12f
+            canvas.drawText("图片记录", padding, y + 32f, labelPaint)
+            y += 52f
+            y = drawExportImage(context, canvas, block.text, padding, y, contentWidth, cardPaint)
+        } else {
+            val body = buildString {
+                append(block.mainText.ifBlank { "空内容" })
+                block.childLines.forEach { child ->
+                    appendLine()
+                    append("  - ")
+                    append(child)
+                }
             }
+            y = drawExportSection(canvas, "${block.type.label} · ${block.style.label}", body, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
         }
-        y = drawExportSection(canvas, "${block.type.label} · ${block.style.label}", body, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
     }
-    state.imageUris.take(3).forEachIndexed { index, uri ->
+    state.legacyImageUris.take(3).forEachIndexed { index, uri ->
         y += 12f
         canvas.drawText("图片 ${index + 1}", padding, y + 32f, labelPaint)
         y += 52f
@@ -3548,9 +3598,9 @@ private fun StructuredDiaryEditor(
             onAddChild = { index -> onStateChange(state.withBlockChild(index)) },
             onRemoveBlock = { index -> onStateChange(state.withoutBlock(index)) },
         )
-        if (state.imageUris.isNotEmpty()) {
+        if (state.legacyImageUris.isNotEmpty()) {
             DiaryImageStrip(
-                imageUris = state.imageUris,
+                imageUris = state.legacyImageUris,
                 onRemoveImage = onRemoveImage,
             )
         }
@@ -3665,16 +3715,18 @@ private fun DiaryTypedBlockEditRow(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "子项",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = color,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Color.White.copy(alpha = 0.62f))
-                        .clickable { onAddChild() }
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                )
+                if (block.type != DiaryBlockType.IMAGE && block.type != DiaryBlockType.TARGET_CHILD) {
+                    Text(
+                        "子项",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = color,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(Color.White.copy(alpha = 0.62f))
+                            .clickable { onAddChild() }
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                    )
+                }
                 Text(
                     "删除",
                     style = MaterialTheme.typography.labelSmall,
@@ -3686,26 +3738,46 @@ private fun DiaryTypedBlockEditRow(
                 )
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-            DiaryBlockStyle.entries.forEach { style ->
-                DiaryStyleChip(
-                    label = style.label,
-                    selected = block.style == style,
-                    color = color,
-                    onClick = { onStyleChange(style) },
-                )
+        if (block.type != DiaryBlockType.IMAGE) {
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                DiaryBlockStyle.entries.forEach { style ->
+                    DiaryStyleChip(
+                        label = style.label,
+                        selected = block.style == style,
+                        color = color,
+                        onClick = { onStyleChange(style) },
+                    )
+                }
             }
         }
-        BasicTextField(
-            value = block.text,
-            onValueChange = onTextChange,
-            textStyle = diaryBlockTextStyle(block),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.White.copy(alpha = 0.68f))
-                .padding(horizontal = 8.dp, vertical = 7.dp),
-        )
+        if (block.type == DiaryBlockType.IMAGE) {
+            DiaryImageTile(
+                uri = block.text,
+                onRemove = null,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            BasicTextField(
+                value = block.text,
+                onValueChange = onTextChange,
+                textStyle = MaterialTheme.typography.labelSmall.copy(color = GoaldayDesign.InkMuted),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.White.copy(alpha = 0.58f))
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+            )
+        } else {
+            BasicTextField(
+                value = block.text,
+                onValueChange = onTextChange,
+                textStyle = diaryBlockTextStyle(block),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.White.copy(alpha = 0.68f))
+                    .padding(horizontal = 8.dp, vertical = 7.dp),
+            )
+        }
     }
 }
 
@@ -3771,36 +3843,46 @@ private fun DiaryBlockTypeBadge(
 
 private fun diaryBlockTypeIcon(type: DiaryBlockType): String =
     when (type) {
+        DiaryBlockType.IMAGE -> "IMG"
         DiaryBlockType.TEXT -> "T"
         DiaryBlockType.TARGET -> "✓"
+        DiaryBlockType.TARGET_CHILD -> "↳"
         DiaryBlockType.TOPIC_TARGET -> "◎"
     }
 
 private fun diaryBlockDisplayTitle(type: DiaryBlockType): String =
     when (type) {
+        DiaryBlockType.IMAGE -> "图片记录"
         DiaryBlockType.TEXT -> "文字记录"
         DiaryBlockType.TARGET -> "关联目标"
+        DiaryBlockType.TARGET_CHILD -> "目标子项"
         DiaryBlockType.TOPIC_TARGET -> "专题目标"
     }
 
 private fun diaryBlockDisplaySubtitle(type: DiaryBlockType): String =
     when (type) {
+        DiaryBlockType.IMAGE -> "照片 / 截图 / 本地图片"
         DiaryBlockType.TEXT -> "自由文字 / 摘要"
         DiaryBlockType.TARGET -> "完成项 / 工作项"
+        DiaryBlockType.TARGET_CHILD -> "下一步 / 子任务"
         DiaryBlockType.TOPIC_TARGET -> "来自灵感主题"
     }
 
 private fun diaryBlockTypeColor(type: DiaryBlockType): Color =
     when (type) {
+        DiaryBlockType.IMAGE -> Color(0xFFB07A8F)
         DiaryBlockType.TEXT -> GoaldayDesign.InkSecondary
         DiaryBlockType.TARGET -> GoaldayDesign.Positive
+        DiaryBlockType.TARGET_CHILD -> Color(0xFF6F8E68)
         DiaryBlockType.TOPIC_TARGET -> Color(0xFFB07A8F)
     }
 
 private fun diaryBlockTypeBackground(type: DiaryBlockType): Color =
     when (type) {
+        DiaryBlockType.IMAGE -> Color(0x16B07A8F)
         DiaryBlockType.TEXT -> Color(0x14EFE3D4)
         DiaryBlockType.TARGET -> Color(0x1439A76D)
+        DiaryBlockType.TARGET_CHILD -> Color(0x116F8E68)
         DiaryBlockType.TOPIC_TARGET -> Color(0x16E88FAE)
     }
 
@@ -3866,8 +3948,8 @@ private fun StructuredDiaryPreview(
                 }
             }
         }
-        if (state.imageUris.isNotEmpty()) {
-            DiaryImageStrip(imageUris = state.imageUris, onRemoveImage = null)
+        if (state.legacyImageUris.isNotEmpty()) {
+            DiaryImageStrip(imageUris = state.legacyImageUris, onRemoveImage = null)
         } else if (photos.isEmpty()) {
             Text(
                 "＋ 添加图片",
@@ -3960,16 +4042,26 @@ private fun DiaryTypedBlockPreview(
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text(diaryBlockDisplayTitle(block.type), style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
-                            Text(block.style.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                            if (block.type != DiaryBlockType.IMAGE) {
+                                Text(block.style.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                            }
                         }
-                        Text(
-                            block.mainText.ifBlank { "空内容" },
-                            style = diaryBlockTextStyle(block),
-                            color = GoaldayDesign.InkPrimary,
-                        )
+                        if (block.type == DiaryBlockType.IMAGE) {
+                            DiaryImageTile(
+                                uri = block.text,
+                                onRemove = null,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
+                            Text(
+                                block.mainText.ifBlank { "空内容" },
+                                style = diaryBlockTextStyle(block),
+                                color = GoaldayDesign.InkPrimary,
+                            )
+                        }
                     }
                 }
-                block.childLines.take(4).forEach { child ->
+                if (block.type != DiaryBlockType.IMAGE) block.childLines.take(4).forEach { child ->
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.Top,
