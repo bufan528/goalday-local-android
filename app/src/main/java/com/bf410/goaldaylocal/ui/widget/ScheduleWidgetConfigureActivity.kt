@@ -58,10 +58,10 @@ class ScheduleWidgetConfigureActivity : ComponentActivity() {
         MMKV.defaultMMKV().encode("${ScheduleWidgetProvider.KEY_WIDGET_STYLE_PREFIX}$appWidgetId", style.raw)
         val manager = AppWidgetManager.getInstance(this)
         val info = manager.getAppWidgetInfo(appWidgetId)
-        val views = if (info?.initialLayout == R.layout.widget_schedule_large) {
-            ScheduleWidgetProvider.buildLargeRemoteViews(this, appWidgetId)
-        } else {
-            ScheduleWidgetProvider.buildRemoteViews(this, appWidgetId)
+        val views = when (info?.initialLayout) {
+            R.layout.widget_schedule_large -> ScheduleWidgetProvider.buildLargeRemoteViews(this, appWidgetId)
+            R.layout.widget_quick_diary -> QuickDiaryWidgetProvider.buildRemoteViews(this, appWidgetId)
+            else -> ScheduleWidgetProvider.buildRemoteViews(this, appWidgetId)
         }
         manager.updateAppWidget(appWidgetId, views)
         val result = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -82,8 +82,8 @@ private fun ScheduleWidgetConfigureScreen(
             .padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text("选择日程小组件样式", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2F2922))
-        Text("小号和大号日程组件通用。添加到桌面后会自动读取今天的本地日程。", style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A7065))
+        Text("选择 Goalday 小组件样式", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2F2922))
+        Text("日程、日记入口和大号组件通用。添加到桌面后会自动读取本地数据。", style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A7065))
         ScheduleWidgetStyle.entries.forEach { style ->
             Row(
                 modifier = Modifier
