@@ -769,6 +769,18 @@ private fun GoaldayHandbookScreen(
     }
 }
 
+private data class HandbookRoutePayload(
+    val viewModel: BookViewModel,
+    val book: TopicBook,
+    val currentPage: BookPage,
+    val previousPage: BookPage?,
+    val nextPage: BookPage?,
+    val uiState: BookUiState,
+    val sectionPages: List<BookPage>,
+    val selectedSectionIndex: Int,
+    val onOpenTargetDetail: (String) -> Unit,
+)
+
 @Composable
 private fun HandbookRouteSurface(
     route: HandbookSection,
@@ -782,21 +794,65 @@ private fun HandbookRouteSurface(
     selectedSectionIndex: Int,
     onOpenTargetDetail: (String) -> Unit,
 ) {
+    val payload = HandbookRoutePayload(
+        viewModel = viewModel,
+        book = book,
+        currentPage = currentPage,
+        previousPage = previousPage,
+        nextPage = nextPage,
+        uiState = uiState,
+        sectionPages = sectionPages,
+        selectedSectionIndex = selectedSectionIndex,
+        onOpenTargetDetail = onOpenTargetDetail,
+    )
+    when (route) {
+        HandbookSection.OVERVIEW -> HandbookOverviewRoute(payload)
+        HandbookSection.SCHEDULE -> HandbookScheduleRoute(payload)
+        HandbookSection.DIARY -> HandbookDiaryRoute(payload)
+        HandbookSection.TARGET -> HandbookTargetRoute(payload)
+    }
+}
+
+@Composable
+private fun HandbookOverviewRoute(payload: HandbookRoutePayload) {
+    HandbookRouteContent(HandbookSection.OVERVIEW, payload)
+}
+
+@Composable
+private fun HandbookScheduleRoute(payload: HandbookRoutePayload) {
+    HandbookRouteContent(HandbookSection.SCHEDULE, payload)
+}
+
+@Composable
+private fun HandbookDiaryRoute(payload: HandbookRoutePayload) {
+    HandbookRouteContent(HandbookSection.DIARY, payload)
+}
+
+@Composable
+private fun HandbookTargetRoute(payload: HandbookRoutePayload) {
+    HandbookRouteContent(HandbookSection.TARGET, payload)
+}
+
+@Composable
+private fun HandbookRouteContent(
+    route: HandbookSection,
+    payload: HandbookRoutePayload,
+) {
     fun routeNextIndex(): Int =
         if (route == HandbookSection.OVERVIEW) {
-            uiState.selectedPageIndex + 1
+            payload.uiState.selectedPageIndex + 1
         } else {
-            sectionPages.getOrNull(selectedSectionIndex + 1)
-                ?.let { page -> book.pages.indexOfFirst { it.title == page.title } }
+            payload.sectionPages.getOrNull(payload.selectedSectionIndex + 1)
+                ?.let { page -> payload.book.pages.indexOfFirst { it.title == page.title } }
                 ?: -1
         }
 
     fun routePreviousIndex(): Int =
         if (route == HandbookSection.OVERVIEW) {
-            uiState.selectedPageIndex - 1
+            payload.uiState.selectedPageIndex - 1
         } else {
-            sectionPages.getOrNull(selectedSectionIndex - 1)
-                ?.let { page -> book.pages.indexOfFirst { it.title == page.title } }
+            payload.sectionPages.getOrNull(payload.selectedSectionIndex - 1)
+                ?.let { page -> payload.book.pages.indexOfFirst { it.title == page.title } }
                 ?: -1
         }
 
@@ -806,60 +862,60 @@ private fun HandbookRouteSurface(
     ) {
         HandbookRouteHeader(
             route = route,
-            title = currentPage.title,
+            title = payload.currentPage.title,
             subtitle = routeSubtitle(route),
         )
         Box(modifier = Modifier.weight(1f)) {
             BookReader(
-                bookId = book.id,
-                bookTitle = book.title,
-                subtitle = "${route.label} · ${book.subtitle}",
-                page = currentPage,
-                previousPage = previousPage,
-                nextPage = nextPage,
-                pageIndex = uiState.selectedPageIndex,
-                pageCount = book.pages.size,
-                tint = book.color,
-                isSaved = book.id in uiState.savedBookIds,
-                diaryDraft = uiState.diaryDraft,
-                customPageItems = uiState.customPageItems,
-                weeklyTheme = uiState.weeklyTheme,
-                todayPlanItems = uiState.todayPlanItems,
-                todayCompletedItems = uiState.todayCompletedItems,
-                schedulePreviewEntries = uiState.schedulePreviewEntries,
-                targetItemMeta = uiState.targetItemMeta,
-                onToggleSaved = viewModel::toggleSavedCurrentBook,
-                isChecked = { pageTitle, item -> viewModel.isChecked(pageTitle, item) },
-                onToggleChecked = { pageTitle, item -> viewModel.toggleChecked(pageTitle, item) },
-                onDiaryChange = viewModel::updateDiaryDraft,
-                onAddCustomItem = viewModel::addCustomPageItem,
-                onAddCustomItemWithDeadline = viewModel::addCustomPageItemWithDeadline,
-                onRemoveCustomItem = viewModel::removeCustomPageItem,
-                onRenameCustomItem = viewModel::renameCustomPageItem,
-                onAddToSchedule = viewModel::addItemToSchedule,
-                onAddHandbookPoolItem = viewModel::addHandbookPoolItem,
-                onRemoveHandbookPoolItem = viewModel::removeHandbookPoolItem,
-                onAddScheduleFromHandbook = viewModel::addScheduleFromHandbook,
-                onWeeklyThemeChange = viewModel::updateWeeklyTheme,
-                onMoveItemToToday = viewModel::moveItemToToday,
-                onMoveItemToCompleted = viewModel::moveItemToCompleted,
-                onRestoreItemFromToday = viewModel::restoreItemFromToday,
-                onRestoreItemFromCompleted = viewModel::restoreItemFromCompleted,
-                onUpdateScheduleTitle = viewModel::updateScheduleTitleFromHandbook,
-                onMoveScheduleDay = viewModel::moveScheduleDayFromHandbook,
-                onToggleScheduleCompleted = viewModel::toggleScheduleCompletedFromHandbook,
-                onUpdateTargetNote = viewModel::updateTargetItemNote,
-                onUpdateTargetDeadline = viewModel::updateTargetItemDeadline,
-                onOpenTargetDetail = onOpenTargetDetail,
+                bookId = payload.book.id,
+                bookTitle = payload.book.title,
+                subtitle = "${route.label} · ${payload.book.subtitle}",
+                page = payload.currentPage,
+                previousPage = payload.previousPage,
+                nextPage = payload.nextPage,
+                pageIndex = payload.uiState.selectedPageIndex,
+                pageCount = payload.book.pages.size,
+                tint = payload.book.color,
+                isSaved = payload.book.id in payload.uiState.savedBookIds,
+                diaryDraft = payload.uiState.diaryDraft,
+                customPageItems = payload.uiState.customPageItems,
+                weeklyTheme = payload.uiState.weeklyTheme,
+                todayPlanItems = payload.uiState.todayPlanItems,
+                todayCompletedItems = payload.uiState.todayCompletedItems,
+                schedulePreviewEntries = payload.uiState.schedulePreviewEntries,
+                targetItemMeta = payload.uiState.targetItemMeta,
+                onToggleSaved = payload.viewModel::toggleSavedCurrentBook,
+                isChecked = { pageTitle, item -> payload.viewModel.isChecked(pageTitle, item) },
+                onToggleChecked = { pageTitle, item -> payload.viewModel.toggleChecked(pageTitle, item) },
+                onDiaryChange = payload.viewModel::updateDiaryDraft,
+                onAddCustomItem = payload.viewModel::addCustomPageItem,
+                onAddCustomItemWithDeadline = payload.viewModel::addCustomPageItemWithDeadline,
+                onRemoveCustomItem = payload.viewModel::removeCustomPageItem,
+                onRenameCustomItem = payload.viewModel::renameCustomPageItem,
+                onAddToSchedule = payload.viewModel::addItemToSchedule,
+                onAddHandbookPoolItem = payload.viewModel::addHandbookPoolItem,
+                onRemoveHandbookPoolItem = payload.viewModel::removeHandbookPoolItem,
+                onAddScheduleFromHandbook = payload.viewModel::addScheduleFromHandbook,
+                onWeeklyThemeChange = payload.viewModel::updateWeeklyTheme,
+                onMoveItemToToday = payload.viewModel::moveItemToToday,
+                onMoveItemToCompleted = payload.viewModel::moveItemToCompleted,
+                onRestoreItemFromToday = payload.viewModel::restoreItemFromToday,
+                onRestoreItemFromCompleted = payload.viewModel::restoreItemFromCompleted,
+                onUpdateScheduleTitle = payload.viewModel::updateScheduleTitleFromHandbook,
+                onMoveScheduleDay = payload.viewModel::moveScheduleDayFromHandbook,
+                onToggleScheduleCompleted = payload.viewModel::toggleScheduleCompletedFromHandbook,
+                onUpdateTargetNote = payload.viewModel::updateTargetItemNote,
+                onUpdateTargetDeadline = payload.viewModel::updateTargetItemDeadline,
+                onOpenTargetDetail = payload.onOpenTargetDetail,
                 shellStyle = ShellStyle.BOOK,
                 handbookMode = true,
                 onFlipNext = {
                     val nextIndex = routeNextIndex()
-                    if (nextIndex in book.pages.indices) viewModel.setPage(nextIndex)
+                    if (nextIndex in payload.book.pages.indices) payload.viewModel.setPage(nextIndex)
                 },
                 onFlipPrevious = {
                     val previousIndex = routePreviousIndex()
-                    if (previousIndex in book.pages.indices) viewModel.setPage(previousIndex)
+                    if (previousIndex in payload.book.pages.indices) payload.viewModel.setPage(previousIndex)
                 },
             )
         }
