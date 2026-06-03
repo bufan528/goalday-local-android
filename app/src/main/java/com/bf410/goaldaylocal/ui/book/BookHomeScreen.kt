@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -54,6 +55,7 @@ import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetItemMeta
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
+import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 import org.json.JSONObject
@@ -820,23 +822,30 @@ private fun HandbookOverviewRoute(payload: HandbookRoutePayload) {
 
 @Composable
 private fun HandbookScheduleRoute(payload: HandbookRoutePayload) {
-    HandbookRouteContent(HandbookSection.SCHEDULE, payload)
+    HandbookRouteContent(HandbookSection.SCHEDULE, payload) {
+        HandbookScheduleRouteStrip(payload)
+    }
 }
 
 @Composable
 private fun HandbookDiaryRoute(payload: HandbookRoutePayload) {
-    HandbookRouteContent(HandbookSection.DIARY, payload)
+    HandbookRouteContent(HandbookSection.DIARY, payload) {
+        HandbookDiaryRouteStrip(payload)
+    }
 }
 
 @Composable
 private fun HandbookTargetRoute(payload: HandbookRoutePayload) {
-    HandbookRouteContent(HandbookSection.TARGET, payload)
+    HandbookRouteContent(HandbookSection.TARGET, payload) {
+        HandbookTargetRouteStrip(payload)
+    }
 }
 
 @Composable
 private fun HandbookRouteContent(
     route: HandbookSection,
     payload: HandbookRoutePayload,
+    routeAccessory: (@Composable () -> Unit)? = null,
 ) {
     fun routeNextIndex(): Int =
         if (route == HandbookSection.OVERVIEW) {
@@ -865,6 +874,7 @@ private fun HandbookRouteContent(
             title = payload.currentPage.title,
             subtitle = routeSubtitle(route),
         )
+        routeAccessory?.invoke()
         Box(modifier = Modifier.weight(1f)) {
             BookReader(
                 bookId = payload.book.id,
@@ -919,6 +929,87 @@ private fun HandbookRouteContent(
                 },
             )
         }
+    }
+}
+
+@Composable
+private fun HandbookScheduleRouteStrip(payload: HandbookRoutePayload) {
+    val entries = payload.uiState.schedulePreviewEntries
+    val todoCount = entries.count { !it.completed }
+    val doneCount = entries.count { it.completed }
+    val repeatCount = entries.count { it.repeatRule.isNotBlank() }
+    HandbookRouteMetricStrip {
+        HandbookRouteMetricPill("TODO", todoCount.toString(), GoaldayDesign.Pink, Modifier.weight(1f))
+        HandbookRouteMetricPill("DONE", doneCount.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
+        HandbookRouteMetricPill("REPEAT", repeatCount.toString(), Color(0xFFB07A8F), Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun HandbookDiaryRouteStrip(payload: HandbookRoutePayload) {
+    val raw = payload.uiState.diaryDraft
+    val imageCount = raw.lines().count { line -> line.trim().startsWith("image:") || line.trim().startsWith("image|") }
+    val targetCount = raw.lines().count { line ->
+        val trimmed = line.trim()
+        trimmed.startsWith("target|") || trimmed.startsWith("target_child|") || trimmed.startsWith("topic_target|")
+    }
+    val textCount = raw.lines().count { line -> line.trim().startsWith("text|") } +
+        listOf("# 今日完成", "# 工作任务", "# 小幸福", "# 可改进").count { marker -> raw.contains(marker) }
+    HandbookRouteMetricStrip {
+        HandbookRouteMetricPill("TEXT", textCount.toString(), GoaldayDesign.InkSecondary, Modifier.weight(1f))
+        HandbookRouteMetricPill("IMAGE", imageCount.toString(), Color(0xFFB07A8F), Modifier.weight(1f))
+        HandbookRouteMetricPill("TARGET", targetCount.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun HandbookTargetRouteStrip(payload: HandbookRoutePayload) {
+    val targetPage = payload.currentPage as? TargetPage
+    val items = targetPage?.let { (it.items + payload.uiState.customPageItems).distinct() }.orEmpty()
+    val checkedCount = targetPage?.let { page -> items.count { item -> payload.viewModel.isChecked(page.title, item) } } ?: 0
+    val scheduledCount = items.count { item -> payload.uiState.schedulePreviewEntries.any { it.title == item } }
+    HandbookRouteMetricStrip {
+        HandbookRouteMetricPill("ITEMS", items.size.toString(), routeColor(HandbookSection.TARGET), Modifier.weight(1f))
+        HandbookRouteMetricPill("DONE", checkedCount.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
+        HandbookRouteMetricPill("PLAN", scheduledCount.toString(), GoaldayDesign.Pink, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun HandbookRouteMetricStrip(
+    content: @Composable RowScope.() -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color(0x9FFFFCF6))
+            .border(0.6.dp, Color(0x1EA88966), RoundedCornerShape(14.dp))
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun HandbookRouteMetricPill(
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(color.copy(alpha = 0.12f))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(value, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
     }
 }
 
