@@ -1165,6 +1165,8 @@ private fun TargetDetailRouteOverlay(
     val today = java.time.LocalDate.now().dayOfMonth
     val tomorrow = today + 1
     val weekend = today + (7 - java.time.LocalDate.now().dayOfWeek.value).coerceAtLeast(1)
+    val deadlineLabel = meta.deadlineDay?.let { "${it}日" } ?: "未设置"
+    val scheduleLabel = if (scheduledEntries.isEmpty()) "未排期" else "${scheduledEntries.size}条"
     var noteDraft by remember(item, meta.note) { mutableStateOf(meta.note) }
     var actionHint by remember(item) { mutableStateOf("") }
     fun appendDetailNote(line: String) {
@@ -1200,7 +1202,7 @@ private fun TargetDetailRouteOverlay(
         ) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.weight(1f)) {
-                    Text("目标详情", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelMedium)
+                    Text("TARGET DETAIL", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                     Text(item, color = Color(0xFF2F261D), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                     Text("$pageTitle · 目标 ${itemIndex + 1}/$itemCount", color = Color(0xFF7A7065), style = MaterialTheme.typography.bodySmall)
                 }
@@ -1215,7 +1217,18 @@ private fun TargetDetailRouteOverlay(
                 )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            TargetDetailSummaryStrip(
+                checked = checked,
+                deadlineLabel = deadlineLabel,
+                scheduleLabel = scheduleLabel,
+                noteReady = noteDraft.isNotBlank(),
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+            ) {
                 DetailPill(if (checked) "已完成" else "未完成", active = checked, onClick = onToggleChecked)
                 DetailPill("排入今天", active = false) { onAddToSchedule(today) }
                 DetailPill("排入明天", active = false) { onAddToSchedule(tomorrow) }
@@ -1310,14 +1323,112 @@ private fun TargetDetailRouteOverlay(
                     Text("还没有排入日程", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.bodySmall)
                 } else {
                     scheduledEntries.take(8).forEach { entry ->
-                        Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            Text("${entry.month}月${entry.day}日", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelMedium)
-                            Text(entry.timeText.ifBlank { if (entry.completed) "done" else "todo" }, color = if (entry.completed) Color(0xFF6F8E68) else Color(0xFFE88FAE), style = MaterialTheme.typography.labelSmall)
-                        }
+                        TargetScheduledEntryRow(entry = entry)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TargetDetailSummaryStrip(
+    checked: Boolean,
+    deadlineLabel: String,
+    scheduleLabel: String,
+    noteReady: Boolean,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xCCFFFDF8))
+            .border(0.8.dp, Color(0x20A88966), RoundedCornerShape(18.dp))
+            .padding(horizontal = 10.dp, vertical = 9.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TargetDetailMetric(
+            label = "状态",
+            value = if (checked) "DONE" else "TODO",
+            active = checked,
+            modifier = Modifier.weight(1f),
+        )
+        TargetDetailMetric(
+            label = "截止",
+            value = deadlineLabel,
+            active = deadlineLabel != "未设置",
+            modifier = Modifier.weight(1f),
+        )
+        TargetDetailMetric(
+            label = "排期",
+            value = scheduleLabel,
+            active = scheduleLabel != "未排期",
+            modifier = Modifier.weight(1f),
+        )
+        TargetDetailMetric(
+            label = "备注",
+            value = if (noteReady) "已写" else "空白",
+            active = noteReady,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun TargetDetailMetric(
+    label: String,
+    value: String,
+    active: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (active) Color(0x1439A76D) else Color(0x12E88FAE))
+            .padding(horizontal = 8.dp, vertical = 7.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(label, color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(value, color = if (active) Color(0xFF4F7E55) else Color(0xFFB07A8F), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+    }
+}
+
+@Composable
+private fun TargetScheduledEntryRow(entry: ScheduleEntry) {
+    val color = if (entry.completed) Color(0xFF6F8E68) else Color(0xFFE88FAE)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (entry.completed) Color(0x1039A76D) else Color(0x12E88FAE))
+            .border(0.7.dp, color.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "${entry.month}/${entry.day}",
+            color = Color.White,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(color)
+                .padding(horizontal = 7.dp, vertical = 4.dp),
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(entry.title, color = Color(0xFF2F261D), style = MaterialTheme.typography.bodySmall, maxLines = 1)
+            Text(entry.note.ifBlank { "Goalday 本地日程" }, color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        }
+        Text(
+            entry.timeText.ifBlank { if (entry.completed) "done" else "todo" },
+            color = color,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
     }
 }
 
