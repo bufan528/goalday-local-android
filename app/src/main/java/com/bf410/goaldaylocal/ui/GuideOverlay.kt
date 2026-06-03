@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
@@ -61,6 +62,14 @@ internal fun GuideOverlay(
     }
     var index by remember { mutableIntStateOf(0) }
     val page = pages[index.coerceIn(0, pages.lastIndex)]
+    val context = LocalContext.current
+    val hasLocalGuideAssets = remember {
+        runCatching {
+            context.assets.open("lottie/goalday.json").use { }
+            context.assets.open("lottie/coupon.json").use { }
+            true
+        }.getOrDefault(false)
+    }
 
     Box(
         modifier = Modifier
@@ -79,7 +88,14 @@ internal fun GuideOverlay(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Goalday 新手引导", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Goalday 新手引导", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        if (hasLocalGuideAssets) "asset-backed guide" else "compose guide",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (hasLocalGuideAssets) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
+                    )
+                }
                 Text(
                     "跳过",
                     style = MaterialTheme.typography.labelSmall,
