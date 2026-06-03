@@ -1,5 +1,7 @@
 package com.bf410.goaldaylocal.ui.book
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -13,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,6 +23,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -72,7 +78,31 @@ internal fun TopicCoverArt(
     compact: Boolean = false,
 ) {
     val palette = topicCoverPalette(template, index)
+    val context = LocalContext.current
+    val assetBitmap = remember(template.coverKey) {
+        runCatching {
+            context.assets.open("cover/${template.coverKey}.png").use(BitmapFactory::decodeStream)
+        }.getOrNull()
+    }
     Box(modifier.fillMaxSize()) {
+        if (assetBitmap != null) {
+            Image(
+                bitmap = assetBitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, Color(0x33000000)),
+                        ),
+                    ),
+            )
+            return@Box
+        }
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
