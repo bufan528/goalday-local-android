@@ -1,5 +1,10 @@
 package com.bf410.goaldaylocal.ui
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
@@ -140,6 +146,19 @@ private fun GuideIllustration(
     page: GuidePage,
     index: Int,
 ) {
+    val motion = rememberInfiniteTransition(label = "guide-motion")
+    val pulse by motion.animateFloat(
+        initialValue = 0.88f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(animation = tween(900), repeatMode = RepeatMode.Reverse),
+        label = "guide-pulse",
+    )
+    val glide by motion.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(animation = tween(1800), repeatMode = RepeatMode.Reverse),
+        label = "guide-glide",
+    )
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -186,6 +205,29 @@ private fun GuideIllustration(
                     .background(if (row <= index) GoaldayDesign.Pink.copy(alpha = 0.48f) else Color(0xFFD8CFC5)),
             )
         }
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .offset(x = (-24 + glide * 28).dp, y = (-40 + index * 6).dp)
+                .width(86.dp)
+                .height(18.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(Color.White.copy(alpha = 0.46f))
+                .border(1.dp, GoaldayDesign.Pink.copy(alpha = 0.28f), RoundedCornerShape(99.dp)),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 12.dp, end = 16.dp)
+                .size(52.dp)
+                .graphicsLayer {
+                    scaleX = pulse
+                    scaleY = pulse
+                    alpha = 0.24f + (pulse - 0.88f) * 0.9f
+                }
+                .clip(RoundedCornerShape(99.dp))
+                .background(GoaldayDesign.Pink.copy(alpha = 0.36f)),
+        )
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
