@@ -1753,12 +1753,12 @@ private fun DaySpreadEditableSection(
             Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
             Text("待办 $todoCount · 完成 $doneCount", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB07A8F))
         }
-        repeat(4) { idx ->
+        repeat(3) { idx ->
             val entry = entries.getOrNull(idx)
             if (entry == null) {
                 EmptyHandbookSlot(
-                    label = if (activeDrop && idx == entries.size.coerceAtMost(3)) "释放到${day}日" else "",
-                    highlight = activeDrop && idx == entries.size.coerceAtMost(3),
+                    label = if (activeDrop && idx == entries.size.coerceAtMost(2)) "释放到${day}日" else "",
+                    highlight = activeDrop && idx == entries.size.coerceAtMost(2),
                 )
             } else {
                 HandbookEntryLine(
@@ -1788,7 +1788,7 @@ private fun EmptyHandbookSlot(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(16.dp),
+            .height(22.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -1835,17 +1835,21 @@ private fun HandbookEntryLine(
     val focusManager = LocalFocusManager.current
     val rowEditorFocus = remember(entry.id) { FocusRequester() }
     var rowOrigin by remember(entry.id) { mutableStateOf(Offset.Zero) }
+    val statusColor = if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.Pink
     LaunchedEffect(editingId) {
         if (editingId == entry.id) {
             rowEditorFocus.requestFocus()
         }
     }
     Row(
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(16.dp)
+            .height(28.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (entry.completed) Color(0x1739A76D) else Color(0x18FFFFFF))
+            .border(0.55.dp, statusColor.copy(alpha = if (entry.completed) 0.28f else 0.18f), RoundedCornerShape(8.dp))
             .onGloballyPositioned { coordinates ->
                 rowOrigin = coordinates.boundsInRoot().topLeft
             }
@@ -1860,21 +1864,25 @@ private fun HandbookEntryLine(
             },
     ) {
         Text(
-            slotLabel,
+            "${slotLabel}日",
             style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF9A958D),
+            color = Color.White,
             modifier = Modifier
-                .width(18.dp)
-                .clip(RoundedCornerShape(3.dp))
-                .background(Color(0x14000000))
-                .padding(horizontal = 1.dp, vertical = 0.dp),
+                .width(30.dp)
+                .fillMaxHeight()
+                .background(statusColor)
+                .padding(top = 6.dp),
             textAlign = TextAlign.Center,
         )
         Text(
             if (entry.completed) "✓" else "○",
             style = MaterialTheme.typography.labelSmall,
-            color = if (entry.completed) Color(0xFF7A9D73) else Color(0xFF9A958D),
-            modifier = Modifier.padding(top = 1.dp).clickable { onToggleCompleted() },
+            color = statusColor,
+            modifier = Modifier
+                .clip(RoundedCornerShape(99.dp))
+                .background(Color.White.copy(alpha = 0.72f))
+                .clickable { onToggleCompleted() }
+                .padding(horizontal = 4.dp, vertical = 1.dp),
         )
         if (editingId == entry.id) {
             BasicTextField(
@@ -1889,10 +1897,10 @@ private fun HandbookEntryLine(
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(rowEditorFocus)
-                    .background(Color(0x09000000), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 4.dp, vertical = 1.dp),
+                    .background(Color(0x88FFFFFF), RoundedCornerShape(5.dp))
+                    .padding(horizontal = 5.dp, vertical = 3.dp),
             )
-            Text("Done", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE18DA9), modifier = Modifier.clickable {
+            Text("Done", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, modifier = Modifier.clickable {
                 onCommit()
                 focusManager.clearFocus(force = true)
             })
@@ -1900,22 +1908,38 @@ private fun HandbookEntryLine(
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(4.dp))
                     .clickable { onStartEdit() }
-                    .padding(horizontal = 2.dp, vertical = 0.dp),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(end = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
+                if (entry.timeText.isNotBlank()) {
+                    Text(
+                        entry.timeText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = GoaldayDesign.InkMuted,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(Color.White.copy(alpha = 0.64f))
+                            .padding(horizontal = 4.dp, vertical = 1.dp),
+                    )
+                }
                 Text(
                     entry.title,
                     style = MaterialTheme.typography.bodySmall,
                     color = if (entry.completed) Color(0xFF7A746E) else Color(0xFF2F2E2C),
                     textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                     maxLines = 1,
-                    modifier = Modifier.weight(1f).padding(top = 1.dp),
+                    modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Start,
                 )
-                Text("✎", style = MaterialTheme.typography.labelSmall, color = Color(0xFFAAA39A), modifier = Modifier.padding(top = 1.dp))
+                Text(
+                    if (entry.completed) "done" else "todo",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = statusColor,
+                    maxLines = 1,
+                )
             }
         }
     }
