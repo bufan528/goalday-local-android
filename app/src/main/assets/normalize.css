@@ -1,0 +1,44 @@
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  display: block;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+input {
+  overflow: visible;
+}
+
+button,
+select {
+  text-transform: none;
+}
+
+textarea {
+  overflow: auto;
+}
+
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
