@@ -1041,10 +1041,10 @@ private fun HandbookReplicaPage(
                     .padding(top = 58.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp),
-            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1873,8 +1873,12 @@ private fun DaySpreadEditableSection(
     onEntryDragEnd: () -> Unit,
     onEntryDragCancel: () -> Unit,
 ) {
+    var showAllRows by remember(day, entries.map { it.id }) { mutableStateOf(false) }
     val doneCount = entries.count { it.completed }
     val todoCount = entries.count { !it.completed }
+    val visibleLimit = if (showAllRows) 6 else 3
+    val visibleEntries = entries.take(visibleLimit)
+    val hiddenCount = (entries.size - visibleEntries.size).coerceAtLeast(0)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1888,12 +1892,12 @@ private fun DaySpreadEditableSection(
             Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
             Text("待办 $todoCount · 完成 $doneCount", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB07A8F))
         }
-        repeat(3) { idx ->
-            val entry = entries.getOrNull(idx)
+        repeat(visibleLimit.coerceAtLeast(3)) { idx ->
+            val entry = visibleEntries.getOrNull(idx)
             if (entry == null) {
                 EmptyHandbookSlot(
-                    label = if (activeDrop && idx == entries.size.coerceAtMost(2)) "释放到${day}日" else "",
-                    highlight = activeDrop && idx == entries.size.coerceAtMost(2),
+                    label = if (activeDrop && idx == visibleEntries.size.coerceAtMost(2)) "释放到${day}日" else "",
+                    highlight = activeDrop && idx == visibleEntries.size.coerceAtMost(2),
                 )
             } else {
                 val dayIndex = visibleDays.indexOf(entry.day)
@@ -1919,6 +1923,26 @@ private fun DaySpreadEditableSection(
                     onDragEnd = onEntryDragEnd,
                     onDragCancel = onEntryDragCancel,
                 )
+            }
+        }
+        if (hiddenCount > 0 || showAllRows) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .background(Color(0x10E88FAE))
+                    .clickable { showAllRows = !showAllRows }
+                    .padding(horizontal = 7.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    if (showAllRows) "收起日程" else "展开 $hiddenCount 条更多",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GoaldayDesign.Pink,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text("adaptive", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
             }
         }
     }
@@ -1983,18 +2007,18 @@ private fun HandbookEntryLine(
     val focusManager = LocalFocusManager.current
     val rowEditorFocus = remember(entry.id) { FocusRequester() }
     var rowOrigin by remember(entry.id) { mutableStateOf(Offset.Zero) }
+    var expanded by remember(entry.id) { mutableStateOf(false) }
     val statusColor = if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.Pink
+    val repeatLabel = scheduleRepeatLabel(entry)
+    val hasDetail = entry.note.isNotBlank() || repeatLabel.isNotBlank() || entry.timeText.isNotBlank()
     LaunchedEffect(editingId) {
         if (editingId == entry.id) {
             rowEditorFocus.requestFocus()
         }
     }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(28.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(if (entry.completed) Color(0x1739A76D) else Color(0x18FFFFFF))
             .border(0.55.dp, statusColor.copy(alpha = if (entry.completed) 0.28f else 0.18f), RoundedCornerShape(8.dp))
@@ -2011,6 +2035,13 @@ private fun HandbookEntryLine(
                 )
             },
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(28.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
         Text(
             "${slotLabel}日",
             style = MaterialTheme.typography.labelSmall,
@@ -2073,7 +2104,6 @@ private fun HandbookEntryLine(
                             .padding(horizontal = 4.dp, vertical = 1.dp),
                     )
                 }
-                val repeatLabel = scheduleRepeatLabel(entry)
                 if (repeatLabel.isNotBlank()) {
                     Text(
                         repeatLabel,
@@ -2101,6 +2131,13 @@ private fun HandbookEntryLine(
                     color = statusColor,
                     maxLines = 1,
                 )
+                if (hasDetail) {
+                    HandbookMoveTargetButton(
+                        label = if (expanded) "⌃" else "⌄",
+                        enabled = true,
+                        onClick = { expanded = !expanded },
+                    )
+                }
                 HandbookMoveTargetButton(
                     label = "‹",
                     enabled = canMovePrevious,
@@ -2113,6 +2150,58 @@ private fun HandbookEntryLine(
                 )
             }
         }
+        }
+        if (expanded && editingId != entry.id) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 35.dp, end = 7.dp, bottom = 5.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                if (repeatLabel.isNotBlank()) {
+                    HandbookEntryDetailChip("repeat", repeatLabel, statusColor)
+                }
+                if (entry.timeText.isNotBlank()) {
+                    HandbookEntryDetailChip("time", entry.timeText, GoaldayDesign.InkSecondary)
+                }
+                if (entry.note.isNotBlank()) {
+                    HandbookEntryDetailChip("note", entry.note, GoaldayDesign.InkMuted)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HandbookEntryDetailChip(
+    label: String,
+    value: String,
+    color: Color,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(7.dp))
+            .background(Color.White.copy(alpha = 0.58f))
+            .border(0.35.dp, color.copy(alpha = 0.16f), RoundedCornerShape(7.dp))
+            .padding(horizontal = 6.dp, vertical = 3.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.width(36.dp),
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.labelSmall,
+            color = GoaldayDesign.InkSecondary,
+            maxLines = 2,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
