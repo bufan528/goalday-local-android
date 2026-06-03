@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -727,6 +728,9 @@ private fun GoaldayHandbookScreen(
                             ),
                         ),
                 )
+                HandbookPhysicalBookDetails(
+                    pageProgress = ((uiState.selectedPageIndex + 1).toFloat() / book.pages.size.coerceAtLeast(1)).coerceIn(0.08f, 1f),
+                )
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -769,6 +773,87 @@ private fun GoaldayHandbookScreen(
             )
         }
     }
+}
+
+@Composable
+private fun BoxScope.HandbookPhysicalBookDetails(pageProgress: Float) {
+    repeat(9) { index ->
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(top = 28.dp, end = (18 + index * 2).dp, bottom = 30.dp)
+                .width(0.7.dp)
+                .fillMaxHeight(0.82f)
+                .background(Color(0x22A98566).copy(alpha = 0.18f + index * 0.018f)),
+        )
+    }
+    repeat(7) { index ->
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(start = 44.dp, end = 38.dp, bottom = (8 + index * 2).dp)
+                .fillMaxWidth(0.86f)
+                .height(0.8.dp)
+                .background(Color(0x32A98566).copy(alpha = 0.15f + index * 0.02f)),
+        )
+    }
+    Box(
+        modifier = Modifier
+            .align(Alignment.CenterStart)
+            .padding(start = 13.dp, top = 30.dp, bottom = 34.dp)
+            .width(1.2.dp)
+            .fillMaxHeight(0.78f)
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color.Transparent, Color(0x66FFF4E6), Color.Transparent),
+                ),
+            ),
+    )
+    Column(
+        modifier = Modifier
+            .align(Alignment.CenterStart)
+            .padding(start = 3.dp, top = 42.dp, bottom = 42.dp)
+            .width(24.dp)
+            .fillMaxHeight(0.72f),
+        verticalArrangement = Arrangement.SpaceEvenly,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        repeat(5) { index ->
+            Box(
+                modifier = Modifier
+                    .size(if (index == 2) 9.dp else 7.dp)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0xFF4C3329).copy(alpha = 0.74f))
+                    .border(0.8.dp, Color(0x88F6D8BE), RoundedCornerShape(99.dp)),
+            )
+        }
+    }
+    Box(
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(top = 17.dp, end = (28 + (pageProgress * 10).toInt()).dp)
+            .width(84.dp)
+            .height(2.dp)
+            .clip(RoundedCornerShape(99.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(Color.Transparent, Color(0x66FFFDF8), Color.Transparent),
+                ),
+            ),
+    )
+    Box(
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(end = 38.dp, bottom = 18.dp)
+            .width(130.dp)
+            .height(5.dp)
+            .clip(RoundedCornerShape(99.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(Color.Transparent, Color(0x33835A45), Color.Transparent),
+                ),
+            ),
+    )
 }
 
 private data class HandbookRoutePayload(
