@@ -1063,11 +1063,17 @@ private fun HandbookReplicaPage(
                 leftBlocks.forEachIndexed { idx, block ->
                     DaySpreadSection(
                         day = block.day,
-                        done = if (idx == 0 && block.done.isEmpty()) fallbackLeftDone else block.done.map { it.title },
+                        doneEntries = block.done,
+                        fallbackDone = if (idx == 0 && block.done.isEmpty()) fallbackLeftDone else emptyList(),
                         todoCount = block.todo.size,
                         accent = GoaldayDesign.Positive,
                         activeDrop = activeDoneDropDay == block.day,
                         onBounds = { rect -> doneDropBounds[block.day] = rect },
+                        onToggleCompleted = { entry ->
+                            if (!entry.id.startsWith("fallback_")) {
+                                onToggleScheduleCompleted(entry.id)
+                            }
+                        },
                     )
                 }
             }
@@ -1564,12 +1570,15 @@ private fun SectionStamp(
 @Composable
 private fun DaySpreadSection(
     day: Int,
-    done: List<String>,
+    doneEntries: List<ScheduleEntry>,
+    fallbackDone: List<String>,
     todoCount: Int,
     accent: Color,
     activeDrop: Boolean,
     onBounds: (Rect) -> Unit,
+    onToggleCompleted: (ScheduleEntry) -> Unit,
 ) {
+    val doneCount = doneEntries.size + fallbackDone.size
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1581,21 +1590,123 @@ private fun DaySpreadSection(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-            Text("完成 ${done.size} · 待办 $todoCount", style = MaterialTheme.typography.labelSmall, color = accent.copy(alpha = 0.88f))
+            Text("完成 $doneCount · 待办 $todoCount", style = MaterialTheme.typography.labelSmall, color = accent.copy(alpha = 0.88f))
         }
-        done.take(2).forEach { line ->
-            Text("✓ $line", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary, textDecoration = TextDecoration.LineThrough, maxLines = 1, modifier = Modifier.padding(start = 2.dp))
+        doneEntries.take(2).forEach { entry ->
+            HandbookDoneEntryLine(
+                day = day,
+                entry = entry,
+                onToggleCompleted = { onToggleCompleted(entry) },
+            )
         }
-        repeat((3 - done.take(2).size).coerceAtLeast(0)) { index ->
+        val remainingSlots = (2 - doneEntries.take(2).size).coerceAtLeast(0)
+        fallbackDone.take(remainingSlots).forEach { line ->
+            HandbookFallbackDoneLine(day = day, title = line)
+        }
+        val visibleDoneRows = doneEntries.take(2).size + fallbackDone.take(remainingSlots).size
+        repeat((2 - visibleDoneRows).coerceAtLeast(0)) { index ->
             EmptyHandbookSlot(
                 label = when {
                     activeDrop && index == 0 -> "释放放入 done"
-                    done.isEmpty() && index == 0 -> "○"
+                    doneCount == 0 && index == 0 -> "○"
                     else -> ""
                 },
                 highlight = activeDrop && index == 0,
             )
         }
+    }
+}
+
+@Composable
+private fun HandbookDoneEntryLine(
+    day: Int,
+    entry: ScheduleEntry,
+    onToggleCompleted: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(26.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0x1739A76D))
+            .border(0.55.dp, GoaldayDesign.Positive.copy(alpha = 0.26f), RoundedCornerShape(8.dp))
+            .clickable(onClick = onToggleCompleted),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Text(
+            "${day}日",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White,
+            modifier = Modifier
+                .width(30.dp)
+                .fillMaxHeight()
+                .background(GoaldayDesign.Positive)
+                .padding(top = 5.dp),
+            textAlign = TextAlign.Center,
+        )
+        Text("✓", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Positive)
+        if (entry.timeText.isNotBlank()) {
+            Text(
+                entry.timeText,
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.InkMuted,
+                maxLines = 1,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color.White.copy(alpha = 0.64f))
+                    .padding(horizontal = 4.dp, vertical = 1.dp),
+            )
+        }
+        Text(
+            entry.title,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFF6B665F),
+            textDecoration = TextDecoration.LineThrough,
+            maxLines = 1,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            "done",
+            style = MaterialTheme.typography.labelSmall,
+            color = GoaldayDesign.Positive,
+            maxLines = 1,
+            modifier = Modifier.padding(end = 5.dp),
+        )
+    }
+}
+
+@Composable
+private fun HandbookFallbackDoneLine(
+    day: Int,
+    title: String,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0x10FFFFFF))
+            .border(0.45.dp, Color(0x1839A76D), RoundedCornerShape(8.dp)),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Text(
+            "${day}日",
+            style = MaterialTheme.typography.labelSmall,
+            color = GoaldayDesign.Positive,
+            modifier = Modifier.width(30.dp),
+            textAlign = TextAlign.Center,
+        )
+        Text("✓", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Positive.copy(alpha = 0.74f))
+        Text(
+            title,
+            style = MaterialTheme.typography.bodySmall,
+            color = GoaldayDesign.InkMuted,
+            textDecoration = TextDecoration.LineThrough,
+            maxLines = 1,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
