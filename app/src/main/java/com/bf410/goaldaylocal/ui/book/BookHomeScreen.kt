@@ -71,6 +71,13 @@ private enum class BookSegment(val label: String) {
     LIST("清单"),
 }
 
+private enum class HandbookSection(val label: String) {
+    OVERVIEW("总览"),
+    SCHEDULE("日程"),
+    DIARY("日记"),
+    TARGET("目标"),
+}
+
 enum class BookEntryMode {
     PLANNER,
     INSPIRATION,
@@ -120,7 +127,25 @@ fun BookHomeScreen(
             )
         }
 
-        BookEntryMode.HANDBOOK, BookEntryMode.DIARY -> {
+        BookEntryMode.HANDBOOK -> {
+            if (!hasBooks) return
+            if (uiState.selectedBookIndex != 0) return
+            val book = uiState.books[safeBookIndex]
+            val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
+            val currentPage = book.pages[clampedPageIndex]
+            val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
+            val nextPage = book.pages.getOrNull(clampedPageIndex + 1)
+            GoaldayHandbookScreen(
+                viewModel = viewModel,
+                book = book,
+                currentPage = currentPage,
+                previousPage = previousPage,
+                nextPage = nextPage,
+                uiState = uiState,
+            )
+        }
+
+        BookEntryMode.DIARY -> {
             if (!hasBooks) return
             if (uiState.selectedBookIndex != 0) return
             val book = uiState.books[safeBookIndex]
@@ -141,8 +166,8 @@ fun BookHomeScreen(
                 onShowEditBook = { showEditBookDialog = true },
                 onToggleManagePanel = { },
                 showManagePanel = false,
-                forcedSegment = if (entryMode == BookEntryMode.DIARY) BookSegment.DIARY else null,
-                bookOnlyMode = entryMode == BookEntryMode.HANDBOOK,
+                forcedSegment = BookSegment.DIARY,
+                bookOnlyMode = false,
                 onShowInspiration = { },
             )
         }
@@ -540,6 +565,262 @@ private fun AddBookShelfCard(onCreateBook: () -> Unit) {
 }
 
 @Composable
+private fun GoaldayHandbookScreen(
+    viewModel: BookViewModel,
+    book: TopicBook,
+    currentPage: BookPage,
+    previousPage: BookPage?,
+    nextPage: BookPage?,
+    uiState: BookUiState,
+) {
+    var section by remember(book.id) { mutableStateOf(resolveHandbookSection(currentPage)) }
+    var openedTargetDetail by remember(book.id, currentPage.title) { mutableStateOf<String?>(null) }
+    val sectionPages = remember(book.pages, section) {
+        book.pages.filter { page -> matchesHandbookSection(page, section) }.ifEmpty { book.pages }
+    }
+    val selectedSectionIndex = sectionPages.indexOfFirst { it.title == currentPage.title }.coerceAtLeast(0)
+
+    fun openSection(next: HandbookSection) {
+        section = next
+        val firstIndex = book.pages.indexOfFirst { page -> matchesHandbookSection(page, next) }
+        if (firstIndex >= 0 && firstIndex != uiState.selectedPageIndex) {
+            viewModel.setPage(firstIndex)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFFFFFBF6),
+                        Color(0xFFF5E4D2),
+                        Color(0xFFE4C7AE),
+                    ),
+                ),
+            ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Goalday 手账", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(monthLabelForPage(currentPage.title, fallback = book.title), color = Color(0xFF7A7065), style = MaterialTheme.typography.labelMedium)
+                }
+                Text(
+                    "${uiState.selectedPageIndex + 1}/${book.pages.size}",
+                    color = Color(0xFF6E6258),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x45FFFDF8))
+                        .border(0.6.dp, Color(0x25A88966), RoundedCornerShape(99.dp))
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+            ) {
+                HandbookSection.entries.forEach { item ->
+                    val selected = item == section
+                    Text(
+                        item.label,
+                        color = if (selected) Color.White else Color(0xFF6E6258),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(if (selected) Color(0xFFE88FAE) else Color(0x4DFFFDF8))
+                            .border(0.7.dp, if (selected) Color(0xFFFFF6F9) else Color(0x28A88966), RoundedCornerShape(99.dp))
+                            .clickable { openSection(item) }
+                            .padding(horizontal = 13.dp, vertical = 6.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+            ) {
+                sectionPages.forEach { page ->
+                    val realIndex = book.pages.indexOfFirst { it.title == page.title }.coerceAtLeast(0)
+                    val selected = page.title == currentPage.title
+                    Text(
+                        text = monthLabelForPage(page.title, fallback = page.title),
+                        color = if (selected) Color(0xFF2F261D) else Color(0xFF8A7C70),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(if (selected) Color(0x66FFFFFF) else Color(0x24FFFFFF))
+                            .border(0.5.dp, if (selected) Color(0x55B88A58) else Color.Transparent, RoundedCornerShape(99.dp))
+                            .clickable { viewModel.setPage(realIndex) }
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(start = 16.dp, top = 22.dp, end = 6.dp, bottom = 14.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(Color(0x55B99173)),
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(start = 10.dp, top = 14.dp, end = 12.dp, bottom = 8.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(Color(0x8BFFEEDC)),
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(start = 3.dp, top = 5.dp, end = 18.dp, bottom = 2.dp)
+                        .shadow(12.dp, RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color(0xFF6C4C3C),
+                                    Color(0xFFE7C7A9),
+                                    Color(0xFFFFFBF5),
+                                    Color(0xFFFFF8EF),
+                                    Color(0xFFE2C0A4),
+                                ),
+                            ),
+                        ),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .fillMaxHeight(0.94f)
+                        .width(18.dp)
+                        .padding(start = 6.dp)
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFF7E5441), Color(0xFFB78366), Color(0xFF6E4A3A)),
+                            ),
+                        ),
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 18.dp, top = 14.dp, end = 22.dp, bottom = 18.dp),
+                ) {
+                    BookReader(
+                        bookId = book.id,
+                        bookTitle = book.title,
+                        subtitle = "${section.label} · ${book.subtitle}",
+                        page = currentPage,
+                        previousPage = previousPage,
+                        nextPage = nextPage,
+                        pageIndex = uiState.selectedPageIndex,
+                        pageCount = book.pages.size,
+                        tint = book.color,
+                        isSaved = book.id in uiState.savedBookIds,
+                        diaryDraft = uiState.diaryDraft,
+                        customPageItems = uiState.customPageItems,
+                        weeklyTheme = uiState.weeklyTheme,
+                        todayPlanItems = uiState.todayPlanItems,
+                        todayCompletedItems = uiState.todayCompletedItems,
+                        schedulePreviewEntries = uiState.schedulePreviewEntries,
+                        targetItemMeta = uiState.targetItemMeta,
+                        onToggleSaved = viewModel::toggleSavedCurrentBook,
+                        isChecked = { pageTitle, item -> viewModel.isChecked(pageTitle, item) },
+                        onToggleChecked = { pageTitle, item -> viewModel.toggleChecked(pageTitle, item) },
+                        onDiaryChange = viewModel::updateDiaryDraft,
+                        onAddCustomItem = viewModel::addCustomPageItem,
+                        onAddCustomItemWithDeadline = viewModel::addCustomPageItemWithDeadline,
+                        onRemoveCustomItem = viewModel::removeCustomPageItem,
+                        onRenameCustomItem = viewModel::renameCustomPageItem,
+                        onAddToSchedule = viewModel::addItemToSchedule,
+                        onAddHandbookPoolItem = viewModel::addHandbookPoolItem,
+                        onRemoveHandbookPoolItem = viewModel::removeHandbookPoolItem,
+                        onAddScheduleFromHandbook = viewModel::addScheduleFromHandbook,
+                        onWeeklyThemeChange = viewModel::updateWeeklyTheme,
+                        onMoveItemToToday = viewModel::moveItemToToday,
+                        onMoveItemToCompleted = viewModel::moveItemToCompleted,
+                        onRestoreItemFromToday = viewModel::restoreItemFromToday,
+                        onRestoreItemFromCompleted = viewModel::restoreItemFromCompleted,
+                        onUpdateScheduleTitle = viewModel::updateScheduleTitleFromHandbook,
+                        onMoveScheduleDay = viewModel::moveScheduleDayFromHandbook,
+                        onToggleScheduleCompleted = viewModel::toggleScheduleCompletedFromHandbook,
+                        onUpdateTargetNote = viewModel::updateTargetItemNote,
+                        onUpdateTargetDeadline = viewModel::updateTargetItemDeadline,
+                        onOpenTargetDetail = { openedTargetDetail = it },
+                        shellStyle = ShellStyle.BOOK,
+                        handbookMode = true,
+                        onFlipNext = {
+                            val nextIndex = if (section == HandbookSection.OVERVIEW) {
+                                uiState.selectedPageIndex + 1
+                            } else {
+                                sectionPages.getOrNull(selectedSectionIndex + 1)
+                                    ?.let { page -> book.pages.indexOfFirst { it.title == page.title } }
+                                    ?: -1
+                            }
+                            if (nextIndex in book.pages.indices) viewModel.setPage(nextIndex)
+                        },
+                        onFlipPrevious = {
+                            val previousIndex = if (section == HandbookSection.OVERVIEW) {
+                                uiState.selectedPageIndex - 1
+                            } else {
+                                sectionPages.getOrNull(selectedSectionIndex - 1)
+                                    ?.let { page -> book.pages.indexOfFirst { it.title == page.title } }
+                                    ?: -1
+                            }
+                            if (previousIndex in book.pages.indices) viewModel.setPage(previousIndex)
+                        },
+                    )
+                }
+            }
+        }
+        val targetPage = currentPage as? TargetPage
+        val targetItems = targetPage?.let { (it.items + uiState.customPageItems).distinct() }.orEmpty()
+        val targetItem = openedTargetDetail?.takeIf { it in targetItems }
+        if (targetPage != null && targetItem != null) {
+            TargetDetailRouteOverlay(
+                pageTitle = targetPage.title,
+                item = targetItem,
+                itemIndex = targetItems.indexOf(targetItem).coerceAtLeast(0),
+                itemCount = targetItems.size,
+                checked = viewModel.isChecked(targetPage.title, targetItem),
+                meta = uiState.targetItemMeta[targetItem] ?: TargetItemMeta(),
+                scheduledEntries = uiState.schedulePreviewEntries
+                    .filter { it.title == targetItem }
+                    .sortedWith(compareBy<ScheduleEntry>({ it.month }, { it.day }, { it.timeText })),
+                onClose = { openedTargetDetail = null },
+                onToggleChecked = { viewModel.toggleChecked(targetPage.title, targetItem) },
+                onUpdateNote = { viewModel.updateTargetItemNote(targetItem, it) },
+                onUpdateDeadline = { viewModel.updateTargetItemDeadline(targetItem, it) },
+                onAddToSchedule = { day -> viewModel.addItemToSchedule(targetItem, day) },
+            )
+        }
+    }
+}
+
+@Composable
 private fun BookDetailView(
     viewModel: BookViewModel,
     book: TopicBook,
@@ -850,6 +1131,21 @@ private fun monthLabelForPage(title: String, fallback: String): String {
     val regex = Regex("(\\d{1,2}月)")
     return regex.find(title)?.value ?: fallback
 }
+
+private fun matchesHandbookSection(page: BookPage, section: HandbookSection): Boolean =
+    when (section) {
+        HandbookSection.OVERVIEW -> true
+        HandbookSection.SCHEDULE -> page is SchedulePage || page is PlanPage
+        HandbookSection.DIARY -> page is DiaryPage
+        HandbookSection.TARGET -> page is TargetPage
+    }
+
+private fun resolveHandbookSection(page: BookPage): HandbookSection =
+    when (page) {
+        is DiaryPage -> HandbookSection.DIARY
+        is TargetPage -> HandbookSection.TARGET
+        is SchedulePage, is PlanPage -> HandbookSection.SCHEDULE
+    }
 
 @Composable
 private fun TargetDetailRouteOverlay(
