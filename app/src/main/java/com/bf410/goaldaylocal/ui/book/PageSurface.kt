@@ -3657,7 +3657,13 @@ private fun DiaryTypedBlockEditRow(
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("${index + 1}. ${block.type.label}", style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
+                DiaryBlockTypeBadge(type = block.type, index = index + 1)
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text(diaryBlockDisplayTitle(block.type), style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
+                    Text(diaryBlockDisplaySubtitle(block.type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "子项",
@@ -3741,6 +3747,48 @@ private fun DiaryToolChip(
             .padding(horizontal = 8.dp, vertical = 4.dp),
     )
 }
+
+@Composable
+private fun DiaryBlockTypeBadge(
+    type: DiaryBlockType,
+    index: Int,
+) {
+    val color = diaryBlockTypeColor(type)
+    Column(
+        modifier = Modifier
+            .width(42.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(color.copy(alpha = 0.13f))
+            .border(0.7.dp, color.copy(alpha = 0.26f), RoundedCornerShape(10.dp))
+            .padding(horizontal = 5.dp, vertical = 5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(diaryBlockTypeIcon(type), color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text("%02d".format(index), color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+    }
+}
+
+private fun diaryBlockTypeIcon(type: DiaryBlockType): String =
+    when (type) {
+        DiaryBlockType.TEXT -> "T"
+        DiaryBlockType.TARGET -> "✓"
+        DiaryBlockType.TOPIC_TARGET -> "◎"
+    }
+
+private fun diaryBlockDisplayTitle(type: DiaryBlockType): String =
+    when (type) {
+        DiaryBlockType.TEXT -> "文字记录"
+        DiaryBlockType.TARGET -> "关联目标"
+        DiaryBlockType.TOPIC_TARGET -> "专题目标"
+    }
+
+private fun diaryBlockDisplaySubtitle(type: DiaryBlockType): String =
+    when (type) {
+        DiaryBlockType.TEXT -> "自由文字 / 摘要"
+        DiaryBlockType.TARGET -> "完成项 / 工作项"
+        DiaryBlockType.TOPIC_TARGET -> "来自灵感主题"
+    }
 
 private fun diaryBlockTypeColor(type: DiaryBlockType): Color =
     when (type) {
@@ -3896,7 +3944,7 @@ private fun DiaryTypedBlockPreview(
 ) {
     if (blocks.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
-        blocks.take(6).forEach { block ->
+        blocks.take(6).forEachIndexed { index, block ->
             val color = diaryBlockTypeColor(block.type)
             Column(
                 modifier = Modifier
@@ -3908,13 +3956,18 @@ private fun DiaryTypedBlockPreview(
                 verticalArrangement = Arrangement.spacedBy(5.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.Top) {
-                    Text(block.type.label, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold, modifier = Modifier.width(48.dp))
-                    Text(
-                        block.mainText.ifBlank { "空内容" },
-                        style = diaryBlockTextStyle(block),
-                        color = GoaldayDesign.InkPrimary,
-                        modifier = Modifier.weight(1f),
-                    )
+                    DiaryBlockTypeBadge(type = block.type, index = index + 1)
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(diaryBlockDisplayTitle(block.type), style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
+                            Text(block.style.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                        }
+                        Text(
+                            block.mainText.ifBlank { "空内容" },
+                            style = diaryBlockTextStyle(block),
+                            color = GoaldayDesign.InkPrimary,
+                        )
+                    }
                 }
                 block.childLines.take(4).forEach { child ->
                     Row(
