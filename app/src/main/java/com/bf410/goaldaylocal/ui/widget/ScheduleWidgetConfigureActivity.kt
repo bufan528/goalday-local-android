@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -76,11 +78,12 @@ private fun ScheduleWidgetConfigureScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFF8EF))
+            .verticalScroll(rememberScrollState())
             .padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text("选择日程小组件样式", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2F2922))
-        Text("添加到桌面后仍会自动读取今天的日程。", style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A7065))
+        Text("小号和大号日程组件通用。添加到桌面后会自动读取今天的本地日程。", style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A7065))
         ScheduleWidgetStyle.entries.forEach { style ->
             Row(
                 modifier = Modifier
