@@ -372,7 +372,7 @@ internal object InspirationTemplates {
             targetKey = "${coverKey}_target",
             category = category,
             catalogPath = "assets/topic_center_config.json",
-            coverAssetPath = "compose/cover/$coverKey",
+            coverAssetPath = "assets/cover/$coverKey.png",
             targetAssetPath = "assets/topictarget/${coverKey}_target.txt",
             linkToSchedule = linkToSchedule,
             items = items.distinct(),
@@ -594,13 +594,29 @@ internal object InspirationTemplates {
     }
 }
 
-internal fun loadTargetAssetItems(context: Context, path: String): List<String> =
-    runCatching {
-        val assetName = path.removePrefix("assets/")
-        context.assets.open(assetName).bufferedReader().useLines { lines ->
-            lines.map(String::trim)
-                .filter { it.isNotBlank() && !it.startsWith("#") }
-                .distinct()
-                .toList()
+internal fun loadTargetAssetItems(context: Context, path: String): List<String> {
+    for (assetName in targetAssetCandidates(path)) {
+        val items = runCatching {
+            context.assets.open(assetName).bufferedReader().useLines { lines ->
+                lines.map(String::trim)
+                    .filter { it.isNotBlank() && !it.startsWith("#") }
+                    .distinct()
+                    .toList()
+            }
+        }.getOrDefault(emptyList())
+        if (items.isNotEmpty()) return items
+    }
+    return emptyList()
+}
+
+internal fun targetAssetCandidates(path: String): List<String> {
+    val requested = path.removePrefix("assets/")
+    return buildList {
+        add(requested)
+        if (requested.endsWith("_target.txt")) {
+            add(requested.replace("_target.txt", ".txt"))
+        } else if (requested.endsWith(".txt")) {
+            add(requested.replace(".txt", "_target.txt"))
         }
-    }.getOrDefault(emptyList())
+    }.distinct()
+}

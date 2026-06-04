@@ -102,11 +102,15 @@ import com.bf410.goaldaylocal.ui.replica.BoardTask
 import com.bf410.goaldaylocal.ui.replica.DualLaneExecutionBoard
 import com.bf410.goaldaylocal.ui.replica.ExecutionBoardHeader
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+import com.tencent.mmkv.MMKV
+import org.json.JSONArray
+import org.json.JSONObject
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileOutputStream
@@ -3280,6 +3284,14 @@ private data class LongImagePreview(
     val bitmap: Bitmap,
 )
 
+private data class LongImageExportHistoryItem(
+    val action: String,
+    val title: String,
+    val preset: String,
+    val detail: String,
+    val createdAtMillis: Long,
+)
+
 private fun saveLongImagePreview(context: Context, preview: LongImagePreview): Uri? =
     saveBitmapToPictures(context, preview.bitmap, "${preview.filePrefix}_${System.currentTimeMillis()}.png")
 
@@ -3297,6 +3309,66 @@ private enum class LongImageExportPreset(
     LONG("长图", "原始比例 · 适合保存分享", PrintAttributes.MediaSize.UNKNOWN_PORTRAIT, 0),
     PHONE("手机", "9:16 预览 · 适合发到社交软件", PrintAttributes.MediaSize.NA_LETTER, 10),
     PRINT("打印", "A4 PDF · 适合纸质手账", PrintAttributes.MediaSize.ISO_A4, 22),
+}
+
+private const val KEY_LONG_IMAGE_EXPORT_HISTORY = "long_image_export_history"
+private val longImageHistoryFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm")
+
+private fun loadLongImageExportHistory(): List<LongImageExportHistoryItem> {
+    val raw = MMKV.defaultMMKV().decodeString(KEY_LONG_IMAGE_EXPORT_HISTORY, "[]") ?: "[]"
+    val array = runCatching { JSONArray(raw) }.getOrElse { JSONArray() }
+    return buildList {
+        repeat(array.length()) { index ->
+            val json = array.optJSONObject(index) ?: return@repeat
+            add(
+                LongImageExportHistoryItem(
+                    action = json.optString("action").ifBlank { "导出" },
+                    title = json.optString("title").ifBlank { "Goalday 长图" },
+                    preset = json.optString("preset").ifBlank { "长图" },
+                    detail = json.optString("detail"),
+                    createdAtMillis = json.optLong("createdAtMillis", 0L),
+                ),
+            )
+        }
+    }
+}
+
+private fun appendLongImageExportHistory(
+    preview: LongImagePreview,
+    preset: LongImageExportPreset,
+    action: String,
+    detail: String = "",
+) {
+    val updated = (
+        listOf(
+            LongImageExportHistoryItem(
+                action = action,
+                title = preview.title,
+                preset = preset.label,
+                detail = detail,
+                createdAtMillis = System.currentTimeMillis(),
+            ),
+        ) + loadLongImageExportHistory()
+    ).take(12)
+    val array = JSONArray()
+    updated.forEach { item ->
+        array.put(
+            JSONObject()
+                .put("action", item.action)
+                .put("title", item.title)
+                .put("preset", item.preset)
+                .put("detail", item.detail)
+                .put("createdAtMillis", item.createdAtMillis),
+        )
+    }
+    MMKV.defaultMMKV().encode(KEY_LONG_IMAGE_EXPORT_HISTORY, array.toString())
+}
+
+private fun LongImageExportHistoryItem.displayTime(): String {
+    if (createdAtMillis <= 0L) return "刚刚"
+    return Instant.ofEpochMilli(createdAtMillis)
+        .atZone(ZoneId.systemDefault())
+        .format(longImageHistoryFormatter)
 }
 
 private fun printLongImagePreview(context: Context, preview: LongImagePreview, preset: LongImageExportPreset): Boolean =
@@ -3376,10 +3448,11 @@ private fun LongImagePreviewDialog(
     val context = LocalContext.current
     var actionHint by remember(preview) { mutableStateOf("") }
     var selectedPreset by remember(preview) { mutableStateOf(LongImageExportPreset.LONG) }
-    var actionHistory by remember(preview) { mutableStateOf(listOf<String>()) }
-    fun recordAction(message: String) {
+    var exportHistory by remember(preview) { mutableStateOf(loadLongImageExportHistory()) }
+    fun recordAction(message: String, action: String, detail: String = "") {
         actionHint = message
-        actionHistory = (listOf(message) + actionHistory).take(4)
+        appendLongImageExportHistory(preview, selectedPreset, action, detail)
+        exportHistory = loadLongImageExportHistory()
     }
     LaunchedEffect(actionHint) {
         if (actionHint.isNotBlank()) {
@@ -3394,31 +3467,35 @@ private fun LongImagePreviewDialog(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFFFFCF7))
-                .padding(horizontal = 14.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFFFFFCF7), Color(0xFFFFF4EA), Color(0xFFF4DDC6)),
+                    ),
+                )
+                .padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(18.dp))
                     .background(
                         Brush.horizontalGradient(
                             listOf(Color(0xFFFFFEFC), Color(0xFFFFF2E7), Color(0xFFFFEAF1)),
                         ),
                     )
-                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(18.dp))
+                    .padding(horizontal = 13.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("LONG IMAGE DISPLAY", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+                    Text("LONG IMAGE DISPLAY · PRINT EXPORT", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
                     Text(preview.title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
                     Text(preview.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                 }
                 Text(
-                    "关闭",
+                    "完成",
                     style = MaterialTheme.typography.labelSmall,
                     color = GoaldayDesign.InkMuted,
                     modifier = Modifier
@@ -3437,7 +3514,7 @@ private fun LongImagePreviewDialog(
                 LongImageInfoPill("长图", "${preview.bitmap.width}×${preview.bitmap.height}")
                 LongImageInfoPill("格式", "PNG")
                 LongImageInfoPill("预设", selectedPreset.label)
-                LongImageInfoPill("用途", "保存 / 分享 / 打印")
+                LongImageInfoPill("记录", "${exportHistory.size}条")
             }
             Row(
                 modifier = Modifier
@@ -3458,9 +3535,9 @@ private fun LongImagePreviewDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(18.dp))
                     .background(Color(0xFFF2ECE3))
-                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(16.dp))
+                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(18.dp))
                     .verticalScroll(rememberScrollState()),
             ) {
                 Image(
@@ -3472,26 +3549,27 @@ private fun LongImagePreviewDialog(
                         .padding(selectedPreset.previewInset.dp),
                 )
             }
-            if (actionHistory.isNotEmpty()) {
-                Row(
+            if (exportHistory.isNotEmpty()) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.72f))
+                        .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
+                        .padding(9.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text("历史", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
-                    actionHistory.forEach { item ->
-                        Text(
-                            item,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = GoaldayDesign.InkSecondary,
-                            maxLines = 1,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(99.dp))
-                                .background(Color(0x11A88966))
-                                .padding(horizontal = 8.dp, vertical = 3.dp),
-                        )
+                    Text("最近导出", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        exportHistory.take(6).forEach { item ->
+                            LongImageHistoryChip(item)
+                        }
                     }
                 }
             }
@@ -3506,19 +3584,49 @@ private fun LongImagePreviewDialog(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LongImageActionChip("保存", GoaldayDesign.Positive) {
-                    recordAction(if (saveLongImagePreview(context, preview) != null) "已保存到相册" else "保存失败")
+                    val uri = saveLongImagePreview(context, preview)
+                    if (uri != null) {
+                        recordAction("已保存到相册", "保存", uri.lastPathSegment.orEmpty())
+                    } else {
+                        actionHint = "保存失败"
+                    }
                 }
                 LongImageActionChip("分享", Color(0xFFB07A8F)) {
-                    recordAction(if (shareLongImagePreview(context, preview)) "已打开分享" else "分享失败")
+                    if (shareLongImagePreview(context, preview)) {
+                        recordAction("已打开分享", "分享", selectedPreset.description)
+                    } else {
+                        actionHint = "分享失败"
+                    }
                 }
                 LongImageActionChip("打印", GoaldayDesign.InkSecondary) {
-                    recordAction(if (printLongImagePreview(context, preview, selectedPreset)) "已打开${selectedPreset.label}打印" else "打印失败")
+                    if (printLongImagePreview(context, preview, selectedPreset)) {
+                        recordAction("已打开${selectedPreset.label}打印", "打印", selectedPreset.description)
+                    } else {
+                        actionHint = "打印失败"
+                    }
                 }
                 if (actionHint.isNotBlank()) {
                     Text(actionHint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LongImageHistoryChip(item: LongImageExportHistoryItem) {
+    Column(
+        modifier = Modifier
+            .width(142.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFFFFCF7))
+            .border(0.6.dp, Color(0x16B7A893), RoundedCornerShape(12.dp))
+            .padding(horizontal = 9.dp, vertical = 7.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text("${item.action} · ${item.preset}", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(item.displayTime(), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+        Text(item.title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, maxLines = 1)
     }
 }
 

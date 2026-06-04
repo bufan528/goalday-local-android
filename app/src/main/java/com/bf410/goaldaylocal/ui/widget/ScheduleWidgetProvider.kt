@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import com.bf410.goaldaylocal.MainActivity
@@ -14,6 +15,7 @@ import com.bf410.goaldaylocal.data.LocalStateStore
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.tencent.mmkv.MMKV
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 enum class ScheduleWidgetStyle(
     val raw: String,
@@ -99,6 +101,45 @@ enum class ScheduleWidgetStyle(
     }
 }
 
+enum class ScheduleWidgetScope(
+    val raw: String,
+    val label: String,
+    val shortLabel: String,
+) {
+    TODAY("today", "今天", "TODAY"),
+    UPCOMING("upcoming", "未来7天", "NEXT 7"),
+    WEEK("week", "本周", "WEEK");
+
+    companion object {
+        fun fromRaw(raw: String?): ScheduleWidgetScope =
+            entries.firstOrNull { it.raw == raw } ?: TODAY
+    }
+}
+
+enum class ScheduleWidgetDensity(
+    val raw: String,
+    val label: String,
+    val smallRows: Int,
+    val largeRows: Int,
+    val taskTextSp: Float,
+    val subtitleTextSp: Float,
+) {
+    COMPACT("compact", "紧凑", 2, 4, 10.5f, 10f),
+    BALANCED("balanced", "标准", 3, 5, 12f, 11f),
+    DETAILED("detailed", "详细", 3, 5, 13f, 12f);
+
+    companion object {
+        fun fromRaw(raw: String?): ScheduleWidgetDensity =
+            entries.firstOrNull { it.raw == raw } ?: BALANCED
+    }
+}
+
+data class ScheduleWidgetConfig(
+    val style: ScheduleWidgetStyle,
+    val scope: ScheduleWidgetScope,
+    val density: ScheduleWidgetDensity,
+)
+
 class ScheduleWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
         context: Context,
@@ -112,6 +153,8 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val KEY_WIDGET_STYLE_PREFIX = "schedule_widget_style_"
+        const val KEY_WIDGET_SCOPE_PREFIX = "schedule_widget_scope_"
+        const val KEY_WIDGET_DENSITY_PREFIX = "schedule_widget_density_"
 
         fun buildRemoteViews(context: Context, widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID): RemoteViews =
             buildScheduleViews(
@@ -134,6 +177,7 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
                     R.id.widget_task_2,
                     R.id.widget_task_3,
                 ),
+                large = false,
             )
 
         fun buildLargeRemoteViews(context: Context, widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID): RemoteViews =
@@ -163,7 +207,24 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
                     R.id.widget_task_4,
                     R.id.widget_task_5,
                 ),
+                large = true,
             )
+
+        fun loadConfig(widgetId: Int): ScheduleWidgetConfig {
+            val mmkv = MMKV.defaultMMKV()
+            return ScheduleWidgetConfig(
+                style = ScheduleWidgetStyle.fromRaw(mmkv.decodeString("$KEY_WIDGET_STYLE_PREFIX$widgetId", null)),
+                scope = ScheduleWidgetScope.fromRaw(mmkv.decodeString("$KEY_WIDGET_SCOPE_PREFIX$widgetId", null)),
+                density = ScheduleWidgetDensity.fromRaw(mmkv.decodeString("$KEY_WIDGET_DENSITY_PREFIX$widgetId", null)),
+            )
+        }
+
+        fun saveConfig(widgetId: Int, config: ScheduleWidgetConfig) {
+            val mmkv = MMKV.defaultMMKV()
+            mmkv.encode("$KEY_WIDGET_STYLE_PREFIX$widgetId", config.style.raw)
+            mmkv.encode("$KEY_WIDGET_SCOPE_PREFIX$widgetId", config.scope.raw)
+            mmkv.encode("$KEY_WIDGET_DENSITY_PREFIX$widgetId", config.density.raw)
+        }
 
         private fun buildScheduleViews(
             context: Context,
@@ -173,26 +234,34 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
             rowIds: List<Int>,
             dotIds: List<Int>,
             taskIds: List<Int>,
+            large: Boolean,
         ): RemoteViews {
             val today = LocalDate.now()
+            val config = loadConfig(widgetId)
+            val style = config.style
             val entries = LocalStateStore(MMKV.defaultMMKV())
                 .scheduleEntries()
-                .filter { it.year == today.year && it.month == today.monthValue && it.day == today.dayOfMonth }
-                .sortedWith(compareBy<ScheduleEntry>({ it.completed }, { it.timeText }, { it.title.lowercase() }))
+                .filter { it.matchesWidgetScope(today, config.scope) }
+                .sortedWith(compareBy<ScheduleEntry>({ it.completed }, { it.year }, { it.month }, { it.day }, { it.timeText }, { it.title.lowercase() }))
             val todo = entries.filterNot { it.completed }
             val done = entries.count { it.completed }
             val views = RemoteViews(context.packageName, layoutId)
-            val style = ScheduleWidgetStyle.fromRaw(MMKV.defaultMMKV().decodeString("$KEY_WIDGET_STYLE_PREFIX$widgetId", null))
+            val maxRows = if (large) config.density.largeRows else config.density.smallRows
             views.setInt(R.id.widget_root, "setBackgroundColor", style.backgroundColor)
             views.setTextViewText(R.id.widget_title, style.title)
             views.setTextColor(R.id.widget_title, style.titleColor)
             views.setTextColor(R.id.widget_subtitle, style.subtitleColor)
             views.setTextColor(R.id.widget_status_pill, style.accentColor)
             views.setTextColor(R.id.widget_footer, style.subtitleColor)
-            sectionId?.let { id -> views.setTextColor(id, style.accentColor) }
-            views.setTextViewText(R.id.widget_subtitle, "${today.monthValue}月${today.dayOfMonth}日 · 待办 ${todo.size} · 完成 $done")
+            views.setTextViewTextSize(R.id.widget_subtitle, TypedValue.COMPLEX_UNIT_SP, config.density.subtitleTextSp)
+            views.setTextViewText(R.id.widget_empty, config.scope.emptyText)
+            sectionId?.let { id ->
+                views.setTextColor(id, style.accentColor)
+                views.setTextViewText(id, config.scope.shortLabel)
+            }
+            views.setTextViewText(R.id.widget_subtitle, "${config.scope.label} · 待办 ${todo.size} · 完成 $done")
             views.setTextViewText(R.id.widget_status_pill, if (todo.isEmpty()) "清爽" else "${todo.size} todo")
-            val displayEntries = entries.take(taskIds.size)
+            val displayEntries = entries.take(maxRows.coerceAtMost(taskIds.size))
             taskIds.forEachIndexed { index, id ->
                 val entry = displayEntries.getOrNull(index)
                 if (entry == null) {
@@ -201,10 +270,13 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
                     views.setViewVisibility(rowIds[index], View.VISIBLE)
                     val time = entry.timeText.takeIf { it.isNotBlank() }?.let { "$it " }.orEmpty()
                     val repeat = widgetRepeatLabel(entry).takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()
+                    val date = widgetDatePrefix(entry, today, config.scope)
+                    val note = if (config.density == ScheduleWidgetDensity.DETAILED) entry.note.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty() else ""
                     views.setTextViewText(dotIds[index], "●")
                     views.setTextColor(dotIds[index], if (entry.completed) style.doneColor else style.accentColor)
-                    views.setTextViewText(id, "$time${entry.title}$repeat")
+                    views.setTextViewText(id, "$date$time${entry.title}$repeat$note")
                     views.setTextColor(id, if (entry.completed) style.doneTextColor else style.titleColor)
+                    views.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_SP, config.density.taskTextSp)
                 }
             }
             if (entries.isEmpty()) {
@@ -229,6 +301,37 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
             )
         }
     }
+}
+
+private val ScheduleWidgetScope.emptyText: String
+    get() = when (this) {
+        ScheduleWidgetScope.TODAY -> "今天还没有日程\n打开 Goalday，把目标排进今天"
+        ScheduleWidgetScope.UPCOMING -> "未来7天还没有待办\n从目标页安排下一步"
+        ScheduleWidgetScope.WEEK -> "本周还没有日程\n把本周计划放进手账"
+    }
+
+private fun ScheduleEntry.matchesWidgetScope(today: LocalDate, scope: ScheduleWidgetScope): Boolean {
+    val date = runCatching { LocalDate.of(year, month, day) }.getOrNull() ?: return false
+    return when (scope) {
+        ScheduleWidgetScope.TODAY -> date == today
+        ScheduleWidgetScope.UPCOMING -> !date.isBefore(today) && ChronoUnit.DAYS.between(today, date) <= 6
+        ScheduleWidgetScope.WEEK -> {
+            val start = today.minusDays((today.dayOfWeek.value - 1).toLong())
+            val end = start.plusDays(6)
+            !date.isBefore(start) && !date.isAfter(end)
+        }
+    }
+}
+
+private fun widgetDatePrefix(entry: ScheduleEntry, today: LocalDate, scope: ScheduleWidgetScope): String {
+    if (scope == ScheduleWidgetScope.TODAY) return ""
+    val date = runCatching { LocalDate.of(entry.year, entry.month, entry.day) }.getOrNull() ?: return ""
+    val label = when (ChronoUnit.DAYS.between(today, date).toInt()) {
+        0 -> "今天"
+        1 -> "明天"
+        else -> "${entry.month}/${entry.day}"
+    }
+    return "$label "
 }
 
 private fun widgetRepeatLabel(entry: ScheduleEntry): String {

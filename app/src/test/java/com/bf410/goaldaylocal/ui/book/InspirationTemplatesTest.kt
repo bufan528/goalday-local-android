@@ -1,0 +1,20 @@
+package com.bf410.goaldaylocal.ui.book
+
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+class InspirationTemplatesTest {
+    @Test
+    fun target_asset_candidates_accept_local_and_reference_apk_names() {
+        val candidates = targetAssetCandidates("assets/topictarget/life_target.txt")
+
+        assertEquals(listOf("topictarget/life_target.txt", "topictarget/life.txt"), candidates)
+    }
+
+    @Test
+    fun target_asset_candidates_accept_reference_apk_name_first() {
+        val candidates = targetAssetCandidates("assets/topictarget/topicweek.txt")
+
+        assertEquals(listOf("topictarget/topicweek.txt", "topictarget/topicweek_target.txt"), candidates)
+    }
+}

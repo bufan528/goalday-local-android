@@ -1,10 +1,14 @@
 package com.bf410.goaldaylocal.ui
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,7 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,6 +52,9 @@ private data class GuidePage(
     val body: String,
     val action: String,
     val focus: String,
+    val asset: String,
+    val star: String,
+    val tone: Color,
 )
 
 @Composable
@@ -54,10 +63,10 @@ internal fun GuideOverlay(
 ) {
     val pages = remember {
         listOf(
-            GuidePage("目标", "先把目标放进手账", "从灵感中心选择主题，勾选目标后可以导入任务池，也可以保存成一本手账。", "选主题 · 勾目标", "聚焦：灵感中心"),
-            GuidePage("日程", "把任务排进今天", "在日程页把任务拖入日期，或者点目标卡片的排入按钮；桌面小组件会跟着刷新。", "拖入日期 · 标记完成", "聚焦：手账/整月"),
-            GuidePage("日记", "每天写成块", "日记支持文字块、目标块、专题目标块和图片；完成的目标也能直接关联到日记。", "写文字 · 贴目标", "聚焦：日记块"),
-            GuidePage("导出", "最后导出成手账图", "日记和日程手账都可以预览长图，再保存、分享或调用系统打印。", "预览 · 分享 · 打印", "聚焦：长图预览"),
+            GuidePage("目标", "先把目标放进手账", "从灵感中心选择主题，勾选目标后可以导入任务池，也可以保存成一本手账。", "选主题 · 勾目标", "聚焦：灵感中心", "lottie/book.png", "lottie/star_pink.png", Color(0xFFE88FAE)),
+            GuidePage("日程", "把任务排进今天", "在日程页把任务拖入日期，或者点目标卡片的排入按钮；桌面小组件会跟着刷新。", "拖入日期 · 标记完成", "聚焦：手账/整月", "lottie/img_4.png", "lottie/star_green.png", Color(0xFF6F8E68)),
+            GuidePage("日记", "每天写成块", "日记支持文字块、目标块、专题目标块和图片；完成的目标也能直接关联到日记。", "写文字 · 贴目标", "聚焦：日记块", "lottie/card.png", "lottie/star_purple.png", Color(0xFFB07A8F)),
+            GuidePage("导出", "最后导出成手账图", "日记和日程手账都可以预览长图，再保存、分享或调用系统打印。", "预览 · 分享 · 打印", "聚焦：长图预览", "lottie/img_8.png", "lottie/star_yellow.png", Color(0xFFB88A58)),
         )
     }
     var index by remember { mutableIntStateOf(0) }
@@ -74,24 +83,27 @@ internal fun GuideOverlay(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xAA2F2922))
-            .padding(18.dp),
-        contentAlignment = Alignment.Center,
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFFFFFCF7),
+                        Color(0xFFFFF0E4),
+                        page.tone.copy(alpha = 0.22f),
+                    ),
+                ),
+            )
+            .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFFFFFCF7))
-                .border(1.dp, Color(0x28E88FAE), RoundedCornerShape(24.dp))
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("Goalday 新手引导", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                    Text("Goalday", style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
                     Text(
-                        if (hasLocalGuideAssets) "asset-backed guide" else "compose guide",
+                        if (hasLocalGuideAssets) "GuideActivity style · local assets" else "compose guide",
                         style = MaterialTheme.typography.labelSmall,
                         color = if (hasLocalGuideAssets) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
                     )
@@ -107,11 +119,6 @@ internal fun GuideOverlay(
                 )
             }
             GuideIllustration(page = page, index = index)
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(page.label, style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
-                Text(page.title, style = MaterialTheme.typography.headlineSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-                Text(page.body, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.InkSecondary)
-            }
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
                 pages.forEachIndexed { dotIndex, _ ->
                     Box(
@@ -123,35 +130,50 @@ internal fun GuideOverlay(
                     )
                 }
             }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    if (index == 0) "从头开始" else "上一步",
-                    color = if (index == 0) GoaldayDesign.InkMuted else GoaldayDesign.InkSecondary,
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .clickable {
-                            if (index > 0) index -= 1
-                        }
-                        .padding(horizontal = 10.dp, vertical = 7.dp),
-                )
-                Text(
-                    if (index == pages.lastIndex) "完成" else "下一步",
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(GoaldayDesign.PrimaryAction)
-                        .clickable {
-                            if (index == pages.lastIndex) {
-                                onClose()
-                            } else {
-                                index += 1
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color.White.copy(alpha = 0.78f))
+                    .border(1.dp, Color.White.copy(alpha = 0.72f), RoundedCornerShape(24.dp))
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(13.dp),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(page.label, style = MaterialTheme.typography.labelMedium, color = page.tone, fontWeight = FontWeight.SemiBold)
+                    Text(page.title, style = MaterialTheme.typography.headlineSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                    Text(page.body, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.InkSecondary)
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        if (index == 0) "从头开始" else "上一步",
+                        color = if (index == 0) GoaldayDesign.InkMuted else GoaldayDesign.InkSecondary,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .clickable {
+                                if (index > 0) index -= 1
                             }
-                        }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                )
+                            .padding(horizontal = 10.dp, vertical = 7.dp),
+                    )
+                    Text(
+                        if (index == pages.lastIndex) "完成" else "下一步",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(page.tone)
+                            .clickable {
+                                if (index == pages.lastIndex) {
+                                    onClose()
+                                } else {
+                                    index += 1
+                                }
+                            }
+                            .padding(horizontal = 18.dp, vertical = 9.dp),
+                    )
+                }
             }
         }
     }
@@ -162,6 +184,10 @@ private fun GuideIllustration(
     page: GuidePage,
     index: Int,
 ) {
+    val context = LocalContext.current
+    val mainAsset = remember(page.asset) { loadGuideAssetBitmap(context, page.asset) }
+    val starAsset = remember(page.star) { loadGuideAssetBitmap(context, page.star) }
+    val whiteStar = remember { loadGuideAssetBitmap(context, "lottie/star_white.png") }
     val motion = rememberInfiniteTransition(label = "guide-motion")
     val pulse by motion.animateFloat(
         initialValue = 0.88f,
@@ -178,79 +204,132 @@ private fun GuideIllustration(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(178.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .height(330.dp)
+            .clip(RoundedCornerShape(28.dp))
             .background(
-                Brush.linearGradient(
+                Brush.radialGradient(
                     listOf(
-                        Color(0xFFFFECF3),
-                        Color(0xFFFFF7EC),
-                        Color(0xFFE9F1E5),
+                        Color.White.copy(alpha = 0.95f),
+                        page.tone.copy(alpha = 0.24f),
+                        Color(0xFFFFF5EA),
                     ),
                 ),
             )
-            .border(1.dp, Color.White.copy(alpha = 0.55f), RoundedCornerShape(18.dp))
-            .padding(16.dp),
+            .border(1.dp, Color.White.copy(alpha = 0.72f), RoundedCornerShape(28.dp))
+            .padding(18.dp),
     ) {
         Box(
             modifier = Modifier
-                .align(Alignment.CenterStart)
-                .width(72.dp)
-                .height(126.dp)
-                .clip(RoundedCornerShape(12.dp, 4.dp, 12.dp, 4.dp))
-                .background(Color.White.copy(alpha = 0.74f))
-                .border(1.dp, Color(0x22B7A893), RoundedCornerShape(12.dp, 4.dp, 12.dp, 4.dp)),
-        )
+                .align(Alignment.Center)
+                .size(228.dp)
+                .graphicsLayer {
+                    translationY = (glide - 0.5f) * 18f
+                    scaleX = 0.98f + (pulse - 0.88f) * 0.12f
+                    scaleY = 0.98f + (pulse - 0.88f) * 0.12f
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            if (mainAsset != null) {
+                Image(
+                    bitmap = mainAsset.asImageBitmap(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color.White.copy(alpha = 0.72f))
+                        .border(1.dp, Color(0x22B7A893), RoundedCornerShape(24.dp)),
+                )
+            }
+        }
+        listOf(
+            Triple(Alignment.TopEnd, 8.dp, 54.dp),
+            Triple(Alignment.CenterStart, 18.dp, 42.dp),
+            Triple(Alignment.BottomEnd, 34.dp, 34.dp),
+        ).forEachIndexed { starIndex, item ->
+            val bitmap = if (starIndex == 1) whiteStar else starAsset
+            val (alignment, pad, size) = item
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .align(alignment)
+                        .padding(pad)
+                        .size(size)
+                        .graphicsLayer {
+                            rotationZ = (glide * 16f) - 8f + starIndex * 7f
+                            scaleX = pulse
+                            scaleY = pulse
+                        },
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .align(alignment)
+                        .padding(pad)
+                        .size(size)
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(page.tone.copy(alpha = 0.25f)),
+                )
+            }
+        }
         Box(
             modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .width(122.dp)
-                .height(126.dp)
-                .clip(RoundedCornerShape(4.dp, 12.dp, 4.dp, 12.dp))
-                .background(Color.White.copy(alpha = 0.80f))
-                .border(1.dp, Color(0x22B7A893), RoundedCornerShape(4.dp, 12.dp, 4.dp, 12.dp)),
+                .align(Alignment.Center)
+                .offset(x = (-96 + glide * 18).dp, y = 92.dp)
+                .width(148.dp)
+                .height(24.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(Color.White.copy(alpha = 0.52f))
+                .border(1.dp, page.tone.copy(alpha = 0.22f), RoundedCornerShape(99.dp)),
         )
-        repeat(4) { row ->
+        repeat(3) { row ->
             Box(
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .offset(x = (-20).dp, y = (row * 20 - 38).dp)
-                    .width((70 + row * 7).dp)
-                    .height(5.dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = (-16).dp, y = (row * -20 - 24).dp)
+                    .width((68 + row * 12).dp)
+                    .height(6.dp)
                     .clip(RoundedCornerShape(99.dp))
-                    .background(if (row <= index) GoaldayDesign.Pink.copy(alpha = 0.48f) else Color(0xFFD8CFC5)),
+                    .background(if (row <= index) page.tone.copy(alpha = 0.42f) else Color.White.copy(alpha = 0.62f)),
             )
         }
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .offset(x = (-24 + glide * 28).dp, y = (-40 + index * 6).dp)
-                .width(86.dp)
-                .height(18.dp)
+                .offset(x = (-24 + glide * 24).dp, y = (-104 + index * 5).dp)
+                .width(92.dp)
+                .height(22.dp)
                 .clip(RoundedCornerShape(99.dp))
-                .background(Color.White.copy(alpha = 0.46f))
-                .border(1.dp, GoaldayDesign.Pink.copy(alpha = 0.28f), RoundedCornerShape(99.dp)),
+                .background(Color.White.copy(alpha = 0.64f))
+                .border(1.dp, page.tone.copy(alpha = 0.28f), RoundedCornerShape(99.dp)),
         )
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 12.dp, end = 16.dp)
-                .size(52.dp)
+                .padding(top = 76.dp, end = 24.dp)
+                .size(58.dp)
                 .graphicsLayer {
                     scaleX = pulse
                     scaleY = pulse
                     alpha = 0.24f + (pulse - 0.88f) * 0.9f
                 }
                 .clip(RoundedCornerShape(99.dp))
-                .background(GoaldayDesign.Pink.copy(alpha = 0.36f)),
+                .background(page.tone.copy(alpha = 0.28f)),
         )
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 16.dp, end = 20.dp)
-                .size(44.dp)
+                .padding(top = 82.dp, end = 30.dp)
+                .size(46.dp)
                 .clip(RoundedCornerShape(99.dp))
-                .background(GoaldayDesign.PrimaryAction.copy(alpha = 0.88f)),
+                .background(page.tone.copy(alpha = 0.88f)),
         ) {
             Text("${index + 1}", color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Center))
         }
@@ -262,7 +341,7 @@ private fun GuideIllustration(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .clip(RoundedCornerShape(99.dp))
-                .background(GoaldayDesign.Pink.copy(alpha = 0.78f))
+                .background(page.tone.copy(alpha = 0.78f))
                 .padding(horizontal = 10.dp, vertical = 5.dp),
         )
         Text(
@@ -278,3 +357,8 @@ private fun GuideIllustration(
         )
     }
 }
+
+private fun loadGuideAssetBitmap(context: Context, path: String): Bitmap? =
+    runCatching {
+        context.assets.open(path).use(BitmapFactory::decodeStream)
+    }.getOrNull()

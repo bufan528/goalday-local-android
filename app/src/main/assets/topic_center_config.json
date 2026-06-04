@@ -4,7 +4,7 @@
   "roots": {
     "cn": {
       "title": "灵感中心",
-      "coverRoot": "compose/cover",
+      "coverRoot": "assets/cover",
       "targetRoot": "assets/topictarget",
       "topics": [
         { "id": "wish_2026", "title": "2026年愿望清单", "category": "年度", "cover": "2026", "target": "2026_target", "schedule": true },
@@ -44,7 +44,7 @@
     },
     "en": {
       "title": "Inspiration Center",
-      "coverRoot": "compose/cover",
+      "coverRoot": "assets/cover",
       "targetRoot": "assets/topictarget",
       "topics": []
     }
