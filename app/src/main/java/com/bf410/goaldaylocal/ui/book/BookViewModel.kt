@@ -78,6 +78,7 @@ class BookViewModel(
 
     fun selectBook(index: Int) {
         val books = _uiState.value.books
+        if (books.isEmpty()) return
         val clamped = index.coerceIn(0, books.lastIndex)
         store.setSelectedBookIndex(clamped)
         _uiState.update {

@@ -40,17 +40,16 @@ class BackupManager(
     }
 
     fun restoreBackup(path: String): Result<File> = runCatching {
-        val source = File(path)
+        val source = requireBackupChild(path)
         require(source.exists() && source.isDirectory) { "备份不存在" }
         restoreBackupDirectory(source)
     }
 
     fun deleteBackup(path: String): Result<Boolean> = runCatching {
-        val root = backupDir.canonicalFile
-        val target = File(path).canonicalFile
+        val target = requireBackupChild(path)
         require(target.exists() && target.isDirectory) { "备份不存在" }
-        require(target.parentFile?.canonicalPath == root.canonicalPath) { "只能删除备份目录内的数据" }
-        target.deleteRecursively()
+        check(target.deleteRecursively()) { "删除备份失败" }
+        true
     }
 
     fun cleanupOldBackups(keepLatest: Int = 6): Result<Int> = runCatching {
@@ -60,7 +59,10 @@ class BackupManager(
             ?.sortedByDescending { it.lastModified() }
             ?.drop(safeKeep)
             ?: emptyList()
-        oldBackups.count { it.deleteRecursively() }
+        oldBackups.forEach { backup ->
+            check(backup.deleteRecursively()) { "清理备份失败：${backup.name}" }
+        }
+        oldBackups.size
     }
 
     fun latestBackupPath(): String =
@@ -96,6 +98,13 @@ class BackupManager(
         backupDir.listFiles()
             ?.filter { it.isDirectory }
             ?.maxByOrNull { it.lastModified() }
+
+    private fun requireBackupChild(path: String): File {
+        val root = backupDir.canonicalFile
+        val target = File(path).canonicalFile
+        require(target.parentFile?.canonicalPath == root.canonicalPath) { "只能操作备份目录内的数据" }
+        return target
+    }
 
     private fun restoreBackupDirectory(source: File): File {
         val targetDir = File(context.filesDir.parentFile, "mmkv").apply { mkdirs() }

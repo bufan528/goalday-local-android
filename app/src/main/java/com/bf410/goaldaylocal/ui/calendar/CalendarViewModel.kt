@@ -81,12 +81,13 @@ class CalendarViewModel(
         repeatEndDate: String = "",
     ): String {
         val current = _uiState.value
+        val clampedDay = day.coerceIn(1, YearMonth.of(current.year, current.month).lengthOfMonth())
         val repeatGroupId = if (repeatRule.isNotBlank()) java.util.UUID.randomUUID().toString() else ""
         val entry = scheduleRepository.addEntry(
             title = title,
             year = current.year,
             month = current.month,
-            day = day,
+            day = clampedDay,
             note = note,
             timeText = timeText,
             repeatRule = repeatRule,
@@ -135,6 +136,7 @@ class CalendarViewModel(
         applySeries: Boolean = false,
     ) {
         val current = _uiState.value
+        val clampedDay = day.coerceIn(1, YearMonth.of(current.year, current.month).lengthOfMonth())
         val all = scheduleRepository.entries()
         val target = all.firstOrNull { it.id == id }
         val targetGroupId = target?.repeatGroupId.orEmpty()
@@ -144,7 +146,7 @@ class CalendarViewModel(
                     title = title.trim(),
                     year = current.year,
                     month = current.month,
-                    day = day,
+                    day = clampedDay,
                     note = note.trim(),
                     timeText = timeText?.trim() ?: entry.timeText,
                     repeatRule = repeatRule ?: entry.repeatRule,
@@ -209,7 +211,7 @@ class CalendarViewModel(
 
     fun moveScheduleToDay(id: String, day: Int) {
         val current = _uiState.value
-        val clampedDay = day.coerceAtLeast(1)
+        val clampedDay = day.coerceIn(1, YearMonth.of(current.year, current.month).lengthOfMonth())
         val updated = scheduleRepository.entries().map { entry ->
             if (entry.id == id) {
                 entry.copy(

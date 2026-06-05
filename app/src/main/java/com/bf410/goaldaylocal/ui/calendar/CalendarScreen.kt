@@ -167,8 +167,9 @@ fun CalendarScreen(
             todoCount = monthTodoCount,
             doneCount = monthDoneCount,
             onToday = {
+                val today = LocalDate.now()
                 viewModel.backToToday()
-                selectedDay = LocalDate.now().dayOfMonth.coerceIn(1, maxDay)
+                selectedDay = today.dayOfMonth
                 toast = "已回到今天"
             },
         )

@@ -6,6 +6,7 @@ import com.tencent.mmkv.MMKV
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
+import java.time.YearMonth
 import java.util.UUID
 
 class LocalStateStore(
@@ -63,12 +64,17 @@ class LocalStateStore(
             repeat(array.length()) { index ->
                 runCatching {
                     val item = array.getJSONObject(index)
+                    val entryYear = item.optInt("year", LocalDate.now().year)
+                    val entryMonth = item.optInt("month", LocalDate.now().monthValue).coerceIn(1, 12)
                     ScheduleEntry(
                         id = item.optString("id").ifBlank { UUID.randomUUID().toString() },
                         title = item.optString("title").ifBlank { "未命名日程" },
-                        year = item.optInt("year", LocalDate.now().year),
-                        month = item.optInt("month", LocalDate.now().monthValue).coerceIn(1, 12),
-                        day = item.optInt("day", LocalDate.now().dayOfMonth).coerceIn(1, 31),
+                        year = entryYear,
+                        month = entryMonth,
+                        day = item.optInt("day", LocalDate.now().dayOfMonth).coerceIn(
+                            1,
+                            YearMonth.of(entryYear, entryMonth).lengthOfMonth(),
+                        ),
                         note = item.optString("note"),
                         timeText = item.optString("timeText"),
                         repeatRule = item.optString("repeatRule"),
@@ -119,12 +125,14 @@ class LocalStateStore(
         repeatEndDate: String = "",
         repeatGroupId: String = "",
     ) {
+        val safeMonth = month.coerceIn(1, 12)
+        val safeDay = day.coerceIn(1, YearMonth.of(year, safeMonth).lengthOfMonth())
         val updated = scheduleEntries() + ScheduleEntry(
             id = UUID.randomUUID().toString(),
             title = title,
             year = year,
-            month = month,
-            day = day,
+            month = safeMonth,
+            day = safeDay,
             note = note,
             timeText = timeText,
             repeatRule = repeatRule,

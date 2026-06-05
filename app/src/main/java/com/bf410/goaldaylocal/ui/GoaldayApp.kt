@@ -72,7 +72,7 @@ fun GoaldayApp(startTarget: String? = null) {
     val mmkv = remember { MMKV.defaultMMKV() }
     var showGuide by remember { mutableStateOf(!mmkv.decodeBool(KEY_GUIDE_SEEN, false)) }
 
-    val canGoBackInsideApp = tab != RootTab.HOME || !bookUiState.inLibraryMode
+    val canGoBackInsideApp = tab != RootTab.HOME
     val allowEdgeBackSwipe = canGoBackInsideApp
     val density = LocalDensity.current
     val edgeWidthPx = with(density) { 28.dp.toPx() }
@@ -82,11 +82,13 @@ fun GoaldayApp(startTarget: String? = null) {
 
     fun navigateBackInsideApp() {
         when {
+            tab == RootTab.BOOK && bookEntryMode == BookEntryMode.PLANNER && !bookUiState.inLibraryMode -> {
+                bookViewModel.openLibrary()
+            }
             tab != RootTab.HOME -> {
                 tab = RootTab.HOME
                 bookEntryMode = BookEntryMode.PLANNER
             }
-            !bookUiState.inLibraryMode -> bookViewModel.openLibrary()
         }
     }
 

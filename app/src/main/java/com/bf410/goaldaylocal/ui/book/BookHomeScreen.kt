@@ -110,6 +110,19 @@ fun BookHomeScreen(
             viewModel.selectBook(0)
         }
     }
+    if ((entryMode == BookEntryMode.HANDBOOK || entryMode == BookEntryMode.DIARY) && hasBooks && uiState.selectedBookIndex != 0) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "正在打开本地手账...",
+                color = GoaldayDesign.InkSecondary,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        return
+    }
 
     when (entryMode) {
         BookEntryMode.INSPIRATION -> {

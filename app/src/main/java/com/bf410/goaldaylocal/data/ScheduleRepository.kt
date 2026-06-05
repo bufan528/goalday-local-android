@@ -2,6 +2,7 @@ package com.bf410.goaldaylocal.data
 
 import com.bf410.goaldaylocal.GoaldayApplication
 import com.bf410.goaldaylocal.ui.widget.WidgetRefresh
+import java.time.YearMonth
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,12 +34,14 @@ class ScheduleRepository private constructor(
         repeatGroupId: String = "",
         status: ScheduleStatus = ScheduleStatus.PLANNED,
     ): ScheduleEntry {
+        val safeMonth = month.coerceIn(1, 12)
+        val safeDay = day.coerceIn(1, YearMonth.of(year, safeMonth).lengthOfMonth())
         val entry = ScheduleEntry(
             id = UUID.randomUUID().toString(),
             title = title,
             year = year,
-            month = month,
-            day = day,
+            month = safeMonth,
+            day = safeDay,
             note = note,
             timeText = timeText,
             repeatRule = repeatRule,
