@@ -37,6 +37,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.R
+import com.bf410.goaldaylocal.data.LocalStateStore
+import com.bf410.goaldaylocal.data.ScheduleEntry
+import com.tencent.mmkv.MMKV
 import java.time.LocalDate
 
 class ScheduleWidgetConfigureActivity : ComponentActivity() {
@@ -109,6 +112,7 @@ private fun ScheduleWidgetConfigureScreen(
     var selectedScope by remember { mutableStateOf(initialConfig.scope) }
     var selectedDensity by remember { mutableStateOf(initialConfig.density) }
     val config = ScheduleWidgetConfig(selectedStyle, selectedScope, selectedDensity)
+    val previewEntries = remember { LocalStateStore(MMKV.defaultMMKV()).scheduleEntries() }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -123,7 +127,7 @@ private fun ScheduleWidgetConfigureScreen(
             Text(kind.subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A7065))
         }
         WidgetKindSignalStrip(kind = kind)
-        WidgetPreviewCard(kind = kind, config = config)
+        WidgetPreviewCard(kind = kind, config = config, entries = previewEntries)
         ConfigureSectionTitle("颜色")
         Row(
             modifier = Modifier
@@ -229,9 +233,17 @@ private fun ConfigureSectionTitle(title: String) {
 private fun WidgetPreviewCard(
     kind: WidgetConfigureKind,
     config: ScheduleWidgetConfig,
+    entries: List<ScheduleEntry>,
 ) {
     val style = config.style
     val today = LocalDate.now()
+    val scopedEntries = remember(entries, config.scope) {
+        entries
+            .filter { it.matchesWidgetScopeForPreview(today, config.scope) }
+            .sortedWith(compareBy<ScheduleEntry>({ it.completed }, { it.year }, { it.month }, { it.day }, { it.timeText }, { it.title.lowercase() }))
+    }
+    val maxRows = if (kind == WidgetConfigureKind.SCHEDULE_LARGE) config.density.largeRows else config.density.smallRows
+    val previewRows = scopedEntries.take(maxRows)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -269,15 +281,68 @@ private fun WidgetPreviewCard(
                     .padding(10.dp),
             )
         } else {
-            repeat(if (kind == WidgetConfigureKind.SCHEDULE_LARGE) 4 else config.density.smallRows) { index ->
-                PreviewScheduleRow(
-                    text = listOf("09:30 整理今天目标", "明天 写一页复盘", "6/7 打印手账长图", "本周 清空待办池").getOrElse(index) { "记录本地计划" },
-                    style = style,
-                    completed = index == 2,
+            if (previewRows.isEmpty()) {
+                Text(
+                    config.scope.previewEmptyText().replace("\n", " · "),
+                    color = Color(style.doneTextColor),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(13.dp))
+                        .background(Color.White.copy(alpha = 0.50f))
+                        .padding(10.dp),
                 )
+            } else {
+                previewRows.forEach { entry ->
+                    PreviewScheduleRow(
+                        text = entry.previewText(today, config.scope, config.density),
+                        style = style,
+                        completed = entry.completed,
+                    )
+                }
             }
         }
     }
+}
+
+private fun ScheduleWidgetScope.previewEmptyText(): String =
+    when (this) {
+        ScheduleWidgetScope.TODAY -> "今天还没有日程\n打开 Goalday，把目标排进今天"
+        ScheduleWidgetScope.UPCOMING -> "未来7天还没有待办\n从目标页安排下一步"
+        ScheduleWidgetScope.WEEK -> "本周还没有日程\n把本周计划放进手账"
+    }
+
+private fun ScheduleEntry.matchesWidgetScopeForPreview(today: LocalDate, scope: ScheduleWidgetScope): Boolean {
+    val date = runCatching { LocalDate.of(year, month, day) }.getOrNull() ?: return false
+    return when (scope) {
+        ScheduleWidgetScope.TODAY -> date == today
+        ScheduleWidgetScope.UPCOMING -> !date.isBefore(today) && java.time.temporal.ChronoUnit.DAYS.between(today, date) <= 6
+        ScheduleWidgetScope.WEEK -> {
+            val start = today.minusDays((today.dayOfWeek.value - 1).toLong())
+            val end = start.plusDays(6)
+            !date.isBefore(start) && !date.isAfter(end)
+        }
+    }
+}
+
+private fun ScheduleEntry.previewText(
+    today: LocalDate,
+    scope: ScheduleWidgetScope,
+    density: ScheduleWidgetDensity,
+): String {
+    val datePrefix = if (scope == ScheduleWidgetScope.TODAY) {
+        ""
+    } else {
+        val date = runCatching { LocalDate.of(year, month, day) }.getOrNull()
+        when (date?.let { java.time.temporal.ChronoUnit.DAYS.between(today, it).toInt() }) {
+            0 -> "今天 "
+            1 -> "明天 "
+            else -> "${month}/${day} "
+        }
+    }
+    val time = timeText.takeIf { it.isNotBlank() }?.let { "$it " }.orEmpty()
+    val noteText = if (density == ScheduleWidgetDensity.DETAILED) note.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty() else ""
+    return "$datePrefix$time$title$noteText"
 }
 
 @Composable

@@ -141,6 +141,11 @@ data class ScheduleWidgetConfig(
 )
 
 class ScheduleWidgetProvider : AppWidgetProvider() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (WidgetRefresh.refreshForSystemTimeChange(context, intent)) return
+        super.onReceive(context, intent)
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
