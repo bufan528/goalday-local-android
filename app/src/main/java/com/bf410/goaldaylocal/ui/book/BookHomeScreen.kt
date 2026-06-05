@@ -610,15 +610,25 @@ private fun GoaldayHandbookScreen(
 ) {
     var section by remember(book.id) { mutableStateOf(resolveHandbookSection(currentPage)) }
     var openedTargetDetail by remember(book.id, currentPage.title) { mutableStateOf<String?>(null) }
-    val sectionPages = remember(book.pages, section) {
-        book.pages.filter { page -> matchesHandbookSection(page, section) }.ifEmpty { book.pages }
+    val sectionPageEntries = remember(book.pages, section) {
+        book.pages
+            .mapIndexed { index, page -> IndexedValue(index, page) }
+            .filter { (_, page) -> matchesHandbookSection(page, section) }
+            .ifEmpty { book.pages.mapIndexed { index, page -> IndexedValue(index, page) } }
     }
-    val selectedSectionIndex = sectionPages.indexOfFirst { it.title == currentPage.title }.coerceAtLeast(0)
+    val sectionPages = sectionPageEntries.map { it.value }
     val visiblePageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
+    val selectedSectionIndex = sectionPageEntries.indexOfFirst { it.index == visiblePageIndex }.coerceAtLeast(0)
     LaunchedEffect(currentPage.title) {
         if (section != HandbookSection.OVERVIEW && !matchesHandbookSection(currentPage, section)) {
             section = resolveHandbookSection(currentPage)
         }
+    }
+
+    fun goToPage(index: Int) {
+        val page = book.pages.getOrNull(index) ?: return
+        section = resolveHandbookSection(page)
+        viewModel.setPage(index)
     }
 
     fun openSection(next: HandbookSection) {
@@ -697,9 +707,8 @@ private fun GoaldayHandbookScreen(
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
             ) {
-                sectionPages.forEach { page ->
-                    val realIndex = book.pages.indexOfFirst { it.title == page.title }.coerceAtLeast(0)
-                    val selected = page.title == currentPage.title
+                sectionPageEntries.forEach { (realIndex, page) ->
+                    val selected = realIndex == visiblePageIndex
                     Text(
                         text = monthLabelForPage(page.title, fallback = page.title),
                         color = if (selected) Color(0xFF2F261D) else Color(0xFF8A7C70),
@@ -709,8 +718,7 @@ private fun GoaldayHandbookScreen(
                             .background(if (selected) Color(0x66FFFFFF) else Color(0x24FFFFFF))
                             .border(0.5.dp, if (selected) Color(0x55B88A58) else Color.Transparent, RoundedCornerShape(99.dp))
                             .clickable {
-                                section = resolveHandbookSection(page)
-                                viewModel.setPage(realIndex)
+                                goToPage(realIndex)
                             }
                             .padding(horizontal = 10.dp, vertical = 5.dp),
                     )
@@ -720,82 +728,27 @@ private fun GoaldayHandbookScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color(0xF8FFFDF8))
+                    .border(0.8.dp, Color(0x2EA88966), RoundedCornerShape(24.dp))
+                    .padding(8.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .padding(start = 16.dp, top = 22.dp, end = 6.dp, bottom = 14.dp)
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(Color(0x55B99173)),
+                HandbookRouteSurface(
+                    route = section,
+                    viewModel = viewModel,
+                    book = book,
+                    currentPage = currentPage,
+                    previousPage = previousPage,
+                    nextPage = nextPage,
+                    uiState = uiState,
+                    sectionPages = sectionPages,
+                    selectedSectionIndex = selectedSectionIndex,
+                    onOpenTargetDetail = { openedTargetDetail = it },
+                    onOpenSection = ::openSection,
+                    onOpenPage = ::goToPage,
                 )
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .padding(start = 10.dp, top = 14.dp, end = 12.dp, bottom = 8.dp)
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(Color(0x8BFFEEDC)),
-                )
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .padding(start = 3.dp, top = 5.dp, end = 18.dp, bottom = 2.dp)
-                        .shadow(12.dp, RoundedCornerShape(24.dp))
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(
-                            Brush.horizontalGradient(
-                                listOf(
-                                    Color(0xFF6C4C3C),
-                                    Color(0xFFE7C7A9),
-                                    Color(0xFFFFFBF5),
-                                    Color(0xFFFFF8EF),
-                                    Color(0xFFE2C0A4),
-                                ),
-                            ),
-                        ),
-                )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .fillMaxHeight(0.94f)
-                        .width(18.dp)
-                        .padding(start = 6.dp)
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color(0xFF7E5441), Color(0xFFB78366), Color(0xFF6E4A3A)),
-                            ),
-                        ),
-                )
-                HandbookPhysicalBookDetails(
-                    pageProgress = ((visiblePageIndex + 1).toFloat() / book.pages.size.coerceAtLeast(1)).coerceIn(0.08f, 1f),
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(start = 18.dp, top = 14.dp, end = 22.dp, bottom = 18.dp),
-                ) {
-                    HandbookRouteSurface(
-                        route = section,
-                        viewModel = viewModel,
-                        book = book,
-                        currentPage = currentPage,
-                        previousPage = previousPage,
-                        nextPage = nextPage,
-                        uiState = uiState,
-                        sectionPages = sectionPages,
-                        selectedSectionIndex = selectedSectionIndex,
-                        onOpenTargetDetail = { openedTargetDetail = it },
-                        onOpenSection = ::openSection,
-                        onOpenPage = { index ->
-                            book.pages.getOrNull(index)?.let { page ->
-                                section = resolveHandbookSection(page)
-                            }
-                            viewModel.setPage(index)
-                        },
-                    )
-                }
             }
             Spacer(Modifier.height(7.dp))
             HandbookPageControlDock(
@@ -809,17 +762,16 @@ private fun GoaldayHandbookScreen(
                 selectedSectionIndex = selectedSectionIndex,
                 onPrevious = {
                     val previousIndex = sectionPages.getOrNull(selectedSectionIndex - 1)
-                        ?.let { page -> book.pages.indexOfFirst { it.title == page.title } }
+                        ?.let { page -> book.pages.indexOf(page) }
                         ?: (visiblePageIndex - 1)
-                    if (previousIndex in book.pages.indices) viewModel.setPage(previousIndex)
+                    if (previousIndex in book.pages.indices) goToPage(previousIndex)
                 },
                 onNext = {
                     val nextIndex = sectionPages.getOrNull(selectedSectionIndex + 1)
-                        ?.let { page -> book.pages.indexOfFirst { it.title == page.title } }
+                        ?.let { page -> book.pages.indexOf(page) }
                         ?: (visiblePageIndex + 1)
-                    if (nextIndex in book.pages.indices) viewModel.setPage(nextIndex)
+                    if (nextIndex in book.pages.indices) goToPage(nextIndex)
                 },
-                onOpenSection = ::openSection,
             )
         }
         val targetPage = currentPage as? TargetPage
@@ -858,7 +810,6 @@ private fun HandbookPageControlDock(
     selectedSectionIndex: Int,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
-    onOpenSection: (HandbookSection) -> Unit,
 ) {
     val canPrevious = selectedSectionIndex > 0 || previousPage != null
     val canNext = selectedSectionIndex < sectionPages.lastIndex || nextPage != null
@@ -910,29 +861,6 @@ private fun HandbookPageControlDock(
                 modifier = Modifier.weight(0.9f),
                 onClick = onNext,
             )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            HandbookSection.entries.forEach { item ->
-                val selected = item == section
-                Text(
-                    item.label,
-                    color = if (selected) Color.White else routeColor(item),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(if (selected) routeColor(item) else routeColor(item).copy(alpha = 0.11f))
-                        .border(0.6.dp, routeColor(item).copy(alpha = 0.24f), RoundedCornerShape(99.dp))
-                        .clickable { onOpenSection(item) }
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
-                )
-            }
         }
     }
 }
@@ -1079,12 +1007,21 @@ private fun HandbookRouteSurface(
         selectedSectionIndex = selectedSectionIndex,
         onOpenTargetDetail = onOpenTargetDetail,
     )
-    HandbookOpenSpreadSurface(
-        route = route,
-        payload = payload,
-        onOpenSection = onOpenSection,
-        onOpenPage = onOpenPage,
-    )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xFFFFFEFC))
+            .border(0.7.dp, Color(0x18A88966), RoundedCornerShape(18.dp))
+            .padding(10.dp),
+    ) {
+        when (route) {
+            HandbookSection.OVERVIEW -> HandbookOverviewRoute(payload, onOpenSection, onOpenPage)
+            HandbookSection.SCHEDULE -> HandbookScheduleRoute(payload)
+            HandbookSection.DIARY -> HandbookDiaryRoute(payload)
+            HandbookSection.TARGET -> HandbookTargetRoute(payload)
+        }
+    }
 }
 
 @Composable
@@ -1131,7 +1068,7 @@ private fun HandbookOpenSpreadSurface(
                 .padding(8.dp),
         ) {
             when (route) {
-                HandbookSection.OVERVIEW -> HandbookOverviewRoute(payload)
+                HandbookSection.OVERVIEW -> HandbookOverviewRoute(payload, onOpenSection, onOpenPage)
                 HandbookSection.SCHEDULE -> HandbookScheduleRoute(payload)
                 HandbookSection.DIARY -> HandbookDiaryRoute(payload)
                 HandbookSection.TARGET -> HandbookTargetRoute(payload)
@@ -1281,8 +1218,57 @@ private fun BookPage.handbookPageTypeLabel(): String =
     }
 
 @Composable
-private fun HandbookOverviewRoute(payload: HandbookRoutePayload) {
-    HandbookRouteContent(HandbookSection.OVERVIEW, payload)
+private fun HandbookOverviewRoute(
+    payload: HandbookRoutePayload,
+    onOpenSection: (HandbookSection) -> Unit,
+    onOpenPage: (Int) -> Unit,
+) {
+    val scheduleCount = payload.uiState.schedulePreviewEntries.size
+    val doneCount = payload.uiState.schedulePreviewEntries.count { it.completed }
+    val diaryBlockCount = payload.uiState.diaryDraft.lines().count { it.contains("|") || it.startsWith("#") }.coerceAtLeast(
+        if (payload.uiState.diaryDraft.isBlank()) 0 else 1,
+    )
+    val targetCount = payload.book.pages.filterIsInstance<TargetPage>().sumOf { it.items.size }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        HandbookRouteHeader(
+            route = HandbookSection.OVERVIEW,
+            title = payload.book.title,
+            subtitle = payload.book.subtitle,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(7.dp),
+        ) {
+            HandbookIndexMiniMetric("日程", scheduleCount.toString(), routeColor(HandbookSection.SCHEDULE), Modifier.weight(1f))
+            HandbookIndexMiniMetric("完成", doneCount.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
+            HandbookIndexMiniMetric("日记", diaryBlockCount.toString(), routeColor(HandbookSection.DIARY), Modifier.weight(1f))
+            HandbookIndexMiniMetric("目标", targetCount.toString(), routeColor(HandbookSection.TARGET), Modifier.weight(1f))
+        }
+        HandbookSection.entries
+            .filterNot { it == HandbookSection.OVERVIEW }
+            .forEach { item ->
+                HandbookIndexSectionRow(
+                    section = item,
+                    selected = false,
+                    count = payload.book.pages.count { page -> matchesHandbookSection(page, item) },
+                    onClick = { onOpenSection(item) },
+                )
+            }
+        Text("最近页签", color = Color(0xFF6F5B4B), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+        payload.book.pages.take(8).forEachIndexed { index, page ->
+            HandbookIndexPageRow(
+                title = monthLabelForPage(page.title, fallback = page.title),
+                type = page.handbookPageTypeLabel(),
+                selected = index == payload.uiState.selectedPageIndex,
+                onClick = { onOpenPage(index) },
+            )
+        }
+    }
 }
 
 @Composable
