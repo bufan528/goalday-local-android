@@ -2155,6 +2155,15 @@ private fun HandbookEntryLine(
             }
         }
         }
+        if (editingId != entry.id) {
+            HandbookEntryMetaRail(
+                entry = entry,
+                repeatLabel = repeatLabel,
+                statusColor = statusColor,
+                canMovePrevious = canMovePrevious,
+                canMoveNext = canMoveNext,
+            )
+        }
         if (expanded && editingId != entry.id) {
             Column(
                 modifier = Modifier
@@ -2173,6 +2182,49 @@ private fun HandbookEntryLine(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HandbookEntryMetaRail(
+    entry: ScheduleEntry,
+    repeatLabel: String,
+    statusColor: Color,
+    canMovePrevious: Boolean,
+    canMoveNext: Boolean,
+) {
+    val detailText = buildList {
+        add(if (entry.completed) "书内完成 · done" else "自适应条目 · todo")
+        if (entry.timeText.isNotBlank()) add(entry.timeText)
+        if (repeatLabel.isNotBlank()) add(repeatLabel)
+        if (entry.note.isNotBlank()) add(entry.note)
+        if (canMovePrevious || canMoveNext) add("可移动")
+    }.joinToString(" · ")
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 35.dp, end = 7.dp, bottom = 5.dp)
+            .clip(RoundedCornerShape(7.dp))
+            .background(Color.White.copy(alpha = 0.42f))
+            .border(0.35.dp, statusColor.copy(alpha = 0.14f), RoundedCornerShape(7.dp))
+            .padding(horizontal = 6.dp, vertical = 3.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            if (entry.completed) "✓" else "○",
+            style = MaterialTheme.typography.labelSmall,
+            color = statusColor,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+        Text(
+            detailText,
+            style = MaterialTheme.typography.labelSmall,
+            color = GoaldayDesign.InkMuted,
+            maxLines = 1,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
@@ -3101,6 +3153,15 @@ private data class StructuredDiary(
         return withBlocks(blocks.mapIndexed { blockIndex, block ->
             if (blockIndex == index) block.withChildLine() else block
         })
+    }
+
+    fun withMovedBlock(index: Int, direction: Int): StructuredDiary {
+        val targetIndex = (index + direction).coerceIn(0, blocks.lastIndex)
+        if (index !in blocks.indices || targetIndex == index) return this
+        val next = blocks.toMutableList()
+        val item = next.removeAt(index)
+        next.add(targetIndex, item)
+        return withBlocks(next)
     }
 
     fun withoutBlock(index: Int): StructuredDiary =
@@ -4251,6 +4312,7 @@ private fun StructuredDiaryEditor(
             onBlockTextChange = { index, text -> onStateChange(state.withBlockText(index, text)) },
             onBlockStyleChange = { index, style -> onStateChange(state.withBlockStyle(index, style)) },
             onAddChild = { index -> onStateChange(state.withBlockChild(index)) },
+            onMoveBlock = { index, direction -> onStateChange(state.withMovedBlock(index, direction)) },
             onRemoveBlock = { index -> onStateChange(state.withoutBlock(index)) },
         )
         if (state.legacyImageUris.isNotEmpty()) {
@@ -4351,6 +4413,7 @@ private fun DiaryTypedBlockEditor(
     onBlockTextChange: (Int, String) -> Unit,
     onBlockStyleChange: (Int, DiaryBlockStyle) -> Unit,
     onAddChild: (Int) -> Unit,
+    onMoveBlock: (Int, Int) -> Unit,
     onRemoveBlock: (Int) -> Unit,
 ) {
     if (blocks.isEmpty()) {
@@ -4372,6 +4435,10 @@ private fun DiaryTypedBlockEditor(
                 onTextChange = { onBlockTextChange(index, it) },
                 onStyleChange = { onBlockStyleChange(index, it) },
                 onAddChild = { onAddChild(index) },
+                canMoveUp = index > 0,
+                canMoveDown = index < blocks.lastIndex,
+                onMoveUp = { onMoveBlock(index, -1) },
+                onMoveDown = { onMoveBlock(index, 1) },
                 onRemove = { onRemoveBlock(index) },
             )
         }
@@ -4421,6 +4488,10 @@ private fun DiaryTypedBlockEditRow(
     onTextChange: (String) -> Unit,
     onStyleChange: (DiaryBlockStyle) -> Unit,
     onAddChild: () -> Unit,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
     onRemove: () -> Unit,
 ) {
     val color = diaryBlockTypeColor(block.type)
@@ -4442,27 +4513,12 @@ private fun DiaryTypedBlockEditRow(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                DiaryBlockActionChip("上移", color, enabled = canMoveUp, onClick = onMoveUp)
+                DiaryBlockActionChip("下移", color, enabled = canMoveDown, onClick = onMoveDown)
                 if (block.type != DiaryBlockType.IMAGE && block.type != DiaryBlockType.TARGET_CHILD) {
-                    Text(
-                        "子项",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = color,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
-                            .background(Color.White.copy(alpha = 0.62f))
-                            .clickable { onAddChild() }
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                    )
+                    DiaryBlockActionChip("子项", color, enabled = true, onClick = onAddChild)
                 }
-                Text(
-                    "删除",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = GoaldayDesign.InkMuted,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .clickable { onRemove() }
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                )
+                DiaryBlockActionChip("删除", GoaldayDesign.InkMuted, enabled = true, onClick = onRemove)
             }
         }
         if (block.type != DiaryBlockType.IMAGE) {
@@ -4506,6 +4562,26 @@ private fun DiaryTypedBlockEditRow(
             )
         }
     }
+}
+
+@Composable
+private fun DiaryBlockActionChip(
+    label: String,
+    color: Color,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelSmall,
+        color = if (enabled) color else GoaldayDesign.InkMuted.copy(alpha = 0.42f),
+        maxLines = 1,
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(if (enabled) Color.White.copy(alpha = 0.62f) else Color.Transparent)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+    )
 }
 
 @Composable
