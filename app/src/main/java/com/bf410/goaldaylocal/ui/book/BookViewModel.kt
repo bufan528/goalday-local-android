@@ -118,9 +118,11 @@ class BookViewModel(
     }
 
     fun updateDiaryDraft(text: String) {
+        val book = currentBook()
         val page = currentPage() as? DiaryPage ?: return
-        store.setDiaryText(currentBook().id, page.title, text)
-        _uiState.update { it.copy(diaryDraft = text) }
+        store.setDiaryText(book.id, page.title, text)
+        syncDiarySchedulesForBook(book)
+        _uiState.update { it.copy(diaryDraft = text, schedulePreviewEntries = yearEntriesForAnchor()) }
     }
 
     fun addCustomPageItem(text: String) {
@@ -592,6 +594,7 @@ class BookViewModel(
 
     private fun syncEditableContent() {
         val book = currentBook()
+        syncDiarySchedulesForBook(book)
         val imported = importTodayFromSchedule()
         when (val page = currentPage()) {
             is DiaryPage -> {
@@ -631,6 +634,198 @@ class BookViewModel(
             }
         }
     }
+
+    private data class DiaryScheduleCandidate(
+        val title: String,
+        val date: LocalDate,
+        val completed: Boolean,
+        val sourceNote: String,
+    )
+
+    private fun syncDiarySchedulesForBook(book: TopicBook) {
+        val diaryPages = book.pages.filterIsInstance<DiaryPage>()
+        if (diaryPages.isEmpty()) return
+        val sourceNotes = diaryPages.map { page -> diaryScheduleSourceNote(book, page) }.toSet()
+        val existing = scheduleRepository.entries()
+        val existingDiaryEntries = existing.filter { it.note in sourceNotes }
+        val existingByKey = existingDiaryEntries.associateBy { entry ->
+            diaryScheduleKey(entry.title, entry.year, entry.month, entry.day, entry.completed, entry.note)
+        }
+        val desired = diaryPages.flatMap { page ->
+            parseDiaryScheduleCandidates(
+                raw = store.diaryText(book.id, page.title),
+                sourceNote = diaryScheduleSourceNote(book, page),
+            )
+        }
+        val desiredEntries = desired.distinctBy { candidate ->
+            diaryScheduleKey(
+                title = candidate.title,
+                year = candidate.date.year,
+                month = candidate.date.monthValue,
+                day = candidate.date.dayOfMonth,
+                completed = candidate.completed,
+                note = candidate.sourceNote,
+            )
+        }.map { candidate ->
+            val key = diaryScheduleKey(
+                title = candidate.title,
+                year = candidate.date.year,
+                month = candidate.date.monthValue,
+                day = candidate.date.dayOfMonth,
+                completed = candidate.completed,
+                note = candidate.sourceNote,
+            )
+            existingByKey[key]?.copy(
+                title = candidate.title,
+                year = candidate.date.year,
+                month = candidate.date.monthValue,
+                day = candidate.date.dayOfMonth,
+                completed = candidate.completed,
+                note = candidate.sourceNote,
+            ) ?: ScheduleEntry(
+                id = UUID.randomUUID().toString(),
+                title = candidate.title,
+                year = candidate.date.year,
+                month = candidate.date.monthValue,
+                day = candidate.date.dayOfMonth,
+                completed = candidate.completed,
+                note = candidate.sourceNote,
+            )
+        }
+        val next = existing.filterNot { it.note in sourceNotes } + desiredEntries
+        if (next.scheduleSignature() != existing.scheduleSignature()) {
+            scheduleRepository.saveEntries(next)
+        }
+    }
+
+    private fun parseDiaryScheduleCandidates(raw: String, sourceNote: String): List<DiaryScheduleCandidate> {
+        if (raw.isBlank()) return emptyList()
+        val date = diarySection(raw, "日期").lineSequence()
+            .map(String::trim)
+            .firstOrNull(String::isNotBlank)
+            ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            ?: LocalDate.now()
+        val candidates = mutableListOf<DiaryScheduleCandidate>()
+        fun addLines(sectionName: String, completed: Boolean) {
+            diarySection(raw, sectionName)
+                .lines()
+                .map(::normalizeDiaryScheduleTitle)
+                .filter(String::isNotBlank)
+                .forEach { title ->
+                    candidates += DiaryScheduleCandidate(title, date, completed, sourceNote)
+                }
+        }
+        addLines("工作任务", completed = false)
+        addLines("日程", completed = false)
+        addLines("计划", completed = false)
+        addLines("待办", completed = false)
+        addLines("今日完成", completed = true)
+        diarySection(raw, "日记块")
+            .lines()
+            .mapNotNull(::parseDiaryBlockForSchedule)
+            .forEach { (title, completed) ->
+                candidates += DiaryScheduleCandidate(title, date, completed, sourceNote)
+            }
+        return candidates
+    }
+
+    private fun diarySection(raw: String, sectionName: String): String {
+        val marker = "# $sectionName"
+        val start = raw.indexOf(marker)
+        if (start < 0) return ""
+        val bodyStart = raw.indexOf('\n', start).takeIf { it >= 0 }?.plus(1) ?: return ""
+        val bodyEnd = raw.indexOf("\n#", bodyStart).takeIf { it >= 0 } ?: raw.length
+        return raw.substring(bodyStart, bodyEnd).trim()
+    }
+
+    private fun parseDiaryBlockForSchedule(line: String): Pair<String, Boolean>? {
+        val parts = splitEscapedDiaryBlock(line)
+        val type = parts.getOrNull(0).orEmpty()
+        if (type !in setOf("target", "target_child", "topic_target")) return null
+        val text = unescapeDiaryScheduleBlockText(parts.getOrNull(2).orEmpty().ifBlank { parts.getOrNull(1).orEmpty() })
+        val completed = text.trimStart().startsWith("✓")
+        val title = normalizeDiaryScheduleTitle(text)
+        return title.takeIf(String::isNotBlank)?.let { it to completed }
+    }
+
+    private fun splitEscapedDiaryBlock(line: String): List<String> {
+        val parts = mutableListOf<String>()
+        val current = StringBuilder()
+        var escaping = false
+        line.forEach { char ->
+            when {
+                escaping -> {
+                    current.append('\\').append(char)
+                    escaping = false
+                }
+                char == '\\' -> escaping = true
+                char == '|' -> {
+                    parts += current.toString()
+                    current.clear()
+                }
+                else -> current.append(char)
+            }
+        }
+        if (escaping) current.append('\\')
+        parts += current.toString()
+        return parts
+    }
+
+    private fun unescapeDiaryScheduleBlockText(text: String): String {
+        val builder = StringBuilder()
+        var escaping = false
+        text.forEach { char ->
+            if (escaping) {
+                builder.append(
+                    when (char) {
+                        'n' -> '\n'
+                        'p' -> '|'
+                        '\\' -> '\\'
+                        else -> char
+                    },
+                )
+                escaping = false
+            } else if (char == '\\') {
+                escaping = true
+            } else {
+                builder.append(char)
+            }
+        }
+        if (escaping) builder.append('\\')
+        return builder.toString()
+    }
+
+    private fun normalizeDiaryScheduleTitle(raw: String): String =
+        raw.lines()
+            .firstOrNull()
+            .orEmpty()
+            .trim()
+            .removePrefix("-")
+            .removePrefix("•")
+            .removePrefix("✓")
+            .removePrefix("○")
+            .removePrefix("[ ]")
+            .removePrefix("[x]")
+            .removePrefix("[X]")
+            .trim()
+
+    private fun diaryScheduleSourceNote(book: TopicBook, page: DiaryPage): String =
+        "日记同步 · ${book.title} · ${page.title}"
+
+    private fun diaryScheduleKey(
+        title: String,
+        year: Int,
+        month: Int,
+        day: Int,
+        completed: Boolean,
+        note: String,
+    ): String = listOf(title.trim(), year, month, day, completed, note).joinToString("|")
+
+    private fun List<ScheduleEntry>.scheduleSignature(): List<String> =
+        map { entry ->
+            diaryScheduleKey(entry.title, entry.year, entry.month, entry.day, entry.completed, entry.note) +
+                "|${entry.id}|${entry.timeText}|${entry.repeatRule}|${entry.repeatInterval}|${entry.repeatEndDate}|${entry.repeatGroupId}"
+        }.sorted()
 
     private fun importTodayFromSchedule(): ScheduleImport {
         val year = store.calendarAnchorYear()

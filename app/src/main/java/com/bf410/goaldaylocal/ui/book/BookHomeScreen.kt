@@ -728,27 +728,82 @@ private fun GoaldayHandbookScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color(0xF8FFFDF8))
-                    .border(0.8.dp, Color(0x2EA88966), RoundedCornerShape(24.dp))
-                    .padding(8.dp),
+                    .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                HandbookRouteSurface(
-                    route = section,
-                    viewModel = viewModel,
-                    book = book,
-                    currentPage = currentPage,
-                    previousPage = previousPage,
-                    nextPage = nextPage,
-                    uiState = uiState,
-                    sectionPages = sectionPages,
-                    selectedSectionIndex = selectedSectionIndex,
-                    onOpenTargetDetail = { openedTargetDetail = it },
-                    onOpenSection = ::openSection,
-                    onOpenPage = ::goToPage,
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(start = 18.dp, top = 20.dp, end = 4.dp, bottom = 12.dp)
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(Color(0x55A87658)),
                 )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(start = 12.dp, top = 12.dp, end = 10.dp, bottom = 7.dp)
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(Color(0x99F3D7BC)),
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(start = 4.dp, top = 4.dp, end = 16.dp, bottom = 2.dp)
+                        .shadow(16.dp, RoundedCornerShape(30.dp))
+                        .clip(RoundedCornerShape(30.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color(0xFF6C4A39),
+                                    Color(0xFFE2B997),
+                                    Color(0xFFFFFBF4),
+                                    Color(0xFFFFF8EF),
+                                    Color(0xFFE0B895),
+                                ),
+                            ),
+                        ),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 5.dp, top = 28.dp, bottom = 30.dp)
+                        .width(23.dp)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFF503529), Color(0xFFB47C62), Color(0xFF5A3B2E)),
+                            ),
+                        )
+                        .border(0.7.dp, Color(0x55F5D7BE), RoundedCornerShape(99.dp)),
+                )
+                HandbookPhysicalBookDetails(
+                    pageProgress = ((visiblePageIndex + 1).toFloat() / book.pages.size.coerceAtLeast(1)).coerceIn(0.08f, 1f),
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 29.dp, top = 16.dp, end = 25.dp, bottom = 18.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(Color(0xF8FFFDF8))
+                        .border(0.8.dp, Color(0x24A88966), RoundedCornerShape(22.dp))
+                        .padding(8.dp),
+                ) {
+                    HandbookRouteSurface(
+                        route = section,
+                        viewModel = viewModel,
+                        book = book,
+                        currentPage = currentPage,
+                        previousPage = previousPage,
+                        nextPage = nextPage,
+                        uiState = uiState,
+                        sectionPages = sectionPages,
+                        selectedSectionIndex = selectedSectionIndex,
+                        onOpenTargetDetail = { openedTargetDetail = it },
+                        onOpenSection = ::openSection,
+                        onOpenPage = ::goToPage,
+                    )
+                }
             }
             Spacer(Modifier.height(7.dp))
             HandbookPageControlDock(
