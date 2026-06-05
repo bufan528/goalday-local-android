@@ -73,6 +73,7 @@ fun HomeScreen(
     calendarViewModel: CalendarViewModel,
     onOpenCalendar: () -> Unit,
     onOpenCalendarForDay: (Int) -> Unit,
+    onOpenBook: () -> Unit,
     onOpenHandbook: () -> Unit,
     onOpenDiary: () -> Unit,
     onOpenInspiration: () -> Unit,
@@ -220,6 +221,7 @@ fun HomeScreen(
             HomeActionDock(
                 onOpenCalendar = onOpenCalendar,
                 onOpenInspiration = onOpenInspiration,
+                onOpenBook = onOpenBook,
                 onOpenHandbook = onOpenHandbook,
                 onOpenDiary = onOpenDiary,
             )
@@ -771,6 +773,7 @@ private fun EmptyHint(text: String) {
 private fun HomeActionDock(
     onOpenCalendar: () -> Unit,
     onOpenInspiration: () -> Unit,
+    onOpenBook: () -> Unit,
     onOpenHandbook: () -> Unit,
     onOpenDiary: () -> Unit,
 ) {
@@ -787,8 +790,12 @@ private fun HomeActionDock(
             HomeActionCard("灵感", "专题库", "灵", Color(0xFFB88A58), Modifier.weight(1f), onOpenInspiration)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            HomeActionCard("手账", "书内页", "账", Color(0xFF8F684F), Modifier.weight(1f), onOpenHandbook)
+            HomeActionCard("书库", "本子", "书", Color(0xFF8F684F), Modifier.weight(1f), onOpenBook)
+            HomeActionCard("手账", "书内页", "账", Color(0xFF6F8B6A), Modifier.weight(1f), onOpenHandbook)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             HomeActionCard("日记", "记录块", "记", Color(0xFFB07A8F), Modifier.weight(1f), onOpenDiary)
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }

@@ -50,17 +50,30 @@ import com.bf410.goaldaylocal.START_TARGET_DIARY
 import com.tencent.mmkv.MMKV
 
 private enum class RootTab(val label: String, val iconText: String) {
-    HOME("今日", "今"),
     BOOK("手账", "账"),
-    INSPIRATION("灵感", "灵"),
     CALENDAR("日历", "历"),
     SETTINGS("设置", "设"),
 }
 
+private enum class BookRootSurface {
+    HOME,
+    BOOK,
+    INSPIRATION,
+}
+
+private data class AppRoute(
+    val tab: RootTab,
+    val bookSurface: BookRootSurface,
+    val bookEntryMode: BookEntryMode,
+)
+
 @Composable
 fun GoaldayApp(startTarget: String? = null) {
     var tab by rememberSaveable(startTarget) {
-        mutableStateOf(if (startTarget == START_TARGET_DIARY) RootTab.BOOK else RootTab.HOME)
+        mutableStateOf(RootTab.BOOK)
+    }
+    var bookSurface by rememberSaveable(startTarget) {
+        mutableStateOf(if (startTarget == START_TARGET_DIARY) BookRootSurface.BOOK else BookRootSurface.HOME)
     }
     var bookEntryMode by rememberSaveable(startTarget) {
         mutableStateOf(if (startTarget == START_TARGET_DIARY) BookEntryMode.DIARY else BookEntryMode.PLANNER)
@@ -72,7 +85,9 @@ fun GoaldayApp(startTarget: String? = null) {
     val mmkv = remember { MMKV.defaultMMKV() }
     var showGuide by remember { mutableStateOf(!mmkv.decodeBool(KEY_GUIDE_SEEN, false)) }
 
-    val canGoBackInsideApp = tab != RootTab.HOME
+    val canGoBackInsideApp = tab != RootTab.BOOK ||
+        bookSurface != BookRootSurface.HOME ||
+        bookSurface == BookRootSurface.BOOK && bookEntryMode == BookEntryMode.PLANNER && !bookUiState.inLibraryMode
     val allowEdgeBackSwipe = canGoBackInsideApp
     val density = LocalDensity.current
     val edgeWidthPx = with(density) { 28.dp.toPx() }
@@ -82,11 +97,19 @@ fun GoaldayApp(startTarget: String? = null) {
 
     fun navigateBackInsideApp() {
         when {
-            tab == RootTab.BOOK && bookEntryMode == BookEntryMode.PLANNER && !bookUiState.inLibraryMode -> {
+            tab == RootTab.BOOK &&
+                bookSurface == BookRootSurface.BOOK &&
+                bookEntryMode == BookEntryMode.PLANNER &&
+                !bookUiState.inLibraryMode -> {
                 bookViewModel.openLibrary()
             }
-            tab != RootTab.HOME -> {
-                tab = RootTab.HOME
+            tab == RootTab.BOOK && bookSurface != BookRootSurface.HOME -> {
+                bookSurface = BookRootSurface.HOME
+                bookEntryMode = BookEntryMode.PLANNER
+            }
+            tab != RootTab.BOOK -> {
+                tab = RootTab.BOOK
+                bookSurface = BookRootSurface.HOME
                 bookEntryMode = BookEntryMode.PLANNER
             }
         }
@@ -96,8 +119,10 @@ fun GoaldayApp(startTarget: String? = null) {
         navigateBackInsideApp()
     }
 
-    LaunchedEffect(tab) {
-        if (tab == RootTab.BOOK) bookViewModel.refreshSchedulePreview()
+    LaunchedEffect(tab, bookSurface) {
+        if (tab == RootTab.BOOK && bookSurface == BookRootSurface.BOOK) {
+            bookViewModel.refreshSchedulePreview()
+        }
     }
 
     MaterialTheme {
@@ -109,8 +134,11 @@ fun GoaldayApp(startTarget: String? = null) {
                     onSelect = { item ->
                         tab = item
                         when (item) {
-                            RootTab.BOOK -> bookEntryMode = BookEntryMode.PLANNER
-                            RootTab.HOME, RootTab.INSPIRATION, RootTab.CALENDAR, RootTab.SETTINGS -> Unit
+                            RootTab.BOOK -> {
+                                bookSurface = BookRootSurface.HOME
+                                bookEntryMode = BookEntryMode.PLANNER
+                            }
+                            RootTab.CALENDAR, RootTab.SETTINGS -> Unit
                         }
                     },
                 )
@@ -147,47 +175,60 @@ fun GoaldayApp(startTarget: String? = null) {
                         )
                     },
             ) {
+                val route = AppRoute(tab, bookSurface, bookEntryMode)
                 AnimatedContent(
-                    targetState = tab,
+                    targetState = route,
                     transitionSpec = { fadeIn() togetherWith fadeOut() },
                     label = "root-tab-switch",
-                ) { currentTab ->
-                    when (currentTab) {
-                        RootTab.HOME -> HomeScreen(
-                            calendarViewModel = calendarViewModel,
-                            onOpenCalendar = {
-                                calendarFocusDay = null
-                                tab = RootTab.CALENDAR
-                            },
-                            onOpenCalendarForDay = { day ->
-                                calendarFocusDay = day
-                                tab = RootTab.CALENDAR
-                            },
-                            onOpenHandbook = {
-                                bookEntryMode = BookEntryMode.HANDBOOK
-                                tab = RootTab.BOOK
-                            },
-                            onOpenDiary = {
-                                bookEntryMode = BookEntryMode.DIARY
-                                tab = RootTab.BOOK
-                            },
-                            onOpenInspiration = {
-                                tab = RootTab.INSPIRATION
-                            },
-                        )
-                        RootTab.INSPIRATION -> InspirationScreen(
-                            viewModel = bookViewModel,
-                            onOpenHandbook = {
-                                bookEntryMode = BookEntryMode.HANDBOOK
-                                tab = RootTab.BOOK
-                            },
-                        )
+                ) { currentRoute ->
+                    when (currentRoute.tab) {
+                        RootTab.BOOK -> when (currentRoute.bookSurface) {
+                            BookRootSurface.HOME -> HomeScreen(
+                                calendarViewModel = calendarViewModel,
+                                onOpenCalendar = {
+                                    calendarFocusDay = null
+                                    tab = RootTab.CALENDAR
+                                },
+                                onOpenCalendarForDay = { day ->
+                                    calendarFocusDay = day
+                                    tab = RootTab.CALENDAR
+                                },
+                                onOpenBook = {
+                                    bookViewModel.openLibrary()
+                                    bookEntryMode = BookEntryMode.PLANNER
+                                    bookSurface = BookRootSurface.BOOK
+                                    tab = RootTab.BOOK
+                                },
+                                onOpenHandbook = {
+                                    bookEntryMode = BookEntryMode.HANDBOOK
+                                    bookSurface = BookRootSurface.BOOK
+                                    tab = RootTab.BOOK
+                                },
+                                onOpenDiary = {
+                                    bookEntryMode = BookEntryMode.DIARY
+                                    bookSurface = BookRootSurface.BOOK
+                                    tab = RootTab.BOOK
+                                },
+                                onOpenInspiration = {
+                                    bookSurface = BookRootSurface.INSPIRATION
+                                    tab = RootTab.BOOK
+                                },
+                            )
+                            BookRootSurface.INSPIRATION -> InspirationScreen(
+                                viewModel = bookViewModel,
+                                onOpenHandbook = {
+                                    bookEntryMode = BookEntryMode.HANDBOOK
+                                    bookSurface = BookRootSurface.BOOK
+                                    tab = RootTab.BOOK
+                                },
+                            )
+                            BookRootSurface.BOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = currentRoute.bookEntryMode)
+                        }
                         RootTab.CALENDAR -> CalendarScreen(
                             viewModel = calendarViewModel,
                             focusDay = calendarFocusDay,
                             onFocusConsumed = { calendarFocusDay = null },
                         )
-                        RootTab.BOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = bookEntryMode)
                         RootTab.SETTINGS -> SettingsScreen(
                             onShowGuide = { showGuide = true },
                         )
