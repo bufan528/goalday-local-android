@@ -747,6 +747,8 @@ private fun GoaldayHandbookScreen(
                         sectionPages = sectionPages,
                         selectedSectionIndex = selectedSectionIndex,
                         onOpenTargetDetail = { openedTargetDetail = it },
+                        onOpenSection = ::openSection,
+                        onOpenPage = viewModel::setPage,
                     )
                 }
             }
@@ -880,6 +882,8 @@ private fun HandbookRouteSurface(
     sectionPages: List<BookPage>,
     selectedSectionIndex: Int,
     onOpenTargetDetail: (String) -> Unit,
+    onOpenSection: (HandbookSection) -> Unit,
+    onOpenPage: (Int) -> Unit,
 ) {
     val payload = HandbookRoutePayload(
         viewModel = viewModel,
@@ -892,13 +896,206 @@ private fun HandbookRouteSurface(
         selectedSectionIndex = selectedSectionIndex,
         onOpenTargetDetail = onOpenTargetDetail,
     )
-    when (route) {
-        HandbookSection.OVERVIEW -> HandbookOverviewRoute(payload)
-        HandbookSection.SCHEDULE -> HandbookScheduleRoute(payload)
-        HandbookSection.DIARY -> HandbookDiaryRoute(payload)
-        HandbookSection.TARGET -> HandbookTargetRoute(payload)
+    HandbookOpenSpreadSurface(
+        route = route,
+        payload = payload,
+        onOpenSection = onOpenSection,
+        onOpenPage = onOpenPage,
+    )
+}
+
+@Composable
+private fun HandbookOpenSpreadSurface(
+    route: HandbookSection,
+    payload: HandbookRoutePayload,
+    onOpenSection: (HandbookSection) -> Unit,
+    onOpenPage: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxSize(),
+        horizontalArrangement = Arrangement.spacedBy(0.dp),
+    ) {
+        HandbookLeftIndexPage(
+            route = route,
+            payload = payload,
+            onOpenSection = onOpenSection,
+            onOpenPage = onOpenPage,
+            modifier = Modifier
+                .weight(0.39f)
+                .fillMaxHeight(),
+        )
+        Box(
+            modifier = Modifier
+                .width(9.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color(0x22835A45),
+                            Color(0x55F7D9BE),
+                            Color(0x33835A45),
+                        ),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .weight(0.61f)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(topEnd = 18.dp, bottomEnd = 18.dp))
+                .background(Color(0xF7FFFDF8))
+                .border(0.7.dp, Color(0x1EA88966), RoundedCornerShape(topEnd = 18.dp, bottomEnd = 18.dp))
+                .padding(8.dp),
+        ) {
+            when (route) {
+                HandbookSection.OVERVIEW -> HandbookOverviewRoute(payload)
+                HandbookSection.SCHEDULE -> HandbookScheduleRoute(payload)
+                HandbookSection.DIARY -> HandbookDiaryRoute(payload)
+                HandbookSection.TARGET -> HandbookTargetRoute(payload)
+            }
+        }
     }
 }
+
+@Composable
+private fun HandbookLeftIndexPage(
+    route: HandbookSection,
+    payload: HandbookRoutePayload,
+    onOpenSection: (HandbookSection) -> Unit,
+    onOpenPage: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scheduleCount = payload.uiState.schedulePreviewEntries.size
+    val doneCount = payload.uiState.schedulePreviewEntries.count { it.completed }
+    val diaryBlockCount = payload.uiState.diaryDraft.lines().count { it.contains("|") || it.startsWith("#") }.coerceAtLeast(
+        if (payload.uiState.diaryDraft.isBlank()) 0 else 1,
+    )
+    val targetPages = payload.book.pages.filterIsInstance<TargetPage>()
+    val targetCount = targetPages.sumOf { page -> page.items.size }
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(topStart = 18.dp, bottomStart = 18.dp))
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFFFFEFC), Color(0xFFFFF8EE), Color(0xFFF3DEC8)),
+                ),
+            )
+            .border(0.7.dp, Color(0x22A88966), RoundedCornerShape(topStart = 18.dp, bottomStart = 18.dp))
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Text("BOOK ACTIVITY", color = Color(0xFF8F684F), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+        Text(payload.book.title, color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 2)
+        Text(payload.book.subtitle, color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall, maxLines = 2)
+
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+            HandbookIndexMiniMetric("日程", scheduleCount.toString(), routeColor(HandbookSection.SCHEDULE), Modifier.weight(1f))
+            HandbookIndexMiniMetric("完成", doneCount.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+            HandbookIndexMiniMetric("日记", diaryBlockCount.toString(), routeColor(HandbookSection.DIARY), Modifier.weight(1f))
+            HandbookIndexMiniMetric("目标", targetCount.toString(), routeColor(HandbookSection.TARGET), Modifier.weight(1f))
+        }
+
+        Text("目录", color = Color(0xFF6F5B4B), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+        HandbookSection.entries.forEach { item ->
+            HandbookIndexSectionRow(
+                section = item,
+                selected = item == route,
+                count = payload.book.pages.count { page -> matchesHandbookSection(page, item) },
+                onClick = { onOpenSection(item) },
+            )
+        }
+
+        Text("页签", color = Color(0xFF6F5B4B), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+        payload.book.pages.forEachIndexed { index, page ->
+            val selected = index == payload.uiState.selectedPageIndex
+            HandbookIndexPageRow(
+                title = monthLabelForPage(page.title, fallback = page.title),
+                type = page.handbookPageTypeLabel(),
+                selected = selected,
+                onClick = { onOpenPage(index) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun HandbookIndexMiniMetric(
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(color.copy(alpha = 0.12f))
+            .padding(horizontal = 7.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(value, color = color, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(label, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+    }
+}
+
+@Composable
+private fun HandbookIndexSectionRow(
+    section: HandbookSection,
+    selected: Boolean,
+    count: Int,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (selected) routeColor(section).copy(alpha = 0.16f) else Color.White.copy(alpha = 0.45f))
+            .border(0.6.dp, if (selected) routeColor(section).copy(alpha = 0.28f) else Color(0x10A88966), RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 7.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.weight(1f)) {
+            Text(section.label, color = if (selected) routeColor(section) else Color(0xFF3D332A), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(routeSubtitle(section), color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        }
+        Text(count.toString(), color = routeColor(section), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun HandbookIndexPageRow(
+    title: String,
+    type: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (selected) Color(0x33E88FAE) else Color.Transparent)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 7.dp, vertical = 5.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(title, color = if (selected) GoaldayDesign.Pink else GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, maxLines = 1, modifier = Modifier.weight(1f))
+        Text(type, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+    }
+}
+
+private fun BookPage.handbookPageTypeLabel(): String =
+    when (this) {
+        is DiaryPage -> "DIARY"
+        is TargetPage -> "TARGET"
+        is SchedulePage -> "SCHEDULE"
+        is PlanPage -> "PLAN"
+    }
 
 @Composable
 private fun HandbookOverviewRoute(payload: HandbookRoutePayload) {
@@ -954,6 +1151,8 @@ private fun HandbookRouteContent(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        val inBookScheduleMode = route == HandbookSection.SCHEDULE &&
+            (payload.currentPage is SchedulePage || payload.currentPage is PlanPage)
         HandbookRouteHeader(
             route = route,
             title = payload.currentPage.title,
@@ -1002,8 +1201,8 @@ private fun HandbookRouteContent(
                 onUpdateTargetNote = payload.viewModel::updateTargetItemNote,
                 onUpdateTargetDeadline = payload.viewModel::updateTargetItemDeadline,
                 onOpenTargetDetail = payload.onOpenTargetDetail,
-                shellStyle = ShellStyle.BOOK,
-                handbookMode = true,
+                shellStyle = if (inBookScheduleMode) ShellStyle.BOOK else ShellStyle.LIGHT,
+                handbookMode = inBookScheduleMode,
                 onFlipNext = {
                     val nextIndex = routeNextIndex()
                     if (nextIndex in payload.book.pages.indices) payload.viewModel.setPage(nextIndex)
