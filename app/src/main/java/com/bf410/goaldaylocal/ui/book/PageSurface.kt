@@ -694,25 +694,66 @@ fun ActivePageLayer(
     turnDirection: TurnDirection? = null,
 ) {
     if (handbookMode) {
-        HandbookReplicaPage(
-            modifier = modifier,
-            page = page,
-            pageIndex = pageIndex,
-            pageCount = pageCount,
-            todayPlanItems = todayPlanItems,
-            todayCompletedItems = todayCompletedItems,
-            schedulePreviewEntries = schedulePreviewEntries,
-            weeklyTheme = weeklyTheme,
-            onAddPoolItem = onAddHandbookPoolItem,
-            onRemovePoolItem = onRemoveHandbookPoolItem,
-            onAddSchedule = onAddScheduleFromHandbook,
-            onWeeklyThemeChange = onWeeklyThemeChange,
-            onUpdateScheduleTitle = onUpdateScheduleTitle,
-            onMoveScheduleDay = onMoveScheduleDay,
-            onToggleScheduleCompleted = onToggleScheduleCompleted,
-            turnProgress = turnProgress,
-            turnDirection = turnDirection,
-        )
+        when (page) {
+            is SchedulePage, is PlanPage -> HandbookReplicaPage(
+                modifier = modifier,
+                page = page,
+                pageIndex = pageIndex,
+                pageCount = pageCount,
+                todayPlanItems = todayPlanItems,
+                todayCompletedItems = todayCompletedItems,
+                schedulePreviewEntries = schedulePreviewEntries,
+                weeklyTheme = weeklyTheme,
+                onAddPoolItem = onAddHandbookPoolItem,
+                onRemovePoolItem = onRemoveHandbookPoolItem,
+                onAddSchedule = onAddScheduleFromHandbook,
+                onWeeklyThemeChange = onWeeklyThemeChange,
+                onUpdateScheduleTitle = onUpdateScheduleTitle,
+                onMoveScheduleDay = onMoveScheduleDay,
+                onToggleScheduleCompleted = onToggleScheduleCompleted,
+                turnProgress = turnProgress,
+                turnDirection = turnDirection,
+            )
+            is DiaryPage -> HandbookDiaryReplicaPage(
+                modifier = modifier,
+                title = page.title,
+                prompt = page.prompt,
+                tint = tint,
+                diaryDraft = diaryDraft,
+                todayPlanItems = todayPlanItems,
+                todayCompletedItems = todayCompletedItems,
+                pendingCommand = pendingCommand,
+                onCommand = onCommand,
+                onDiaryChange = onDiaryChange,
+                contentMode = contentMode,
+                onContentModeChange = onContentModeChange,
+                pageIndex = pageIndex,
+                pageCount = pageCount,
+                turnProgress = turnProgress,
+                turnDirection = turnDirection,
+            )
+            is TargetPage -> HandbookTargetReplicaPage(
+                modifier = modifier,
+                page = page,
+                pageIndex = pageIndex,
+                pageCount = pageCount,
+                tint = tint,
+                customPageItems = customPageItems,
+                schedulePreviewEntries = schedulePreviewEntries,
+                targetItemMeta = targetItemMeta,
+                isChecked = isChecked,
+                onToggleChecked = onToggleChecked,
+                onAddCustomItem = onAddCustomItem,
+                onRemoveCustomItem = onRemoveCustomItem,
+                onRenameCustomItem = onRenameCustomItem,
+                onAddToSchedule = onAddToSchedule,
+                onUpdateTargetNote = onUpdateTargetNote,
+                onUpdateTargetDeadline = onUpdateTargetDeadline,
+                onOpenTargetDetail = onOpenTargetDetail,
+                turnProgress = turnProgress,
+                turnDirection = turnDirection,
+            )
+        }
         return
     }
     val easedShift = turnProgress * turnProgress
@@ -780,6 +821,187 @@ fun ActivePageLayer(
 private enum class ScheduleBoardMode(val label: String) {
     SPREAD("手账"),
     MONTH("整月"),
+}
+
+@Composable
+private fun HandbookDiaryReplicaPage(
+    modifier: Modifier,
+    title: String,
+    prompt: String,
+    tint: Color,
+    diaryDraft: String,
+    todayPlanItems: List<String>,
+    todayCompletedItems: List<String>,
+    pendingCommand: RichEditorCommand?,
+    onCommand: (RichEditorCommand) -> Unit,
+    onDiaryChange: (String) -> Unit,
+    contentMode: PageContentMode,
+    onContentModeChange: (PageContentMode) -> Unit,
+    pageIndex: Int,
+    pageCount: Int,
+    turnProgress: Float,
+    turnDirection: TurnDirection?,
+) {
+    val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
+    val contentShift = when (turnDirection) {
+        TurnDirection.NEXT -> -(eased * 8f)
+        TurnDirection.PREVIOUS -> eased * 8f
+        null -> 0f
+    }
+    val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
+    val editing = contentMode is PageContentMode.EditingDiary && contentMode.title == title
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
+            .background(
+                Brush.linearGradient(
+                    listOf(Color(0xFFFFFEFB), Color(0xFFFFF7F1), Color(0xFFFFFCF7)),
+                    start = Offset.Zero,
+                    end = Offset(760f, 900f),
+                ),
+            )
+            .border(0.8.dp, Color(0x22B7A893), RoundedCornerShape(GoaldayDesign.RadiusL))
+            .graphicsLayer {
+                translationX = contentShift
+                this.alpha = alpha
+            }
+            .padding(12.dp),
+    ) {
+        HandbookPaperRuling()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SectionStamp("DIARY", GoaldayDesign.Pink)
+                Text("${pageIndex + 1}/$pageCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+            }
+            if (editing) {
+                DiarySection(
+                    title = title,
+                    prompt = prompt,
+                    tint = tint,
+                    diaryDraft = diaryDraft,
+                    todayPlanItems = todayPlanItems,
+                    todayCompletedItems = todayCompletedItems,
+                    pendingCommand = pendingCommand,
+                    onCommand = onCommand,
+                    onDiaryChange = onDiaryChange,
+                    contentMode = contentMode,
+                    onContentModeChange = onContentModeChange,
+                )
+            } else {
+                StructuredDiaryPreview(
+                    state = StructuredDiary.fromRaw(diaryDraft),
+                    onAddImage = { onContentModeChange(PageContentMode.EditingDiary(title)) },
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "编辑日记",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(GoaldayDesign.Pink)
+                            .clickable { onContentModeChange(PageContentMode.EditingDiary(title)) }
+                            .padding(horizontal = 12.dp, vertical = 7.dp),
+                    )
+                    Text(prompt, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 2, modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HandbookTargetReplicaPage(
+    modifier: Modifier,
+    page: TargetPage,
+    pageIndex: Int,
+    pageCount: Int,
+    tint: Color,
+    customPageItems: List<String>,
+    schedulePreviewEntries: List<ScheduleEntry>,
+    targetItemMeta: Map<String, TargetItemMeta>,
+    isChecked: (String, String) -> Boolean,
+    onToggleChecked: (String, String) -> Unit,
+    onAddCustomItem: (String) -> Unit,
+    onRemoveCustomItem: (String) -> Unit,
+    onRenameCustomItem: (String, String) -> Unit,
+    onAddToSchedule: (String, Int) -> Unit,
+    onUpdateTargetNote: (String, String) -> Unit,
+    onUpdateTargetDeadline: (String, Int?) -> Unit,
+    onOpenTargetDetail: (String) -> Unit,
+    turnProgress: Float,
+    turnDirection: TurnDirection?,
+) {
+    val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
+    val contentShift = when (turnDirection) {
+        TurnDirection.NEXT -> -(eased * 8f)
+        TurnDirection.PREVIOUS -> eased * 8f
+        null -> 0f
+    }
+    val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
+            .background(
+                Brush.linearGradient(
+                    listOf(Color(0xFFFFFCF7), tint.copy(alpha = 0.13f), Color(0xFFFFFEFB)),
+                    start = Offset.Zero,
+                    end = Offset(760f, 900f),
+                ),
+            )
+            .border(0.8.dp, Color(0x1FA88966), RoundedCornerShape(GoaldayDesign.RadiusL))
+            .graphicsLayer {
+                translationX = contentShift
+                this.alpha = alpha
+            }
+            .padding(12.dp),
+    ) {
+        HandbookPaperRuling()
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SectionStamp("TARGET", tint)
+                Text("${pageIndex + 1}/$pageCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+            }
+            TargetDetailReplicaPage(
+                pageTitle = page.title,
+                baseItems = page.items,
+                customItems = customPageItems,
+                tint = tint,
+                schedulePreviewEntries = schedulePreviewEntries,
+                targetItemMeta = targetItemMeta,
+                isChecked = isChecked,
+                onToggleChecked = onToggleChecked,
+                onAddCustomItem = onAddCustomItem,
+                onRemoveCustomItem = onRemoveCustomItem,
+                onRenameCustomItem = onRenameCustomItem,
+                onAddToSchedule = onAddToSchedule,
+                onUpdateTargetNote = onUpdateTargetNote,
+                onUpdateTargetDeadline = onUpdateTargetDeadline,
+                onOpenTargetDetail = onOpenTargetDetail,
+            )
+        }
+    }
 }
 
 @Composable

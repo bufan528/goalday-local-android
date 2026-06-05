@@ -1375,8 +1375,6 @@ private fun HandbookRouteContent(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        val inBookScheduleMode = route == HandbookSection.SCHEDULE &&
-            (payload.currentPage is SchedulePage || payload.currentPage is PlanPage)
         HandbookRouteHeader(
             route = route,
             title = payload.currentPage.title,
@@ -1425,8 +1423,8 @@ private fun HandbookRouteContent(
                 onUpdateTargetNote = payload.viewModel::updateTargetItemNote,
                 onUpdateTargetDeadline = payload.viewModel::updateTargetItemDeadline,
                 onOpenTargetDetail = payload.onOpenTargetDetail,
-                shellStyle = if (inBookScheduleMode) ShellStyle.BOOK else ShellStyle.LIGHT,
-                handbookMode = inBookScheduleMode,
+                shellStyle = ShellStyle.BOOK,
+                handbookMode = true,
                 onFlipNext = {
                     val nextIndex = routeNextIndex()
                     if (nextIndex in payload.book.pages.indices) payload.viewModel.setPage(nextIndex)
