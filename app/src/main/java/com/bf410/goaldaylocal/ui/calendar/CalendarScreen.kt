@@ -47,6 +47,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
@@ -59,7 +60,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.core.content.ContextCompat
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
-import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 import java.time.Instant
 import java.time.LocalDate
 import java.time.DayOfWeek
@@ -137,10 +137,13 @@ fun CalendarScreen(
     val dayEntries = state.entries
         .filter { it.year == state.year && it.month == state.month && it.day == selectedDay }
         .sortedWith(compareBy<ScheduleEntry> { it.completed }.thenBy { it.title.lowercase() })
+    val monthEntries = state.entries
+        .filter { it.year == state.year && it.month == state.month }
     val doneEntries = dayEntries.filter { it.completed }
     val todoEntries = dayEntries.filterNot { it.completed }
-    val poolEntries = state.entries
-        .filter { it.year == state.year && it.month == state.month }
+    val monthTodoCount = monthEntries.count { !it.completed }
+    val monthDoneCount = monthEntries.count { it.completed }
+    val poolEntries = monthEntries
         .filterNot { it.day == selectedDay }
         .filterNot { it.completed }
         .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.title.lowercase() }))
@@ -157,21 +160,17 @@ fun CalendarScreen(
                 .padding(bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-        GoaldayTopBar(
-            rightPrimaryText = "今天",
-            onRightPrimaryClick = {
+        CalendarHeroHeader(
+            year = state.year,
+            month = state.month,
+            selectedDay = selectedDay,
+            todoCount = monthTodoCount,
+            doneCount = monthDoneCount,
+            onToday = {
                 viewModel.backToToday()
                 selectedDay = LocalDate.now().dayOfMonth.coerceIn(1, maxDay)
                 toast = "已回到今天"
             },
-        )
-        Text(
-            "为J人而生的App",
-            color = Color.White,
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier
-                .background(Color(0xFF111111), RoundedCornerShape(GoaldayDesign.RadiusS))
-                .padding(horizontal = 8.dp, vertical = 3.dp),
         )
 
         CalendarThemeField(
@@ -179,41 +178,20 @@ fun CalendarScreen(
             onValueChange = viewModel::updateTheme,
         )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(GoaldayDesign.Surface, RoundedCornerShape(GoaldayDesign.RadiusM))
-                .border(1.dp, Color(0x14000000), RoundedCornerShape(GoaldayDesign.RadiusM))
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("‹ 上月", color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable { viewModel.previousMonth() })
-            Text("${state.year}年${state.month}月", color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.Medium)
-            Text("下月 ›", color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable { viewModel.nextMonth() })
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            Text(
-                "导入系统日历",
-                color = Color.White,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier
-                    .background(GoaldayDesign.PrimaryAction, RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .clickable {
-                        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
-                        if (granted) {
-                            showImportRangeDialog = true
-                        } else {
-                            calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
-                        }
-                    }
-                    .padding(horizontal = 10.dp, vertical = 5.dp),
-            )
-        }
+        CalendarMonthControl(
+            year = state.year,
+            month = state.month,
+            onPreviousMonth = viewModel::previousMonth,
+            onNextMonth = viewModel::nextMonth,
+            onImportCalendar = {
+                val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
+                if (granted) {
+                    showImportRangeDialog = true
+                } else {
+                    calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
+                }
+            },
+        )
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             weekDays.forEach { day ->
@@ -704,6 +682,123 @@ private fun CalendarThemeField(
                 }
             }
         },
+    )
+}
+
+@Composable
+private fun CalendarHeroHeader(
+    year: Int,
+    month: Int,
+    selectedDay: Int,
+    todoCount: Int,
+    doneCount: Int,
+    onToday: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.linearGradient(
+                    listOf(Color(0xFFFFF8F1), Color(0xFFFFEAF1), Color(0xFFEBD0BA)),
+                    start = Offset.Zero,
+                    end = Offset(780f, 440f),
+                ),
+                RoundedCornerShape(22.dp),
+            )
+            .border(0.8.dp, Color(0x35FFFFFF), RoundedCornerShape(22.dp))
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("MONTHLY SCHEDULE", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                    Text("${year}年${month}月", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                    Text("当前查看 ${selectedDay} 日 · 本地日历", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                }
+                Text(
+                    "今天",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .background(GoaldayDesign.PrimaryAction, RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .clickable(onClick = onToday)
+                        .padding(horizontal = 13.dp, vertical = 7.dp),
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
+                CalendarHeroMetric("待办", todoCount.toString(), GoaldayDesign.Pink, Modifier.weight(1f))
+                CalendarHeroMetric("完成", doneCount.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
+                CalendarHeroMetric("进度", if (todoCount + doneCount == 0) "0%" else "${doneCount * 100 / (todoCount + doneCount)}%", Color(0xFF8F684F), Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CalendarHeroMetric(
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .background(Color.White.copy(alpha = 0.66f), RoundedCornerShape(14.dp))
+            .border(0.6.dp, color.copy(alpha = 0.18f), RoundedCornerShape(14.dp))
+            .padding(horizontal = 9.dp, vertical = 7.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(value, color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(label, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+    }
+}
+
+@Composable
+private fun CalendarMonthControl(
+    year: Int,
+    month: Int,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onImportCalendar: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(GoaldayDesign.Surface, RoundedCornerShape(18.dp))
+            .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(18.dp))
+            .padding(horizontal = 9.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CalendarControlChip("上月", Color(0xFF8F684F), Modifier.weight(0.8f), onPreviousMonth)
+        Column(modifier = Modifier.weight(1.2f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text("${year}年${month}月", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text("系统日历可导入", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        }
+        CalendarControlChip("下月", GoaldayDesign.Pink, Modifier.weight(0.8f), onNextMonth)
+        CalendarControlChip("导入", GoaldayDesign.PrimaryAction, Modifier.weight(0.8f), onImportCalendar)
+    }
+}
+
+@Composable
+private fun CalendarControlChip(
+    label: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        color = Color.White,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+        modifier = modifier
+            .background(color, RoundedCornerShape(GoaldayDesign.RadiusPill))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
     )
 }
 

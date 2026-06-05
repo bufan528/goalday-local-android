@@ -6,14 +6,18 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,9 +30,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bf410.goaldaylocal.ui.book.BookEntryMode
@@ -44,11 +50,11 @@ import com.bf410.goaldaylocal.START_TARGET_DIARY
 import com.tencent.mmkv.MMKV
 
 private enum class RootTab(val label: String, val iconText: String) {
-    HOME("今日", "●"),
-    BOOK("手账", "▣"),
-    INSPIRATION("灵感", "◇"),
-    CALENDAR("日历", "□"),
-    SETTINGS("设置", "○"),
+    HOME("今日", "今"),
+    BOOK("手账", "账"),
+    INSPIRATION("灵感", "灵"),
+    CALENDAR("日历", "历"),
+    SETTINGS("设置", "设"),
 }
 
 @Composable
@@ -96,33 +102,16 @@ fun GoaldayApp(startTarget: String? = null) {
         Scaffold(
             containerColor = GoaldayDesign.AppBg,
             bottomBar = {
-                NavigationBar(
-                    containerColor = Color.White,
-                    tonalElevation = 0.dp,
-                ) {
-                    RootTab.entries.forEach { item ->
-                        val selected = tab == item
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                tab = item
-                                when (item) {
-                                    RootTab.BOOK -> bookEntryMode = BookEntryMode.PLANNER
-                                    RootTab.HOME, RootTab.INSPIRATION, RootTab.CALENDAR, RootTab.SETTINGS -> Unit
-                                }
-                            },
-                            icon = { Text(item.iconText, color = if (selected) GoaldayDesign.Pink else Color(0xFF9E958A)) },
-                            label = { Text(item.label) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = GoaldayDesign.Pink,
-                                selectedTextColor = GoaldayDesign.Pink,
-                                unselectedIconColor = Color(0xFF9E958A),
-                                unselectedTextColor = Color(0xFF9E958A),
-                                indicatorColor = GoaldayDesign.PinkSoft,
-                            ),
-                        )
-                    }
-                }
+                GoaldayBottomDock(
+                    selectedTab = tab,
+                    onSelect = { item ->
+                        tab = item
+                        when (item) {
+                            RootTab.BOOK -> bookEntryMode = BookEntryMode.PLANNER
+                            RootTab.HOME, RootTab.INSPIRATION, RootTab.CALENDAR, RootTab.SETTINGS -> Unit
+                        }
+                    },
+                )
             },
         ) { padding ->
             Box(
@@ -212,5 +201,71 @@ fun GoaldayApp(startTarget: String? = null) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun GoaldayBottomDock(
+    selectedTab: RootTab,
+    onSelect: (RootTab) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFFCF7))
+            .border(0.7.dp, Color(0x18A88966), RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RootTab.entries.forEach { item ->
+            val selected = selectedTab == item
+            GoaldayBottomDockItem(
+                tab = item,
+                selected = selected,
+                modifier = Modifier.weight(1f),
+                onClick = { onSelect(item) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun GoaldayBottomDockItem(
+    tab: RootTab,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .background(
+                if (selected) GoaldayDesign.PinkSoft else Color.Transparent,
+                RoundedCornerShape(16.dp),
+            )
+            .border(
+                0.7.dp,
+                if (selected) GoaldayDesign.Pink.copy(alpha = 0.26f) else Color.Transparent,
+                RoundedCornerShape(16.dp),
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 5.dp, vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            tab.iconText,
+            color = if (selected) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+        Text(
+            tab.label,
+            color = if (selected) GoaldayDesign.InkPrimary else GoaldayDesign.InkMuted,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 1,
+        )
     }
 }
