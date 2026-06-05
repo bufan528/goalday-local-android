@@ -45,6 +45,24 @@ class BackupManager(
         restoreBackupDirectory(source)
     }
 
+    fun deleteBackup(path: String): Result<Boolean> = runCatching {
+        val root = backupDir.canonicalFile
+        val target = File(path).canonicalFile
+        require(target.exists() && target.isDirectory) { "备份不存在" }
+        require(target.parentFile?.canonicalPath == root.canonicalPath) { "只能删除备份目录内的数据" }
+        target.deleteRecursively()
+    }
+
+    fun cleanupOldBackups(keepLatest: Int = 6): Result<Int> = runCatching {
+        val safeKeep = keepLatest.coerceAtLeast(1)
+        val oldBackups = backupDir.listFiles()
+            ?.filter { it.isDirectory }
+            ?.sortedByDescending { it.lastModified() }
+            ?.drop(safeKeep)
+            ?: emptyList()
+        oldBackups.count { it.deleteRecursively() }
+    }
+
     fun latestBackupPath(): String =
         latestBackupFile()
             ?.absolutePath

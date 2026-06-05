@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -59,6 +60,7 @@ fun SettingsScreen(
     var refreshTick by remember { mutableIntStateOf(0) }
     var selectedFont by remember { mutableStateOf(mmkv.decodeString(KEY_FONT_SIZE, "standard") ?: "standard") }
     var pendingRestore by remember { mutableStateOf<BackupSnapshot?>(null) }
+    var pendingDelete by remember { mutableStateOf<BackupSnapshot?>(null) }
 
     val snapshots = remember(refreshTick) { manager.backupSnapshots() }
     val latestBackup = snapshots.firstOrNull()
@@ -74,17 +76,49 @@ fun SettingsScreen(
         refreshTick += 1
     }
 
+    fun createBackup() {
+        val result = manager.backupMmkv()
+        result.onSuccess {
+            refreshBackups()
+            Toast.makeText(context, "备份完成", Toast.LENGTH_SHORT).show()
+        }.onFailure {
+            Toast.makeText(context, it.message ?: "备份失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun restoreLatestBackup() {
+        val latest = snapshots.firstOrNull()
+        if (latest == null) {
+            Toast.makeText(context, "暂无可恢复备份", Toast.LENGTH_SHORT).show()
+            return
+        }
+        pendingRestore = latest
+    }
+
+    fun cleanupOldBackups() {
+        val result = manager.cleanupOldBackups(keepLatest = 6)
+        result.onSuccess { deleted ->
+            refreshBackups()
+            Toast.makeText(context, if (deleted > 0) "已清理 $deleted 个旧备份" else "没有需要清理的旧备份", Toast.LENGTH_SHORT).show()
+        }.onFailure {
+            Toast.makeText(context, it.message ?: "清理失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color(0xFFFAF8F4))
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("本地设置", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 18.dp))
         SettingsHeroCard(
             backupSummary = manager.storageSummary(),
             latestBackup = latestBackup,
+            backupCount = snapshots.size,
+            onCreateBackup = ::createBackup,
+            onRestoreLatest = ::restoreLatestBackup,
         )
         SettingsSection(title = "偏好") {
             SettingRow(
@@ -112,19 +146,12 @@ fun SettingsScreen(
             )
         }
         SettingsSection(title = "备份") {
-            SettingRow(
-                title = "立即备份",
-                subtitle = "把当前 MMKV 本地数据复制到备份目录。",
-                meta = "创建",
-                onClick = {
-                    val result = manager.backupMmkv()
-                    result.onSuccess {
-                        refreshBackups()
-                        Toast.makeText(context, "备份完成", Toast.LENGTH_SHORT).show()
-                    }.onFailure {
-                        Toast.makeText(context, it.message ?: "备份失败", Toast.LENGTH_SHORT).show()
-                    }
-                },
+            BackupActionPanel(
+                backupCount = snapshots.size,
+                latestBackup = latestBackup,
+                onCreate = ::createBackup,
+                onRestoreLatest = ::restoreLatestBackup,
+                onCleanup = ::cleanupOldBackups,
             )
             SettingRow(
                 title = "备份目录",
@@ -137,6 +164,7 @@ fun SettingsScreen(
             BackupHistoryList(
                 snapshots = snapshots,
                 onRestore = { pendingRestore = it },
+                onDelete = { pendingDelete = it },
             )
         }
     }
@@ -172,29 +200,152 @@ fun SettingsScreen(
             },
         )
     }
+
+    pendingDelete?.let { snapshot ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text("删除备份？") },
+            text = {
+                Text(
+                    "${snapshot.name}\n${formatBackupDate(snapshot.modifiedAtMillis)} · ${BackupManager.formatBytes(snapshot.sizeBytes)}\n\n删除后无法从这个备份恢复。",
+                    color = Color(0xFF5F564E),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val result = manager.deleteBackup(snapshot.absolutePath)
+                    result.onSuccess {
+                        refreshBackups()
+                        Toast.makeText(context, "已删除备份", Toast.LENGTH_SHORT).show()
+                    }.onFailure {
+                        Toast.makeText(context, it.message ?: "删除失败", Toast.LENGTH_SHORT).show()
+                    }
+                    pendingDelete = null
+                }) {
+                    Text("确认删除")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }) {
+                    Text("取消")
+                }
+            },
+        )
+    }
 }
 
 @Composable
 private fun SettingsHeroCard(
     backupSummary: String,
     latestBackup: BackupSnapshot?,
+    backupCount: Int,
+    onCreateBackup: () -> Unit,
+    onRestoreLatest: () -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFFFECF3), RoundedCornerShape(22.dp))
+            .background(Color(0xFFFFECF3), RoundedCornerShape(24.dp))
             .border(1.dp, Color(0x22E88FAE), RoundedCornerShape(22.dp))
             .padding(16.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-            Text("Goalday Local", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
-            Text("无服务器依赖，不设置付费锁。所有日程、手账、日记和组件数据保存在本机。", color = Color(0xFF6C3F50))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("LOCAL DATA CENTER", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE88FAE), fontWeight = FontWeight.SemiBold)
+                    Text("Goalday Local", style = MaterialTheme.typography.titleLarge, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+                }
+                Text(
+                    "$backupCount",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .background(Color(0xFFE88FAE), RoundedCornerShape(14.dp))
+                        .padding(horizontal = 12.dp, vertical = 7.dp),
+                )
+            }
+            Text("无服务器依赖，不设置付费锁。所有日程、手账、日记和组件数据保存在本机。", color = Color(0xFF6C3F50), style = MaterialTheme.typography.bodySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 StatusPill(backupSummary, Color(0xFFB45E7A))
                 StatusPill(latestBackup?.let { "最近 ${formatBackupDate(it.modifiedAtMillis)}" } ?: "暂无备份", Color(0xFF7A6E66))
             }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                HeroActionButton("立即备份", Color(0xFF2F2923), Modifier.weight(1f), onCreateBackup)
+                HeroActionButton("恢复最近", Color(0xFFE88FAE), Modifier.weight(1f), onRestoreLatest)
+            }
         }
     }
+}
+
+@Composable
+private fun HeroActionButton(
+    label: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        color = Color.White,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.SemiBold,
+        modifier = modifier
+            .background(color, RoundedCornerShape(99.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+    )
+}
+
+@Composable
+private fun BackupActionPanel(
+    backupCount: Int,
+    latestBackup: BackupSnapshot?,
+    onCreate: () -> Unit,
+    onRestoreLatest: () -> Unit,
+    onCleanup: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFFBF6), RoundedCornerShape(16.dp))
+            .border(0.8.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
+                Text("备份操作", style = MaterialTheme.typography.titleSmall, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+                Text(latestBackup?.let { "最近 ${formatBackupDate(it.modifiedAtMillis)}" } ?: "暂无可恢复备份", color = Color(0xFF6C635A), style = MaterialTheme.typography.bodySmall)
+            }
+            StatusPill("$backupCount 个", Color(0xFFB45E7A))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
+            BackupActionChip("创建", Color(0xFF2F2923), Modifier.weight(1f), onCreate)
+            BackupActionChip("恢复最近", Color(0xFFE88FAE), Modifier.weight(1f), onRestoreLatest)
+            BackupActionChip("清理旧备份", Color(0xFF8F684F), Modifier.weight(1f), onCleanup)
+        }
+    }
+}
+
+@Composable
+private fun BackupActionChip(
+    label: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        color = Color.White,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        modifier = modifier
+            .height(34.dp)
+            .background(color, RoundedCornerShape(99.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+    )
 }
 
 @Composable
@@ -256,7 +407,7 @@ private fun FontSizeMenu(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("字号", style = MaterialTheme.typography.titleSmall, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
-                Text("设置已保存，后续可接入全局排版。", color = Color(0xFF6C635A), style = MaterialTheme.typography.bodySmall)
+                Text("设置会保存在本机偏好中。", color = Color(0xFF6C635A), style = MaterialTheme.typography.bodySmall)
             }
             Text(
                 options.firstOrNull { it.key == selected }?.label ?: "标准",
@@ -287,6 +438,7 @@ private fun FontSizeMenu(
 private fun BackupHistoryList(
     snapshots: List<BackupSnapshot>,
     onRestore: (BackupSnapshot) -> Unit,
+    onDelete: (BackupSnapshot) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -306,8 +458,12 @@ private fun BackupHistoryList(
             )
             return
         }
-        snapshots.take(6).forEach { snapshot ->
-            BackupHistoryRow(snapshot = snapshot, onRestore = { onRestore(snapshot) })
+        snapshots.take(8).forEach { snapshot ->
+            BackupHistoryRow(
+                snapshot = snapshot,
+                onRestore = { onRestore(snapshot) },
+                onDelete = { onDelete(snapshot) },
+            )
         }
     }
 }
@@ -316,6 +472,7 @@ private fun BackupHistoryList(
 private fun BackupHistoryRow(
     snapshot: BackupSnapshot,
     onRestore: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -333,16 +490,27 @@ private fun BackupHistoryRow(
                 style = MaterialTheme.typography.labelSmall,
             )
         }
-        Text(
-            "恢复",
-            color = Color.White,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .background(Color(0xFFE88FAE), RoundedCornerShape(99.dp))
-                .clickable(onClick = onRestore)
-                .padding(horizontal = 10.dp, vertical = 5.dp),
-        )
+        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Text(
+                "恢复",
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .background(Color(0xFFE88FAE), RoundedCornerShape(99.dp))
+                    .clickable(onClick = onRestore)
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            )
+            Text(
+                "删除",
+                color = Color(0xFFA15E58),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clickable(onClick = onDelete)
+                    .padding(horizontal = 10.dp, vertical = 3.dp),
+            )
+        }
     }
 }
 
