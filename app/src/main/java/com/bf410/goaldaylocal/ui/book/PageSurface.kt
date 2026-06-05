@@ -3369,12 +3369,13 @@ private fun shareLongImagePreview(context: Context, preview: LongImagePreview): 
 private enum class LongImageExportPreset(
     val label: String,
     val description: String,
+    val paperLabel: String,
     val mediaSize: PrintAttributes.MediaSize,
     val previewInset: Int,
 ) {
-    LONG("长图", "原始比例 · 适合保存分享", PrintAttributes.MediaSize.UNKNOWN_PORTRAIT, 0),
-    PHONE("手机", "9:16 预览 · 适合发到社交软件", PrintAttributes.MediaSize.NA_LETTER, 10),
-    PRINT("打印", "A4 PDF · 适合纸质手账", PrintAttributes.MediaSize.ISO_A4, 22),
+    LONG("长图", "原始比例 · 适合保存分享", "长图", PrintAttributes.MediaSize.UNKNOWN_PORTRAIT, 0),
+    PHONE("手机", "9:16 预览 · 适合发到社交软件", "手机", PrintAttributes.MediaSize.NA_LETTER, 10),
+    PRINT("打印", "A4 PDF · 适合纸质手账", "A4", PrintAttributes.MediaSize.ISO_A4, 22),
 }
 
 private const val KEY_LONG_IMAGE_EXPORT_HISTORY = "long_image_export_history"
@@ -3544,30 +3545,33 @@ private fun LongImagePreviewDialog(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color(0xFFFFFEFC), Color(0xFFFFF2E7), Color(0xFFFFEAF1)),
-                        ),
-                    )
-                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(18.dp))
-                    .padding(horizontal = 13.dp, vertical = 10.dp),
+                    .background(Color(0xDDFFFDF8))
+                    .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp))
+                    .padding(horizontal = 14.dp, vertical = 11.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("LONG IMAGE DISPLAY · PRINT EXPORT", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "‹ 返回",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GoaldayDesign.InkSecondary,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color(0x10A88966))
+                        .clickable { onDismiss() }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
+                    Text("LongImageDisplayActivity", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
                     Text(preview.title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
                     Text(preview.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                 }
                 Text(
-                    "完成",
+                    "PrintPage",
                     style = MaterialTheme.typography.labelSmall,
                     color = GoaldayDesign.InkMuted,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .clickable { onDismiss() }
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
             Row(
@@ -3582,6 +3586,10 @@ private fun LongImagePreviewDialog(
                 LongImageInfoPill("预设", selectedPreset.label)
                 LongImageInfoPill("记录", "${exportHistory.size}条")
             }
+            LongImagePrintPanel(
+                preset = selectedPreset,
+                preview = preview,
+            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -3642,14 +3650,14 @@ private fun LongImagePreviewDialog(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(22.dp))
                     .background(Color.White.copy(alpha = 0.86f))
-                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(20.dp))
+                    .border(1.dp, Color(0x22B7A893), RoundedCornerShape(22.dp))
                     .padding(horizontal = 10.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                LongImageActionChip("保存", GoaldayDesign.Positive) {
+                LongImageActionChip("保存", GoaldayDesign.Positive, Modifier.weight(1f)) {
                     val uri = saveLongImagePreview(context, preview)
                     if (uri != null) {
                         recordAction("已保存到相册", "保存", uri.lastPathSegment.orEmpty())
@@ -3657,14 +3665,14 @@ private fun LongImagePreviewDialog(
                         actionHint = "保存失败"
                     }
                 }
-                LongImageActionChip("分享", Color(0xFFB07A8F)) {
+                LongImageActionChip("分享", Color(0xFFB07A8F), Modifier.weight(1f)) {
                     if (shareLongImagePreview(context, preview)) {
                         recordAction("已打开分享", "分享", selectedPreset.description)
                     } else {
                         actionHint = "分享失败"
                     }
                 }
-                LongImageActionChip("打印", GoaldayDesign.InkSecondary) {
+                LongImageActionChip("打印", GoaldayDesign.InkSecondary, Modifier.weight(1f)) {
                     if (printLongImagePreview(context, preview, selectedPreset)) {
                         recordAction("已打开${selectedPreset.label}打印", "打印", selectedPreset.description)
                     } else {
@@ -3676,6 +3684,30 @@ private fun LongImagePreviewDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LongImagePrintPanel(
+    preset: LongImageExportPreset,
+    preview: LongImagePreview,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.72f))
+            .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("PrintPage", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+            Text(preset.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, maxLines = 1)
+        }
+        LongImageInfoPill("纸张", preset.paperLabel)
+        LongImageInfoPill("比例", if (preset == LongImageExportPreset.PHONE) "9:16" else "${preview.bitmap.width}:${preview.bitmap.height}")
     }
 }
 
@@ -3744,6 +3776,7 @@ private fun LongImageInfoPill(
 private fun LongImageActionChip(
     label: String,
     color: Color,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     Text(
@@ -3751,7 +3784,9 @@ private fun LongImageActionChip(
         style = MaterialTheme.typography.labelSmall,
         color = Color.White,
         fontWeight = FontWeight.SemiBold,
+        textAlign = TextAlign.Center,
         modifier = Modifier
+            .then(modifier)
             .clip(RoundedCornerShape(99.dp))
             .background(color)
             .clickable { onClick() }
