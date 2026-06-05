@@ -66,8 +66,8 @@ fun BookReader(
     var contentMode by remember(pageIndex, bookId) { mutableStateOf<PageContentMode>(PageContentMode.Browsing) }
     val turnEnabled = canTurnPage(contentMode)
     val turnProfile = if (handbookMode || page is DiaryPage || shellStyle == ShellStyle.BOOK) TurnProfile.HANDBOOK else TurnProfile.DEFAULT
-    val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 18.dp else 28.dp
-    val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 16.dp else 26.dp
+    val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 8.dp else 28.dp
+    val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 8.dp else 26.dp
 
     PageTurnEngine(
         canTurnPrevious = previousPage != null,

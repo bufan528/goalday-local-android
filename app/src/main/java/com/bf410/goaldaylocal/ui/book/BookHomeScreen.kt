@@ -657,50 +657,15 @@ private fun GoaldayHandbookScreen(
                 .fillMaxSize()
                 .padding(horizontal = 10.dp, vertical = 8.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("Goalday 手账", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(monthLabelForPage(currentPage.title, fallback = book.title), color = Color(0xFF7A7065), style = MaterialTheme.typography.labelMedium)
-                }
-                Text(
-                    "${visiblePageIndex + 1}/${book.pages.size}",
-                    color = Color(0xFF6E6258),
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x45FFFDF8))
-                        .border(0.6.dp, Color(0x25A88966), RoundedCornerShape(99.dp))
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-            ) {
-                HandbookSection.entries.forEach { item ->
-                    val selected = item == section
-                    Text(
-                        item.label,
-                        color = if (selected) Color.White else Color(0xFF6E6258),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
-                            .background(if (selected) Color(0xFFE88FAE) else Color(0x4DFFFDF8))
-                            .border(0.7.dp, if (selected) Color(0xFFFFF6F9) else Color(0x28A88966), RoundedCornerShape(99.dp))
-                            .clickable { openSection(item) }
-                            .padding(horizontal = 13.dp, vertical = 6.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.height(8.dp))
+            HandbookTopChrome(
+                book = book,
+                currentPage = currentPage,
+                section = section,
+                visiblePageIndex = visiblePageIndex,
+                pageCount = book.pages.size,
+                onOpenSection = ::openSection,
+            )
+            Spacer(Modifier.height(6.dp))
             Row(
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
                 modifier = Modifier
@@ -783,11 +748,11 @@ private fun GoaldayHandbookScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(start = 29.dp, top = 16.dp, end = 25.dp, bottom = 18.dp)
+                        .padding(start = 24.dp, top = 10.dp, end = 18.dp, bottom = 12.dp)
                         .clip(RoundedCornerShape(22.dp))
                         .background(Color(0xF8FFFDF8))
                         .border(0.8.dp, Color(0x24A88966), RoundedCornerShape(22.dp))
-                        .padding(8.dp),
+                        .padding(6.dp),
                 ) {
                     HandbookRouteSurface(
                         route = section,
@@ -855,6 +820,69 @@ private fun GoaldayHandbookScreen(
 }
 
 @Composable
+private fun HandbookTopChrome(
+    book: TopicBook,
+    currentPage: BookPage,
+    section: HandbookSection,
+    visiblePageIndex: Int,
+    pageCount: Int,
+    onOpenSection: (HandbookSection) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xCAFFFDF8))
+            .border(0.7.dp, Color(0x24A88966), RoundedCornerShape(18.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.weight(1f)) {
+                Text("Goalday 手账", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(monthLabelForPage(currentPage.title, fallback = book.title), color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            }
+            Text(
+                "${visiblePageIndex + 1}/$pageCount",
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(routeColor(section))
+                    .padding(horizontal = 9.dp, vertical = 4.dp),
+            )
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+        ) {
+            HandbookSection.entries.forEach { item ->
+                val selected = item == section
+                Text(
+                    item.label,
+                    color = if (selected) Color.White else routeColor(item),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(if (selected) routeColor(item) else routeColor(item).copy(alpha = 0.12f))
+                        .border(0.6.dp, routeColor(item).copy(alpha = 0.20f), RoundedCornerShape(99.dp))
+                        .clickable { onOpenSection(item) }
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun HandbookPageControlDock(
     section: HandbookSection,
     pageIndex: Int,
@@ -875,7 +903,7 @@ private fun HandbookPageControlDock(
             .clip(RoundedCornerShape(18.dp))
             .background(Color(0xDFFFFCF7))
             .border(0.7.dp, Color(0x24A88966), RoundedCornerShape(18.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(horizontal = 9.dp, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Row(
@@ -940,7 +968,7 @@ private fun HandbookDockButton(
             .clip(RoundedCornerShape(99.dp))
             .background(if (enabled) color else Color(0x1AA88966))
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 7.dp),
+            .padding(horizontal = 9.dp, vertical = 5.dp),
     )
 }
 
@@ -1424,7 +1452,7 @@ private fun HandbookRouteContent(
                 onUpdateTargetNote = payload.viewModel::updateTargetItemNote,
                 onUpdateTargetDeadline = payload.viewModel::updateTargetItemDeadline,
                 onOpenTargetDetail = payload.onOpenTargetDetail,
-                shellStyle = ShellStyle.BOOK,
+                shellStyle = ShellStyle.LIGHT,
                 handbookMode = true,
                 onFlipNext = {
                     val nextIndex = routeNextIndex()
@@ -1529,22 +1557,22 @@ private fun HandbookRouteHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xDFFFFDF8))
-            .border(0.7.dp, Color(0x1EA88966), RoundedCornerShape(16.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .clip(RoundedCornerShape(12.dp))
+            .background(routeColor(route).copy(alpha = 0.08f))
+            .border(0.5.dp, routeColor(route).copy(alpha = 0.16f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 9.dp, vertical = 5.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
-            Text(route.label, color = routeColor(route), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-            Text(title, color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(route.label, color = routeColor(route), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+            Text(title, color = Color(0xFF2F261D), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
         Text(
             subtitle,
             color = Color(0xFF7A7065),
             style = MaterialTheme.typography.labelSmall,
-            maxLines = 2,
+            maxLines = 1,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.End,
         )
