@@ -2187,9 +2187,9 @@ private fun loadTopicCatalogStatus(
         val topicCount = rootNames.sumOf { root ->
             roots.getJSONObject(root).optJSONArray("topics")?.length() ?: 0
         }
-        TopicCatalogStatus("${rootNames.joinToString("/")} · $topicCount topics")
+        TopicCatalogStatus("已加载 $topicCount 个专题")
     }.getOrElse {
-        TopicCatalogStatus("fallback")
+        TopicCatalogStatus("本地专题")
     }
 
 @Composable
@@ -2282,7 +2282,7 @@ private fun InspirationCenterView(
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
                             Text(item.title, color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            Text("${item.category} · ${item.coverKey}", color = Color.White.copy(alpha = 0.84f), style = MaterialTheme.typography.labelSmall)
+                            Text("${item.category} · ${item.subtitle}", color = Color.White.copy(alpha = 0.84f), style = MaterialTheme.typography.labelSmall, maxLines = 1)
                         }
                     }
                 }
@@ -2334,8 +2334,8 @@ private fun InspirationCenterView(
                 Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Text("目标详情", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("catalog: ${selected.catalogPath.substringAfterLast('/')} · ${catalogStatus.label}", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
-                        Text("target: ${selected.targetAssetPath.substringAfterLast('/')} · ${loadedTargetItems.size} lines", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                        Text(catalogStatus.label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                        Text("${loadedTargetItems.size} 条目标 · 本地离线", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
                     }
                 }
                 editableItems.chunked(2).forEachIndexed { rowIndex, rowItems ->

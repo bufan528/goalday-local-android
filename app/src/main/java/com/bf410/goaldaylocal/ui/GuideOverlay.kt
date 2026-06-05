@@ -103,7 +103,7 @@ internal fun GuideOverlay(
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text("Goalday", style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
                     Text(
-                        if (hasLocalGuideAssets) "GuideActivity style · local assets" else "compose guide",
+                        if (hasLocalGuideAssets) "本地手账指南" else "使用指南",
                         style = MaterialTheme.typography.labelSmall,
                         color = if (hasLocalGuideAssets) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
                     )
