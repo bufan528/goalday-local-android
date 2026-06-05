@@ -2807,6 +2807,11 @@ private fun DiarySection(
         StructuredDiary.fromRaw(diaryDraft).let { saved ->
             if (editingDiary?.title == title) structured else saved
         }
+    fun beginDiaryEditing(nextState: StructuredDiary = currentDiaryState()) {
+        structured = nextState
+        onDiaryChange(nextState.toRaw())
+        onContentModeChange(PageContentMode.EditingDiary(title))
+    }
     fun applyLinkedTarget(item: String, completed: Boolean) {
         structured = if (completed) {
             structured.withCompletedTarget(item).withTargetBlock(item, completed = true)
@@ -2857,14 +2862,26 @@ private fun DiarySection(
                 },
             )
         } else {
+            DiaryQuickActionRow(
+                onEdit = { beginDiaryEditing() },
+                onAddText = { beginDiaryEditing(currentDiaryState().withTextBlock()) },
+                onAddImage = {
+                    structured = currentDiaryState()
+                    onContentModeChange(PageContentMode.EditingDiary(title))
+                    imagePicker.launch(arrayOf("image/*"))
+                },
+                onAddTopicTarget = { beginDiaryEditing(currentDiaryState().withTopicTargetBlock()) },
+            )
             PaperNoteCard(
                 modifier = Modifier.clickable {
+                    structured = currentDiaryState()
                     onContentModeChange(pageContentModeForTap(DiaryPage(title, prompt)))
                 },
             ) {
                 StructuredDiaryPreview(
                     state = StructuredDiary.fromRaw(diaryDraft),
                     onAddImage = {
+                        structured = currentDiaryState()
                         onContentModeChange(PageContentMode.EditingDiary(title))
                         imagePicker.launch(arrayOf("image/*"))
                     },
@@ -2917,6 +2934,52 @@ private fun DiarySection(
             onDismiss = { longImagePreview = null },
         )
     }
+}
+
+@Composable
+private fun DiaryQuickActionRow(
+    onEdit: () -> Unit,
+    onAddText: () -> Unit,
+    onAddImage: () -> Unit,
+    onAddTopicTarget: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(13.dp))
+            .background(Color(0x10E88FAE))
+            .border(0.7.dp, Color(0x1FE88FAE), RoundedCornerShape(13.dp))
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 7.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DiaryQuickActionChip("编辑", GoaldayDesign.Pink, onEdit)
+        DiaryQuickActionChip("文字", GoaldayDesign.InkSecondary, onAddText)
+        DiaryQuickActionChip("图片", Color(0xFFB07A8F), onAddImage)
+        DiaryQuickActionChip("专题目标", GoaldayDesign.Positive, onAddTopicTarget)
+    }
+}
+
+@Composable
+private fun DiaryQuickActionChip(
+    label: String,
+    color: Color,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelSmall,
+        color = color,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(Color.White.copy(alpha = 0.76f))
+            .border(0.6.dp, color.copy(alpha = 0.18f), RoundedCornerShape(99.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+    )
 }
 
 private data class StructuredDiary(

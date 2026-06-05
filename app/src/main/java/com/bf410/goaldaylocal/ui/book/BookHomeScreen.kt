@@ -133,8 +133,7 @@ fun BookHomeScreen(
 
         BookEntryMode.HANDBOOK -> {
             if (!hasBooks) return
-            if (uiState.selectedBookIndex != 0) return
-            val book = uiState.books[safeBookIndex]
+            val book = uiState.books.first()
             val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
             val currentPage = book.pages[clampedPageIndex]
             val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
@@ -151,8 +150,7 @@ fun BookHomeScreen(
 
         BookEntryMode.DIARY -> {
             if (!hasBooks) return
-            if (uiState.selectedBookIndex != 0) return
-            val book = uiState.books[safeBookIndex]
+            val book = uiState.books.first()
             val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
             val currentPage = book.pages[clampedPageIndex]
             val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
@@ -583,6 +581,12 @@ private fun GoaldayHandbookScreen(
         book.pages.filter { page -> matchesHandbookSection(page, section) }.ifEmpty { book.pages }
     }
     val selectedSectionIndex = sectionPages.indexOfFirst { it.title == currentPage.title }.coerceAtLeast(0)
+    val visiblePageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
+    LaunchedEffect(currentPage.title) {
+        if (section != HandbookSection.OVERVIEW && !matchesHandbookSection(currentPage, section)) {
+            section = resolveHandbookSection(currentPage)
+        }
+    }
 
     fun openSection(next: HandbookSection) {
         section = next
@@ -620,7 +624,7 @@ private fun GoaldayHandbookScreen(
                     Text(monthLabelForPage(currentPage.title, fallback = book.title), color = Color(0xFF7A7065), style = MaterialTheme.typography.labelMedium)
                 }
                 Text(
-                    "${uiState.selectedPageIndex + 1}/${book.pages.size}",
+                    "${visiblePageIndex + 1}/${book.pages.size}",
                     color = Color(0xFF6E6258),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
@@ -671,7 +675,10 @@ private fun GoaldayHandbookScreen(
                             .clip(RoundedCornerShape(99.dp))
                             .background(if (selected) Color(0x66FFFFFF) else Color(0x24FFFFFF))
                             .border(0.5.dp, if (selected) Color(0x55B88A58) else Color.Transparent, RoundedCornerShape(99.dp))
-                            .clickable { viewModel.setPage(realIndex) }
+                            .clickable {
+                                section = resolveHandbookSection(page)
+                                viewModel.setPage(realIndex)
+                            }
                             .padding(horizontal = 10.dp, vertical = 5.dp),
                     )
                 }
@@ -729,7 +736,7 @@ private fun GoaldayHandbookScreen(
                         ),
                 )
                 HandbookPhysicalBookDetails(
-                    pageProgress = ((uiState.selectedPageIndex + 1).toFloat() / book.pages.size.coerceAtLeast(1)).coerceIn(0.08f, 1f),
+                    pageProgress = ((visiblePageIndex + 1).toFloat() / book.pages.size.coerceAtLeast(1)).coerceIn(0.08f, 1f),
                 )
                 Box(
                     modifier = Modifier
@@ -748,10 +755,39 @@ private fun GoaldayHandbookScreen(
                         selectedSectionIndex = selectedSectionIndex,
                         onOpenTargetDetail = { openedTargetDetail = it },
                         onOpenSection = ::openSection,
-                        onOpenPage = viewModel::setPage,
+                        onOpenPage = { index ->
+                            book.pages.getOrNull(index)?.let { page ->
+                                section = resolveHandbookSection(page)
+                            }
+                            viewModel.setPage(index)
+                        },
                     )
                 }
             }
+            Spacer(Modifier.height(7.dp))
+            HandbookPageControlDock(
+                section = section,
+                pageIndex = visiblePageIndex,
+                pageCount = book.pages.size,
+                currentPage = currentPage,
+                previousPage = previousPage,
+                nextPage = nextPage,
+                sectionPages = sectionPages,
+                selectedSectionIndex = selectedSectionIndex,
+                onPrevious = {
+                    val previousIndex = sectionPages.getOrNull(selectedSectionIndex - 1)
+                        ?.let { page -> book.pages.indexOfFirst { it.title == page.title } }
+                        ?: (visiblePageIndex - 1)
+                    if (previousIndex in book.pages.indices) viewModel.setPage(previousIndex)
+                },
+                onNext = {
+                    val nextIndex = sectionPages.getOrNull(selectedSectionIndex + 1)
+                        ?.let { page -> book.pages.indexOfFirst { it.title == page.title } }
+                        ?: (visiblePageIndex + 1)
+                    if (nextIndex in book.pages.indices) viewModel.setPage(nextIndex)
+                },
+                onOpenSection = ::openSection,
+            )
         }
         val targetPage = currentPage as? TargetPage
         val targetItems = targetPage?.let { (it.items + uiState.customPageItems).distinct() }.orEmpty()
@@ -775,6 +811,120 @@ private fun GoaldayHandbookScreen(
             )
         }
     }
+}
+
+@Composable
+private fun HandbookPageControlDock(
+    section: HandbookSection,
+    pageIndex: Int,
+    pageCount: Int,
+    currentPage: BookPage,
+    previousPage: BookPage?,
+    nextPage: BookPage?,
+    sectionPages: List<BookPage>,
+    selectedSectionIndex: Int,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onOpenSection: (HandbookSection) -> Unit,
+) {
+    val canPrevious = selectedSectionIndex > 0 || previousPage != null
+    val canNext = selectedSectionIndex < sectionPages.lastIndex || nextPage != null
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xDFFFFCF7))
+            .border(0.7.dp, Color(0x24A88966), RoundedCornerShape(18.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            HandbookDockButton(
+                label = "上一页",
+                enabled = canPrevious,
+                color = Color(0xFF8F684F),
+                modifier = Modifier.weight(0.9f),
+                onClick = onPrevious,
+            )
+            Column(
+                modifier = Modifier.weight(1.5f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    monthLabelForPage(currentPage.title, fallback = currentPage.title),
+                    color = Color(0xFF2F261D),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    "${pageIndex + 1}/$pageCount · ${section.label}",
+                    color = GoaldayDesign.InkMuted,
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                )
+            }
+            HandbookDockButton(
+                label = "下一页",
+                enabled = canNext,
+                color = routeColor(section),
+                modifier = Modifier.weight(0.9f),
+                onClick = onNext,
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            HandbookSection.entries.forEach { item ->
+                val selected = item == section
+                Text(
+                    item.label,
+                    color = if (selected) Color.White else routeColor(item),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(if (selected) routeColor(item) else routeColor(item).copy(alpha = 0.11f))
+                        .border(0.6.dp, routeColor(item).copy(alpha = 0.24f), RoundedCornerShape(99.dp))
+                        .clickable { onOpenSection(item) }
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HandbookDockButton(
+    label: String,
+    enabled: Boolean,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        color = if (enabled) Color.White else GoaldayDesign.InkMuted,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(if (enabled) color else Color(0x1AA88966))
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+    )
 }
 
 @Composable
