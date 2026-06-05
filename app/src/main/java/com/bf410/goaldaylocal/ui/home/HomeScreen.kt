@@ -1,6 +1,8 @@
 package com.bf410.goaldaylocal.ui.home
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,12 +44,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
@@ -211,12 +217,12 @@ fun HomeScreen(
                 },
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                TextNav("日历", Modifier.weight(1f), onOpenCalendar)
-                TextNav("灵感", Modifier.weight(1f), onOpenInspiration)
-                TextNav("手账", Modifier.weight(1f), onOpenHandbook)
-                TextNav("日记", Modifier.weight(1f), onOpenDiary)
-            }
+            HomeActionDock(
+                onOpenCalendar = onOpenCalendar,
+                onOpenInspiration = onOpenInspiration,
+                onOpenHandbook = onOpenHandbook,
+                onOpenDiary = onOpenDiary,
+            )
             if (hint.isNotBlank()) {
                 Text(hint, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
             }
@@ -259,33 +265,97 @@ private fun PromoHeader(
     month: Int,
     onToday: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                "新手",
-                color = GoaldayDesign.InkPrimary,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier
-                    .border(0.8.dp, Color(0x33000000), RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .padding(horizontal = 12.dp, vertical = 3.dp),
-            )
-            Text("Goalday", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-            Text("${year}年${month}月 · 周计划", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelMedium)
-        }
-        Text(
-            "今天",
-            color = Color.White,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier
-                .background(GoaldayDesign.InkPrimary, RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .clickable(onClick = onToday)
-                .padding(horizontal = 13.dp, vertical = 7.dp),
-        )
+    val context = LocalContext.current
+    val heroBitmap = remember {
+        runCatching {
+            context.assets.open("lottie/book.png").use(BitmapFactory::decodeStream)
+        }.getOrNull()
     }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(148.dp)
+            .background(
+                Brush.linearGradient(
+                    listOf(Color(0xFFFFF4EA), Color(0xFFFFE4EC), Color(0xFFF2CFB3)),
+                    start = Offset.Zero,
+                    end = Offset(760f, 420f),
+                ),
+                RoundedCornerShape(22.dp),
+            )
+            .border(0.8.dp, Color(0x33FFFFFF), RoundedCornerShape(22.dp)),
+    ) {
+        heroBitmap?.let { bitmap ->
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 6.dp, top = 8.dp, bottom = 8.dp)
+                    .size(128.dp),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0xEFFFF4EA), Color(0x88FFF4EA), Color.Transparent),
+                    ),
+                    RoundedCornerShape(22.dp),
+                ),
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "TODAY",
+                    color = GoaldayDesign.Pink,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                )
+                Text(
+                    "今天",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .background(GoaldayDesign.InkPrimary, RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .clickable(onClick = onToday)
+                        .padding(horizontal = 13.dp, vertical = 7.dp),
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text("Goalday", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                Text("${year}年${month}月 · 本地日程手账", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    HomeHeroPill("离线", GoaldayDesign.Positive)
+                    HomeHeroPill("周计划", GoaldayDesign.Pink)
+                    HomeHeroPill("可拖拽", Color(0xFF8F684F))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeHeroPill(label: String, color: Color) {
+    Text(
+        label,
+        color = color,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(GoaldayDesign.RadiusPill))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+    )
 }
 
 @Composable
@@ -325,14 +395,20 @@ private fun PaperPlanner(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(GoaldayDesign.Surface, RoundedCornerShape(18.dp))
-            .border(1.dp, Color(0x11000000), RoundedCornerShape(18.dp))
+            .background(GoaldayDesign.Surface, RoundedCornerShape(22.dp))
+            .border(1.dp, Color(0x14A88966), RoundedCornerShape(22.dp))
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("${month}月", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-            Text("为J人而生的App", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text("SCHEDULE ACTIVITY", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text("${month}月周视图", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                PlannerMetric("TODO", todoEntries.size.toString(), GoaldayDesign.Pink)
+                PlannerMetric("DONE", doneEntries.size.toString(), GoaldayDesign.Positive)
+            }
         }
 
         BasicTextField(
@@ -611,6 +687,24 @@ private fun DateChipRow(
 }
 
 @Composable
+private fun PlannerMetric(
+    label: String,
+    value: String,
+    color: Color,
+) {
+    Column(
+        modifier = Modifier
+            .background(color.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 8.dp, vertical = 5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(1.dp),
+    ) {
+        Text(value, color = color, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(label, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+    }
+}
+
+@Composable
 @OptIn(ExperimentalFoundationApi::class)
 private fun TaskLine(
     entry: ScheduleEntry,
@@ -674,16 +768,62 @@ private fun EmptyHint(text: String) {
 }
 
 @Composable
-private fun TextNav(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Box(
-        modifier = modifier
-            .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .border(0.7.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        contentAlignment = Alignment.Center,
+private fun HomeActionDock(
+    onOpenCalendar: () -> Unit,
+    onOpenInspiration: () -> Unit,
+    onOpenHandbook: () -> Unit,
+    onOpenDiary: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xCCFFFDF8), RoundedCornerShape(18.dp))
+            .border(0.7.dp, Color(0x20A88966), RoundedCornerShape(18.dp))
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(label, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            HomeActionCard("日历", "月视图", "月", GoaldayDesign.Pink, Modifier.weight(1f), onOpenCalendar)
+            HomeActionCard("灵感", "专题库", "灵", Color(0xFFB88A58), Modifier.weight(1f), onOpenInspiration)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            HomeActionCard("手账", "书内页", "账", Color(0xFF8F684F), Modifier.weight(1f), onOpenHandbook)
+            HomeActionCard("日记", "记录块", "记", Color(0xFFB07A8F), Modifier.weight(1f), onOpenDiary)
+        }
+    }
+}
+
+@Composable
+private fun HomeActionCard(
+    title: String,
+    subtitle: String,
+    code: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = modifier
+            .height(62.dp)
+            .background(color.copy(alpha = 0.10f), RoundedCornerShape(14.dp))
+            .border(0.7.dp, color.copy(alpha = 0.20f), RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+        modifier = Modifier
+                .size(34.dp)
+                .background(color, RoundedCornerShape(10.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(code.take(1), color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(subtitle, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        }
     }
 }
 
