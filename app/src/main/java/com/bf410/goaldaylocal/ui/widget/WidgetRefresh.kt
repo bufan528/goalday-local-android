@@ -13,6 +13,9 @@ object WidgetRefresh {
         refreshProvider(context, manager, LargeScheduleWidgetProvider::class.java) { id ->
             ScheduleWidgetProvider.buildLargeRemoteViews(context, id)
         }
+        refreshProvider(context, manager, QuickDiaryWidgetProvider::class.java) { id ->
+            QuickDiaryWidgetProvider.buildRemoteViews(context, id)
+        }
     }
 
     private fun refreshProvider(

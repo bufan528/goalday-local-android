@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.R
+import java.time.LocalDate
 
 class ScheduleWidgetConfigureActivity : ComponentActivity() {
     private var appWidgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
@@ -91,10 +92,11 @@ class ScheduleWidgetConfigureActivity : ComponentActivity() {
 private enum class WidgetConfigureKind(
     val title: String,
     val subtitle: String,
+    val referenceSignal: String,
 ) {
-    SCHEDULE_MID("日程中号组件", "适合放在首页，快速查看当前计划。"),
-    SCHEDULE_LARGE("日程大号组件", "显示更多行，适合周计划和手账桌面。"),
-    DIARY_ADD("日记添加组件", "一键进入今日记录，保留同一套颜色风格。"),
+    SCHEDULE_MID("日程中号组件", "适合放在首页，快速查看当前计划。", "schedule_mid_widget"),
+    SCHEDULE_LARGE("日程大号组件", "显示更多行，适合周计划和手账桌面。", "schedule_larger_widget"),
+    DIARY_ADD("日记添加组件", "一键进入今日记录，保留同一套颜色风格。", "diary_add_widget_configure"),
 }
 
 @Composable
@@ -116,9 +118,11 @@ private fun ScheduleWidgetConfigureScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text("Add widget", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFFE88FAE))
             Text(kind.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2F2922))
             Text(kind.subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A7065))
         }
+        WidgetKindSignalStrip(kind = kind)
         WidgetPreviewCard(kind = kind, config = config)
         ConfigureSectionTitle("颜色")
         Row(
@@ -180,6 +184,43 @@ private fun ScheduleWidgetConfigureScreen(
 }
 
 @Composable
+private fun WidgetKindSignalStrip(kind: WidgetConfigureKind) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.66f))
+            .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        WidgetSignalPill(kind.referenceSignal, Color(0xFFB07A8F), Modifier.weight(1f))
+        WidgetSignalPill("widget_schedule_add_color", Color(0xFFE88FAE), Modifier.weight(1f))
+        WidgetSignalPill("本地可用", Color(0xFF6F8E68), Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun WidgetSignalPill(
+    label: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelSmall,
+        color = color,
+        maxLines = 1,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(color.copy(alpha = 0.10f))
+            .padding(horizontal = 7.dp, vertical = 5.dp),
+    )
+}
+
+@Composable
 private fun ConfigureSectionTitle(title: String) {
     Text(title, style = MaterialTheme.typography.labelMedium, color = Color(0xFF6F5C4C), fontWeight = FontWeight.SemiBold)
 }
@@ -190,6 +231,7 @@ private fun WidgetPreviewCard(
     config: ScheduleWidgetConfig,
 ) {
     val style = config.style
+    val today = LocalDate.now()
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -205,7 +247,7 @@ private fun WidgetPreviewCard(
                 Text(if (kind == WidgetConfigureKind.DIARY_ADD) "打开日记页 · 本地保存" else "${config.scope.label} · ${config.density.label}", color = Color(style.subtitleColor), style = MaterialTheme.typography.labelSmall)
             }
             Text(
-                if (kind == WidgetConfigureKind.DIARY_ADD) "6/4" else config.scope.shortLabel,
+                if (kind == WidgetConfigureKind.DIARY_ADD) "${today.monthValue}/${today.dayOfMonth}" else config.scope.shortLabel,
                 color = Color(style.accentColor),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
