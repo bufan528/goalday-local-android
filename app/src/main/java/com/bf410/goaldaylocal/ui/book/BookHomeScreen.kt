@@ -848,6 +848,7 @@ private fun GoaldayHandbookScreen(
                 onUpdateNote = { viewModel.updateTargetItemNote(targetItem, it) },
                 onUpdateDeadline = { viewModel.updateTargetItemDeadline(targetItem, it) },
                 onAddToSchedule = { day -> viewModel.addItemToSchedule(targetItem, day) },
+                onSaveAsOwnTarget = { viewModel.addCustomPageItem(targetItem) },
             )
         }
     }
@@ -1867,6 +1868,7 @@ private fun BookDetailView(
                 onUpdateNote = { viewModel.updateTargetItemNote(targetItem, it) },
                 onUpdateDeadline = { viewModel.updateTargetItemDeadline(targetItem, it) },
                 onAddToSchedule = { day -> viewModel.addItemToSchedule(targetItem, day) },
+                onSaveAsOwnTarget = { viewModel.addCustomPageItem(targetItem) },
             )
         }
     }
@@ -1906,6 +1908,7 @@ private fun TargetDetailRouteOverlay(
     onUpdateNote: (String) -> Unit,
     onUpdateDeadline: (Int?) -> Unit,
     onAddToSchedule: (Int) -> Unit,
+    onSaveAsOwnTarget: () -> Unit,
 ) {
     val today = java.time.LocalDate.now().dayOfMonth
     val tomorrow = today + 1
@@ -2026,21 +2029,33 @@ private fun TargetDetailRouteOverlay(
             }
 
             TargetDetailPanel(title = "目标选项", trailing = "本地保存") {
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    DetailPill("保存为我的目标", active = false) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TargetOptionRow(
+                        code = "OWN",
+                        title = "保存为我的目标",
+                        subtitle = "加入当前目标页，后续可继续备注、排期和完成",
+                        accent = GoaldayDesign.Positive,
+                    ) {
+                        onSaveAsOwnTarget()
                         appendDetailNote("我的目标：$item")
-                        actionHint = "已写入目标备注"
+                        actionHint = "已保存为我的目标"
                     }
-                    DetailPill("加入复盘", active = false) {
+                    TargetOptionRow(
+                        code = "REVIEW",
+                        title = "加入复盘",
+                        subtitle = "排入本周末，并写入复盘备注",
+                        accent = Color(0xFFB07A8F),
+                    ) {
                         appendDetailNote("复盘：本周检查「$item」推进情况")
                         onAddToSchedule(weekend)
                         actionHint = "已排入周末复盘"
                     }
-                    DetailPill("复制执行句", active = false) {
+                    TargetOptionRow(
+                        code = "COPY",
+                        title = "生成执行句",
+                        subtitle = "把今天要推进的行动写进备注",
+                        accent = GoaldayDesign.Pink,
+                    ) {
                         appendDetailNote("执行句：今天推进「$item」")
                         actionHint = "已写入执行句"
                     }
@@ -2249,6 +2264,43 @@ private fun DetailPill(
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp),
     )
+}
+
+@Composable
+private fun TargetOptionRow(
+    code: String,
+    title: String,
+    subtitle: String,
+    accent: Color,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(accent.copy(alpha = 0.10f))
+            .border(0.7.dp, accent.copy(alpha = 0.22f), RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 9.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .width(58.dp)
+                .height(34.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(accent),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(code, color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, color = Color(0xFF2F261D), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(subtitle, color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall, maxLines = 2)
+        }
+        Text("›", color = accent, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    }
 }
 
 private fun matchesSegment(page: BookPage, segment: BookSegment): Boolean =
