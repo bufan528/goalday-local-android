@@ -202,7 +202,8 @@ class BookViewModel(
         if (normalized.isBlank()) return
         val bookId = currentBook().id
         val current = store.targetItemMeta(bookId, page.title, normalized)
-        store.setTargetItemMeta(bookId, page.title, normalized, current.copy(deadlineDay = deadlineDay?.coerceIn(1, 31)))
+        val maxDeadlineDay = YearMonth.now().lengthOfMonth()
+        store.setTargetItemMeta(bookId, page.title, normalized, current.copy(deadlineDay = deadlineDay?.coerceIn(1, maxDeadlineDay)))
         syncEditableContent()
     }
 

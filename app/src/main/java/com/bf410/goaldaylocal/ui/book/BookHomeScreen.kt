@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -1864,90 +1865,127 @@ private fun TargetDetailRouteOverlay(
         noteDraft = next
         onUpdateNote(next)
     }
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xDDF8EFE5))
-            .clickable(onClick = onClose),
-        contentAlignment = Alignment.Center,
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFFFFCF7), Color(0xFFFFF2E7), Color(0xFFF1D9C4)),
+                ),
+            ),
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xCCFFFDF8))
+                .border(0.6.dp, Color(0x18A88966), RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp))
+                .padding(horizontal = 14.dp, vertical = 11.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "‹ 返回",
+                color = Color(0xFF6F5B4B),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0x10A88966))
+                    .clickable(onClick = onClose)
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text("TargetDetailActivity", color = Color(0xFFB07A8F), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text("本地目标详情", color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall)
+            }
+            Text(
+                if (checked) "DONE" else "TODO",
+                color = if (checked) Color(0xFF4F7E55) else Color(0xFFE88FAE),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.94f)
-                .fillMaxHeight(0.86f)
-                .clip(RoundedCornerShape(28.dp))
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0xFFFFFEFC), Color(0xFFFFF7EE), Color(0xFFF0DDC9)),
-                    ),
-                )
-                .border(1.dp, Color(0x30A88966), RoundedCornerShape(28.dp))
-                .clickable {}
-                .padding(18.dp)
-                .verticalScroll(rememberScrollState()),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.weight(1f)) {
-                    Text("TARGET DETAIL", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                    Text(item, color = Color(0xFF2F261D), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-                    Text("$pageTitle · 目标 ${itemIndex + 1}/$itemCount", color = Color(0xFF7A7065), style = MaterialTheme.typography.bodySmall)
-                }
-                Text(
-                    "关闭",
-                    color = Color(0xFF6F5B4B),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x12000000))
-                        .clickable(onClick = onClose)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                )
-            }
-
-            TargetDetailSummaryStrip(
-                checked = checked,
-                deadlineLabel = deadlineLabel,
-                scheduleLabel = scheduleLabel,
-                noteReady = noteDraft.isNotBlank(),
-            )
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-            ) {
-                DetailPill(if (checked) "已完成" else "未完成", active = checked, onClick = onToggleChecked)
-                DetailPill("排入今天", active = false) { onAddToSchedule(today) }
-                DetailPill("排入明天", active = false) { onAddToSchedule(tomorrow) }
-                DetailPill("排入周末", active = false) { onAddToSchedule(weekend) }
-            }
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFFFFEFC))
-                    .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(16.dp))
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(Color(0xFFFFFEFC), Color(0xFFFFEAF1), Color(0xFFFFF3D7)),
+                            start = Offset.Zero,
+                            end = Offset(900f, 420f),
+                        ),
+                    )
+                    .border(1.dp, Color(0x24A88966), RoundedCornerShape(24.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(11.dp),
             ) {
-                Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text("目标选项", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    Text("本地保存", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelSmall)
+                Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.weight(1f)) {
+                        Text(pageTitle, color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                        Text(item, color = Color(0xFF2F261D), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                        Text("目标 ${itemIndex + 1}/$itemCount · $deadlineLabel · $scheduleLabel", color = Color(0xFF7A7065), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(58.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(if (checked) Color(0xFF6F8E68) else Color(0xFFE88FAE)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(if (checked) "✓" else "%02d".format(itemIndex + 1), color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                TargetDetailSummaryStrip(
+                    checked = checked,
+                    deadlineLabel = deadlineLabel,
+                    scheduleLabel = scheduleLabel,
+                    noteReady = noteDraft.isNotBlank(),
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                DetailPill(if (checked) "切换完成" else "标记完成", active = checked, onClick = onToggleChecked)
+                DetailPill("排入今天", active = false) { onAddToSchedule(today) }
+                DetailPill("排入明天", active = false) { onAddToSchedule(tomorrow) }
+                DetailPill("排入周末", active = false) { onAddToSchedule(weekend) }
+                DetailPill("生成下一步", active = false) {
+                    appendDetailNote("下一步：为「$item」安排一个 15 分钟行动")
+                    actionHint = "已生成下一步"
+                }
+            }
+
+            TargetDetailPanel(title = "目标选项", trailing = "本地保存") {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     DetailPill("保存为我的目标", active = false) {
                         appendDetailNote("我的目标：$item")
                         actionHint = "已写入目标备注"
-                    }
-                    DetailPill("生成下一步", active = false) {
-                        appendDetailNote("下一步：为「$item」安排一个 15 分钟行动")
-                        actionHint = "已生成下一步"
                     }
                     DetailPill("加入复盘", active = false) {
                         appendDetailNote("复盘：本周检查「$item」推进情况")
                         onAddToSchedule(weekend)
                         actionHint = "已排入周末复盘"
+                    }
+                    DetailPill("复制执行句", active = false) {
+                        appendDetailNote("执行句：今天推进「$item」")
+                        actionHint = "已写入执行句"
                     }
                 }
                 if (actionHint.isNotBlank()) {
@@ -1955,16 +1993,7 @@ private fun TargetDetailRouteOverlay(
                 }
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFFFFEFC))
-                    .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(16.dp))
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text("执行备注", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            TargetDetailPanel(title = "执行备注", trailing = if (noteDraft.isBlank()) "空白" else "已写") {
                 OutlinedTextField(
                     value = noteDraft,
                     onValueChange = {
@@ -1972,23 +2001,18 @@ private fun TargetDetailRouteOverlay(
                         onUpdateNote(it)
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    minLines = 4,
+                    minLines = 5,
                     placeholder = { Text("写下做法、灵感、阻碍或复盘") },
                 )
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFFFFEFC))
-                    .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(16.dp))
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text("截止日", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            TargetDetailPanel(title = "截止日", trailing = deadlineLabel) {
                 Text(meta.deadlineDay?.let { "当前截止：${it}日" } ?: "当前未设置截止日", color = Color(0xFF7A7065), style = MaterialTheme.typography.bodySmall)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     DetailPill("今天", active = meta.deadlineDay == today) { onUpdateDeadline(today) }
                     DetailPill("明天", active = meta.deadlineDay == tomorrow) { onUpdateDeadline(tomorrow) }
                     DetailPill("周末", active = meta.deadlineDay == weekend) { onUpdateDeadline(weekend) }
@@ -1996,25 +2020,39 @@ private fun TargetDetailRouteOverlay(
                 }
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFFFFEFC))
-                    .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(16.dp))
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text("已排期", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            TargetDetailPanel(title = "已排期", trailing = scheduleLabel) {
                 if (scheduledEntries.isEmpty()) {
                     Text("还没有排入日程", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.bodySmall)
                 } else {
-                    scheduledEntries.take(8).forEach { entry ->
+                    scheduledEntries.take(10).forEach { entry ->
                         TargetScheduledEntryRow(entry = entry)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TargetDetailPanel(
+    title: String,
+    trailing: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xDFFFFEFC))
+            .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(18.dp))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Text(title, color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(trailing, color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        }
+        content()
     }
 }
 

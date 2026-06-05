@@ -188,9 +188,12 @@ class LocalStateStore(
     fun targetItemMeta(bookId: String, pageTitle: String, item: String): TargetItemMeta {
         val raw = mmkv.decodeString(targetMetaKey(bookId, pageTitle, item), null) ?: return TargetItemMeta()
         val json = runCatching { JSONObject(raw) }.getOrNull() ?: return TargetItemMeta()
+        val maxDeadlineDay = YearMonth.now().lengthOfMonth()
         return TargetItemMeta(
             note = json.optString("note"),
-            deadlineDay = json.optInt("deadlineDay", 0).takeIf { it > 0 },
+            deadlineDay = json.optInt("deadlineDay", 0)
+                .takeIf { it > 0 }
+                ?.coerceIn(1, maxDeadlineDay),
         )
     }
 
