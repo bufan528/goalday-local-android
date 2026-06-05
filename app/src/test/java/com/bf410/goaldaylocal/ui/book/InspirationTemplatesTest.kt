@@ -17,4 +17,15 @@ class InspirationTemplatesTest {
 
         assertEquals(listOf("topictarget/topicweek.txt", "topictarget/topicweek_target.txt"), candidates)
     }
+
+    @Test
+    fun fallback_topic_catalog_summary_matches_local_template_count() {
+        val summary = fallbackTopicCatalogSummary("assets/topic_center_config.json")
+
+        assertEquals(0, summary.rootCount)
+        assertEquals(InspirationTemplates.all.size, summary.topicCount)
+        assertEquals("assets/cover", summary.coverRoot)
+        assertEquals("assets/topictarget", summary.targetRoot)
+        assertEquals("本地专题", summary.label)
+    }
 }

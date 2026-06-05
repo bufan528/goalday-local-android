@@ -60,7 +60,6 @@ import com.bf410.goaldaylocal.data.TopicBook
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
-import org.json.JSONObject
 
 private val bookPalette = listOf(
     Color(0xFFF2C0A5),
@@ -2359,27 +2358,6 @@ private fun resolveSegment(page: BookPage): BookSegment =
         is SchedulePage -> BookSegment.WEEK
     }
 
-private data class TopicCatalogStatus(
-    val label: String,
-)
-
-private fun loadTopicCatalogStatus(
-    context: android.content.Context,
-    path: String,
-): TopicCatalogStatus =
-    runCatching {
-        val assetName = path.removePrefix("assets/")
-        val raw = context.assets.open(assetName).bufferedReader().use { it.readText() }
-        val roots = JSONObject(raw).getJSONObject("roots")
-        val rootNames = roots.keys().asSequence().toList()
-        val topicCount = rootNames.sumOf { root ->
-            roots.getJSONObject(root).optJSONArray("topics")?.length() ?: 0
-        }
-        TopicCatalogStatus("已加载 $topicCount 个专题")
-    }.getOrElse {
-        TopicCatalogStatus("本地专题")
-    }
-
 @Composable
 private fun InspirationCenterView(
     templates: List<InspirationTemplate>,
@@ -2399,7 +2377,7 @@ private fun InspirationCenterView(
     var pushToToday by remember { mutableStateOf(true) }
     var clearSourceAfterApply by remember { mutableStateOf(false) }
     val catalogStatus = remember(selected.catalogPath) {
-        loadTopicCatalogStatus(context, selected.catalogPath)
+        loadTopicCatalogSummary(context, selected.catalogPath)
     }
 
     Column(
@@ -2440,6 +2418,9 @@ private fun InspirationCenterView(
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 templates.forEachIndexed { index, item ->
+                    val previewCount = remember(item.id, item.targetAssetPath) {
+                        loadTargetAssetItems(context, item.targetAssetPath).ifEmpty { item.items }.size
+                    }
                     Box(
                         modifier = Modifier
                             .width(190.dp)
@@ -2456,7 +2437,7 @@ private fun InspirationCenterView(
                     ) {
                         TopicCoverArt(template = item, index = index, compact = true)
                         Text(
-                            "${item.targetCount}项",
+                            "${previewCount}项",
                             color = Color(0xEFFFFFFF),
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier
@@ -2501,7 +2482,7 @@ private fun InspirationCenterView(
                 ) {
                     TopicCoverArt(template = selected, index = selectedIndex)
                     Text(
-                        "${selected.category} · ${selected.targetCount} 个目标",
+                        "${selected.category} · ${loadedTargetItems.size} 个目标",
                         color = Color(0xEFFFFFFF),
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier
@@ -2523,7 +2504,27 @@ private fun InspirationCenterView(
                     Text("目标详情", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
                     Column(horizontalAlignment = Alignment.End) {
                         Text(catalogStatus.label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
-                        Text("${loadedTargetItems.size} 条目标 · 本地离线", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                        Text(catalogStatus.assetLabel, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0x0FA68B71))
+                        .padding(horizontal = 10.dp, vertical = 7.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "本地资源",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFF5E5147),
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("${selected.coverKey}.png", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                        Text("${selected.targetKey}.txt · ${loadedTargetItems.size} 条", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
                     }
                 }
                 editableItems.chunked(2).forEachIndexed { rowIndex, rowItems ->

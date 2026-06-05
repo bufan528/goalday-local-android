@@ -2,6 +2,7 @@ package com.bf410.goaldaylocal.ui.book
 
 import android.content.Context
 import androidx.compose.ui.graphics.Color
+import org.json.JSONObject
 
 data class InspirationTemplate(
     val id: String,
@@ -594,6 +595,27 @@ internal object InspirationTemplates {
     }
 }
 
+data class TopicCatalogSummary(
+    val rootCount: Int,
+    val topicCount: Int,
+    val coverCount: Int,
+    val targetCount: Int,
+    val coverRoot: String,
+    val targetRoot: String,
+    val assetPath: String,
+    val loaded: Boolean,
+) {
+    val label: String
+        get() = if (loaded) {
+            "已加载 $topicCount 个专题"
+        } else {
+            "本地专题"
+        }
+
+    val assetLabel: String
+        get() = "封面 $coverCount · 目标 $targetCount"
+}
+
 internal fun loadTargetAssetItems(context: Context, path: String): List<String> {
     for (assetName in targetAssetCandidates(path)) {
         val items = runCatching {
@@ -608,6 +630,66 @@ internal fun loadTargetAssetItems(context: Context, path: String): List<String> 
     }
     return emptyList()
 }
+
+internal fun loadTopicCatalogSummary(
+    context: Context,
+    path: String,
+): TopicCatalogSummary =
+    runCatching {
+        val assetName = path.removePrefix("assets/")
+        val raw = context.assets.open(assetName).bufferedReader().use { it.readText() }
+        val parsed = parseTopicCatalogSummary(raw, path)
+        parsed.copy(
+            coverCount = countAssets(context, parsed.coverRoot),
+            targetCount = countAssets(context, parsed.targetRoot),
+        )
+    }.getOrElse {
+        fallbackTopicCatalogSummary(path)
+    }
+
+internal fun parseTopicCatalogSummary(
+    raw: String,
+    path: String,
+): TopicCatalogSummary {
+    val roots = JSONObject(raw).optJSONObject("roots")
+    val rootNames = roots?.keys()?.asSequence()?.toList().orEmpty()
+    val topicCount = rootNames.sumOf { root ->
+        roots?.optJSONObject(root)?.optJSONArray("topics")?.length() ?: 0
+    }
+    val firstRoot = rootNames.firstNotNullOfOrNull { root ->
+        roots?.optJSONObject(root)
+    }
+    return TopicCatalogSummary(
+        rootCount = rootNames.size,
+        topicCount = topicCount,
+        coverCount = 0,
+        targetCount = 0,
+        coverRoot = firstRoot?.optString("coverRoot")?.ifBlank { null } ?: "assets/cover",
+        targetRoot = firstRoot?.optString("targetRoot")?.ifBlank { null } ?: "assets/topictarget",
+        assetPath = path,
+        loaded = topicCount > 0,
+    )
+}
+
+internal fun fallbackTopicCatalogSummary(path: String): TopicCatalogSummary =
+    TopicCatalogSummary(
+        rootCount = 0,
+        topicCount = InspirationTemplates.all.size,
+        coverCount = 0,
+        targetCount = 0,
+        coverRoot = "assets/cover",
+        targetRoot = "assets/topictarget",
+        assetPath = path,
+        loaded = false,
+    )
+
+private fun countAssets(
+    context: Context,
+    path: String,
+): Int =
+    runCatching {
+        context.assets.list(path.removePrefix("assets/").trim('/'))?.size ?: 0
+    }.getOrDefault(0)
 
 internal fun targetAssetCandidates(path: String): List<String> {
     val requested = path.removePrefix("assets/")

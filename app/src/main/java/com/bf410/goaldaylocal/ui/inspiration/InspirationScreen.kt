@@ -44,6 +44,7 @@ import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.book.InspirationTemplates
 import com.bf410.goaldaylocal.ui.book.TopicCoverArt
 import com.bf410.goaldaylocal.ui.book.loadTargetAssetItems
+import com.bf410.goaldaylocal.ui.book.loadTopicCatalogSummary
 import com.bf410.goaldaylocal.ui.book.topicCoverBrush
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
@@ -79,6 +80,9 @@ fun InspirationScreen(
     val context = LocalContext.current
     val selectedTemplateItems = remember(selectedTemplate.id, selectedTemplate.targetAssetPath) {
         loadTargetAssetItems(context, selectedTemplate.targetAssetPath).ifEmpty { selectedTemplate.items }
+    }
+    val catalogSummary = remember(selectedTemplate.catalogPath) {
+        loadTopicCatalogSummary(context, selectedTemplate.catalogPath)
     }
     val draftItems = remember(selectedTemplate.id, selectedTemplateItems) {
         mutableStateListOf<InspirationDraftItem>().apply {
@@ -138,6 +142,12 @@ fun InspirationScreen(
                 index = selectedTemplateIndex,
                 itemCount = selectedTemplateItems.size,
                 selectedCount = draftItems.count { it.selected },
+            )
+            InspirationCatalogStrip(
+                template = selectedTemplate,
+                itemCount = selectedTemplateItems.size,
+                catalogLabel = catalogSummary.label,
+                assetLabel = catalogSummary.assetLabel,
             )
             InspirationCategoryRail(
                 categories = categories,
@@ -207,6 +217,33 @@ fun InspirationScreen(
         if (mode == InspirationMode.FLIP) {
             Text("翻页", style = MaterialTheme.typography.titleLarge, color = Color(0xFF1F1D1A), fontWeight = FontWeight.SemiBold)
             Text("已保存内容可在手账中翻页查看", color = Color(0xFF7E756B), style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Composable
+private fun InspirationCatalogStrip(
+    template: InspirationTemplate,
+    itemCount: Int,
+    catalogLabel: String,
+    assetLabel: String,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0x88FFFDF8), RoundedCornerShape(14.dp))
+            .border(0.6.dp, Color(0x20A88966), RoundedCornerShape(14.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(catalogLabel, color = Color(0xFF4E453D), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+            Text(assetLabel, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+        }
+        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("${template.coverKey}.png", color = Color(0xFF6F5E51), style = MaterialTheme.typography.labelSmall)
+            Text("${template.targetKey}.txt · $itemCount 条", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
         }
     }
 }
