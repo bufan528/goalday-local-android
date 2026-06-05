@@ -4463,37 +4463,45 @@ private fun StructuredDiaryPreview(
     val moodItems = remember(state.moodTags) {
         state.moodTags.split(',', '，', ' ').map(String::trim).filter(String::isNotBlank).take(6)
     }
-    val photos = state.photoText.lines().map(String::trim).filter(String::isNotBlank)
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-        Text(dateLabel, style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), modifier = Modifier.align(Alignment.CenterHorizontally))
+    val photoNotes = remember(state.photoText) {
+        state.photoText.lines().map(String::trim).filter(String::isNotBlank)
+    }
+    val imageUris = remember(state.blocksRaw, state.photoNotes) {
+        (state.imageBlockUris + state.legacyImageUris).distinct()
+    }
+    val summaryRows = listOf(
+        DiaryPreviewRow("DONE", "今日完成", state.todayDone, DiaryBlockType.TARGET),
+        DiaryPreviewRow("WORK", "工作任务", state.workTasks, DiaryBlockType.TARGET),
+        DiaryPreviewRow("JOY", "小幸福", state.smallJoy, DiaryBlockType.TEXT),
+        DiaryPreviewRow("FIX", "可改进", state.canImprove, DiaryBlockType.TEXT),
+        DiaryPreviewRow("PHOTO", "图片描述", state.photoText, DiaryBlockType.IMAGE),
+    )
+    val hasContent = moodItems.isNotEmpty() ||
+        photoNotes.isNotEmpty() ||
+        imageUris.isNotEmpty() ||
+        state.richHtml.isNotBlank() ||
+        state.blocks.isNotEmpty() ||
+        summaryRows.any { it.content.isNotBlank() }
+
+    Column(verticalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
+        DiaryInBookHeader(
+            title = "DIARY ACTIVITY",
+            subtitle = dateLabel,
+            blockCount = state.blocks.size,
+            imageCount = imageUris.size,
+        )
+        if (!hasContent) {
+            DiaryEmptyInBookPage(onAddImage = onAddImage)
+            return@Column
+        }
         if (moodItems.isNotEmpty()) {
-            Text(
-                moodItems.joinToString("  ") { "#$it" },
-                style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF8B7A68),
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
+            DiaryMoodRibbon(items = moodItems)
         }
-        if (photos.isNotEmpty()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
-                photos.take(3).forEach { note ->
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(64.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFFF2EFE9))
-                            .border(1.dp, Color(0xFFE6DED2), RoundedCornerShape(8.dp))
-                            .padding(5.dp),
-                    ) {
-                        Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258))
-                    }
-                }
-            }
-        }
-        if (state.legacyImageUris.isNotEmpty()) {
-            DiaryImageStrip(imageUris = state.legacyImageUris, onRemoveImage = null)
-        } else if (photos.isEmpty()) {
+        if (imageUris.isNotEmpty()) {
+            DiaryMediaMosaic(imageUris = imageUris, notes = photoNotes)
+        } else if (photoNotes.isNotEmpty()) {
+            DiaryPhotoNoteGrid(notes = photoNotes)
+        } else {
             Text(
                 "＋ 添加图片",
                 color = Color(0xFFB07A8F),
@@ -4509,11 +4517,126 @@ private fun StructuredDiaryPreview(
         }
         DiaryTypedBlockPreview(blocks = state.blocks)
         Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
-            DiaryInBookRow("DONE", "今日完成", state.todayDone, DiaryBlockType.TARGET)
-            DiaryInBookRow("WORK", "工作任务", state.workTasks, DiaryBlockType.TARGET)
-            DiaryInBookRow("JOY", "小幸福", state.smallJoy, DiaryBlockType.TEXT)
-            DiaryInBookRow("FIX", "可改进", state.canImprove, DiaryBlockType.TEXT)
-            DiaryInBookRow("PHOTO", "图片描述", state.photoText, DiaryBlockType.IMAGE)
+            summaryRows
+                .filter { it.content.isNotBlank() }
+                .forEach { row ->
+                    DiaryInBookRow(row.code, row.title, row.content, row.type)
+                }
+        }
+    }
+}
+
+private data class DiaryPreviewRow(
+    val code: String,
+    val title: String,
+    val content: String,
+    val type: DiaryBlockType,
+)
+
+@Composable
+private fun DiaryInBookHeader(
+    title: String,
+    subtitle: String,
+    blockCount: Int,
+    imageCount: Int,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Brush.verticalGradient(listOf(Color(0xFFFFFCF7), Color(0xFFFFF6EC))))
+            .border(0.8.dp, Color(0x24B7A893), RoundedCornerShape(14.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(subtitle, style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E), fontWeight = FontWeight.SemiBold, maxLines = 1)
+            }
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text("书内日记", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB7A893), maxLines = 1)
+                Text("$blockCount 条目 · $imageCount 图片", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Brush.horizontalGradient(listOf(Color(0x00B7A893), Color(0x44B7A893), Color(0x00B7A893)))),
+        )
+    }
+}
+
+@Composable
+private fun DiaryEmptyInBookPage(onAddImage: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFFFFBF6))
+            .border(0.8.dp, Color(0x20B7A893), RoundedCornerShape(12.dp))
+            .clickable { onAddImage() }
+            .padding(horizontal = 12.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        Text("今日还没有日记", style = MaterialTheme.typography.labelLarge, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+        Text("点击添加图片，或进入编辑补充文字、目标和专题条目。", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun DiaryMoodRibbon(items: List<String>) {
+    Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+        items.take(4).forEach { item ->
+            Text(
+                "#$item",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF8B5E6D),
+                maxLines = 1,
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0xFFFFEEF4))
+                    .border(0.6.dp, Color(0x24E88FAE), RoundedCornerShape(99.dp))
+                    .padding(horizontal = 7.dp, vertical = 4.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DiaryMediaMosaic(
+    imageUris: List<String>,
+    notes: List<String>,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+        DiaryImageStrip(imageUris = imageUris, onRemoveImage = null)
+        if (notes.isNotEmpty()) {
+            DiaryPhotoNoteGrid(notes = notes)
+        }
+    }
+}
+
+@Composable
+private fun DiaryPhotoNoteGrid(notes: List<String>) {
+    Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+        notes.take(3).forEach { note ->
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(58.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xFFF2EFE9))
+                    .border(1.dp, Color(0xFFE6DED2), RoundedCornerShape(8.dp))
+                    .padding(6.dp),
+            ) {
+                Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258), maxLines = 3)
+            }
+        }
+        repeat((3 - notes.take(3).size).coerceAtLeast(0)) {
+            Spacer(Modifier.weight(1f))
         }
     }
 }
@@ -4538,7 +4661,7 @@ private fun DiaryInBookRow(
     ) {
         Column(
             modifier = Modifier
-                .width(44.dp)
+                .width(48.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(color.copy(alpha = 0.13f))
                 .padding(horizontal = 4.dp, vertical = 4.dp),
@@ -4556,7 +4679,7 @@ private fun DiaryInBookRow(
                 content.ifBlank { "暂未填写" },
                 style = MaterialTheme.typography.bodySmall,
                 color = if (content.isBlank()) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
-                maxLines = 3,
+                maxLines = 4,
             )
         }
     }
@@ -4580,10 +4703,13 @@ private fun DiaryTypedBlockPreview(
                 verticalArrangement = Arrangement.spacedBy(5.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.Top) {
-                    DiaryBlockTypeBadge(type = block.type, index = index + 1)
+                    DiaryInBookTypeMarker(type = block.type, index = index + 1)
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            Text(diaryBlockDisplayTitle(block.type), style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
+                            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                                Text(diaryBlockDisplayTitle(block.type), style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
+                                Text(diaryInBookItemLabel(block.type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+                            }
                             if (block.type != DiaryBlockType.IMAGE) {
                                 Text(block.style.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                             }
@@ -4603,20 +4729,66 @@ private fun DiaryTypedBlockPreview(
                         }
                     }
                 }
-                if (block.type != DiaryBlockType.IMAGE) block.childLines.take(4).forEach { child ->
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.Top,
-                        modifier = Modifier.padding(start = 55.dp),
-                    ) {
-                        Text("└", style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.72f))
-                        Text(child, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.weight(1f))
+                if (block.type != DiaryBlockType.IMAGE) {
+                    block.childLines.take(4).forEachIndexed { childIndex, child ->
+                        DiaryChildPreviewRow(index = childIndex + 1, text = child, color = color)
                     }
                 }
             }
         }
     }
 }
+
+@Composable
+private fun DiaryInBookTypeMarker(
+    type: DiaryBlockType,
+    index: Int,
+) {
+    val color = diaryBlockTypeColor(type)
+    Column(
+        modifier = Modifier
+            .width(50.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color.White.copy(alpha = 0.66f))
+            .border(0.7.dp, color.copy(alpha = 0.28f), RoundedCornerShape(10.dp))
+            .padding(horizontal = 5.dp, vertical = 5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(diaryBlockTypeIcon(type), color = color, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text("ITEM %02d".format(index), color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+    }
+}
+
+@Composable
+private fun DiaryChildPreviewRow(
+    index: Int,
+    text: String,
+    color: Color,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier
+            .padding(start = 57.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White.copy(alpha = 0.54f))
+            .padding(horizontal = 7.dp, vertical = 4.dp),
+    ) {
+        Text("%02d".format(index), style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.72f), maxLines = 1)
+        Text(text, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.weight(1f))
+    }
+}
+
+private fun diaryInBookItemLabel(type: DiaryBlockType): String =
+    when (type) {
+        DiaryBlockType.IMAGE -> "书内图片条目"
+        DiaryBlockType.TEXT -> "书内文字条目"
+        DiaryBlockType.TARGET -> "书内目标条目"
+        DiaryBlockType.TARGET_CHILD -> "书内子目标"
+        DiaryBlockType.TOPIC_TARGET -> "书内专题目标"
+    }
 
 @Composable
 private fun DiaryImageStrip(
