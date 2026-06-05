@@ -193,6 +193,14 @@ fun CalendarScreen(
             },
         )
 
+        CalendarMonthGrid(
+            year = state.year,
+            month = state.month,
+            selectedDay = selectedDay,
+            entries = monthEntries,
+            onSelectDay = { selectedDay = it },
+        )
+
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             weekDays.forEach { day ->
                 val weekday = when (YearMonth.of(state.year, state.month).atDay(day).dayOfWeek) {
@@ -799,6 +807,127 @@ private fun CalendarControlChip(
             .background(color, RoundedCornerShape(GoaldayDesign.RadiusPill))
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 6.dp),
+    )
+}
+
+@Composable
+private fun CalendarMonthGrid(
+    year: Int,
+    month: Int,
+    selectedDay: Int,
+    entries: List<ScheduleEntry>,
+    onSelectDay: (Int) -> Unit,
+) {
+    val yearMonth = YearMonth.of(year, month)
+    val firstOffset = yearMonth.atDay(1).dayOfWeek.value - 1
+    val days = buildList<Int?> {
+        repeat(firstOffset) { add(null) }
+        (1..yearMonth.lengthOfMonth()).forEach { add(it) }
+        while (size % 7 != 0) add(null)
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFFEFC), RoundedCornerShape(18.dp))
+            .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(18.dp))
+            .padding(horizontal = 9.dp, vertical = 9.dp),
+        verticalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text("MONTH GRID", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text("点击日期切换今日执行", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+            }
+            Text("${entries.size} 条", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+            listOf("一", "二", "三", "四", "五", "六", "日").forEach { label ->
+                Text(
+                    label,
+                    color = GoaldayDesign.InkMuted,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                )
+            }
+        }
+        days.chunked(7).forEach { week ->
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+                week.forEach { day ->
+                    if (day == null) {
+                        Spacer(Modifier.weight(1f))
+                    } else {
+                        val dayEntries = entries.filter { it.day == day }
+                        val todo = dayEntries.count { !it.completed }
+                        val done = dayEntries.count { it.completed }
+                        CalendarMonthDayCell(
+                            day = day,
+                            selected = day == selectedDay,
+                            todoCount = todo,
+                            doneCount = done,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onSelectDay(day) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CalendarMonthDayCell(
+    day: Int,
+    selected: Boolean,
+    todoCount: Int,
+    doneCount: Int,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .height(48.dp)
+            .background(
+                if (selected) GoaldayDesign.PrimaryAction else if (todoCount + doneCount > 0) Color(0xFFFFF4F8) else Color(0xFFF7F1EA),
+                RoundedCornerShape(12.dp),
+            )
+            .border(
+                0.7.dp,
+                if (selected) GoaldayDesign.PrimaryAction else if (todoCount + doneCount > 0) GoaldayDesign.Pink.copy(alpha = 0.22f) else Color.Transparent,
+                RoundedCornerShape(12.dp),
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            day.toString(),
+            color = if (selected) Color.White else GoaldayDesign.InkPrimary,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (todoCount > 0) CalendarDayDot(GoaldayDesign.Pink, todoCount, selected)
+            if (doneCount > 0) CalendarDayDot(GoaldayDesign.Positive, doneCount, selected)
+        }
+    }
+}
+
+@Composable
+private fun CalendarDayDot(
+    color: Color,
+    count: Int,
+    selected: Boolean,
+) {
+    Text(
+        count.coerceAtMost(9).toString(),
+        color = if (selected) Color.White else color,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
     )
 }
 
