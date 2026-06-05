@@ -275,20 +275,23 @@ private fun BookRootScaffold(
     onOpenInspiration: () -> Unit,
     content: @Composable () -> Unit,
 ) {
+    val showRootHeader = surface != BookRootSurface.BOOK || entryMode == BookEntryMode.PLANNER
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(GoaldayDesign.AppBg),
     ) {
-        BookRootHeader(
-            surface = surface,
-            entryMode = entryMode,
-            onOpenHome = onOpenHome,
-            onOpenLibrary = onOpenLibrary,
-            onOpenHandbook = onOpenHandbook,
-            onOpenDiary = onOpenDiary,
-            onOpenInspiration = onOpenInspiration,
-        )
+        if (showRootHeader) {
+            BookRootHeader(
+                surface = surface,
+                entryMode = entryMode,
+                onOpenHome = onOpenHome,
+                onOpenLibrary = onOpenLibrary,
+                onOpenHandbook = onOpenHandbook,
+                onOpenDiary = onOpenDiary,
+                onOpenInspiration = onOpenInspiration,
+            )
+        }
         Box(modifier = Modifier.weight(1f)) {
             content()
         }

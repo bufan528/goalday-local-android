@@ -1,26 +1,21 @@
-# Handbook Usability Pass - 2026-06-05
+# Handbook usability pass - 2026-06-05
 
-Reference APK signals used for this pass:
+Scope: clean-room comparison against the bundled reference APK, focused on the local handbook and diary entry points.
 
-- `BookActivity`
-- `fragment_schedule_inbook`
-- `fragment_diary_inbook`
-- `TargetDetailActivity`
-- `item_diary_text`
-- `item_diary_img`
-- `item_diary_topic_target`
+## Findings
 
-Implemented locally:
+- The local handbook/detail route was rendering the root book header above the physical handbook UI. The APK-style handbook surface uses its own chrome, so the extra header reduced the usable page area and made the diary/editor surface feel broken.
+- The handbook and diary shortcuts reused the last stored page index. Entering these shortcuts could land on a target or plan page before the UI corrected itself, which made the route look inconsistent.
+- Forced diary/planner segments were updating page state during Compose composition. This could create visible jumps and made the detail route harder to reason about.
 
-- Fixed a handbook/diary entry-mode blank-screen path by always opening the local primary handbook instead of returning when another book was previously selected.
-- Added a persistent in-handbook page dock with previous/next actions, current page label, page count, and section switching.
-- Synchronized the active handbook section when opening a page from the index, preventing mismatches such as a target page showing under the diary section.
-- Clamped visible page numbering for entry-mode transitions so stale selected-page state cannot display out-of-range progress.
-- Added diary browse-mode quick actions for edit, text block, image block, and topic target block.
-- Preserved the local-only model: no server, account, VIP, payment, or remote sync was added.
+## Changes
 
-Known remaining gaps:
+- Keep the root book header on the home, inspiration, and planner/library surfaces, but hide it on the dedicated handbook and diary surfaces.
+- Align the handbook shortcut to the first schedule/plan page and the diary shortcut to the first diary page when entering that route.
+- Move forced segment page alignment into `LaunchedEffect`, so the route selection runs as a side effect instead of mutating state during composition.
 
-- The book content pages still need deeper visual parity with the reference APK's dedicated schedule/diary/target fragments.
-- Diary editing still needs drag ordering and richer inline block controls.
-- Schedule and target pages still contain some generic Compose panel structure that should be replaced with denser in-book rows.
+## Verification
+
+- `./gradlew :app:compileDebugKotlin`
+- `./gradlew :app:testDebugUnitTest`
+- `./gradlew :app:assembleDebug`

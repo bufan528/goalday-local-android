@@ -90,6 +90,13 @@ enum class BookEntryMode {
     DIARY,
 }
 
+private fun entryLandingPageIndex(book: TopicBook, entryMode: BookEntryMode): Int =
+    when (entryMode) {
+        BookEntryMode.HANDBOOK -> book.pages.indexOfFirst { it is SchedulePage || it is PlanPage }
+        BookEntryMode.DIARY -> book.pages.indexOfFirst { it is DiaryPage }
+        else -> -1
+    }.takeIf { it >= 0 } ?: 0
+
 @Composable
 fun BookHomeScreen(
     viewModel: BookViewModel,
@@ -148,6 +155,12 @@ fun BookHomeScreen(
         BookEntryMode.HANDBOOK -> {
             if (!hasBooks) return
             val book = uiState.books.first()
+            LaunchedEffect(entryMode, book.id) {
+                val landingIndex = entryLandingPageIndex(book, entryMode)
+                if (uiState.selectedPageIndex != landingIndex) {
+                    viewModel.setPage(landingIndex)
+                }
+            }
             val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
             val currentPage = book.pages[clampedPageIndex]
             val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
@@ -165,6 +178,12 @@ fun BookHomeScreen(
         BookEntryMode.DIARY -> {
             if (!hasBooks) return
             val book = uiState.books.first()
+            LaunchedEffect(entryMode, book.id) {
+                val landingIndex = entryLandingPageIndex(book, entryMode)
+                if (uiState.selectedPageIndex != landingIndex) {
+                    viewModel.setPage(landingIndex)
+                }
+            }
             val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
             val currentPage = book.pages[clampedPageIndex]
             val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
@@ -1528,13 +1547,12 @@ private fun BookDetailView(
 ) {
     val handbookMode = bookOnlyMode || forcedSegment == BookSegment.DIARY
     var segment by remember(book.id) { mutableStateOf(resolveSegment(currentPage)) }
-    forcedSegment?.let { desired ->
-        if (segment != desired) {
-            segment = desired
-            val firstIndex = book.pages.indexOfFirst { page -> matchesSegment(page, desired) }
-            if (firstIndex >= 0 && uiState.selectedPageIndex != firstIndex) {
-                viewModel.setPage(firstIndex)
-            }
+    LaunchedEffect(forcedSegment, book.id) {
+        val desired = forcedSegment ?: return@LaunchedEffect
+        segment = desired
+        val firstIndex = book.pages.indexOfFirst { page -> matchesSegment(page, desired) }
+        if (firstIndex >= 0 && uiState.selectedPageIndex != firstIndex) {
+            viewModel.setPage(firstIndex)
         }
     }
     val filteredPages = remember(book.pages, segment) {
