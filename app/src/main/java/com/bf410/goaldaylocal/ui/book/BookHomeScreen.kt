@@ -336,26 +336,40 @@ fun BookHomeScreen(
     }
 
     if (showRenamePageDialog) {
-        RenamePageDialog(
-            currentTitle = uiState.books[uiState.selectedBookIndex].pages[uiState.selectedPageIndex].title,
-            onDismiss = { showRenamePageDialog = false },
-            onConfirm = { title ->
-                viewModel.renameCurrentPage(title)
+        val book = uiState.books.getOrNull(safeBookIndex)
+        val page = book?.pages?.getOrNull(uiState.selectedPageIndex.coerceIn(0, (book.pages.lastIndex).coerceAtLeast(0)))
+        if (page == null) {
+            LaunchedEffect(showRenamePageDialog) {
                 showRenamePageDialog = false
-            },
-        )
+            }
+        } else {
+            RenamePageDialog(
+                currentTitle = page.title,
+                onDismiss = { showRenamePageDialog = false },
+                onConfirm = { title ->
+                    viewModel.renameCurrentPage(title)
+                    showRenamePageDialog = false
+                },
+            )
+        }
     }
 
     if (showEditBookDialog) {
-        val book = uiState.books[uiState.selectedBookIndex]
-        EditBookDialog(
-            book = book,
-            onDismiss = { showEditBookDialog = false },
-            onConfirm = { title, subtitle, color ->
-                viewModel.updateCurrentBookInfo(title, subtitle, color)
+        val book = uiState.books.getOrNull(safeBookIndex)
+        if (book == null) {
+            LaunchedEffect(showEditBookDialog) {
                 showEditBookDialog = false
-            },
-        )
+            }
+        } else {
+            EditBookDialog(
+                book = book,
+                onDismiss = { showEditBookDialog = false },
+                onConfirm = { title, subtitle, color ->
+                    viewModel.updateCurrentBookInfo(title, subtitle, color)
+                    showEditBookDialog = false
+                },
+            )
+        }
     }
 }
 

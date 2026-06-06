@@ -27,9 +27,7 @@ class BackupManager(
             backupDir,
             "goalday-backup-${SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())}",
         ).apply { mkdirs() }
-        sourceDir.listFiles()?.forEach { file ->
-            file.copyTo(File(targetDir, file.name), overwrite = true)
-        }
+        copyMmkvFiles(sourceDir, targetDir)
         targetDir
     }
 
@@ -108,13 +106,33 @@ class BackupManager(
 
     private fun restoreBackupDirectory(source: File): File {
         val targetDir = File(context.filesDir.parentFile, "mmkv").apply { mkdirs() }
-        source.listFiles()?.forEach { file ->
-            file.copyTo(File(targetDir, file.name), overwrite = true)
-        }
+        copyMmkvFiles(source, targetDir)
         return source
     }
 
+    private fun copyMmkvFiles(sourceDir: File, targetDir: File) {
+        val files = sourceDir.listFiles()
+            ?.filter { it.isFile && isSafeMmkvBackupFile(it) }
+            ?: emptyList()
+        require(files.size <= MAX_BACKUP_FILE_COUNT) { "备份文件数量异常" }
+        require(files.sumOf { it.length() } <= MAX_BACKUP_TOTAL_BYTES) { "备份文件过大" }
+        files.forEach { file ->
+            file.copyTo(File(targetDir, file.name), overwrite = true)
+        }
+    }
+
+    private fun isSafeMmkvBackupFile(file: File): Boolean {
+        val name = file.name
+        if (name.isBlank() || name.startsWith(".") || File.separatorChar in name) return false
+        if (file.length() > MAX_BACKUP_SINGLE_FILE_BYTES) return false
+        return true
+    }
+
     companion object {
+        private const val MAX_BACKUP_FILE_COUNT = 32
+        private const val MAX_BACKUP_SINGLE_FILE_BYTES = 10L * 1024L * 1024L
+        private const val MAX_BACKUP_TOTAL_BYTES = 50L * 1024L * 1024L
+
         fun formatBytes(bytes: Long): String {
             if (bytes < 1024) return "$bytes B"
             val kb = bytes / 1024.0

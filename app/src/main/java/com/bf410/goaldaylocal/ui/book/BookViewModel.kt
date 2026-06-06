@@ -81,10 +81,11 @@ class BookViewModel(
         if (books.isEmpty()) return
         val clamped = index.coerceIn(0, books.lastIndex)
         store.setSelectedBookIndex(clamped)
+        val book = books[clamped]
         _uiState.update {
             it.copy(
                 selectedBookIndex = clamped,
-                selectedPageIndex = store.selectedPageIndex(books[clamped].id).coerceIn(0, books[clamped].pages.lastIndex),
+                selectedPageIndex = safePageIndex(book, store.selectedPageIndex(book.id)),
             )
         }
         syncEditableContent()
@@ -92,7 +93,7 @@ class BookViewModel(
 
     fun setPage(index: Int) {
         val book = currentBook()
-        val clamped = index.coerceIn(0, book.pages.lastIndex)
+        val clamped = safePageIndex(book, index)
         store.setSelectedPageIndex(book.id, clamped)
         _uiState.update { it.copy(selectedPageIndex = clamped) }
         syncEditableContent()
@@ -528,7 +529,8 @@ class BookViewModel(
         val trimmed = title.trim()
         if (trimmed.isBlank() || !isCurrentBookCustom()) return
         val current = currentBook()
-        val oldPage = currentPage()
+        val oldPage = currentPageOrNull() ?: return
+        val safeIndex = safePageIndex(current, _uiState.value.selectedPageIndex)
         store.migratePageScopedData(
             bookId = current.id,
             oldTitle = oldPage.title,
@@ -537,14 +539,17 @@ class BookViewModel(
         )
         updateCurrentBookPages { pages ->
             pages.toMutableList().also { list ->
-                list[_uiState.value.selectedPageIndex] = renamePage(list[_uiState.value.selectedPageIndex], trimmed)
+                if (safeIndex in list.indices) {
+                    list[safeIndex] = renamePage(list[safeIndex], trimmed)
+                }
             }
         }
     }
 
     fun moveCurrentPageLeft() {
         val currentIndex = _uiState.value.selectedPageIndex
-        if (!isCurrentBookCustom() || currentIndex == 0) return
+        val pages = currentBook().pages
+        if (!isCurrentBookCustom() || currentIndex == 0 || currentIndex !in pages.indices) return
         updateCurrentBookPages { pages ->
             pages.toMutableList().also { list ->
                 val page = list.removeAt(currentIndex)
@@ -556,7 +561,8 @@ class BookViewModel(
 
     fun moveCurrentPageRight() {
         val currentIndex = _uiState.value.selectedPageIndex
-        if (!isCurrentBookCustom() || currentIndex >= currentBook().pages.lastIndex) return
+        val pages = currentBook().pages
+        if (!isCurrentBookCustom() || currentIndex !in pages.indices || currentIndex >= pages.lastIndex) return
         updateCurrentBookPages { pages ->
             pages.toMutableList().also { list ->
                 val page = list.removeAt(currentIndex)
@@ -576,13 +582,13 @@ class BookViewModel(
             else -> DiaryPage(trimmed, "写下这一页最重要的记录。")
         }
         updateCurrentBookPages { it + newPage }
-        setPage(currentBook().pages.lastIndex)
+        setPage(currentBook().pages.lastIndex.coerceAtLeast(0))
     }
 
     fun deleteCurrentPage() {
         val current = currentBook()
         if (!isCurrentBookCustom() || current.pages.size <= 1) return
-        val removedIndex = _uiState.value.selectedPageIndex
+        val removedIndex = safePageIndex(current, _uiState.value.selectedPageIndex)
         val removedPage = current.pages[removedIndex]
         store.removePageScopedData(
             bookId = current.id,
@@ -596,12 +602,22 @@ class BookViewModel(
         setPage(nextIndex)
     }
 
-    private fun currentBook() = _uiState.value.books[_uiState.value.selectedBookIndex]
+    private fun currentBook(): TopicBook {
+        val books = _uiState.value.books
+        return books.getOrNull(_uiState.value.selectedBookIndex) ?: books.first()
+    }
 
-    private fun currentPage() = currentBook().pages[_uiState.value.selectedPageIndex]
+    private fun currentPage(): BookPage =
+        currentPageOrNull() ?: DiaryPage("日记页", "写下这一页最重要的记录。")
+
+    private fun currentPageOrNull(): BookPage? {
+        val book = currentBook()
+        if (book.pages.isEmpty()) return null
+        return book.pages.getOrNull(safePageIndex(book, _uiState.value.selectedPageIndex))
+    }
 
     private fun supportsCustomItems(): Boolean =
-        when (currentPage()) {
+        when (currentPageOrNull()) {
             is PlanPage, is TargetPage, is SchedulePage -> true
             else -> false
         }
@@ -612,13 +628,28 @@ class BookViewModel(
         val book = currentBook()
         _uiState.update {
             it.copy(
-                selectedPageIndex = store.selectedPageIndex(book.id).coerceIn(0, book.pages.lastIndex),
+                selectedPageIndex = safePageIndex(book, store.selectedPageIndex(book.id)),
             )
         }
     }
 
     private fun syncEditableContent() {
         val book = currentBook()
+        if (book.pages.isEmpty()) {
+            _uiState.update {
+                it.copy(
+                    selectedPageIndex = 0,
+                    diaryDraft = "",
+                    customPageItems = emptyList(),
+                    weeklyTheme = store.weeklyTheme(book.id),
+                    todayPlanItems = emptyList(),
+                    todayCompletedItems = emptyList(),
+                    schedulePreviewEntries = yearEntriesForAnchor(),
+                    targetItemMeta = emptyMap(),
+                )
+            }
+            return
+        }
         syncDiarySchedulesForBook(book)
         val imported = importTodayFromSchedule()
         when (val page = currentPage()) {
@@ -964,10 +995,15 @@ class BookViewModel(
         val selectedIndex = updatedBooks.indexOfFirst { it.id == selectBookId }.coerceAtLeast(0)
         store.setSelectedBookIndex(selectedIndex)
         _uiState.update {
+            val selectedBook = updatedBooks.getOrNull(selectedIndex) ?: return@update it.copy(
+                books = updatedBooks,
+                customBookCount = store.customBooks().size,
+                inLibraryMode = !openBook,
+            )
             it.copy(
                 books = updatedBooks,
                 selectedBookIndex = selectedIndex,
-                selectedPageIndex = store.selectedPageIndex(updatedBooks[selectedIndex].id).coerceIn(0, updatedBooks[selectedIndex].pages.lastIndex),
+                selectedPageIndex = safePageIndex(selectedBook, store.selectedPageIndex(selectedBook.id)),
                 customBookCount = store.customBooks().size,
                 inLibraryMode = !openBook,
             )
@@ -977,6 +1013,9 @@ class BookViewModel(
         }
         syncEditableContent()
     }
+
+    private fun safePageIndex(book: TopicBook, requested: Int): Int =
+        if (book.pages.isEmpty()) 0 else requested.coerceIn(0, book.pages.lastIndex)
 
     private fun renamePage(page: BookPage, title: String): BookPage =
         when (page) {
