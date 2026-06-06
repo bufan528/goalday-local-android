@@ -426,7 +426,10 @@ fun CalendarScreen(
                             RoundedCornerShape(GoaldayDesign.RadiusS),
                         )
                         .combinedClickable(
-                            onClick = {},
+                            onClick = {
+                                grabbedPoolEntry = entry
+                                toast = "已抓取任务，可点上午/下午/晚上投放"
+                            },
                             onLongClick = {
                                 grabbedPoolEntry = entry
                                 toast = "已抓取任务"

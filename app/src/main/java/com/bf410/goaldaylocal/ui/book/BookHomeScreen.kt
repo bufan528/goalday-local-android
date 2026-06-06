@@ -197,6 +197,16 @@ fun BookHomeScreen(
                     pageDialogPreset = PageDialogPreset(type = "schedule", title = "日程页")
                     showPageDialog = true
                 }
+                if (showPageDialog) {
+                    CreatePageDialog(
+                        preset = pageDialogPreset,
+                        onDismiss = { showPageDialog = false },
+                        onConfirm = { type, title ->
+                            viewModel.addPage(type, title)
+                            showPageDialog = false
+                        },
+                    )
+                }
                 return
             }
             LaunchedEffect(entryMode, book.id) {
@@ -230,6 +240,16 @@ fun BookHomeScreen(
                 BookUnavailableState("这本手账没有日记页", "日记入口需要至少一个日记页，添加后会自动保存到本机。", "添加日记页") {
                     pageDialogPreset = PageDialogPreset(type = "diary", title = "日记页")
                     showPageDialog = true
+                }
+                if (showPageDialog) {
+                    CreatePageDialog(
+                        preset = pageDialogPreset,
+                        onDismiss = { showPageDialog = false },
+                        onConfirm = { type, title ->
+                            viewModel.addPage(type, title)
+                            showPageDialog = false
+                        },
+                    )
                 }
                 return
             }
@@ -284,6 +304,16 @@ fun BookHomeScreen(
                     BookUnavailableState("这本手账没有页面", "先添加一页，日程、清单和日记功能才有地方保存。", "添加页面") {
                         pageDialogPreset = PageDialogPreset(type = "schedule", title = "日程页")
                         showPageDialog = true
+                    }
+                    if (showPageDialog) {
+                        CreatePageDialog(
+                            preset = pageDialogPreset,
+                            onDismiss = { showPageDialog = false },
+                            onConfirm = { type, title ->
+                                viewModel.addPage(type, title)
+                                showPageDialog = false
+                            },
+                        )
                     }
                     return
                 }
