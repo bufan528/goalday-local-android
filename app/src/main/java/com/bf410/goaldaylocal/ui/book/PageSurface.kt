@@ -3340,6 +3340,14 @@ private data class StructuredDiary(
     fun withTargetChildBlock(text: String = "下一步行动"): StructuredDiary =
         withBlocks(blocks + DiaryEntryBlock(DiaryBlockType.TARGET_CHILD, text, DiaryBlockStyle.CHECK))
 
+    fun withInsertedBlockAfter(index: Int, type: DiaryBlockType): StructuredDiary {
+        val insertIndex = (index + 1).coerceIn(0, blocks.size)
+        val next = blocks.toMutableList().apply {
+            add(insertIndex, defaultDiaryBlock(type))
+        }
+        return withBlocks(next)
+    }
+
     fun withBlockText(index: Int, text: String): StructuredDiary {
         val oldBlock = blocks.getOrNull(index)
         val next = withBlocks(blocks.mapIndexed { blockIndex, block ->
@@ -3499,6 +3507,15 @@ private data class DiaryEntryBlock(
         }
     }
 }
+
+private fun defaultDiaryBlock(type: DiaryBlockType): DiaryEntryBlock =
+    when (type) {
+        DiaryBlockType.IMAGE -> DiaryEntryBlock(DiaryBlockType.IMAGE, "")
+        DiaryBlockType.TEXT -> DiaryEntryBlock(DiaryBlockType.TEXT, "写下这一刻")
+        DiaryBlockType.TARGET -> DiaryEntryBlock(DiaryBlockType.TARGET, "○ 关联一个目标")
+        DiaryBlockType.TARGET_CHILD -> DiaryEntryBlock(DiaryBlockType.TARGET_CHILD, "下一步行动", DiaryBlockStyle.CHECK)
+        DiaryBlockType.TOPIC_TARGET -> DiaryEntryBlock(DiaryBlockType.TOPIC_TARGET, "专题目标 · 今天推进一步")
+    }
 
 private fun escapeDiaryBlockText(text: String): String =
     text.replace("\\", "\\\\").replace("\n", "\\n").replace(DIARY_BLOCK_SEPARATOR, "\\p")
@@ -4434,6 +4451,7 @@ private fun StructuredDiaryEditor(
 ) {
     val dateLabel = remember(state.dateIso) { diaryDateLabel(state.date) }
     var richEditorExpanded by remember(state.dateIso) { mutableStateOf(false) }
+    var focusedBlockIndex by remember(state.blocksRaw) { mutableStateOf(0) }
     val editorTextCount = state.blocks.count { it.type == DiaryBlockType.TEXT } +
         listOf(state.todayDone, state.workTasks, state.smallJoy, state.canImprove, state.richHtml)
             .count { it.isNotBlank() }
@@ -4441,6 +4459,8 @@ private fun StructuredDiaryEditor(
     val editorTargetCount = state.blocks.count {
         it.type == DiaryBlockType.TARGET || it.type == DiaryBlockType.TARGET_CHILD || it.type == DiaryBlockType.TOPIC_TARGET
     }
+    val normalizedFocusIndex = focusedBlockIndex.coerceIn(0, (state.blocks.size - 1).coerceAtLeast(0))
+    val focusedBlock = state.blocks.getOrNull(normalizedFocusIndex)
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         DiaryEditorToolbar(
             dateLabel = dateLabel,
@@ -4454,6 +4474,25 @@ private fun StructuredDiaryEditor(
             onAddTargetChildBlock = { onStateChange(state.withTargetChildBlock()) },
             onCommand = onCommand,
             onDone = onDone,
+        )
+        DiaryFocusedBlockToolbar(
+            block = focusedBlock,
+            index = normalizedFocusIndex,
+            onStyleChange = { style ->
+                focusedBlock?.let {
+                    onStateChange(state.withBlockStyle(normalizedFocusIndex, style))
+                }
+            },
+            onAddChild = {
+                focusedBlock?.let {
+                    onStateChange(state.withBlockChild(normalizedFocusIndex))
+                    focusedBlockIndex = (normalizedFocusIndex + 1).coerceAtMost(state.blocks.size)
+                }
+            },
+            onInsertAfter = { type ->
+                onStateChange(state.withInsertedBlockAfter(normalizedFocusIndex, type))
+                focusedBlockIndex = (normalizedFocusIndex + 1).coerceAtMost(state.blocks.size)
+            },
         )
         Column(
             modifier = Modifier
@@ -4536,6 +4575,8 @@ private fun StructuredDiaryEditor(
             onAddChild = { index -> onStateChange(state.withBlockChild(index)) },
             onMoveBlock = { index, direction -> onStateChange(state.withMovedBlock(index, direction)) },
             onRemoveBlock = { index -> onStateChange(state.withoutBlock(index)) },
+            focusedIndex = normalizedFocusIndex,
+            onFocusBlock = { focusedBlockIndex = it },
         )
         if (state.legacyImageUris.isNotEmpty()) {
             DiaryImageStrip(
@@ -4630,6 +4671,71 @@ private fun DiaryEditorCountPill(
 }
 
 @Composable
+private fun DiaryFocusedBlockToolbar(
+    block: DiaryEntryBlock?,
+    index: Int,
+    onStyleChange: (DiaryBlockStyle) -> Unit,
+    onAddChild: () -> Unit,
+    onInsertAfter: (DiaryBlockType) -> Unit,
+) {
+    val color = block?.let { diaryBlockTypeColor(it.type) } ?: GoaldayDesign.InkMuted
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFFFFEFC))
+            .border(0.7.dp, color.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 8.dp, vertical = 7.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text("块编辑器", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+                Text(
+                    block?.let { "%02d · ${diaryBlockDisplayTitle(it.type)}".format(index + 1) } ?: "未选择块",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = color,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+            }
+            if (block != null && block.type != DiaryBlockType.IMAGE && block.type != DiaryBlockType.TARGET_CHILD) {
+                DiaryToolChip("子项", color, onAddChild)
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+        ) {
+            if (block != null && block.type != DiaryBlockType.IMAGE) {
+                DiaryBlockStyle.entries.forEach { style ->
+                    DiaryStyleChip(
+                        label = style.label,
+                        selected = block.style == style,
+                        color = color,
+                        onClick = { onStyleChange(style) },
+                    )
+                }
+            } else {
+                Text("点选下方日记块后可快速改格式", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+        ) {
+            Text("后插入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+            DiaryToolChip("文字", GoaldayDesign.InkSecondary) { onInsertAfter(DiaryBlockType.TEXT) }
+            DiaryToolChip("目标", GoaldayDesign.Positive) { onInsertAfter(DiaryBlockType.TARGET) }
+            DiaryToolChip("子目标", Color(0xFF6F8E68)) { onInsertAfter(DiaryBlockType.TARGET_CHILD) }
+            DiaryToolChip("专题目标", Color(0xFFB07A8F)) { onInsertAfter(DiaryBlockType.TOPIC_TARGET) }
+        }
+    }
+}
+
+@Composable
 private fun DiaryTypedBlockEditor(
     blocks: List<DiaryEntryBlock>,
     onBlockTextChange: (Int, String) -> Unit,
@@ -4637,6 +4743,8 @@ private fun DiaryTypedBlockEditor(
     onAddChild: (Int) -> Unit,
     onMoveBlock: (Int, Int) -> Unit,
     onRemoveBlock: (Int) -> Unit,
+    focusedIndex: Int,
+    onFocusBlock: (Int) -> Unit,
 ) {
     if (blocks.isEmpty()) {
         Column(
@@ -4662,6 +4770,8 @@ private fun DiaryTypedBlockEditor(
                 onMoveUp = { onMoveBlock(index, -1) },
                 onMoveDown = { onMoveBlock(index, 1) },
                 onRemove = { onRemoveBlock(index) },
+                selected = index == focusedIndex,
+                onFocus = { onFocusBlock(index) },
             )
         }
     }
@@ -4707,6 +4817,8 @@ private fun DiaryEmptyBlockRow(
 private fun DiaryTypedBlockEditRow(
     index: Int,
     block: DiaryEntryBlock,
+    selected: Boolean,
+    onFocus: () -> Unit,
     onTextChange: (String) -> Unit,
     onStyleChange: (DiaryBlockStyle) -> Unit,
     onAddChild: () -> Unit,
@@ -4722,7 +4834,8 @@ private fun DiaryTypedBlockEditRow(
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(diaryBlockTypeBackground(block.type))
-            .border(0.8.dp, color.copy(alpha = 0.28f), RoundedCornerShape(12.dp))
+            .border(if (selected) 1.4.dp else 0.8.dp, color.copy(alpha = if (selected) 0.58f else 0.28f), RoundedCornerShape(12.dp))
+            .clickable(onClick = onFocus)
             .padding(horizontal = 9.dp, vertical = 7.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
