@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+import org.json.JSONObject
 
 internal const val KEY_GUIDE_SEEN = "guide_seen_v1"
 
@@ -79,6 +80,7 @@ internal fun GuideOverlay(
             true
         }.getOrDefault(false)
     }
+    val lottieMeta = remember { loadGuideLottieMeta(context) }
 
     Box(
         modifier = Modifier
@@ -118,7 +120,7 @@ internal fun GuideOverlay(
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 )
             }
-            GuideIllustration(page = page, index = index)
+            GuideIllustration(page = page, index = index, meta = lottieMeta)
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
                 pages.forEachIndexed { dotIndex, _ ->
                     Box(
@@ -179,10 +181,24 @@ internal fun GuideOverlay(
     }
 }
 
+private data class GuideLottieMeta(
+    val name: String,
+    val frameRate: Int,
+    val startFrame: Int,
+    val endFrame: Int,
+    val width: Int,
+    val height: Int,
+    val companionName: String,
+) {
+    val frameCount: Int get() = (endFrame - startFrame).coerceAtLeast(0)
+    val label: String get() = "$frameCount 帧 · ${frameRate}fps · ${width}x$height · $companionName"
+}
+
 @Composable
 private fun GuideIllustration(
     page: GuidePage,
     index: Int,
+    meta: GuideLottieMeta?,
 ) {
     val context = LocalContext.current
     val mainAsset = remember(page.asset) { loadGuideAssetBitmap(context, page.asset) }
@@ -200,6 +216,12 @@ private fun GuideIllustration(
         targetValue = 1f,
         animationSpec = infiniteRepeatable(animation = tween(1800), repeatMode = RepeatMode.Reverse),
         label = "guide-glide",
+    )
+    val frameProgress by motion.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(animation = tween(1600), repeatMode = RepeatMode.Restart),
+        label = "guide-frame-progress",
     )
     Box(
         modifier = Modifier
@@ -344,6 +366,14 @@ private fun GuideIllustration(
                 .background(page.tone.copy(alpha = 0.78f))
                 .padding(horizontal = 10.dp, vertical = 5.dp),
         )
+        GuideLottieStatusPill(
+            meta = meta,
+            progress = frameProgress,
+            tone = page.tone,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 38.dp),
+        )
         Text(
             page.action,
             color = GoaldayDesign.InkPrimary,
@@ -358,7 +388,77 @@ private fun GuideIllustration(
     }
 }
 
+@Composable
+private fun GuideLottieStatusPill(
+    meta: GuideLottieMeta?,
+    progress: Float,
+    tone: Color,
+    modifier: Modifier = Modifier,
+) {
+    val currentFrame = meta?.let { (it.startFrame + it.frameCount * progress).toInt().coerceIn(it.startFrame, it.endFrame) }
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.72f))
+            .border(0.8.dp, tone.copy(alpha = 0.24f), RoundedCornerShape(16.dp))
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Text(
+            meta?.name ?: "GuideActivity assets",
+            color = tone,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .width(82.dp)
+                    .height(5.dp)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(tone.copy(alpha = 0.16f)),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress.coerceIn(0.05f, 1f))
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(tone),
+                )
+            }
+            Text(
+                currentFrame?.let { "F$it" } ?: "本地",
+                color = GoaldayDesign.InkMuted,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+            )
+        }
+        Text(
+            meta?.label ?: "lottie/book.png · card.png",
+            color = GoaldayDesign.InkMuted,
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+        )
+    }
+}
+
 private fun loadGuideAssetBitmap(context: Context, path: String): Bitmap? =
     runCatching {
         context.assets.open(path).use(BitmapFactory::decodeStream)
+    }.getOrNull()
+
+private fun loadGuideLottieMeta(context: Context): GuideLottieMeta? =
+    runCatching {
+        val goalday = context.assets.open("lottie/goalday.json").bufferedReader().use { JSONObject(it.readText()) }
+        val coupon = context.assets.open("lottie/coupon.json").bufferedReader().use { JSONObject(it.readText()) }
+        GuideLottieMeta(
+            name = goalday.optString("nm", "goalday-guide"),
+            frameRate = goalday.optInt("fr", 0),
+            startFrame = goalday.optInt("ip", 0),
+            endFrame = goalday.optInt("op", 0),
+            width = goalday.optInt("w", 0),
+            height = goalday.optInt("h", 0),
+            companionName = coupon.optString("nm", "coupon"),
+        )
     }.getOrNull()
