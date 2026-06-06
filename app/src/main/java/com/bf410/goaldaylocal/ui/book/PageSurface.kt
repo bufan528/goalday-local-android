@@ -3678,8 +3678,31 @@ private enum class LongImageExportPreset(
     PRINT("打印", "A4 PDF · 适合纸质手账", "A4", PrintAttributes.MediaSize.ISO_A4, 22),
 }
 
+private enum class LongImageShortcutMode(
+    val raw: String,
+    val label: String,
+    val description: String,
+    val preset: LongImageExportPreset?,
+) {
+    DISABLED("disabled", "关闭", "shortcut_print_export_disabled", null),
+    LONG("long", "长图", "shortcut_print_export_long", LongImageExportPreset.LONG),
+    SHORT("short", "短图", "shortcut_print_export_short", LongImageExportPreset.PHONE),
+    SHORT_1("short_1", "短图 1", "shortcut_print_export_short_1", LongImageExportPreset.PHONE),
+    SHORT_2("short_2", "短图 2", "shortcut_print_export_short_2", LongImageExportPreset.PRINT),
+}
+
 private const val KEY_LONG_IMAGE_EXPORT_HISTORY = "long_image_export_history"
+private const val KEY_LONG_IMAGE_SHORTCUT_MODE = "long_image_shortcut_mode"
 private val longImageHistoryFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm")
+
+private fun loadLongImageShortcutMode(): LongImageShortcutMode {
+    val raw = MMKV.defaultMMKV().decodeString(KEY_LONG_IMAGE_SHORTCUT_MODE, LongImageShortcutMode.LONG.raw)
+    return LongImageShortcutMode.entries.firstOrNull { it.raw == raw } ?: LongImageShortcutMode.LONG
+}
+
+private fun saveLongImageShortcutMode(mode: LongImageShortcutMode) {
+    MMKV.defaultMMKV().encode(KEY_LONG_IMAGE_SHORTCUT_MODE, mode.raw)
+}
 
 private fun loadLongImageExportHistory(): List<LongImageExportHistoryItem> {
     val raw = MMKV.defaultMMKV().decodeString(KEY_LONG_IMAGE_EXPORT_HISTORY, "[]") ?: "[]"
@@ -3815,6 +3838,7 @@ private fun LongImagePreviewDialog(
     val context = LocalContext.current
     var actionHint by remember(preview) { mutableStateOf("") }
     var selectedPreset by remember(preview) { mutableStateOf(LongImageExportPreset.LONG) }
+    var shortcutMode by remember(preview) { mutableStateOf(loadLongImageShortcutMode()) }
     var exportHistory by remember(preview) { mutableStateOf(loadLongImageExportHistory()) }
     fun recordAction(message: String, action: String, detail: String = "") {
         actionHint = message
@@ -3884,6 +3908,7 @@ private fun LongImagePreviewDialog(
                 LongImageInfoPill("长图", "${preview.bitmap.width}×${preview.bitmap.height}")
                 LongImageInfoPill("格式", "PNG")
                 LongImageInfoPill("预设", selectedPreset.label)
+                LongImageInfoPill("快捷", shortcutMode.label)
                 LongImageInfoPill("记录", "${exportHistory.size}条")
             }
             LongImagePrintPanel(
@@ -3905,6 +3930,15 @@ private fun LongImagePreviewDialog(
                     )
                 }
             }
+            LongImageShortcutPanel(
+                mode = shortcutMode,
+                onSelect = { mode ->
+                    shortcutMode = mode
+                    saveLongImageShortcutMode(mode)
+                    mode.preset?.let { selectedPreset = it }
+                    actionHint = if (mode == LongImageShortcutMode.DISABLED) "已关闭快捷导出" else "已设置快捷导出：${mode.label}"
+                },
+            )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -3953,11 +3987,12 @@ private fun LongImagePreviewDialog(
                     .clip(RoundedCornerShape(22.dp))
                     .background(Color.White.copy(alpha = 0.86f))
                     .border(1.dp, Color(0x22B7A893), RoundedCornerShape(22.dp))
+                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 10.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                LongImageActionChip("保存", GoaldayDesign.Positive, Modifier.weight(1f)) {
+                LongImageActionChip("保存", GoaldayDesign.Positive, Modifier.width(86.dp)) {
                     val uri = saveLongImagePreview(context, preview)
                     if (uri != null) {
                         recordAction("已保存到相册", "保存", uri.lastPathSegment.orEmpty())
@@ -3965,18 +4000,30 @@ private fun LongImagePreviewDialog(
                         actionHint = "保存失败"
                     }
                 }
-                LongImageActionChip("分享", Color(0xFFB07A8F), Modifier.weight(1f)) {
+                LongImageActionChip("分享", Color(0xFFB07A8F), Modifier.width(86.dp)) {
                     if (shareLongImagePreview(context, preview)) {
                         recordAction("已打开分享", "分享", selectedPreset.description)
                     } else {
                         actionHint = "分享失败"
                     }
                 }
-                LongImageActionChip("打印", GoaldayDesign.InkSecondary, Modifier.weight(1f)) {
+                LongImageActionChip("打印", GoaldayDesign.InkSecondary, Modifier.width(86.dp)) {
                     if (printLongImagePreview(context, preview, selectedPreset)) {
                         recordAction("已打开${selectedPreset.label}打印", "打印", selectedPreset.description)
                     } else {
                         actionHint = "打印失败"
+                    }
+                }
+                if (shortcutMode != LongImageShortcutMode.DISABLED) {
+                    LongImageActionChip("快捷", GoaldayDesign.Pink, Modifier.width(86.dp)) {
+                        val shortcutPreset = shortcutMode.preset ?: selectedPreset
+                        selectedPreset = shortcutPreset
+                        val uri = saveLongImagePreview(context, preview)
+                        if (uri != null) {
+                            recordAction("已按${shortcutMode.label}快捷保存", "快捷", shortcutMode.description)
+                        } else {
+                            actionHint = "快捷导出失败"
+                        }
                     }
                 }
                 if (actionHint.isNotBlank()) {
@@ -4009,6 +4056,66 @@ private fun LongImagePrintPanel(
         LongImageInfoPill("纸张", preset.paperLabel)
         LongImageInfoPill("比例", if (preset == LongImageExportPreset.PHONE) "9:16" else "${preview.bitmap.width}:${preview.bitmap.height}")
     }
+}
+
+@Composable
+private fun LongImageShortcutPanel(
+    mode: LongImageShortcutMode,
+    onSelect: (LongImageShortcutMode) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.72f))
+            .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text("快捷导出", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+                Text(mode.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+            }
+            Text(mode.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LongImageShortcutMode.entries.forEach { item ->
+                LongImageShortcutChip(
+                    mode = item,
+                    selected = item == mode,
+                    onClick = { onSelect(item) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LongImageShortcutChip(
+    mode: LongImageShortcutMode,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Text(
+        mode.label,
+        style = MaterialTheme.typography.labelSmall,
+        color = if (selected) Color.White else GoaldayDesign.InkSecondary,
+        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(if (selected) GoaldayDesign.Pink else Color.White.copy(alpha = 0.74f))
+            .border(0.6.dp, if (selected) GoaldayDesign.Pink.copy(alpha = 0.32f) else Color(0x18B7A893), RoundedCornerShape(99.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+    )
 }
 
 @Composable
