@@ -21,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -482,9 +483,11 @@ private fun GoaldayBottomDock(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(10.dp, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp), clip = false)
+            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
             .background(Color(0xFFFFFCF7))
             .border(0.7.dp, Color(0x18A88966), RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 9.dp),
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -509,26 +512,32 @@ private fun GoaldayBottomDockItem(
 ) {
     Column(
         modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
             .background(
-                if (selected) GoaldayDesign.PinkSoft else Color.Transparent,
-                RoundedCornerShape(16.dp),
+                if (selected) Color(0xFFFFEDF4) else Color.Transparent,
+                RoundedCornerShape(18.dp),
             )
             .border(
                 0.7.dp,
-                if (selected) GoaldayDesign.Pink.copy(alpha = 0.26f) else Color.Transparent,
-                RoundedCornerShape(16.dp),
+                if (selected) GoaldayDesign.Pink.copy(alpha = 0.30f) else Color.Transparent,
+                RoundedCornerShape(18.dp),
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 5.dp, vertical = 6.dp),
+            .padding(horizontal = 5.dp, vertical = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
             tab.iconText,
-            color = if (selected) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
-            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) Color.White else GoaldayDesign.InkMuted,
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
             maxLines = 1,
+            modifier = Modifier
+                .clip(RoundedCornerShape(99.dp))
+                .background(if (selected) GoaldayDesign.Pink else Color(0x10A88966))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
         )
         Text(
             tab.label,

@@ -504,7 +504,7 @@ fun CalendarScreen(
         }
 
         if (toast.isNotBlank()) {
-            Text(toast, color = Color(0xFF7A7269), style = MaterialTheme.typography.labelSmall)
+            CalendarHintPill(toast)
         }
         grabbedPoolEntry?.let { entry ->
             Row(
@@ -686,6 +686,21 @@ fun CalendarScreen(
             },
         )
     }
+}
+
+@Composable
+private fun CalendarHintPill(text: String) {
+    Text(
+        text,
+        color = GoaldayDesign.InkPrimary,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFF2F7), RoundedCornerShape(14.dp))
+            .border(0.7.dp, Color(0x28E88FAE), RoundedCornerShape(14.dp))
+            .padding(horizontal = 11.dp, vertical = 8.dp),
+    )
 }
 
 @Composable

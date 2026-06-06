@@ -229,7 +229,7 @@ fun HomeScreen(
                 onOpenDiary = onOpenDiary,
             )
             if (hint.isNotBlank()) {
-                Text(hint, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                HomeHintPill(hint)
             }
         }
 
@@ -262,6 +262,21 @@ fun HomeScreen(
             }
         }
     }
+}
+
+@Composable
+private fun HomeHintPill(text: String) {
+    Text(
+        text,
+        color = GoaldayDesign.InkPrimary,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFF2F7), RoundedCornerShape(14.dp))
+            .border(0.7.dp, Color(0x28E88FAE), RoundedCornerShape(14.dp))
+            .padding(horizontal = 11.dp, vertical = 8.dp),
+    )
 }
 
 @Composable

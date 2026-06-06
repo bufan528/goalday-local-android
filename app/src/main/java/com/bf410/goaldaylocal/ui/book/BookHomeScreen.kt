@@ -1839,19 +1839,44 @@ private fun BookDetailView(
             )
         }
         if (showManagePanel && book.id.startsWith("custom_")) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xF6FFFDF8))
+                    .border(0.7.dp, Color(0x22A88966), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 9.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
-                ActionChip(label = BookStrings.editBook, color = Color(0xFF8F684F), onClick = onShowEditBook)
-                ActionChip(label = BookStrings.addPage, color = Color(0xFF8F684F), onClick = onShowAddPage)
-                ActionChip(label = BookStrings.renamePage, color = Color(0xFF8F684F), onClick = onShowRenamePage)
-                ActionChip(label = BookStrings.moveLeft, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageLeft)
-                ActionChip(label = BookStrings.moveRight, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageRight)
-                ActionChip(label = BookStrings.deletePage, color = Color(0xFF9C5A52), onClick = { confirmDeletePage = true })
-                ActionChip(label = BookStrings.deleteBook, color = Color(0xFF9C5A52), onClick = { confirmDeleteBook = true })
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("手账管理", color = Color(0xFF5F4E40), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    Text("${uiState.selectedPageIndex + 1}/${book.pages.size}", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                ) {
+                    ActionChip(label = BookStrings.editBook, color = Color(0xFF8F684F), onClick = onShowEditBook)
+                    ActionChip(label = BookStrings.addPage, color = Color(0xFF8F684F), onClick = onShowAddPage)
+                    ActionChip(label = BookStrings.renamePage, color = Color(0xFF8F684F), onClick = onShowRenamePage)
+                    ActionChip(label = BookStrings.moveLeft, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageLeft)
+                    ActionChip(label = BookStrings.moveRight, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageRight)
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                ) {
+                    ActionChip(label = BookStrings.deletePage, color = Color(0xFF9C5A52), onClick = { confirmDeletePage = true })
+                    ActionChip(label = BookStrings.deleteBook, color = Color(0xFF9C5A52), onClick = { confirmDeleteBook = true })
+                }
             }
         }
         if (forcedSegment == null && !handbookMode) {
@@ -2911,15 +2936,19 @@ private fun ActionChip(
 ) {
     val isDanger = color == Color(0xFF9C5A52)
     val textColor = if (isDanger) Color(0xFF7A2F2F) else Color(0xFF2D2A26)
-    val bgColor = if (isDanger) Color(0x14D17878) else Color(0x12000000)
+    val bgColor = if (isDanger) Color(0x1AD17878) else color.copy(alpha = 0.10f)
     Text(
         text = label,
         color = textColor,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
         modifier = Modifier
             .clip(RoundedCornerShape(99.dp))
             .background(bgColor)
+            .border(0.6.dp, color.copy(alpha = 0.18f), RoundedCornerShape(99.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 5.dp),
+            .padding(horizontal = 11.dp, vertical = 6.dp),
     )
 }
 
