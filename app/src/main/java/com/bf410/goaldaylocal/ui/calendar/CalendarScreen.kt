@@ -47,6 +47,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -428,12 +429,19 @@ fun CalendarScreen(
             }
             poolEntries.forEach { entry ->
                 var rowOrigin by remember(entry.id) { mutableStateOf(Offset.Zero) }
+                val grabbed = grabbedPoolEntry?.id == entry.id
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .shadow(if (grabbed) 5.dp else 0.dp, RoundedCornerShape(13.dp), clip = false)
                         .background(
-                            if (grabbedPoolEntry?.id == entry.id) Color(0x18E88FAE) else Color.Transparent,
-                            RoundedCornerShape(GoaldayDesign.RadiusS),
+                            if (grabbed) Color(0xFFFFEDF4) else Color(0xFAFFFDF8),
+                            RoundedCornerShape(13.dp),
+                        )
+                        .border(
+                            0.7.dp,
+                            if (grabbed) GoaldayDesign.Pink.copy(alpha = 0.26f) else Color(0x18A88966),
+                            RoundedCornerShape(13.dp),
                         )
                         .combinedClickable(
                             onClick = {
@@ -482,19 +490,31 @@ fun CalendarScreen(
                                 },
                             )
                         }
-                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                        .padding(horizontal = 9.dp, vertical = 7.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text("○", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
-                    Text("${entry.day}日", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(30.dp))
+                    Text(
+                        "${entry.day}日",
+                        color = if (grabbed) Color.White else GoaldayDesign.Pink,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .background(if (grabbed) GoaldayDesign.Pink else Color(0x12E88FAE), RoundedCornerShape(99.dp))
+                            .padding(horizontal = 7.dp, vertical = 3.dp),
+                    )
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                        Text(entry.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall)
+                        Text(entry.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
                         scheduleMetaText(entry).takeIf { it.isNotBlank() }?.let { meta ->
                             Text(meta, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                         }
                     }
-                    Text("长按抓取", color = Color(0xFFB07A8F), style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        if (grabbed) "已抓取" else "点按抓取",
+                        color = if (grabbed) GoaldayDesign.Pink else Color(0xFFB07A8F),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         DropToSlotChip("上") {
                             viewModel.moveScheduleToDay(entry.id, selectedDay)
@@ -759,6 +779,7 @@ private fun CalendarHeroHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(12.dp, RoundedCornerShape(22.dp), clip = false)
             .background(
                 Brush.linearGradient(
                     listOf(Color(0xFFFFF8F1), Color(0xFFFFEAF1), Color(0xFFEBD0BA)),
@@ -828,6 +849,7 @@ private fun CalendarMonthControl(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(5.dp, RoundedCornerShape(18.dp), clip = false)
             .background(GoaldayDesign.Surface, RoundedCornerShape(18.dp))
             .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(18.dp))
             .padding(horizontal = 9.dp, vertical = 8.dp),
@@ -882,6 +904,7 @@ private fun CalendarMonthGrid(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(8.dp, RoundedCornerShape(18.dp), clip = false)
             .background(Color(0xFFFFFEFC), RoundedCornerShape(18.dp))
             .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(18.dp))
             .padding(horizontal = 9.dp, vertical = 9.dp),
@@ -942,8 +965,19 @@ private fun CalendarMonthDayCell(
     Column(
         modifier = modifier
             .height(48.dp)
+            .shadow(
+                if (selected) 7.dp else if (todoCount + doneCount > 0) 3.dp else 0.dp,
+                RoundedCornerShape(12.dp),
+                clip = false,
+            )
             .background(
-                if (selected) GoaldayDesign.PrimaryAction else if (todoCount + doneCount > 0) Color(0xFFFFF4F8) else Color(0xFFF7F1EA),
+                if (selected) {
+                    GoaldayDesign.PrimaryAction
+                } else if (todoCount + doneCount > 0) {
+                    Color(0xFFFFF3F7)
+                } else {
+                    Color(0xFFF9F4EC)
+                },
                 RoundedCornerShape(12.dp),
             )
             .border(
@@ -978,10 +1012,13 @@ private fun CalendarDayDot(
 ) {
     Text(
         count.coerceAtMost(9).toString(),
-        color = if (selected) Color.White else color,
+        color = if (selected) color else Color.White,
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.SemiBold,
         maxLines = 1,
+        modifier = Modifier
+            .background(if (selected) Color.White.copy(alpha = 0.92f) else color, RoundedCornerShape(99.dp))
+            .padding(horizontal = 5.dp, vertical = 1.dp),
     )
 }
 
@@ -994,14 +1031,22 @@ private fun BoardCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(7.dp, RoundedCornerShape(GoaldayDesign.RadiusM), clip = false)
             .background(GoaldayDesign.Surface, RoundedCornerShape(GoaldayDesign.RadiusM))
-            .border(1.dp, Color(0x14000000), RoundedCornerShape(GoaldayDesign.RadiusM))
-            .padding(horizontal = 11.dp, vertical = 9.dp),
-        verticalArrangement = Arrangement.spacedBy(5.dp),
+            .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(GoaldayDesign.RadiusM))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
-            Text(subtitle, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+            Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(
+                subtitle,
+                color = GoaldayDesign.InkSecondary,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .background(Color(0x0FA88966), RoundedCornerShape(99.dp))
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
+            )
         }
         content()
     }
@@ -1023,22 +1068,36 @@ private fun TimeSlotRow(
             .fillMaxWidth()
             .onGloballyPositioned { coords -> onZoneBounds(coords.boundsInRoot()) }
             .background(
-                if (hover) Color(0x33E88FAE) else if (dropReady && assigned == null) Color(0x22E88FAE) else Color.Transparent,
+                if (hover) Color(0x3DE88FAE) else if (dropReady && assigned == null) Color(0x22E88FAE) else Color(0xFAFFFDF8),
                 RoundedCornerShape(GoaldayDesign.RadiusS),
             )
-            .border(if (hover) 1.dp else 0.5.dp, if (hover) Color(0xFFE88FAE) else Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = 8.dp, vertical = 5.dp),
+            .border(if (hover) 1.dp else 0.6.dp, if (hover) Color(0xFFE88FAE) else Color(0x18A88966), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .padding(horizontal = 8.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(slotShort, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(16.dp))
+        Text(
+            slotShort,
+            color = Color.White,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .background(if (assigned != null) GoaldayDesign.PrimaryAction else Color(0xFFB07A8F), RoundedCornerShape(99.dp))
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        )
         if (assigned != null) {
-            Text(assigned.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(assigned.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                scheduleMetaText(assigned).takeIf { it.isNotBlank() }?.let { meta ->
+                    Text(meta, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                }
+            }
         } else {
             Text(
-                "（点此分配）",
+                if (dropReady) "点此放入$slotKey" else "空时段",
                 color = Color(0xFFB07A8F),
                 style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.clickable {
                     val target = fallback ?: return@clickable
                     onAssign(target)
