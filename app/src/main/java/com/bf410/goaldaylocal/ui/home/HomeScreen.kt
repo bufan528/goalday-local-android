@@ -43,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
@@ -305,6 +306,7 @@ private fun PromoHeader(
         modifier = Modifier
             .fillMaxWidth()
             .height(148.dp)
+            .shadow(12.dp, RoundedCornerShape(22.dp), clip = false)
             .background(
                 Brush.linearGradient(
                     listOf(Color(0xFFFFF4EA), Color(0xFFFFE4EC), Color(0xFFF2CFB3)),
@@ -425,8 +427,9 @@ private fun PaperPlanner(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(8.dp, RoundedCornerShape(22.dp), clip = false)
             .background(GoaldayDesign.Surface, RoundedCornerShape(22.dp))
-            .border(1.dp, Color(0x14A88966), RoundedCornerShape(22.dp))
+            .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(22.dp))
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -451,6 +454,7 @@ private fun PaperPlanner(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(GoaldayDesign.PinkSoft, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = 9.dp, vertical = 7.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -617,8 +621,16 @@ private fun TimelineDayRow(
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(28.dp)) {
-            Text(day.toString(), color = if (selected) GoaldayDesign.Pink else GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(32.dp)) {
+            Text(
+                day.toString(),
+                color = if (selected) Color.White else GoaldayDesign.Pink,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .background(if (selected) GoaldayDesign.Pink else Color(0x12E88FAE), RoundedCornerShape(99.dp))
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
+            )
             Text(week, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -670,6 +682,7 @@ private fun QuickInput(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(Color(0xFAFFFDF8), RoundedCornerShape(GoaldayDesign.RadiusS))
                         .border(0.7.dp, Color(0x16000000), RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -749,6 +762,9 @@ private fun TaskLine(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(if (entry.completed) 0.dp else 2.dp, RoundedCornerShape(12.dp), clip = false)
+            .background(if (entry.completed) Color(0x0D39A76D) else Color(0xFAFFFDF8), RoundedCornerShape(12.dp))
+            .border(0.6.dp, if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.14f) else Color(0x18A88966), RoundedCornerShape(12.dp))
             .combinedClickable(onClick = { onToggleDone(entry) }, onLongClick = { onGrab(entry) })
             .onGloballyPositioned { rowOrigin = it.boundsInRoot().topLeft }
             .pointerInput(entry.id) {
@@ -762,11 +778,19 @@ private fun TaskLine(
                     onDragCancel = onDragCancel,
                 )
             }
-            .padding(vertical = 2.dp),
+            .padding(horizontal = 8.dp, vertical = 7.dp),
         verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
-        Text(if (entry.completed) "✓" else "□", color = if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+        Text(
+            if (entry.completed) "✓" else "○",
+            color = Color.White,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .background(if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.Pink, RoundedCornerShape(99.dp))
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+        )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 entry.title,
@@ -825,6 +849,7 @@ private fun HomeActionDock(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(6.dp, RoundedCornerShape(18.dp), clip = false)
             .background(Color(0xCCFFFDF8), RoundedCornerShape(18.dp))
             .border(0.7.dp, Color(0x20A88966), RoundedCornerShape(18.dp))
             .padding(8.dp),
@@ -857,6 +882,7 @@ private fun HomeActionCard(
     Row(
         modifier = modifier
             .height(62.dp)
+            .shadow(2.dp, RoundedCornerShape(14.dp), clip = false)
             .background(color.copy(alpha = 0.10f), RoundedCornerShape(14.dp))
             .border(0.7.dp, color.copy(alpha = 0.20f), RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
@@ -865,7 +891,7 @@ private fun HomeActionCard(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-        modifier = Modifier
+            modifier = Modifier
                 .size(34.dp)
                 .background(color, RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center,
