@@ -827,6 +827,7 @@ private fun GoaldayHandbookScreen(
                 onUpdateDeadline = { viewModel.updateTargetItemDeadline(targetItem, it) },
                 onAddToSchedule = { day -> viewModel.addItemToSchedule(targetItem, day) },
                 onSaveAsOwnTarget = { viewModel.addCustomPageItem(targetItem) },
+                onAddToDiary = { done -> viewModel.addTargetDetailToDiary(targetItem, completed = done) },
             )
         }
     }
@@ -1935,6 +1936,7 @@ private fun BookDetailView(
                 onUpdateDeadline = { viewModel.updateTargetItemDeadline(targetItem, it) },
                 onAddToSchedule = { day -> viewModel.addItemToSchedule(targetItem, day) },
                 onSaveAsOwnTarget = { viewModel.addCustomPageItem(targetItem) },
+                onAddToDiary = { done -> viewModel.addTargetDetailToDiary(targetItem, completed = done) },
             )
         }
     }
@@ -1975,6 +1977,7 @@ private fun TargetDetailRouteOverlay(
     onUpdateDeadline: (Int?) -> Unit,
     onAddToSchedule: (Int) -> Unit,
     onSaveAsOwnTarget: () -> Unit,
+    onAddToDiary: (Boolean) -> Unit,
 ) {
     val today = java.time.LocalDate.now().dayOfMonth
     val tomorrow = today + 1
@@ -2105,6 +2108,16 @@ private fun TargetDetailRouteOverlay(
                         onSaveAsOwnTarget()
                         appendDetailNote("我的目标：$item")
                         actionHint = "已保存为我的目标"
+                    }
+                    TargetOptionRow(
+                        code = "DIARY",
+                        title = "写入日记目标块",
+                        subtitle = "生成 item_diary_target 风格记录，并同步到本地日程",
+                        accent = Color(0xFFB07A8F),
+                    ) {
+                        onAddToDiary(checked)
+                        appendDetailNote("日记：已把「$item」写入目标记录块")
+                        actionHint = "已写入日记"
                     }
                     TargetOptionRow(
                         code = "REVIEW",

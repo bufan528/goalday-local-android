@@ -209,6 +209,31 @@ class BookViewModel(
         syncEditableContent()
     }
 
+    fun addTargetDetailToDiary(item: String, completed: Boolean = false) {
+        val normalized = item.trim()
+        if (normalized.isBlank()) return
+        val book = currentBook()
+        val diaryPage = book.pages.firstOrNull { it is DiaryPage } as? DiaryPage ?: return
+        val raw = store.diaryText(book.id, diaryPage.title)
+        val prefix = if (completed) "✓" else "○"
+        val blockLine = listOf(
+            "target",
+            if (completed) "check" else "body",
+            escapeDiaryScheduleBlockText("$prefix $normalized"),
+        ).joinToString("|")
+        val updated = appendToDiarySection(
+            raw = raw,
+            sectionName = "日记块",
+            item = blockLine,
+        )
+        store.setDiaryText(book.id, diaryPage.title, updated)
+        if (currentPage() is DiaryPage && currentPage().title == diaryPage.title) {
+            _uiState.update { it.copy(diaryDraft = updated) }
+        }
+        syncDiarySchedulesForBook(book)
+        _uiState.update { it.copy(schedulePreviewEntries = yearEntriesForAnchor()) }
+    }
+
     fun addItemToSchedule(item: String, day: Int) {
         val title = item.trim()
         if (title.isBlank()) return
@@ -794,6 +819,9 @@ class BookViewModel(
         if (escaping) builder.append('\\')
         return builder.toString()
     }
+
+    private fun escapeDiaryScheduleBlockText(text: String): String =
+        text.replace("\\", "\\\\").replace("\n", "\\n").replace("|", "\\p")
 
     private fun normalizeDiaryScheduleTitle(raw: String): String =
         raw.lines()
