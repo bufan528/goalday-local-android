@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,18 +58,27 @@ private data class GuidePage(
     val asset: String,
     val star: String,
     val tone: Color,
+    val target: GuideTarget,
 )
+
+internal enum class GuideTarget {
+    INSPIRATION,
+    HANDBOOK,
+    DIARY,
+    HOME,
+}
 
 @Composable
 internal fun GuideOverlay(
     onClose: () -> Unit,
+    onOpenTarget: (GuideTarget) -> Unit,
 ) {
     val pages = remember {
         listOf(
-            GuidePage("目标", "先把目标放进手账", "从灵感中心选择主题，勾选目标后可以导入任务池，也可以保存成一本手账。", "选主题 · 勾目标", "聚焦：灵感中心", "lottie/book.png", "lottie/star_pink.png", Color(0xFFE88FAE)),
-            GuidePage("日程", "把任务排进今天", "在日程页把任务拖入日期，或者点目标卡片的排入按钮；桌面小组件会跟着刷新。", "拖入日期 · 标记完成", "聚焦：手账/整月", "lottie/img_4.png", "lottie/star_green.png", Color(0xFF6F8E68)),
-            GuidePage("日记", "每天写成块", "日记支持文字块、目标块、专题目标块和图片；完成的目标也能直接关联到日记。", "写文字 · 贴目标", "聚焦：日记块", "lottie/card.png", "lottie/star_purple.png", Color(0xFFB07A8F)),
-            GuidePage("导出", "最后导出成手账图", "日记和日程手账都可以预览长图，再保存、分享或调用系统打印。", "预览 · 分享 · 打印", "聚焦：长图预览", "lottie/img_8.png", "lottie/star_yellow.png", Color(0xFFB88A58)),
+            GuidePage("目标", "先把目标放进手账", "从灵感中心选择主题，勾选目标后可以导入任务池，也可以保存成一本手账。", "进入灵感中心", "聚焦：灵感中心", "lottie/book.png", "lottie/star_pink.png", Color(0xFFE88FAE), GuideTarget.INSPIRATION),
+            GuidePage("日程", "把任务排进今天", "在手账页查看本月日程，把任务放进 todo/done；桌面小组件会跟着刷新。", "打开日程手账", "聚焦：手账/整月", "lottie/img_4.png", "lottie/star_green.png", Color(0xFF6F8E68), GuideTarget.HANDBOOK),
+            GuidePage("日记", "每天写成块", "日记支持文字块、目标块、专题目标块和图片；完成的目标也能直接关联到日记。", "打开日记页", "聚焦：日记块", "lottie/card.png", "lottie/star_purple.png", Color(0xFFB07A8F), GuideTarget.DIARY),
+            GuidePage("导出", "最后导出成手账图", "日记和日程手账都可以预览长图，再保存、分享或调用系统打印。", "回到今日", "聚焦：长图预览", "lottie/img_8.png", "lottie/star_yellow.png", Color(0xFFB88A58), GuideTarget.HOME),
         )
     }
     var index by remember { mutableIntStateOf(0) }
@@ -98,8 +109,9 @@ internal fun GuideOverlay(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -176,6 +188,22 @@ internal fun GuideOverlay(
                             .padding(horizontal = 18.dp, vertical = 9.dp),
                     )
                 }
+                Text(
+                    page.action,
+                    color = page.tone,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(page.tone.copy(alpha = 0.12f))
+                        .border(0.7.dp, page.tone.copy(alpha = 0.22f), RoundedCornerShape(16.dp))
+                        .clickable {
+                            onClose()
+                            onOpenTarget(page.target)
+                        }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                )
             }
         }
     }
@@ -226,7 +254,7 @@ private fun GuideIllustration(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(330.dp)
+            .height(236.dp)
             .clip(RoundedCornerShape(28.dp))
             .background(
                 Brush.radialGradient(
@@ -243,7 +271,7 @@ private fun GuideIllustration(
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .size(228.dp)
+                .size(178.dp)
                 .graphicsLayer {
                     translationY = (glide - 0.5f) * 18f
                     scaleX = 0.98f + (pulse - 0.88f) * 0.12f

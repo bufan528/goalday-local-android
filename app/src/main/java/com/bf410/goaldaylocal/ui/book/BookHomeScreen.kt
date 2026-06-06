@@ -96,6 +96,13 @@ private fun entryLandingPageIndex(book: TopicBook, entryMode: BookEntryMode): In
         else -> -1
     }.takeIf { it >= 0 } ?: 0
 
+private fun entryLandingBookIndex(books: List<TopicBook>, entryMode: BookEntryMode): Int =
+    when (entryMode) {
+        BookEntryMode.HANDBOOK -> books.indexOfFirst { book -> book.pages.any { it is SchedulePage || it is PlanPage } }
+        BookEntryMode.DIARY -> books.indexOfFirst { book -> book.pages.any { it is DiaryPage } }
+        else -> -1
+    }.takeIf { it >= 0 } ?: 0
+
 @Composable
 fun BookHomeScreen(
     viewModel: BookViewModel,
@@ -113,17 +120,36 @@ fun BookHomeScreen(
 
     val hasBooks = uiState.books.isNotEmpty()
     val safeBookIndex = uiState.selectedBookIndex.coerceIn(0, (uiState.books.lastIndex).coerceAtLeast(0))
+    val landingBookIndex = remember(uiState.books, entryMode) { entryLandingBookIndex(uiState.books, entryMode) }
+    if (!hasBooks) {
+        BookUnavailableState(
+            title = "还没有可用手账",
+            body = "本地样例和自建手账都为空，先新建一本手账后再进入日程或日记。",
+            action = "新建手账",
+            onAction = { showCreateDialog = true },
+        )
+        if (showCreateDialog) {
+            CreateBookDialog(
+                onDismiss = { showCreateDialog = false },
+                onConfirm = { title, subtitle, color ->
+                    viewModel.createCustomBook(title, subtitle, color)
+                    showCreateDialog = false
+                },
+            )
+        }
+        return
+    }
     LaunchedEffect(entryMode) {
         if (entryMode != BookEntryMode.HANDBOOK && entryMode != BookEntryMode.DIARY) {
             consumedEntryLandingKey = null
         }
     }
-    LaunchedEffect(entryMode, hasBooks, uiState.selectedBookIndex) {
-        if ((entryMode == BookEntryMode.HANDBOOK || entryMode == BookEntryMode.DIARY) && hasBooks && uiState.selectedBookIndex != 0) {
-            viewModel.selectBook(0)
+    LaunchedEffect(entryMode, hasBooks, landingBookIndex, uiState.selectedBookIndex) {
+        if ((entryMode == BookEntryMode.HANDBOOK || entryMode == BookEntryMode.DIARY) && hasBooks && uiState.selectedBookIndex != landingBookIndex) {
+            viewModel.selectBook(landingBookIndex)
         }
     }
-    if ((entryMode == BookEntryMode.HANDBOOK || entryMode == BookEntryMode.DIARY) && hasBooks && uiState.selectedBookIndex != 0) {
+    if ((entryMode == BookEntryMode.HANDBOOK || entryMode == BookEntryMode.DIARY) && hasBooks && uiState.selectedBookIndex != landingBookIndex) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -159,7 +185,11 @@ fun BookHomeScreen(
 
         BookEntryMode.HANDBOOK -> {
             if (!hasBooks) return
-            val book = uiState.books.first()
+            val book = uiState.books[safeBookIndex]
+            if (book.pages.isEmpty()) {
+                BookUnavailableState("这本手账没有页面", "请先新建一个日程页、计划页或日记页。", "添加页面") { showPageDialog = true }
+                return
+            }
             LaunchedEffect(entryMode, book.id) {
                 val landingIndex = entryLandingPageIndex(book, entryMode)
                 val landingKey = "${entryMode.name}:${book.id}"
@@ -186,7 +216,11 @@ fun BookHomeScreen(
 
         BookEntryMode.DIARY -> {
             if (!hasBooks) return
-            val book = uiState.books.first()
+            val book = uiState.books[safeBookIndex]
+            if (book.pages.none { it is DiaryPage }) {
+                BookUnavailableState("这本手账没有日记页", "日记入口需要至少一个日记页，添加后会自动保存到本机。", "添加日记页") { showPageDialog = true }
+                return
+            }
             LaunchedEffect(entryMode, book.id) {
                 val landingIndex = entryLandingPageIndex(book, entryMode)
                 val landingKey = "${entryMode.name}:${book.id}"
@@ -231,6 +265,10 @@ fun BookHomeScreen(
             } else {
                 if (!hasBooks) return
                 val book = uiState.books[safeBookIndex]
+                if (book.pages.isEmpty()) {
+                    BookUnavailableState("这本手账没有页面", "先添加一页，日程、清单和日记功能才有地方保存。", "添加页面") { showPageDialog = true }
+                    return
+                }
                 val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
                 val currentPage = book.pages[clampedPageIndex]
                 val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
@@ -318,6 +356,66 @@ fun BookHomeScreen(
                 showEditBookDialog = false
             },
         )
+    }
+}
+
+@Composable
+private fun BookUnavailableState(
+    title: String,
+    body: String,
+    action: String,
+    onAction: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFFFFFCF7),
+                        Color(0xFFF8EFE5),
+                        Color(0xFFF0DDCA),
+                    ),
+                ),
+            )
+            .padding(22.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color(0xEFFFFDF8))
+                .border(0.8.dp, Color(0x24A88966), RoundedCornerShape(24.dp))
+                .padding(18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                title,
+                color = Color(0xFF2F261D),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                body,
+                color = GoaldayDesign.InkMuted,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                action,
+                color = Color.White,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(GoaldayDesign.PrimaryAction)
+                    .clickable(onClick = onAction)
+                    .padding(horizontal = 15.dp, vertical = 9.dp),
+            )
+        }
     }
 }
 

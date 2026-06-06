@@ -10,15 +10,21 @@ object SampleLibrary {
         TopicBook(
             id = "goalday-2026",
             title = "$currentYear GOALDAY",
-            subtitle = "月度日程本",
+            subtitle = "月度日程与日记手账",
             color = Color(0xFFBBD1AD),
-            pages = (1..12).map { month ->
-                SchedulePage(
-                    title = "${month}月",
-                    items = listOf(
-                        "列出本月要做的所有事",
-                        "标出每周最重要的目标",
-                        "把当天计划拖入 todo/done",
+            pages = (1..12).flatMap { month ->
+                listOf(
+                    SchedulePage(
+                        title = "${month}月日程",
+                        items = listOf(
+                            "列出本月要做的所有事",
+                            "标出每周最重要的目标",
+                            "把当天计划拖入 todo/done",
+                        ),
+                    ),
+                    DiaryPage(
+                        title = "${month}月日记",
+                        prompt = "把${month}月的日程、完成项和今天的感受写进这一页。",
                     ),
                 )
             },

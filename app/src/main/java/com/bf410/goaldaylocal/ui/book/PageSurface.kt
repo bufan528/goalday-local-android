@@ -3136,6 +3136,20 @@ private fun DiarySection(
                 },
             )
         } else {
+            val previewState = currentDiaryState()
+            if (!previewState.hasUserContent) {
+                DiaryStartPanel(
+                    todoCount = todayPlanItems.size,
+                    doneCount = todayCompletedItems.size,
+                    onStart = { beginDiaryEditing(previewState.withTextBlock("")) },
+                    onAddImage = {
+                        structured = previewState
+                        onContentModeChange(PageContentMode.EditingDiary(title))
+                        imagePicker.launch(arrayOf("image/*"))
+                    },
+                    onAddTarget = { beginDiaryEditing(previewState.withTopicTargetBlock("")) },
+                )
+            }
             DiaryQuickActionRow(
                 onEdit = { beginDiaryEditing() },
                 onAddText = { beginDiaryEditing(currentDiaryState().withTextBlock()) },
@@ -3208,6 +3222,69 @@ private fun DiarySection(
             onDismiss = { longImagePreview = null },
         )
     }
+}
+
+@Composable
+private fun DiaryStartPanel(
+    todoCount: Int,
+    doneCount: Int,
+    onStart: () -> Unit,
+    onAddImage: () -> Unit,
+    onAddTarget: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Brush.verticalGradient(listOf(Color(0xFFFFF7FB), Color(0xFFFFFCF7))))
+            .border(0.8.dp, Color(0x26E88FAE), RoundedCornerShape(16.dp))
+            .padding(horizontal = 12.dp, vertical = 11.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
+                Text("开始今天的日记", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text("会自动关联今日待办 $todoCount 条、已完成 $doneCount 条", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+            }
+            Text(
+                "写一条",
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(GoaldayDesign.Pink)
+                    .clickable(onClick = onStart)
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
+            DiaryStartAction("图片", Color(0xFFB07A8F), Modifier.weight(1f), onAddImage)
+            DiaryStartAction("目标块", GoaldayDesign.Positive, Modifier.weight(1f), onAddTarget)
+        }
+    }
+}
+
+@Composable
+private fun DiaryStartAction(
+    label: String,
+    color: Color,
+    modifier: Modifier,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        color = color,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.White.copy(alpha = 0.72f))
+            .border(0.6.dp, color.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 7.dp),
+    )
 }
 
 @Composable
@@ -3295,6 +3372,17 @@ private data class StructuredDiary(
 
     val legacyImageUris: List<String>
         get() = imageUris.filterNot { it in imageBlockUris }
+
+    val hasUserContent: Boolean
+        get() = moodTags.isNotBlank() ||
+            todayDone.isNotBlank() ||
+            workTasks.isNotBlank() ||
+            smallJoy.isNotBlank() ||
+            canImprove.isNotBlank() ||
+            photoText.isNotBlank() ||
+            richHtml.isNotBlank() ||
+            blocks.isNotEmpty() ||
+            imageUris.isNotEmpty()
 
     fun withDate(date: LocalDate): StructuredDiary =
         copy(dateIso = date.toString())

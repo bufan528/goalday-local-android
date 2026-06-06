@@ -100,6 +100,35 @@ fun GoaldayApp(startTarget: String? = null) {
     var backSwipeStartX by remember { mutableFloatStateOf(0f) }
     var backSwipeTravel by remember { mutableFloatStateOf(0f) }
 
+    fun closeGuide() {
+        mmkv.encode(KEY_GUIDE_SEEN, true)
+        showGuide = false
+    }
+
+    fun openGuideTarget(target: GuideTarget) {
+        tab = RootTab.BOOK
+        when (target) {
+            GuideTarget.INSPIRATION -> {
+                bookSurface = BookRootSurface.INSPIRATION
+                bookEntryMode = BookEntryMode.PLANNER
+            }
+            GuideTarget.HANDBOOK -> {
+                bookSurface = BookRootSurface.BOOK
+                bookEntryMode = BookEntryMode.HANDBOOK
+                bookViewModel.openBook(0)
+            }
+            GuideTarget.DIARY -> {
+                bookSurface = BookRootSurface.BOOK
+                bookEntryMode = BookEntryMode.DIARY
+                bookViewModel.openBook(0)
+            }
+            GuideTarget.HOME -> {
+                bookSurface = BookRootSurface.HOME
+                bookEntryMode = BookEntryMode.PLANNER
+            }
+        }
+    }
+
     fun navigateBackInsideApp() {
         when {
             tab == RootTab.BOOK &&
@@ -253,10 +282,8 @@ fun GoaldayApp(startTarget: String? = null) {
                 }
                 if (showGuide) {
                     GuideOverlay(
-                        onClose = {
-                            mmkv.encode(KEY_GUIDE_SEEN, true)
-                            showGuide = false
-                        },
+                        onClose = ::closeGuide,
+                        onOpenTarget = ::openGuideTarget,
                     )
                 }
             }
