@@ -133,17 +133,7 @@ internal fun GuideOverlay(
                 )
             }
             GuideIllustration(page = page, index = index, meta = lottieMeta)
-            Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
-                pages.forEachIndexed { dotIndex, _ ->
-                    Box(
-                        modifier = Modifier
-                            .width(if (dotIndex == index) 24.dp else 8.dp)
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(99.dp))
-                            .background(if (dotIndex == index) GoaldayDesign.Pink else Color(0xFFD8CFC5)),
-                    )
-                }
-            }
+            GuideStepTimeline(pages = pages, selectedIndex = index)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -158,6 +148,7 @@ internal fun GuideOverlay(
                     Text(page.title, style = MaterialTheme.typography.headlineSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
                     Text(page.body, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.InkSecondary)
                 }
+                GuideActionPreview(page)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         if (index == 0) "从头开始" else "上一步",
@@ -221,6 +212,142 @@ private data class GuideLottieMeta(
     val frameCount: Int get() = (endFrame - startFrame).coerceAtLeast(0)
     val label: String get() = "$frameCount 帧 · ${frameRate}fps · ${width}x$height · $companionName"
 }
+
+@Composable
+private fun GuideStepTimeline(
+    pages: List<GuidePage>,
+    selectedIndex: Int,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color.White.copy(alpha = 0.62f))
+            .border(0.8.dp, Color.White.copy(alpha = 0.72f), RoundedCornerShape(20.dp))
+            .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "步骤 ${selectedIndex + 1}/${pages.size}",
+                color = GoaldayDesign.InkPrimary,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                pages[selectedIndex].focus,
+                color = pages[selectedIndex].tone,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(Color(0xFFE5DCD1)),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(((selectedIndex + 1).toFloat() / pages.size).coerceIn(0.1f, 1f))
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(pages[selectedIndex].tone),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            pages.forEachIndexed { stepIndex, step ->
+                val selected = stepIndex == selectedIndex
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (selected) step.tone.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.52f))
+                        .border(
+                            0.7.dp,
+                            if (selected) step.tone.copy(alpha = 0.28f) else Color(0x18A88966),
+                            RoundedCornerShape(14.dp),
+                        )
+                        .padding(horizontal = 7.dp, vertical = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
+                    Text(
+                        "${stepIndex + 1}",
+                        color = if (selected) Color.White else GoaldayDesign.InkMuted,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(if (selected) step.tone else Color(0x12A88966))
+                            .padding(horizontal = 7.dp, vertical = 2.dp),
+                    )
+                    Text(
+                        step.label,
+                        color = if (selected) GoaldayDesign.InkPrimary else GoaldayDesign.InkMuted,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GuideActionPreview(page: GuidePage) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xCCFFFDF8))
+            .border(0.7.dp, page.tone.copy(alpha = 0.18f), RoundedCornerShape(16.dp))
+            .padding(horizontal = 11.dp, vertical = 9.dp),
+        verticalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        GuidePreviewRow("入口", page.action, page.tone)
+        GuidePreviewRow("方式", "不需要服务器，数据保存在本机", page.tone)
+        GuidePreviewRow("目标", routeCopyFor(page.target), page.tone)
+    }
+}
+
+@Composable
+private fun GuidePreviewRow(
+    label: String,
+    value: String,
+    tone: Color,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            label,
+            color = tone,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .clip(RoundedCornerShape(99.dp))
+                .background(tone.copy(alpha = 0.12f))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+        )
+        Text(value, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+private fun routeCopyFor(target: GuideTarget): String =
+    when (target) {
+        GuideTarget.INSPIRATION -> "选主题、导入任务、保存成手账"
+        GuideTarget.HANDBOOK -> "翻页查看日程，把任务排进 TODO/DONE"
+        GuideTarget.DIARY -> "用文字、图片和目标块写当天记录"
+        GuideTarget.HOME -> "回到今日，预览长图后保存或分享"
+    }
 
 @Composable
 private fun GuideIllustration(

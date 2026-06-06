@@ -42,6 +42,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
@@ -784,7 +785,24 @@ private fun MiniSection(
 
 @Composable
 private fun EmptyHint(text: String) {
-    Text(text, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(13.dp))
+            .background(Color(0xFFFFFCF7))
+            .border(0.7.dp, Color(0x1FA88966), RoundedCornerShape(13.dp))
+            .padding(horizontal = 9.dp, vertical = 7.dp),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(7.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(GoaldayDesign.Pink.copy(alpha = 0.72f)),
+        )
+        Text(text, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+    }
 }
 
 @Composable
