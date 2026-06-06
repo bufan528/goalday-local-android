@@ -21,9 +21,7 @@ RE.sanitize = function(contents) {
 };
 
 RE.notify = function() {
-  if (window.AndroidEditor && window.AndroidEditor.onChange) {
-    window.AndroidEditor.onChange(RE.getHtml());
-  }
+  window.location.href = "goalday-editor://change?html=" + encodeURIComponent(RE.getHtml());
 };
 
 RE.setHtml = function(contents) {

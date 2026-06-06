@@ -522,7 +522,7 @@ class BookViewModel(
         }
         store.removeSavedBook(currentBook.id)
         store.removeCustomBook(currentBook.id)
-        refreshBooks(selectBookId = SampleLibrary.books.first().id, openBook = false)
+        refreshBooks(selectBookId = allBooks().firstOrNull()?.id.orEmpty(), openBook = false)
     }
 
     fun renameCurrentPage(title: String) {
@@ -605,7 +605,15 @@ class BookViewModel(
 
     private fun currentBook(): TopicBook {
         val books = _uiState.value.books
-        return books.getOrNull(_uiState.value.selectedBookIndex) ?: books.first()
+        return books.getOrNull(_uiState.value.selectedBookIndex)
+            ?: books.firstOrNull()
+            ?: TopicBook(
+                id = "empty_local_book",
+                title = "本地手账",
+                subtitle = "暂无页面",
+                color = Color(0xFFB88A58),
+                pages = emptyList(),
+            )
     }
 
     private fun currentPage(): BookPage =
@@ -993,7 +1001,7 @@ class BookViewModel(
 
     private fun refreshBooks(selectBookId: String, openBook: Boolean) {
         val updatedBooks = allBooks()
-        val selectedIndex = updatedBooks.indexOfFirst { it.id == selectBookId }.coerceAtLeast(0)
+        val selectedIndex = updatedBooks.indexOfFirst { it.id == selectBookId }.takeIf { it >= 0 } ?: 0
         store.setSelectedBookIndex(selectedIndex)
         _uiState.update {
             val selectedBook = updatedBooks.getOrNull(selectedIndex) ?: return@update it.copy(

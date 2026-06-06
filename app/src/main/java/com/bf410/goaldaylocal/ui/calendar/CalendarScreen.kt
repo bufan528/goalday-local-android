@@ -123,6 +123,16 @@ fun CalendarScreen(
     val maxDay = YearMonth.of(state.year, state.month).lengthOfMonth()
     selectedDay = selectedDay.coerceIn(1, maxDay)
 
+    LaunchedEffect(state.year, state.month) {
+        selectedDay = selectedDay.coerceIn(1, maxDay)
+        grabbedPoolEntry = null
+        draggingPoolEntry = null
+        draggingDayEntry = null
+        activeDropSlot = null
+        activeDoneDrop = false
+        dropSlotBounds.clear()
+        doneDropBounds = Rect.Zero
+    }
     LaunchedEffect(focusDay, maxDay) {
         val day = focusDay ?: return@LaunchedEffect
         selectedDay = day.coerceIn(1, maxDay)

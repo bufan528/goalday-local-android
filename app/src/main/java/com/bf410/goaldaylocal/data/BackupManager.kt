@@ -106,8 +106,17 @@ class BackupManager(
 
     private fun restoreBackupDirectory(source: File): File {
         val targetDir = File(context.filesDir.parentFile, "mmkv").apply { mkdirs() }
+        clearRestoreTarget(targetDir)
         copyMmkvFiles(source, targetDir)
         return source
+    }
+
+    private fun clearRestoreTarget(targetDir: File) {
+        targetDir.listFiles()
+            ?.filter { it.isFile && isSafeMmkvFileName(it.name) }
+            ?.forEach { file ->
+                check(file.delete()) { "清理旧数据失败：${file.name}" }
+            }
     }
 
     private fun copyMmkvFiles(sourceDir: File, targetDir: File) {
@@ -122,11 +131,13 @@ class BackupManager(
     }
 
     private fun isSafeMmkvBackupFile(file: File): Boolean {
-        val name = file.name
-        if (name.isBlank() || name.startsWith(".") || File.separatorChar in name) return false
+        if (!isSafeMmkvFileName(file.name)) return false
         if (file.length() > MAX_BACKUP_SINGLE_FILE_BYTES) return false
         return true
     }
+
+    private fun isSafeMmkvFileName(name: String): Boolean =
+        name.isNotBlank() && !name.startsWith(".") && File.separatorChar !in name
 
     companion object {
         private const val MAX_BACKUP_FILE_COUNT = 32
