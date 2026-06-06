@@ -76,6 +76,10 @@ fun InspirationScreen(
     val visibleTemplates = remember(selectedCategory, templates) {
         if (selectedCategory == "全部") templates else templates.filter { it.category == selectedCategory }
     }
+    if (templates.isEmpty()) {
+        InspirationUnavailableState()
+        return
+    }
     val selectedTemplate = templates[selectedTemplateIndex.coerceIn(0, templates.lastIndex)]
     val context = LocalContext.current
     val selectedTemplateItems = remember(selectedTemplate.id, selectedTemplate.targetAssetPath) {
@@ -217,6 +221,34 @@ fun InspirationScreen(
         if (mode == InspirationMode.FLIP) {
             Text("翻页", style = MaterialTheme.typography.titleLarge, color = Color(0xFF1F1D1A), fontWeight = FontWeight.SemiBold)
             Text("已保存内容可在手账中翻页查看", color = Color(0xFF7E756B), style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Composable
+private fun InspirationUnavailableState() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFFFFBF5), Color(0xFFF3E6D9), Color(0xFFEAD2BD)),
+                ),
+            )
+            .padding(18.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xEFFFFDF8), RoundedCornerShape(22.dp))
+                .border(0.8.dp, Color(0x24A88966), RoundedCornerShape(22.dp))
+                .padding(18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("暂无灵感模板", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+            Text("本地模板资源为空，先进入手账或日历继续使用已有功能。", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
         }
     }
 }

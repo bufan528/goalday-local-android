@@ -99,6 +99,15 @@ fun HomeScreen(
     val dayDropBounds = remember { mutableStateMapOf<Int, Rect>() }
     var doneDropBounds by remember { mutableStateOf(Rect.Zero) }
 
+    LaunchedEffect(state.year, state.month) {
+        grabbedEntry = null
+        draggingEntry = null
+        activeDropDay = null
+        activeDoneDrop = false
+        dayDropBounds.clear()
+        doneDropBounds = Rect.Zero
+    }
+
     LaunchedEffect(hint) {
         if (hint.isBlank()) return@LaunchedEffect
         delay(1200)

@@ -2665,6 +2665,10 @@ private fun InspirationCenterView(
     onApply: (List<String>, Boolean, Boolean) -> Unit,
     onSaveAsBook: (InspirationTemplate, List<String>) -> Unit,
 ) {
+    if (templates.isEmpty()) {
+        EmbeddedInspirationUnavailable(onBack)
+        return
+    }
     val selected = templates[selectedIndex.coerceIn(0, templates.lastIndex)]
     val context = LocalContext.current
     val loadedTargetItems = remember(selected.id, selected.targetAssetPath) {
@@ -2909,6 +2913,41 @@ private fun InspirationCenterView(
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("导入任务池") }
             }
+        }
+    }
+}
+
+@Composable
+private fun EmbeddedInspirationUnavailable(onBack: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(22.dp))
+                .background(Color(0xEFFFFDF8))
+                .border(0.8.dp, Color(0x24A88966), RoundedCornerShape(22.dp))
+                .padding(18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            Text("暂无灵感模板", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+            Text("本地模板资源为空，返回手账继续编辑已有页面。", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted, textAlign = TextAlign.Center)
+            Text(
+                "返回手账",
+                color = Color.White,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(GoaldayDesign.PrimaryAction)
+                    .clickable(onClick = onBack)
+                    .padding(horizontal = 15.dp, vertical = 9.dp),
+            )
         }
     }
 }
