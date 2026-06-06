@@ -1791,6 +1791,8 @@ private fun BookDetailView(
     val readerNextPage = filteredPages.getOrNull(segmentPageIndex + 1)
     var segmentSwipeDistance by remember(book.id) { mutableStateOf(0f) }
     var openedTargetDetail by remember(book.id, currentPage.title) { mutableStateOf<String?>(null) }
+    var confirmDeletePage by remember(book.id, currentPage.title) { mutableStateOf(false) }
+    var confirmDeleteBook by remember(book.id) { mutableStateOf(false) }
 
     fun realPageIndex(page: BookPage): Int =
         book.pages.indexOf(page).takeIf { it >= 0 }
@@ -1848,8 +1850,8 @@ private fun BookDetailView(
                 ActionChip(label = BookStrings.renamePage, color = Color(0xFF8F684F), onClick = onShowRenamePage)
                 ActionChip(label = BookStrings.moveLeft, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageLeft)
                 ActionChip(label = BookStrings.moveRight, color = Color(0xFF8F684F), onClick = viewModel::moveCurrentPageRight)
-                ActionChip(label = BookStrings.deletePage, color = Color(0xFF9C5A52), onClick = viewModel::deleteCurrentPage)
-                ActionChip(label = BookStrings.deleteBook, color = Color(0xFF9C5A52), onClick = viewModel::removeCurrentCustomBook)
+                ActionChip(label = BookStrings.deletePage, color = Color(0xFF9C5A52), onClick = { confirmDeletePage = true })
+                ActionChip(label = BookStrings.deleteBook, color = Color(0xFF9C5A52), onClick = { confirmDeleteBook = true })
             }
         }
         if (forcedSegment == null && !handbookMode) {
@@ -2073,7 +2075,62 @@ private fun BookDetailView(
                 onAddToDiary = { done -> viewModel.addTargetDetailToDiary(targetItem, completed = done) },
             )
         }
+        if (confirmDeletePage) {
+            DangerConfirmDialog(
+                title = "删除这一页？",
+                body = "将删除「${currentPage.title}」以及这一页的本地日记、目标勾选和任务池数据。",
+                confirmText = "删除页",
+                onDismiss = { confirmDeletePage = false },
+                onConfirm = {
+                    confirmDeletePage = false
+                    viewModel.deleteCurrentPage()
+                },
+            )
+        }
+        if (confirmDeleteBook) {
+            DangerConfirmDialog(
+                title = "删除这本手账？",
+                body = "将删除「${book.title}」及其中所有自定义页面和本地记录。这个操作无法撤销。",
+                confirmText = "删除书",
+                onDismiss = { confirmDeleteBook = false },
+                onConfirm = {
+                    confirmDeleteBook = false
+                    viewModel.removeCurrentCustomBook()
+                },
+            )
+        }
     }
+}
+
+@Composable
+private fun DangerConfirmDialog(
+    title: String,
+    body: String,
+    confirmText: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Text(
+                body,
+                color = GoaldayDesign.InkSecondary,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
+        confirmButton = {
+            Button(onClick = onConfirm) {
+                Text(confirmText)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(BookStrings.cancel)
+            }
+        },
+    )
 }
 
 private fun monthLabelForPage(title: String, fallback: String): String {

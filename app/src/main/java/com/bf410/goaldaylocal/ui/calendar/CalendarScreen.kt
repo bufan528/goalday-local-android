@@ -77,6 +77,7 @@ fun CalendarScreen(
     val state by viewModel.uiState.collectAsState()
     var selectedDay by remember { mutableIntStateOf(LocalDate.now().dayOfMonth) }
     var editingEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
+    var deleteCandidate by remember { mutableStateOf<ScheduleEntry?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var showImportPreview by remember { mutableStateOf(false) }
     var showImportSourcePicker by remember { mutableStateOf(false) }
@@ -396,7 +397,7 @@ fun CalendarScreen(
                             editingEntry = entry
                         },
                     )
-                    Text("🗑", color = GoaldayDesign.Danger, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { viewModel.removeSchedule(entry.id) })
+                    Text("🗑", color = GoaldayDesign.Danger, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { deleteCandidate = entry })
                 }
             }
             Text(
@@ -603,6 +604,30 @@ fun CalendarScreen(
                 viewModel.updateSchedule(entry.id, title, day, note, timeText, repeatRule, repeatInterval, repeatEndDate, applySeries)
                 editingEntry = null
                 toast = if (applySeries) "已保存整组重复" else "已保存"
+            },
+        )
+    }
+
+    deleteCandidate?.let { entry ->
+        AlertDialog(
+            onDismissRequest = { deleteCandidate = null },
+            title = { Text("删除这条日程？") },
+            text = {
+                Text(
+                    "将删除「${entry.title}」以及它的本地日程记录。",
+                    color = GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.removeSchedule(entry.id)
+                    deleteCandidate = null
+                    toast = "已删除任务"
+                }) { Text("删除") }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteCandidate = null }) { Text("取消") }
             },
         )
     }
