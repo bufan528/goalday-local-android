@@ -31,10 +31,14 @@ fun GoaldayTopBar(
             .padding(top = 6.dp)
             .fillMaxWidth(),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(leftTitle, style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkSecondary)
-            Text("|", style = MaterialTheme.typography.labelMedium, color = Color(0xFFD2CBC1))
-            Text("Goalday", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.InkPrimary)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(leftTitle, style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkSecondary, maxLines = 1)
+            Text("|", style = MaterialTheme.typography.labelMedium, color = Color(0xFFD2CBC1), maxLines = 1)
+            Text("Goalday", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.InkPrimary, maxLines = 1)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             rightSecondary?.invoke(this)
@@ -42,6 +46,7 @@ fun GoaldayTopBar(
                 rightPrimaryText,
                 color = Color.White,
                 style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
                 modifier = Modifier
                     .background(GoaldayDesign.PrimaryAction, RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .clickable(onClick = onRightPrimaryClick)

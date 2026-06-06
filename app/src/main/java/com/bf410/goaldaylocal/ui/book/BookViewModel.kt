@@ -581,8 +581,9 @@ class BookViewModel(
             "schedule" -> SchedulePage(trimmed, emptyList())
             else -> DiaryPage(trimmed, "写下这一页最重要的记录。")
         }
+        val newPageIndex = currentBook().pages.size
         updateCurrentBookPages { it + newPage }
-        setPage(currentBook().pages.lastIndex.coerceAtLeast(0))
+        setPage(newPageIndex)
     }
 
     fun deleteCurrentPage() {

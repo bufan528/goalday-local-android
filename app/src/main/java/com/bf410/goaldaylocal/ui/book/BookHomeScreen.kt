@@ -82,6 +82,11 @@ private enum class HandbookSection(val label: String) {
     TARGET("目标"),
 }
 
+private data class PageDialogPreset(
+    val type: String = "schedule",
+    val title: String = "",
+)
+
 enum class BookEntryMode {
     PLANNER,
     INSPIRATION,
@@ -114,6 +119,7 @@ fun BookHomeScreen(
     var showRenamePageDialog by remember { mutableStateOf(false) }
     var showEditBookDialog by remember { mutableStateOf(false) }
     var showManagePanel by remember { mutableStateOf(false) }
+    var pageDialogPreset by remember { mutableStateOf(PageDialogPreset()) }
     var showInspiration by remember(entryMode) { mutableStateOf(entryMode == BookEntryMode.INSPIRATION) }
     var selectedTemplateIndex by remember { mutableStateOf(0) }
     var consumedEntryLandingKey by remember { mutableStateOf<String?>(null) }
@@ -169,7 +175,7 @@ fun BookHomeScreen(
                 templates = InspirationTemplates.all,
                 selectedIndex = selectedTemplateIndex,
                 onSelect = { selectedTemplateIndex = it },
-                onBack = { },
+                onBack = { viewModel.openLibrary() },
                 onApply = { items, pushToToday, clearSource ->
                     viewModel.applyInspirationTemplate(
                         items = items,
@@ -187,7 +193,10 @@ fun BookHomeScreen(
             if (!hasBooks) return
             val book = uiState.books[safeBookIndex]
             if (book.pages.isEmpty()) {
-                BookUnavailableState("这本手账没有页面", "请先新建一个日程页、计划页或日记页。", "添加页面") { showPageDialog = true }
+                BookUnavailableState("这本手账没有页面", "请先新建一个日程页、计划页或日记页。", "添加页面") {
+                    pageDialogPreset = PageDialogPreset(type = "schedule", title = "日程页")
+                    showPageDialog = true
+                }
                 return
             }
             LaunchedEffect(entryMode, book.id) {
@@ -218,7 +227,10 @@ fun BookHomeScreen(
             if (!hasBooks) return
             val book = uiState.books[safeBookIndex]
             if (book.pages.none { it is DiaryPage }) {
-                BookUnavailableState("这本手账没有日记页", "日记入口需要至少一个日记页，添加后会自动保存到本机。", "添加日记页") { showPageDialog = true }
+                BookUnavailableState("这本手账没有日记页", "日记入口需要至少一个日记页，添加后会自动保存到本机。", "添加日记页") {
+                    pageDialogPreset = PageDialogPreset(type = "diary", title = "日记页")
+                    showPageDialog = true
+                }
                 return
             }
             LaunchedEffect(entryMode, book.id) {
@@ -243,7 +255,10 @@ fun BookHomeScreen(
                 nextPage = nextPage,
                 uiState = uiState,
                 onBackToLibrary = { },
-                onShowAddPage = { showPageDialog = true },
+                onShowAddPage = {
+                    pageDialogPreset = PageDialogPreset(type = "diary", title = "日记页")
+                    showPageDialog = true
+                },
                 onShowRenamePage = { showRenamePageDialog = true },
                 onShowEditBook = { showEditBookDialog = true },
                 onToggleManagePanel = { },
@@ -266,7 +281,10 @@ fun BookHomeScreen(
                 if (!hasBooks) return
                 val book = uiState.books[safeBookIndex]
                 if (book.pages.isEmpty()) {
-                    BookUnavailableState("这本手账没有页面", "先添加一页，日程、清单和日记功能才有地方保存。", "添加页面") { showPageDialog = true }
+                    BookUnavailableState("这本手账没有页面", "先添加一页，日程、清单和日记功能才有地方保存。", "添加页面") {
+                        pageDialogPreset = PageDialogPreset(type = "schedule", title = "日程页")
+                        showPageDialog = true
+                    }
                     return
                 }
                 val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
@@ -301,7 +319,10 @@ fun BookHomeScreen(
                         nextPage = nextPage,
                         uiState = uiState,
                         onBackToLibrary = viewModel::openLibrary,
-                        onShowAddPage = { showPageDialog = true },
+                        onShowAddPage = {
+                            pageDialogPreset = PageDialogPreset(type = "schedule", title = "日程页")
+                            showPageDialog = true
+                        },
                         onShowRenamePage = { showRenamePageDialog = true },
                         onShowEditBook = { showEditBookDialog = true },
                         onToggleManagePanel = { showManagePanel = !showManagePanel },
@@ -327,6 +348,7 @@ fun BookHomeScreen(
 
     if (showPageDialog) {
         CreatePageDialog(
+            preset = pageDialogPreset,
             onDismiss = { showPageDialog = false },
             onConfirm = { type, title ->
                 viewModel.addPage(type, title)
@@ -2892,16 +2914,20 @@ private fun EditBookDialog(
 
 @Composable
 private fun CreatePageDialog(
+    preset: PageDialogPreset,
     onDismiss: () -> Unit,
     onConfirm: (type: String, title: String) -> Unit,
 ) {
-    var title by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf("target") }
+    var title by remember(preset) { mutableStateOf(preset.title) }
+    var type by remember(preset) { mutableStateOf(preset.type) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            Button(onClick = { if (title.isNotBlank()) onConfirm(type, title) }) {
+            Button(
+                enabled = title.isNotBlank(),
+                onClick = { onConfirm(type, title) },
+            ) {
                 Text(BookStrings.createPage)
             }
         },
@@ -2923,7 +2949,12 @@ private fun CreatePageDialog(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(99.dp))
                                 .background(if (type == key) Color(0x33B88A58) else Color.Transparent)
-                                .clickable { type = key }
+                                .clickable {
+                                    if (title.isBlank() || title in defaultPageTitles) {
+                                        title = defaultPageTitle(key)
+                                    }
+                                    type = key
+                                }
                                 .padding(horizontal = 10.dp, vertical = 6.dp),
                         )
                     }
@@ -2932,6 +2963,17 @@ private fun CreatePageDialog(
         },
     )
 }
+
+private val defaultPageTitles = setOf("目标页", "计划页", "日程页", "日记页")
+
+private fun defaultPageTitle(type: String): String =
+    when (type) {
+        "target" -> "目标页"
+        "plan" -> "计划页"
+        "schedule" -> "日程页"
+        "diary" -> "日记页"
+        else -> "新页面"
+    }
 
 @Composable
 private fun RenamePageDialog(

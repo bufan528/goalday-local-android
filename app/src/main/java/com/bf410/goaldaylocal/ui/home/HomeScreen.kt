@@ -106,7 +106,10 @@ fun HomeScreen(
 
     fun addDraftTask(day: Int = draftDay) {
         val title = draftTask.trim()
-        if (title.isBlank()) return
+        if (title.isBlank()) {
+            hint = "先输入一条任务"
+            return
+        }
         calendarViewModel.addSchedule(title, day.coerceIn(1, maxDay), "")
         selectedDay = day.coerceIn(1, maxDay)
         draftDay = selectedDay
