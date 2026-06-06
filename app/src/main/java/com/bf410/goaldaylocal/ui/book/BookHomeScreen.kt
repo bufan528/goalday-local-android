@@ -547,6 +547,7 @@ private fun LibraryView(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
                 .background(Color(0x66FFFDF8))
+                .border(0.7.dp, Color(0x18A88966), RoundedCornerShape(14.dp))
                 .padding(horizontal = 12.dp, vertical = 9.dp),
         )
         Spacer(Modifier.height(14.dp))
@@ -656,7 +657,21 @@ private fun FeaturedHandbookCover(
                 Text(book.subtitle, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF4B3D31))
             }
             Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Text("${book.pages.size} ${BookStrings.pageUnit}", style = MaterialTheme.typography.labelLarge, color = Color(0xFF5D4B3D))
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("${book.pages.size} ${BookStrings.pageUnit}", style = MaterialTheme.typography.labelLarge, color = Color(0xFF5D4B3D))
+                    book.pages.take(3).forEach { page ->
+                        Text(
+                            pageRouteLabel(page),
+                            color = routeColor(resolveHandbookSection(page)),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(99.dp))
+                                .background(Color.White.copy(alpha = 0.52f))
+                                .padding(horizontal = 7.dp, vertical = 2.dp),
+                        )
+                    }
+                }
                 Text(
                     "打开这本",
                     color = Color.White,
@@ -680,7 +695,20 @@ private fun BookShelfRow(
 ) {
     if (books.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("书架", color = Color(0xFF3A2D24), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("书架", color = Color(0xFF3A2D24), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                "${books.size} 本",
+                color = Color(0xFF6F4D3A),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(Color(0x66FFFDF8))
+                    .border(0.6.dp, Color(0x20A88966), RoundedCornerShape(99.dp))
+                    .padding(horizontal = 9.dp, vertical = 4.dp),
+            )
+        }
         books.chunked(3).forEachIndexed { rowIndex, row ->
             Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                 Row(
@@ -754,7 +782,20 @@ private fun ShelfBookCover(
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(book.title, color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 3)
-            Text("${book.pages.size}页", color = Color(0xFF5D4B3D), style = MaterialTheme.typography.labelSmall)
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
+                    book.pages.take(3).forEach { page ->
+                        Box(
+                            modifier = Modifier
+                                .width(10.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(99.dp))
+                                .background(routeColor(resolveHandbookSection(page)).copy(alpha = 0.76f)),
+                        )
+                    }
+                }
+                Text("${book.pages.size}页", color = Color(0xFF5D4B3D), style = MaterialTheme.typography.labelSmall)
+            }
         }
     }
 }
@@ -765,6 +806,7 @@ private fun AddBookShelfCard(onCreateBook: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(68.dp)
+            .shadow(6.dp, RoundedCornerShape(18.dp), clip = false)
             .clip(RoundedCornerShape(18.dp))
             .background(Color(0x7AFFFDF8))
             .border(1.dp, Color(0x30A8795E), RoundedCornerShape(18.dp))
@@ -775,6 +817,14 @@ private fun AddBookShelfCard(onCreateBook: () -> Unit) {
         Text("+ 新建一本手账", color = Color(0xFF6F4D3A), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
     }
 }
+
+private fun pageRouteLabel(page: BookPage): String =
+    when (page) {
+        is SchedulePage -> "日程"
+        is DiaryPage -> "日记"
+        is TargetPage -> "目标"
+        is PlanPage -> "计划"
+    }
 
 @Composable
 private fun GoaldayHandbookScreen(
