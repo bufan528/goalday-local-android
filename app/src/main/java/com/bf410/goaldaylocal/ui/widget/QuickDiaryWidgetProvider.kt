@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.widget.RemoteViews
 import com.bf410.goaldaylocal.EXTRA_START_TARGET
 import com.bf410.goaldaylocal.MainActivity
@@ -31,13 +32,15 @@ class QuickDiaryWidgetProvider : AppWidgetProvider() {
             val style = ScheduleWidgetStyle.fromRaw(MMKV.defaultMMKV().decodeString("${ScheduleWidgetProvider.KEY_WIDGET_STYLE_PREFIX}$widgetId", null))
             views.setInt(R.id.quick_diary_root, "setBackgroundColor", style.backgroundColor)
             views.setTextViewText(R.id.quick_diary_title, "记录今天")
-            views.setTextViewText(R.id.quick_diary_subtitle, "打开日记页 · 本地保存")
+            views.setTextViewText(R.id.quick_diary_subtitle, "本地日记 · 无 VIP 锁")
             views.setTextViewText(R.id.quick_diary_date, "${today.monthValue}/${today.dayOfMonth}")
-            views.setTextViewText(R.id.quick_diary_hint, "补一条文字、目标或图片块")
+            views.setTextViewText(R.id.quick_diary_hint, "补一条文字、目标或图片块，写完只保存在本机")
+            views.setTextViewText(R.id.quick_diary_action, "打开手账")
             views.setTextColor(R.id.quick_diary_title, style.titleColor)
             views.setTextColor(R.id.quick_diary_subtitle, style.subtitleColor)
             views.setTextColor(R.id.quick_diary_date, style.accentColor)
             views.setTextColor(R.id.quick_diary_hint, style.doneTextColor)
+            views.setTextColor(R.id.quick_diary_action, if (style == ScheduleWidgetStyle.APK_WHITE) style.backgroundColor else Color.WHITE)
             views.setOnClickPendingIntent(R.id.quick_diary_root, openDiaryPendingIntent(context))
             views.setOnClickPendingIntent(R.id.quick_diary_action, openDiaryPendingIntent(context))
             return views

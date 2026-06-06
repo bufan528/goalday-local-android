@@ -96,10 +96,30 @@ private enum class WidgetConfigureKind(
     val title: String,
     val subtitle: String,
     val referenceSignal: String,
+    val unlockSignal: String,
+    val colorSignal: String,
 ) {
-    SCHEDULE_MID("日程中号组件", "适合放在首页，快速查看当前计划。", "schedule_mid_widget"),
-    SCHEDULE_LARGE("日程大号组件", "显示更多行，适合周计划和手账桌面。", "schedule_larger_widget"),
-    DIARY_ADD("日记添加组件", "一键进入今日记录，保留同一套颜色风格。", "diary_add_widget_configure"),
+    SCHEDULE_MID(
+        title = "日程中号组件",
+        subtitle = "适合放在首页，快速查看当前计划。",
+        referenceSignal = "schedule_mid_widget",
+        unlockSignal = "unlock_schedule_mid_widget",
+        colorSignal = "widget_schedule_add_color",
+    ),
+    SCHEDULE_LARGE(
+        title = "日程大号组件",
+        subtitle = "显示更多行，适合周计划和手账桌面。",
+        referenceSignal = "schedule_larger_widget",
+        unlockSignal = "unlock_schedule_larger_widget",
+        colorSignal = "widget_schedule_add_color",
+    ),
+    DIARY_ADD(
+        title = "日记添加组件",
+        subtitle = "一键进入今日记录，保留同一套颜色风格。",
+        referenceSignal = "diary_add_widget_configure",
+        unlockSignal = "unlock_diary_add_widget",
+        colorSignal = "widget_plan_add_color",
+    ),
 }
 
 @Composable
@@ -127,6 +147,7 @@ private fun ScheduleWidgetConfigureScreen(
             Text(kind.subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A7065))
         }
         WidgetKindSignalStrip(kind = kind)
+        WidgetLocalUnlockCard(kind = kind)
         WidgetPreviewCard(kind = kind, config = config, entries = previewEntries)
         ConfigureSectionTitle("颜色")
         Row(
@@ -189,19 +210,31 @@ private fun ScheduleWidgetConfigureScreen(
 
 @Composable
 private fun WidgetKindSignalStrip(kind: WidgetConfigureKind) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(Color.White.copy(alpha = 0.66f))
             .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
-        WidgetSignalPill(kind.referenceSignal, Color(0xFFB07A8F), Modifier.weight(1f))
-        WidgetSignalPill("widget_schedule_add_color", Color(0xFFE88FAE), Modifier.weight(1f))
-        WidgetSignalPill("本地可用", Color(0xFF6F8E68), Modifier.weight(1f))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            WidgetSignalPill(kind.referenceSignal, Color(0xFFB07A8F), Modifier.weight(1f))
+            WidgetSignalPill(kind.colorSignal, Color(0xFFE88FAE), Modifier.weight(1f))
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            WidgetSignalPill(kind.unlockSignal, Color(0xFF6F8E68), Modifier.weight(1f))
+            WidgetSignalPill("无 VIP 锁 · 纯本地", Color(0xFF6F8E68), Modifier.weight(1f))
+        }
     }
 }
 
@@ -222,6 +255,26 @@ private fun WidgetSignalPill(
             .background(color.copy(alpha = 0.10f))
             .padding(horizontal = 7.dp, vertical = 5.dp),
     )
+}
+
+@Composable
+private fun WidgetLocalUnlockCard(kind: WidgetConfigureKind) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFFF2F7EE))
+            .border(0.7.dp, Color(0x266F8E68), RoundedCornerShape(16.dp))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text("本地全解锁", style = MaterialTheme.typography.labelMedium, color = Color(0xFF4E7547), fontWeight = FontWeight.SemiBold)
+        Text(
+            "${kind.unlockSignal} 在本地版直接可用，不展示 VIP、登录或服务器校验。",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFF667660),
+        )
+    }
 }
 
 @Composable
@@ -256,7 +309,16 @@ private fun WidgetPreviewCard(
         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
                 Text(if (kind == WidgetConfigureKind.DIARY_ADD) "记录今天" else style.title, color = Color(style.titleColor), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(if (kind == WidgetConfigureKind.DIARY_ADD) "打开日记页 · 本地保存" else "${config.scope.label} · ${config.density.label}", color = Color(style.subtitleColor), style = MaterialTheme.typography.labelSmall)
+                Text(
+                    if (kind == WidgetConfigureKind.DIARY_ADD) {
+                        "打开日记页 · 本地保存 · 无 VIP 锁"
+                    } else {
+                        "${config.scope.label} · ${config.density.label} · ${style.dotResourceName}"
+                    },
+                    color = Color(style.subtitleColor),
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                )
             }
             Text(
                 if (kind == WidgetConfigureKind.DIARY_ADD) "${today.monthValue}/${today.dayOfMonth}" else config.scope.shortLabel,
@@ -392,7 +454,7 @@ private fun StyleSwatch(
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(style.label, color = Color(style.titleColor), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-            Text(if (selected) "已选择" else style.title, color = Color(style.subtitleColor), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            Text(if (selected) "已选择" else style.dotResourceName, color = Color(style.subtitleColor), style = MaterialTheme.typography.labelSmall, maxLines = 1)
         }
     }
 }
