@@ -109,9 +109,15 @@ fun BookHomeScreen(
     var showManagePanel by remember { mutableStateOf(false) }
     var showInspiration by remember(entryMode) { mutableStateOf(entryMode == BookEntryMode.INSPIRATION) }
     var selectedTemplateIndex by remember { mutableStateOf(0) }
+    var consumedEntryLandingKey by remember { mutableStateOf<String?>(null) }
 
     val hasBooks = uiState.books.isNotEmpty()
     val safeBookIndex = uiState.selectedBookIndex.coerceIn(0, (uiState.books.lastIndex).coerceAtLeast(0))
+    LaunchedEffect(entryMode) {
+        if (entryMode != BookEntryMode.HANDBOOK && entryMode != BookEntryMode.DIARY) {
+            consumedEntryLandingKey = null
+        }
+    }
     LaunchedEffect(entryMode, hasBooks, uiState.selectedBookIndex) {
         if ((entryMode == BookEntryMode.HANDBOOK || entryMode == BookEntryMode.DIARY) && hasBooks && uiState.selectedBookIndex != 0) {
             viewModel.selectBook(0)
@@ -156,8 +162,12 @@ fun BookHomeScreen(
             val book = uiState.books.first()
             LaunchedEffect(entryMode, book.id) {
                 val landingIndex = entryLandingPageIndex(book, entryMode)
-                if (uiState.selectedPageIndex != landingIndex) {
+                val landingKey = "${entryMode.name}:${book.id}"
+                if (consumedEntryLandingKey != landingKey && uiState.selectedPageIndex != landingIndex) {
+                    consumedEntryLandingKey = landingKey
                     viewModel.setPage(landingIndex)
+                } else {
+                    consumedEntryLandingKey = landingKey
                 }
             }
             val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
@@ -179,8 +189,12 @@ fun BookHomeScreen(
             val book = uiState.books.first()
             LaunchedEffect(entryMode, book.id) {
                 val landingIndex = entryLandingPageIndex(book, entryMode)
-                if (uiState.selectedPageIndex != landingIndex) {
+                val landingKey = "${entryMode.name}:${book.id}"
+                if (consumedEntryLandingKey != landingKey && uiState.selectedPageIndex != landingIndex) {
+                    consumedEntryLandingKey = landingKey
                     viewModel.setPage(landingIndex)
+                } else {
+                    consumedEntryLandingKey = landingKey
                 }
             }
             val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
@@ -1100,9 +1114,9 @@ private fun HandbookRouteSurface(
     ) {
         when (route) {
             HandbookSection.OVERVIEW -> HandbookOverviewRoute(payload, onOpenSection, onOpenPage)
-            HandbookSection.SCHEDULE -> HandbookScheduleRoute(payload)
-            HandbookSection.DIARY -> HandbookDiaryRoute(payload)
-            HandbookSection.TARGET -> HandbookTargetRoute(payload)
+            HandbookSection.SCHEDULE -> HandbookScheduleRoute(payload, onOpenPage)
+            HandbookSection.DIARY -> HandbookDiaryRoute(payload, onOpenPage)
+            HandbookSection.TARGET -> HandbookTargetRoute(payload, onOpenPage)
         }
     }
 }
@@ -1152,9 +1166,9 @@ private fun HandbookOpenSpreadSurface(
         ) {
             when (route) {
                 HandbookSection.OVERVIEW -> HandbookOverviewRoute(payload, onOpenSection, onOpenPage)
-                HandbookSection.SCHEDULE -> HandbookScheduleRoute(payload)
-                HandbookSection.DIARY -> HandbookDiaryRoute(payload)
-                HandbookSection.TARGET -> HandbookTargetRoute(payload)
+                HandbookSection.SCHEDULE -> HandbookScheduleRoute(payload, onOpenPage)
+                HandbookSection.DIARY -> HandbookDiaryRoute(payload, onOpenPage)
+                HandbookSection.TARGET -> HandbookTargetRoute(payload, onOpenPage)
             }
         }
     }
@@ -1355,22 +1369,31 @@ private fun HandbookOverviewRoute(
 }
 
 @Composable
-private fun HandbookScheduleRoute(payload: HandbookRoutePayload) {
-    HandbookRouteContent(HandbookSection.SCHEDULE, payload) {
+private fun HandbookScheduleRoute(
+    payload: HandbookRoutePayload,
+    onOpenPage: (Int) -> Unit,
+) {
+    HandbookRouteContent(HandbookSection.SCHEDULE, payload, onOpenPage) {
         HandbookScheduleRouteStrip(payload)
     }
 }
 
 @Composable
-private fun HandbookDiaryRoute(payload: HandbookRoutePayload) {
-    HandbookRouteContent(HandbookSection.DIARY, payload) {
+private fun HandbookDiaryRoute(
+    payload: HandbookRoutePayload,
+    onOpenPage: (Int) -> Unit,
+) {
+    HandbookRouteContent(HandbookSection.DIARY, payload, onOpenPage) {
         HandbookDiaryRouteStrip(payload)
     }
 }
 
 @Composable
-private fun HandbookTargetRoute(payload: HandbookRoutePayload) {
-    HandbookRouteContent(HandbookSection.TARGET, payload) {
+private fun HandbookTargetRoute(
+    payload: HandbookRoutePayload,
+    onOpenPage: (Int) -> Unit,
+) {
+    HandbookRouteContent(HandbookSection.TARGET, payload, onOpenPage) {
         HandbookTargetRouteStrip(payload)
     }
 }
@@ -1379,6 +1402,7 @@ private fun HandbookTargetRoute(payload: HandbookRoutePayload) {
 private fun HandbookRouteContent(
     route: HandbookSection,
     payload: HandbookRoutePayload,
+    onOpenPage: (Int) -> Unit,
     routeAccessory: (@Composable () -> Unit)? = null,
 ) {
     fun routeNextIndex(): Int =
@@ -1455,11 +1479,11 @@ private fun HandbookRouteContent(
                 handbookMode = true,
                 onFlipNext = {
                     val nextIndex = routeNextIndex()
-                    if (nextIndex in payload.book.pages.indices) payload.viewModel.setPage(nextIndex)
+                    if (nextIndex in payload.book.pages.indices) onOpenPage(nextIndex)
                 },
                 onFlipPrevious = {
                     val previousIndex = routePreviousIndex()
-                    if (previousIndex in payload.book.pages.indices) payload.viewModel.setPage(previousIndex)
+                    if (previousIndex in payload.book.pages.indices) onOpenPage(previousIndex)
                 },
             )
         }
@@ -1628,8 +1652,20 @@ private fun BookDetailView(
         }.ifEmpty { book.pages }
     }
     val segmentPageIndex = filteredPages.indexOfFirst { it.title == currentPage.title }.coerceAtLeast(0)
+    val readerPreviousPage = filteredPages.getOrNull(segmentPageIndex - 1)
+    val readerNextPage = filteredPages.getOrNull(segmentPageIndex + 1)
     var segmentSwipeDistance by remember(book.id) { mutableStateOf(0f) }
     var openedTargetDetail by remember(book.id, currentPage.title) { mutableStateOf<String?>(null) }
+
+    fun realPageIndex(page: BookPage): Int =
+        book.pages.indexOf(page).takeIf { it >= 0 }
+            ?: book.pages.indexOfFirst { it.title == page.title }
+
+    fun goToFilteredPage(filteredIndex: Int) {
+        val page = filteredPages.getOrNull(filteredIndex) ?: return
+        val realIndex = realPageIndex(page)
+        if (realIndex in book.pages.indices) viewModel.setPage(realIndex)
+    }
 
     fun switchSegment(next: BookSegment) {
         segment = next
@@ -1737,8 +1773,9 @@ private fun BookDetailView(
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
             ) {
-                book.pages.forEachIndexed { index, item ->
-                    val selected = index == uiState.selectedPageIndex
+                filteredPages.forEachIndexed { _, item ->
+                    val realIndex = realPageIndex(item)
+                    val selected = realIndex == uiState.selectedPageIndex
                     Text(
                         text = monthLabelForPage(item.title, fallback = item.title),
                         color = if (selected) Color.White else Color(0xFF6E6258),
@@ -1748,7 +1785,9 @@ private fun BookDetailView(
                             .clip(RoundedCornerShape(99.dp))
                             .background(if (selected) Color(0xFFE88FAE) else Color(0x20FFFFFF))
                             .border(0.6.dp, if (selected) Color(0xFFFFF5F8) else Color(0x20A68B71), RoundedCornerShape(99.dp))
-                            .clickable { viewModel.setPage(index) }
+                            .clickable {
+                                if (realIndex in book.pages.indices) viewModel.setPage(realIndex)
+                            }
                             .padding(horizontal = 11.dp, vertical = 5.dp),
                     )
                 }
@@ -1784,10 +1823,10 @@ private fun BookDetailView(
                         bookTitle = book.title,
                         subtitle = book.subtitle,
                         page = currentPage,
-                        previousPage = previousPage,
-                        nextPage = nextPage,
-                        pageIndex = uiState.selectedPageIndex,
-                        pageCount = book.pages.size,
+                        previousPage = readerPreviousPage,
+                        nextPage = readerNextPage,
+                        pageIndex = segmentPageIndex,
+                        pageCount = filteredPages.size,
                         tint = book.color,
                         isSaved = book.id in uiState.savedBookIds,
                         diaryDraft = uiState.diaryDraft,
@@ -1822,8 +1861,8 @@ private fun BookDetailView(
                         onOpenTargetDetail = { openedTargetDetail = it },
                         shellStyle = ShellStyle.BOOK,
                         handbookMode = true,
-                        onFlipNext = { if (uiState.selectedPageIndex < book.pages.lastIndex) viewModel.setPage(uiState.selectedPageIndex + 1) },
-                        onFlipPrevious = { if (uiState.selectedPageIndex > 0) viewModel.setPage(uiState.selectedPageIndex - 1) },
+                        onFlipNext = { goToFilteredPage(segmentPageIndex + 1) },
+                        onFlipPrevious = { goToFilteredPage(segmentPageIndex - 1) },
                     )
                 }
             }
@@ -1833,10 +1872,10 @@ private fun BookDetailView(
                 bookTitle = book.title,
                 subtitle = book.subtitle,
                 page = currentPage,
-                previousPage = previousPage,
-                nextPage = nextPage,
-                pageIndex = uiState.selectedPageIndex,
-                pageCount = book.pages.size,
+                previousPage = readerPreviousPage,
+                nextPage = readerNextPage,
+                pageIndex = segmentPageIndex,
+                pageCount = filteredPages.size,
                 tint = book.color,
                 isSaved = book.id in uiState.savedBookIds,
                 diaryDraft = uiState.diaryDraft,
@@ -1871,8 +1910,8 @@ private fun BookDetailView(
                 onOpenTargetDetail = { openedTargetDetail = it },
                 shellStyle = if (forcedSegment == BookSegment.DIARY || currentPage is DiaryPage) ShellStyle.BOOK else ShellStyle.LIGHT,
                 handbookMode = handbookMode,
-                onFlipNext = { if (uiState.selectedPageIndex < book.pages.lastIndex) viewModel.setPage(uiState.selectedPageIndex + 1) },
-                onFlipPrevious = { if (uiState.selectedPageIndex > 0) viewModel.setPage(uiState.selectedPageIndex - 1) },
+                onFlipNext = { goToFilteredPage(segmentPageIndex + 1) },
+                onFlipPrevious = { goToFilteredPage(segmentPageIndex - 1) },
             )
         }
         }
