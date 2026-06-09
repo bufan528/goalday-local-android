@@ -30,9 +30,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.data.BackupManager
@@ -245,11 +247,12 @@ private fun SettingsHeroCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFFFECF3), RoundedCornerShape(24.dp))
-            .border(1.dp, Color(0x22E88FAE), RoundedCornerShape(22.dp))
+            .shadow(18.dp, RoundedCornerShape(26.dp), clip = false)
+            .background(Color(0xFFFFECF3), RoundedCornerShape(26.dp))
+            .border(1.dp, Color(0x33E88FAE), RoundedCornerShape(26.dp))
             .padding(16.dp),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text("LOCAL DATA CENTER", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE88FAE), fontWeight = FontWeight.SemiBold)
@@ -270,11 +273,36 @@ private fun SettingsHeroCard(
                 StatusPill(backupSummary, Color(0xFFB45E7A))
                 StatusPill(latestBackup?.let { "最近 ${formatBackupDate(it.modifiedAtMillis)}" } ?: "暂无备份", Color(0xFF7A6E66))
             }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White.copy(alpha = 0.42f), RoundedCornerShape(16.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.46f), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 11.dp, vertical = 9.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LocalDataMetric("离线", "本机运行", Modifier.weight(1f))
+                LocalDataMetric("手账", "本地保存", Modifier.weight(1f))
+                LocalDataMetric("备份", "${backupCount} 份", Modifier.weight(1f))
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 HeroActionButton("立即备份", Color(0xFF2F2923), Modifier.weight(1f), onCreateBackup)
                 HeroActionButton("恢复最近", Color(0xFFE88FAE), Modifier.weight(1f), onRestoreLatest)
             }
         }
+    }
+}
+
+@Composable
+private fun LocalDataMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(label, color = Color(0xFFB45E7A), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+        Text(value, color = Color(0xFF4F433A), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -285,16 +313,24 @@ private fun HeroActionButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Text(
-        label,
-        color = Color.White,
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.SemiBold,
+    Box(
         modifier = modifier
+            .height(36.dp)
+            .shadow(5.dp, RoundedCornerShape(99.dp), clip = false)
             .background(color, RoundedCornerShape(99.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 7.dp),
-    )
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            label,
+            color = Color.White,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+        )
+    }
 }
 
 @Composable
@@ -308,8 +344,9 @@ private fun BackupActionPanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(8.dp, RoundedCornerShape(18.dp), clip = false)
             .background(Color(0xFFFFFBF6), RoundedCornerShape(16.dp))
-            .border(0.8.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
+            .border(1.dp, Color(0x22B7A893), RoundedCornerShape(16.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -335,17 +372,23 @@ private fun BackupActionChip(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Text(
-        label,
-        color = Color.White,
-        style = MaterialTheme.typography.labelSmall,
-        fontWeight = FontWeight.SemiBold,
+    Box(
         modifier = modifier
             .height(34.dp)
             .background(color, RoundedCornerShape(99.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-    )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            label,
+            color = Color.White,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 6.dp),
+        )
+    }
 }
 
 @Composable
@@ -358,8 +401,9 @@ private fun SettingsSection(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0x66FFFFFF), RoundedCornerShape(18.dp))
-                .border(1.dp, Color(0x18B7A893), RoundedCornerShape(18.dp))
+                .shadow(8.dp, RoundedCornerShape(20.dp), clip = false)
+                .background(Color(0xEEFFFFFF), RoundedCornerShape(20.dp))
+                .border(1.dp, Color(0x24B7A893), RoundedCornerShape(20.dp))
                 .padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             content = content,
@@ -377,7 +421,9 @@ private fun SettingRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0x73FFFFFF), RoundedCornerShape(14.dp))
+            .shadow(3.dp, RoundedCornerShape(14.dp), clip = false)
+            .background(Color(0xFFFFFFFF), RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0x14B7A893), RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -400,7 +446,9 @@ private fun FontSizeMenu(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0x73FFFFFF), RoundedCornerShape(14.dp))
+            .shadow(3.dp, RoundedCornerShape(14.dp), clip = false)
+            .background(Color.White, RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0x14B7A893), RoundedCornerShape(14.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -453,7 +501,8 @@ private fun BackupHistoryList(
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0x55FFFFFF), RoundedCornerShape(12.dp))
+                    .background(Color(0xFFFFFBF6), RoundedCornerShape(14.dp))
+                    .border(1.dp, Color(0x18B7A893), RoundedCornerShape(14.dp))
                     .padding(12.dp),
             )
             return
@@ -477,7 +526,9 @@ private fun BackupHistoryRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0x55FFFFFF), RoundedCornerShape(12.dp))
+            .shadow(3.dp, RoundedCornerShape(14.dp), clip = false)
+            .background(Color(0xFFFFFBF6), RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0x18B7A893), RoundedCornerShape(14.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -525,7 +576,8 @@ private fun StatusPill(
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
-            .background(Color.White.copy(alpha = 0.62f), RoundedCornerShape(99.dp))
+            .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(99.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.58f), RoundedCornerShape(99.dp))
             .padding(horizontal = 9.dp, vertical = 4.dp),
     )
 }
