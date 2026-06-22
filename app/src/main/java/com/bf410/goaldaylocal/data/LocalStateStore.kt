@@ -6,7 +6,6 @@ import com.tencent.mmkv.MMKV
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
-import java.time.YearMonth
 import java.util.UUID
 
 class LocalStateStore(
@@ -41,13 +40,14 @@ class LocalStateStore(
         mmkv.encode(KEY_SAVED_BOOKS, savedBookIds() - bookId)
     }
 
-    fun calendarAnchorYear(): Int = mmkv.decodeInt(KEY_CALENDAR_YEAR, LocalDate.now().year)
+    fun calendarAnchorYear(): Int = safeScheduleYear(mmkv.decodeInt(KEY_CALENDAR_YEAR, LocalDate.now().year))
 
-    fun calendarAnchorMonth(): Int = mmkv.decodeInt(KEY_CALENDAR_MONTH, LocalDate.now().monthValue)
+    fun calendarAnchorMonth(): Int = safeScheduleMonth(mmkv.decodeInt(KEY_CALENDAR_MONTH, LocalDate.now().monthValue))
 
     fun setCalendarAnchor(year: Int, month: Int) {
-        mmkv.encode(KEY_CALENDAR_YEAR, year)
-        mmkv.encode(KEY_CALENDAR_MONTH, month)
+        val safeDate = safeScheduleDate(year, month, 1)
+        mmkv.encode(KEY_CALENDAR_YEAR, safeDate.year)
+        mmkv.encode(KEY_CALENDAR_MONTH, safeDate.month)
     }
 
     fun calendarTheme(year: Int, month: Int): String =
@@ -64,17 +64,17 @@ class LocalStateStore(
             repeat(array.length()) { index ->
                 runCatching {
                     val item = array.getJSONObject(index)
-                    val entryYear = item.optInt("year", LocalDate.now().year)
-                    val entryMonth = item.optInt("month", LocalDate.now().monthValue).coerceIn(1, 12)
+                    val safeDate = safeScheduleDate(
+                        year = item.optInt("year", LocalDate.now().year),
+                        month = item.optInt("month", LocalDate.now().monthValue),
+                        day = item.optInt("day", LocalDate.now().dayOfMonth),
+                    )
                     ScheduleEntry(
                         id = item.optString("id").ifBlank { UUID.randomUUID().toString() },
                         title = item.optString("title").ifBlank { "未命名日程" },
-                        year = entryYear,
-                        month = entryMonth,
-                        day = item.optInt("day", LocalDate.now().dayOfMonth).coerceIn(
-                            1,
-                            YearMonth.of(entryYear, entryMonth).lengthOfMonth(),
-                        ),
+                        year = safeDate.year,
+                        month = safeDate.month,
+                        day = safeDate.day,
                         note = item.optString("note"),
                         timeText = item.optString("timeText"),
                         repeatRule = item.optString("repeatRule"),
@@ -93,13 +93,14 @@ class LocalStateStore(
     fun saveScheduleEntries(entries: List<ScheduleEntry>) {
         val array = JSONArray()
         entries.forEach { entry ->
+            val safeDate = safeScheduleDate(entry.year, entry.month, entry.day)
             array.put(
                 JSONObject()
                     .put("id", entry.id)
                     .put("title", entry.title)
-                    .put("year", entry.year)
-                    .put("month", entry.month)
-                    .put("day", entry.day)
+                    .put("year", safeDate.year)
+                    .put("month", safeDate.month)
+                    .put("day", safeDate.day)
                     .put("note", entry.note)
                     .put("timeText", entry.timeText)
                     .put("repeatRule", entry.repeatRule)
@@ -125,14 +126,13 @@ class LocalStateStore(
         repeatEndDate: String = "",
         repeatGroupId: String = "",
     ) {
-        val safeMonth = month.coerceIn(1, 12)
-        val safeDay = day.coerceIn(1, YearMonth.of(year, safeMonth).lengthOfMonth())
+        val safeDate = safeScheduleDate(year, month, day)
         val updated = scheduleEntries() + ScheduleEntry(
             id = UUID.randomUUID().toString(),
             title = title,
-            year = year,
-            month = safeMonth,
-            day = safeDay,
+            year = safeDate.year,
+            month = safeDate.month,
+            day = safeDate.day,
             note = note,
             timeText = timeText,
             repeatRule = repeatRule,
@@ -188,7 +188,7 @@ class LocalStateStore(
     fun targetItemMeta(bookId: String, pageTitle: String, item: String): TargetItemMeta {
         val raw = mmkv.decodeString(targetMetaKey(bookId, pageTitle, item), null) ?: return TargetItemMeta()
         val json = runCatching { JSONObject(raw) }.getOrNull() ?: return TargetItemMeta()
-        val maxDeadlineDay = YearMonth.now().lengthOfMonth()
+        val maxDeadlineDay = java.time.YearMonth.now().lengthOfMonth()
         return TargetItemMeta(
             note = json.optString("note"),
             deadlineDay = json.optInt("deadlineDay", 0)
