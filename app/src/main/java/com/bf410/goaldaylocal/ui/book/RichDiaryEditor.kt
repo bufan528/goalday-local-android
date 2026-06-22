@@ -1,7 +1,9 @@
 package com.bf410.goaldaylocal.ui.book
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
@@ -20,6 +22,7 @@ data class RichEditorCommand(
     val nonce: Long = System.nanoTime(),
 )
 
+@Suppress("DEPRECATION")
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun RichDiaryEditor(
@@ -47,7 +50,18 @@ fun RichDiaryEditor(
             WebView(context).apply {
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                settings.allowFileAccess = true
                 settings.allowContentAccess = false
+                settings.allowFileAccessFromFileURLs = false
+                settings.allowUniversalAccessFromFileURLs = false
+                settings.javaScriptCanOpenWindowsAutomatically = false
+                settings.setSupportMultipleWindows(false)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    settings.safeBrowsingEnabled = true
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                }
                 isVerticalScrollBarEnabled = false
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
@@ -59,14 +73,14 @@ fun RichDiaryEditor(
 
                     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                         val uri = request?.url ?: return true
-                        if (uri.scheme == "goalday-editor") {
+                        if (uri.scheme == EDITOR_CALLBACK_SCHEME) {
                             handleEditorChange(uri.getQueryParameter("html").orEmpty())
                             return true
                         }
-                        return uri.scheme != "file"
+                        return !isAllowedEditorAssetUrl(uri.toString())
                     }
                 }
-                loadUrl("file:///android_asset/editor.html")
+                loadUrl(EDITOR_ASSET_URL)
             }
         },
         update = { webView ->
@@ -92,7 +106,7 @@ fun RichDiaryEditor(
 private fun String.asJsString(): String =
     "'" + replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "") + "'"
 
-private fun sanitizeRichHtml(raw: String): String {
+internal fun sanitizeRichHtml(raw: String): String {
     var html = raw.take(MAX_RICH_HTML_LENGTH)
     html = html.replace(
         Regex("(?is)<\\s*(script|style|iframe|object|embed|link|meta)[^>]*>.*?<\\s*/\\s*\\1\\s*>"),
@@ -107,10 +121,18 @@ private fun sanitizeRichHtml(raw: String): String {
         "",
     )
     html = html.replace(
-        Regex("(?i)\\s+(href|src)\\s*=\\s*(\"[^\"]*javascript:[^\"]*\"|'[^']*javascript:[^']*'|javascript:[^\\s>]+)"),
+        Regex("(?i)\\s+(href|src)\\s*=\\s*(\"[^\"]*(javascript|data):[^\"]*\"|'[^']*(javascript|data):[^']*'|(javascript|data):[^\\s>]+)"),
         "",
     )
     return html
 }
 
+private fun isAllowedEditorAssetUrl(url: String): Boolean =
+    url == EDITOR_ASSET_URL ||
+        url == "file:///android_asset/normalize.css" ||
+        url == "file:///android_asset/style.css" ||
+        url == "file:///android_asset/rich_editor.js"
+
+private const val EDITOR_CALLBACK_SCHEME = "goalday-editor"
+private const val EDITOR_ASSET_URL = "file:///android_asset/editor.html"
 private const val MAX_RICH_HTML_LENGTH = 20_000
