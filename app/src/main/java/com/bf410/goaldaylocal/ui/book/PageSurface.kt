@@ -3095,8 +3095,25 @@ private fun DiarySection(
         onContentModeChange(PageContentMode.EditingDiary(title))
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(text = prompt, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6E665D))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(GoaldayDesign.CardPaperGradient)
+            .border(0.8.dp, Color(0x24B7A893), RoundedCornerShape(18.dp))
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        DiaryWorkspaceHeader(
+            title = title,
+            prompt = prompt,
+            state = currentDiaryState(),
+            todoCount = todayPlanItems.size,
+            doneCount = todayCompletedItems.size,
+            editing = editingDiary?.title == title,
+            onEdit = { beginDiaryEditing() },
+            onPickDate = { showDatePicker = true },
+        )
         DiaryBlockRail(
             state = currentDiaryState(),
             todoItems = todayPlanItems,
@@ -3195,8 +3212,9 @@ private fun DiarySection(
                 DatePicker(state = datePickerState)
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = {
+        DiaryExportDock(
+            hint = exportHint,
+            onPreview = {
                 val state = currentDiaryState()
                 longImagePreview = LongImagePreview(
                     title = title.ifBlank { "Goalday 日记" },
@@ -3204,15 +3222,12 @@ private fun DiarySection(
                     filePrefix = "Goalday_diary",
                     bitmap = renderDiaryLongImage(context, title, state),
                 )
-            }) { Text("预览长图") }
-            TextButton(onClick = {
+            },
+            onExport = {
                 val uri = exportDiaryLongImage(context, title, currentDiaryState())
                 exportHint = if (uri != null) "已导出长图" else "导出失败"
-            }) { Text("快速导出") }
-            if (exportHint.isNotBlank()) {
-                Text(exportHint, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A7065))
-            }
-        }
+            },
+        )
         Text(text = BookStrings.diaryLocalOnly, style = MaterialTheme.typography.labelSmall, color = tint.copy(alpha = 0.62f))
     }
     longImagePreview?.let { preview ->
@@ -3221,6 +3236,196 @@ private fun DiarySection(
             onDismiss = { longImagePreview = null },
         )
     }
+}
+
+@Composable
+private fun DiaryWorkspaceHeader(
+    title: String,
+    prompt: String,
+    state: StructuredDiary,
+    todoCount: Int,
+    doneCount: Int,
+    editing: Boolean,
+    onEdit: () -> Unit,
+    onPickDate: () -> Unit,
+) {
+    val imageCount = (state.imageBlockUris + state.legacyImageUris).distinct().size
+    val textCount = listOf(state.todayDone, state.workTasks, state.smallJoy, state.canImprove, state.photoText, state.richHtml)
+        .count { it.isNotBlank() } + state.blocks.count { it.type == DiaryBlockType.TEXT }
+    val targetCount = state.blocks.count {
+        it.type == DiaryBlockType.TARGET || it.type == DiaryBlockType.TARGET_CHILD || it.type == DiaryBlockType.TOPIC_TARGET
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFFFF9F4), Color(0xFFFFF0F6), Color(0xFFFFFCF7)),
+                ),
+            )
+            .border(0.8.dp, Color(0x28E88FAE), RoundedCornerShape(16.dp))
+            .padding(horizontal = 11.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                Text(
+                    title.ifBlank { "日记页" },
+                    color = GoaldayDesign.InkPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+                Text(
+                    prompt,
+                    color = GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 2,
+                )
+            }
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                Text(
+                    if (editing) "编辑中" else "书内预览",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(if (editing) GoaldayDesign.Pink else GoaldayDesign.PrimaryAction)
+                        .padding(horizontal = 9.dp, vertical = 4.dp),
+                )
+                Text(
+                    diaryDateLabel(state.date),
+                    color = GoaldayDesign.Pink,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Color.White.copy(alpha = 0.72f))
+                        .clickable(onClick = onPickDate)
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            DiaryWorkspaceMetric("文字", textCount, GoaldayDesign.InkSecondary, Modifier.weight(1f))
+            DiaryWorkspaceMetric("图片", imageCount, Color(0xFFB07A8F), Modifier.weight(1f))
+            DiaryWorkspaceMetric("目标", targetCount, GoaldayDesign.Positive, Modifier.weight(1f))
+            DiaryWorkspaceMetric("待办", todoCount + doneCount, GoaldayDesign.Pink, Modifier.weight(1f))
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(13.dp))
+                .background(Color.White.copy(alpha = 0.62f))
+                .padding(horizontal = 8.dp, vertical = 7.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                if (state.hasUserContent) "日记已经保存为本地书页" else "今天还没有内容，先写一条记录",
+                color = GoaldayDesign.InkMuted,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+            )
+            Text(
+                if (editing) "继续写" else "进入编辑",
+                color = GoaldayDesign.Pink,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(GoaldayDesign.PinkSoft)
+                    .clickable(onClick = onEdit)
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DiaryWorkspaceMetric(
+    label: String,
+    count: Int,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.White.copy(alpha = 0.70f))
+            .border(0.6.dp, color.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 7.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
+    ) {
+        Text(count.toString(), color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(label, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+    }
+}
+
+@Composable
+private fun DiaryExportDock(
+    hint: String,
+    onPreview: () -> Unit,
+    onExport: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color(0xFFFFFBF6))
+            .border(0.7.dp, Color(0x22B7A893), RoundedCornerShape(14.dp))
+            .padding(horizontal = 9.dp, vertical = 7.dp),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "导出",
+            color = GoaldayDesign.InkPrimary,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.width(42.dp),
+        )
+        DiaryDockAction("预览长图", GoaldayDesign.Pink, Modifier.weight(1f), onPreview)
+        DiaryDockAction("快速导出", GoaldayDesign.Positive, Modifier.weight(1f), onExport)
+        if (hint.isNotBlank()) {
+            Text(hint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun DiaryDockAction(
+    label: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Text(
+        label,
+        color = color,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+            .clip(RoundedCornerShape(99.dp))
+            .background(color.copy(alpha = 0.12f))
+            .border(0.6.dp, color.copy(alpha = 0.20f), RoundedCornerShape(99.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+    )
 }
 
 @Composable
