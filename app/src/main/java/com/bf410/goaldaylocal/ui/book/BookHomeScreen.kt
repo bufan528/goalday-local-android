@@ -1193,6 +1193,113 @@ private fun HandbookDockButton(
 }
 
 @Composable
+private fun HandbookReadingDeskHeader(
+    book: TopicBook,
+    currentPage: BookPage,
+    filteredPages: List<BookPage>,
+    selectedRealPageIndex: Int,
+    onOpenPage: (BookPage) -> Unit,
+) {
+    val route = resolveHandbookSection(currentPage)
+    val routePageCount = filteredPages.size.coerceAtLeast(1)
+    val totalItems = filteredPages.sumOf(::pageItemCount)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(GoaldayDesign.CardPaperGradient)
+            .border(0.8.dp, Color(0x28A88966), RoundedCornerShape(20.dp))
+            .padding(11.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = monthLabelForPage(currentPage.title, fallback = book.title),
+                    color = GoaldayDesign.InkPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+                Text(
+                    text = "${book.title} · ${route.label}路线 · 本地保存",
+                    color = GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                )
+            }
+            Text(
+                text = "离线",
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(routeColor(route))
+                    .padding(horizontal = 9.dp, vertical = 4.dp),
+            )
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(7.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            HandbookDeskMetric("页数", routePageCount.toString(), routeColor(route), Modifier.weight(1f))
+            HandbookDeskMetric("内容", totalItems.toString(), GoaldayDesign.RouteOverview, Modifier.weight(1f))
+            HandbookDeskMetric("全书", book.pages.size.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(7.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+        ) {
+            filteredPages.forEach { item ->
+                val selected = book.pages.indexOf(item) == selectedRealPageIndex
+                Text(
+                    text = monthLabelForPage(item.title, fallback = item.title),
+                    color = if (selected) Color.White else GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(if (selected) routeColor(route) else Color.White.copy(alpha = 0.54f))
+                        .border(0.6.dp, if (selected) Color.White.copy(alpha = 0.72f) else Color(0x20A68B71), RoundedCornerShape(99.dp))
+                        .clickable { onOpenPage(item) }
+                        .padding(horizontal = 11.dp, vertical = 5.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HandbookDeskMetric(
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White.copy(alpha = 0.58f))
+            .border(0.6.dp, color.copy(alpha = 0.16f), RoundedCornerShape(14.dp))
+            .padding(horizontal = 8.dp, vertical = 7.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
+    ) {
+        Text(value, color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(label, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+    }
+}
+
+@Composable
 private fun BoxScope.HandbookPhysicalBookDetails(pageProgress: Float) {
     repeat(9) { index ->
         Box(
@@ -1993,40 +2100,17 @@ private fun BookDetailView(
             Spacer(Modifier.height(8.dp))
         }
         if (handbookMode) {
-            Text(
-                text = monthLabelForPage(currentPage.title, fallback = book.title),
-                modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFF1F1D1A),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
+            HandbookReadingDeskHeader(
+                book = book,
+                currentPage = currentPage,
+                filteredPages = filteredPages,
+                selectedRealPageIndex = uiState.selectedPageIndex,
+                onOpenPage = { page ->
+                    val realIndex = realPageIndex(page)
+                    if (realIndex in book.pages.indices) viewModel.setPage(realIndex)
+                },
             )
-            Spacer(Modifier.height(6.dp))
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-            ) {
-                filteredPages.forEachIndexed { _, item ->
-                    val realIndex = realPageIndex(item)
-                    val selected = realIndex == uiState.selectedPageIndex
-                    Text(
-                        text = monthLabelForPage(item.title, fallback = item.title),
-                        color = if (selected) Color.White else Color(0xFF6E6258),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
-                            .background(if (selected) Color(0xFFE88FAE) else Color(0x20FFFFFF))
-                            .border(0.6.dp, if (selected) Color(0xFFFFF5F8) else Color(0x20A68B71), RoundedCornerShape(99.dp))
-                            .clickable {
-                                if (realIndex in book.pages.indices) viewModel.setPage(realIndex)
-                            }
-                            .padding(horizontal = 11.dp, vertical = 5.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
         }
         if (handbookMode) {
             Box(
@@ -2248,6 +2332,14 @@ private fun resolveHandbookSection(page: BookPage): HandbookSection =
         is DiaryPage -> HandbookSection.DIARY
         is TargetPage -> HandbookSection.TARGET
         is SchedulePage, is PlanPage -> HandbookSection.SCHEDULE
+    }
+
+private fun pageItemCount(page: BookPage): Int =
+    when (page) {
+        is DiaryPage -> 1
+        is TargetPage -> page.items.size
+        is SchedulePage -> page.items.size
+        is PlanPage -> page.items.size
     }
 
 @Composable
