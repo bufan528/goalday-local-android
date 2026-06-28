@@ -1201,8 +1201,8 @@ private fun HandbookReadingDeskHeader(
     onOpenPage: (BookPage) -> Unit,
 ) {
     val route = resolveHandbookSection(currentPage)
-    val routePageCount = filteredPages.size.coerceAtLeast(1)
-    val totalItems = filteredPages.sumOf(::pageItemCount)
+    val routeMetrics = metricsForPages(filteredPages)
+    val bookMetrics = metricsForBook(book)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1250,9 +1250,9 @@ private fun HandbookReadingDeskHeader(
             horizontalArrangement = Arrangement.spacedBy(7.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            HandbookDeskMetric("页数", routePageCount.toString(), routeColor(route), Modifier.weight(1f))
-            HandbookDeskMetric("内容", totalItems.toString(), GoaldayDesign.RouteOverview, Modifier.weight(1f))
-            HandbookDeskMetric("全书", book.pages.size.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
+            HandbookDeskMetric("页数", routeMetrics.pageCount.coerceAtLeast(1).toString(), routeColor(route), Modifier.weight(1f))
+            HandbookDeskMetric("内容", routeMetrics.itemCount.toString(), GoaldayDesign.RouteOverview, Modifier.weight(1f))
+            HandbookDeskMetric("全书", bookMetrics.pageCount.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -2332,14 +2332,6 @@ private fun resolveHandbookSection(page: BookPage): HandbookSection =
         is DiaryPage -> HandbookSection.DIARY
         is TargetPage -> HandbookSection.TARGET
         is SchedulePage, is PlanPage -> HandbookSection.SCHEDULE
-    }
-
-private fun pageItemCount(page: BookPage): Int =
-    when (page) {
-        is DiaryPage -> 1
-        is TargetPage -> page.items.size
-        is SchedulePage -> page.items.size
-        is PlanPage -> page.items.size
     }
 
 @Composable
