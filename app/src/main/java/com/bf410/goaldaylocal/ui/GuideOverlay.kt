@@ -59,6 +59,7 @@ private data class GuidePage(
     val star: String,
     val tone: Color,
     val target: GuideTarget,
+    val tasks: List<String>,
 )
 
 internal enum class GuideTarget {
@@ -75,10 +76,54 @@ internal fun GuideOverlay(
 ) {
     val pages = remember {
         listOf(
-            GuidePage("目标", "先把目标放进手账", "从灵感中心选择主题，勾选目标后可以导入任务池，也可以保存成一本手账。", "进入灵感中心", "聚焦：灵感中心", "lottie/book.png", "lottie/star_pink.png", Color(0xFFE88FAE), GuideTarget.INSPIRATION),
-            GuidePage("日程", "把任务排进今天", "在手账页查看本月日程，把任务放进 todo/done；桌面小组件会跟着刷新。", "打开日程手账", "聚焦：手账/整月", "lottie/img_4.png", "lottie/star_green.png", Color(0xFF6F8E68), GuideTarget.HANDBOOK),
-            GuidePage("日记", "每天写成块", "日记支持文字块、目标块、专题目标块和图片；完成的目标也能直接关联到日记。", "打开日记页", "聚焦：日记块", "lottie/card.png", "lottie/star_purple.png", Color(0xFFB07A8F), GuideTarget.DIARY),
-            GuidePage("导出", "最后导出成手账图", "日记和日程手账都可以预览长图，再保存、分享或调用系统打印。", "回到今日", "聚焦：长图预览", "lottie/img_8.png", "lottie/star_yellow.png", Color(0xFFB88A58), GuideTarget.HOME),
+            GuidePage(
+                "目标",
+                "先把目标放进手账",
+                "从灵感中心选择主题，勾选目标后可以导入任务池，也可以保存成一本手账。",
+                "进入灵感中心",
+                "聚焦：灵感中心",
+                "lottie/book.png",
+                "lottie/star_pink.png",
+                GoaldayDesign.RouteSchedule,
+                GuideTarget.INSPIRATION,
+                listOf("挑选主题模板", "勾选要执行的目标", "导入今日或保存成新手账"),
+            ),
+            GuidePage(
+                "日程",
+                "把任务排进今天",
+                "在手账页查看本月日程，把任务放进 todo/done；桌面小组件会跟着刷新。",
+                "打开日程手账",
+                "聚焦：手账/整月",
+                "lottie/img_4.png",
+                "lottie/star_green.png",
+                GoaldayDesign.RouteTarget,
+                GuideTarget.HANDBOOK,
+                listOf("翻到日程路线", "把任务安排到日期", "完成后移动到 DONE"),
+            ),
+            GuidePage(
+                "日记",
+                "每天写成块",
+                "日记支持文字块、目标块、专题目标块和图片；完成的目标也能直接关联到日记。",
+                "打开日记页",
+                "聚焦：日记块",
+                "lottie/card.png",
+                "lottie/star_purple.png",
+                GoaldayDesign.RouteDiary,
+                GuideTarget.DIARY,
+                listOf("选择当天日记页", "添加文字、图片或目标块", "保存后自动留在本机"),
+            ),
+            GuidePage(
+                "导出",
+                "最后导出成手账图",
+                "日记和日程手账都可以预览长图，再保存、分享或调用系统打印。",
+                "回到今日",
+                "聚焦：长图预览",
+                "lottie/img_8.png",
+                "lottie/star_yellow.png",
+                Color(0xFFB88A58),
+                GuideTarget.HOME,
+                listOf("回到今日总览", "检查日程和日记", "预览长图后保存或分享"),
+            ),
         )
     }
     var index by remember { mutableIntStateOf(0) }
@@ -100,7 +145,7 @@ internal fun GuideOverlay(
                 Brush.verticalGradient(
                     listOf(
                         Color(0xFFFFFCF7),
-                        Color(0xFFFFF0E4),
+                        GoaldayDesign.PaperWarm,
                         page.tone.copy(alpha = 0.22f),
                     ),
                 ),
@@ -149,6 +194,7 @@ internal fun GuideOverlay(
                     Text(page.body, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.InkSecondary)
                 }
                 GuideActionPreview(page)
+                GuideTaskRail(page = page)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         if (index == 0) "从头开始" else "上一步",
@@ -313,6 +359,70 @@ private fun GuideActionPreview(page: GuidePage) {
         GuidePreviewRow("入口", page.action, page.tone)
         GuidePreviewRow("方式", "不需要服务器，数据保存在本机", page.tone)
         GuidePreviewRow("目标", routeCopyFor(page.target), page.tone)
+    }
+}
+
+@Composable
+private fun GuideTaskRail(page: GuidePage) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(GoaldayDesign.CardPaperGradient)
+            .border(0.8.dp, page.tone.copy(alpha = 0.18f), RoundedCornerShape(18.dp))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "本地操作流",
+                color = GoaldayDesign.InkPrimary,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                page.focus.removePrefix("聚焦："),
+                color = page.tone,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(page.tone.copy(alpha = 0.12f))
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
+            )
+        }
+        page.tasks.forEachIndexed { taskIndex, task ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(if (taskIndex == 0) page.tone else page.tone.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "${taskIndex + 1}",
+                        color = if (taskIndex == 0) Color.White else page.tone,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                Text(
+                    task,
+                    color = GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
     }
 }
 

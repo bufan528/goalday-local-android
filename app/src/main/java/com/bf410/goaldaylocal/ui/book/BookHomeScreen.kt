@@ -870,13 +870,7 @@ private fun GoaldayHandbookScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFFFFFBF6),
-                        Color(0xFFF5E4D2),
-                        Color(0xFFE4C7AE),
-                    ),
-                ),
+                GoaldayDesign.DeskGradient,
             ),
     ) {
         Column(
@@ -946,11 +940,11 @@ private fun GoaldayHandbookScreen(
                         .background(
                             Brush.horizontalGradient(
                                 listOf(
-                                    Color(0xFF6C4A39),
-                                    Color(0xFFE2B997),
-                                    Color(0xFFFFFBF4),
-                                    Color(0xFFFFF8EF),
-                                    Color(0xFFE0B895),
+                                    GoaldayDesign.BookBoardDark,
+                                    GoaldayDesign.BookBoard,
+                                    GoaldayDesign.Paper,
+                                    GoaldayDesign.PaperWarm,
+                                    GoaldayDesign.BookBoard,
                                 ),
                             ),
                         ),
@@ -963,9 +957,7 @@ private fun GoaldayHandbookScreen(
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(99.dp))
                         .background(
-                            Brush.verticalGradient(
-                                listOf(Color(0xFF503529), Color(0xFFB47C62), Color(0xFF5A3B2E)),
-                            ),
+                            GoaldayDesign.SpineGradient,
                         )
                         .border(0.7.dp, Color(0x55F5D7BE), RoundedCornerShape(99.dp)),
                 )
@@ -977,7 +969,7 @@ private fun GoaldayHandbookScreen(
                         .fillMaxSize()
                         .padding(start = 24.dp, top = 10.dp, end = 18.dp, bottom = 12.dp)
                         .clip(RoundedCornerShape(22.dp))
-                        .background(Color(0xF8FFFDF8))
+                        .background(GoaldayDesign.Paper.copy(alpha = 0.97f))
                         .border(0.8.dp, Color(0x24A88966), RoundedCornerShape(22.dp))
                         .padding(6.dp),
                 ) {
@@ -1827,10 +1819,10 @@ private fun routeSubtitle(route: HandbookSection): String =
 
 private fun routeColor(route: HandbookSection): Color =
     when (route) {
-        HandbookSection.OVERVIEW -> Color(0xFF8F684F)
-        HandbookSection.SCHEDULE -> Color(0xFFE88FAE)
-        HandbookSection.DIARY -> Color(0xFFB07A8F)
-        HandbookSection.TARGET -> Color(0xFF6F8E68)
+        HandbookSection.OVERVIEW -> GoaldayDesign.RouteOverview
+        HandbookSection.SCHEDULE -> GoaldayDesign.RouteSchedule
+        HandbookSection.DIARY -> GoaldayDesign.RouteDiary
+        HandbookSection.TARGET -> GoaldayDesign.RouteTarget
     }
 
 @Composable

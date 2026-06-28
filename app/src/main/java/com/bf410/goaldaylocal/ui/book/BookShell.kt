@@ -220,7 +220,7 @@ fun BookShell(
                 .fillMaxSize()
                 .padding(horizontal = pageInsetH, vertical = pageInsetV)
                 .clip(innerShape)
-                .background(if (shellStyle == ShellStyle.BOOK) Color(0xFFFFFCF6) else Color(0xFFFFFFFF))
+                .background(if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Paper else Color(0xFFFFFFFF))
                 .then(
                     if (shellStyle == ShellStyle.BOOK) {
                         Modifier.border(1.5.dp, Color(0x40A7896E), innerShape)
@@ -334,7 +334,7 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .clip(pageShape)
-            .background(Color(0xFFFFFCF6)),
+            .background(GoaldayDesign.Paper),
     ) {
         Box(
             modifier = Modifier
@@ -342,15 +342,7 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 .fillMaxHeight()
                 .fillMaxWidth(0.5f)
                 .background(
-                    Brush.linearGradient(
-                        listOf(
-                            Color(0xFFFFFEFA),
-                            Color(0xFFFFFAEF),
-                            Color(0xFFF3E1CD),
-                        ),
-                        start = Offset.Zero,
-                        end = Offset(680f, 420f),
-                    ),
+                    GoaldayDesign.PaperGradient,
                 ),
         )
         Box(
@@ -361,8 +353,8 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 .background(
                     Brush.linearGradient(
                         listOf(
-                            Color(0xFFF3E1CD),
-                            Color(0xFFFFFAEF),
+                            GoaldayDesign.PaperAged,
+                            GoaldayDesign.PaperWarm,
                             Color(0xFFFFFFFF),
                         ),
                         start = Offset.Zero,
@@ -402,7 +394,7 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                     .padding(top = top.dp, end = 3.dp)
                     .width((5 + index % 3).dp)
                     .height(1.dp)
-                    .background(Color(0x33B99A7D)),
+                    .background(GoaldayDesign.PaperLine),
             )
             Box(
                 modifier = Modifier
@@ -410,7 +402,7 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                     .padding(top = (top + 2).dp, start = 3.dp)
                     .width((4 + index % 2).dp)
                     .height(1.dp)
-                    .background(Color(0x24B99A7D)),
+                    .background(GoaldayDesign.PaperLine.copy(alpha = 0.58f)),
             )
         }
         repeat(4) { layer ->
