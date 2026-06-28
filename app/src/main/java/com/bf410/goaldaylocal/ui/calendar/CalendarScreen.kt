@@ -148,7 +148,7 @@ fun CalendarScreen(
 
     val dayEntries = state.entries
         .filter { it.year == state.year && it.month == state.month && it.day == selectedDay }
-        .sortedWith(compareBy<ScheduleEntry> { it.completed }.thenBy { it.title.lowercase() })
+        .let(::sortDayEntries)
     val monthEntries = state.entries
         .filter { it.year == state.year && it.month == state.month }
     val doneEntries = dayEntries.filter { it.completed }
@@ -158,7 +158,7 @@ fun CalendarScreen(
     val poolEntries = monthEntries
         .filterNot { it.day == selectedDay }
         .filterNot { it.completed }
-        .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.title.lowercase() }))
+        .let(::sortCalendarEntries)
         .take(12)
 
     val weekStart = ((selectedDay - 1) / 7) * 7 + 1

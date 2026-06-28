@@ -285,9 +285,10 @@ class CalendarViewModel(
     }
 
     private fun monthEntries(year: Int, month: Int): List<ScheduleEntry> =
-        scheduleRepository.entries()
-            .filter { it.year == year && it.month == month }
-            .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.timeText }, { it.completed }, { it.title.lowercase() }))
+        sortCalendarEntries(
+            scheduleRepository.entries()
+                .filter { it.year == year && it.month == month },
+        )
 
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
