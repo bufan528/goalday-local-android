@@ -165,28 +165,52 @@ class BookViewModel(
 
     fun removeCustomPageItem(item: String) {
         if (!supportsCustomItems()) return
-        val updated = _uiState.value.customPageItems.filterNot { it == item }
-        store.saveCustomPageItems(currentBook().id, currentPage().title, updated)
-        if (currentPage() is TargetPage) {
-            store.setTargetItemMeta(currentBook().id, currentPage().title, item, TargetItemMeta())
+        val book = currentBook()
+        val page = currentPage()
+        val updated = removeExactItem(_uiState.value.customPageItems, item)
+        store.saveCustomPageItems(book.id, page.title, updated)
+        store.saveTodayPlanItems(book.id, page.title, removeExactItem(store.todayPlanItems(book.id, page.title), item))
+        store.saveTodayCompletedItems(book.id, page.title, removeExactItem(store.todayCompletedItems(book.id, page.title), item))
+        store.setChecked(book.id, page.title, item, false)
+        if (page is TargetPage) {
+            store.setTargetItemMeta(book.id, page.title, item, TargetItemMeta())
         }
-        _uiState.update { it.copy(customPageItems = updated) }
+        val cleanedSchedules = scheduleRepository.entries().filterNot { entry ->
+            entry.title == item && entry.note == book.title
+        }
+        scheduleRepository.saveEntries(cleanedSchedules)
+        syncEditableContent()
     }
 
     fun renameCustomPageItem(oldItem: String, newItem: String) {
         if (!supportsCustomItems()) return
         val trimmed = newItem.trim()
         if (trimmed.isBlank()) return
-        val updated = _uiState.value.customPageItems.map { item ->
-            if (item == oldItem) trimmed else item
-        }.distinct()
-        store.saveCustomPageItems(currentBook().id, currentPage().title, updated)
-        if (currentPage() is TargetPage) {
-            val meta = store.targetItemMeta(currentBook().id, currentPage().title, oldItem)
-            store.setTargetItemMeta(currentBook().id, currentPage().title, trimmed, meta)
-            store.setTargetItemMeta(currentBook().id, currentPage().title, oldItem, TargetItemMeta())
+        if (trimmed == oldItem) return
+        val book = currentBook()
+        val page = currentPage()
+        val updated = renameExactItemDistinct(_uiState.value.customPageItems, oldItem, trimmed)
+        store.saveCustomPageItems(book.id, page.title, updated)
+        store.saveTodayPlanItems(book.id, page.title, renameExactItemDistinct(store.todayPlanItems(book.id, page.title), oldItem, trimmed))
+        store.saveTodayCompletedItems(book.id, page.title, renameExactItemDistinct(store.todayCompletedItems(book.id, page.title), oldItem, trimmed))
+        if (store.isChecked(book.id, page.title, oldItem)) {
+            store.setChecked(book.id, page.title, trimmed, true)
+            store.setChecked(book.id, page.title, oldItem, false)
         }
-        _uiState.update { it.copy(customPageItems = updated) }
+        if (page is TargetPage) {
+            val meta = store.targetItemMeta(book.id, page.title, oldItem)
+            store.setTargetItemMeta(book.id, page.title, trimmed, meta)
+            store.setTargetItemMeta(book.id, page.title, oldItem, TargetItemMeta())
+        }
+        val renamedSchedules = scheduleRepository.entries().map { entry ->
+            if (entry.title == oldItem && entry.note == book.title) {
+                entry.copy(title = trimmed)
+            } else {
+                entry
+            }
+        }
+        scheduleRepository.saveEntries(renamedSchedules)
+        syncEditableContent()
     }
 
     fun updateTargetItemNote(item: String, note: String) {
