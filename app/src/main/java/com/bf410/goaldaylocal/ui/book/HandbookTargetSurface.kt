@@ -41,7 +41,6 @@ import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.TargetItemMeta
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
-import java.time.LocalDate
 
 @Composable
 internal fun HandbookTargetReplicaPage(
@@ -145,9 +144,7 @@ internal fun TargetDetailReplicaPage(
     var draft by remember(pageTitle) { mutableStateOf("") }
     var editingItem by remember(pageTitle) { mutableStateOf<String?>(null) }
     var editingText by remember(pageTitle) { mutableStateOf("") }
-    val todayDay = LocalDate.now().dayOfMonth
-    val tomorrowDay = todayDay + 1
-    val weekendDay = todayDay + (7 - LocalDate.now().dayOfWeek.value).coerceAtLeast(1)
+    val dateShortcuts = remember { targetDateShortcuts() }
     val completedCount = items.count { isChecked(pageTitle, it) }
     val scheduledByTitle = remember(schedulePreviewEntries, items) {
         items.associateWith { item ->
@@ -236,7 +233,7 @@ internal fun TargetDetailReplicaPage(
                             Text("目标档案", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
                             Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text("详情", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onOpenTargetDetail(item) })
-                                Text("排入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onAddToSchedule(item, todayDay) })
+                                Text("排入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onAddToSchedule(item, dateShortcuts.today) })
                             }
                         }
                         if (editingItem == item) {
@@ -308,13 +305,13 @@ internal fun TargetDetailReplicaPage(
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
                     Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-                        TargetScheduleChip("今天") { onAddToSchedule(item, todayDay) }
-                        TargetScheduleChip("明天") { onAddToSchedule(item, tomorrowDay) }
-                        TargetScheduleChip("周末") { onAddToSchedule(item, weekendDay) }
+                        TargetScheduleChip("今天") { onAddToSchedule(item, dateShortcuts.today) }
+                        TargetScheduleChip("明天") { onAddToSchedule(item, dateShortcuts.tomorrow) }
+                        TargetScheduleChip("周末") { onAddToSchedule(item, dateShortcuts.weekend) }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-                        TargetDeadlineChip("今", active = meta.deadlineDay == todayDay) { onUpdateTargetDeadline(item, todayDay) }
-                        TargetDeadlineChip("明", active = meta.deadlineDay == tomorrowDay) { onUpdateTargetDeadline(item, tomorrowDay) }
+                        TargetDeadlineChip("今", active = meta.deadlineDay == dateShortcuts.today) { onUpdateTargetDeadline(item, dateShortcuts.today) }
+                        TargetDeadlineChip("明", active = meta.deadlineDay == dateShortcuts.tomorrow) { onUpdateTargetDeadline(item, dateShortcuts.tomorrow) }
                         TargetDeadlineChip("清除", active = false) { onUpdateTargetDeadline(item, null) }
                         if (item in customItems) {
                             Text("删除", color = GoaldayDesign.Danger, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onRemoveCustomItem(item) })

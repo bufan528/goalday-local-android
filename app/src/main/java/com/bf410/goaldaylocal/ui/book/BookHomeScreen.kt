@@ -2508,9 +2508,7 @@ private fun TargetDetailRouteOverlay(
     onSaveAsOwnTarget: () -> Unit,
     onAddToDiary: (Boolean) -> Unit,
 ) {
-    val today = java.time.LocalDate.now().dayOfMonth
-    val tomorrow = today + 1
-    val weekend = today + (7 - java.time.LocalDate.now().dayOfWeek.value).coerceAtLeast(1)
+    val dateShortcuts = remember { targetDateShortcuts() }
     val deadlineLabel = meta.deadlineDay?.let { "${it}日" } ?: "未设置"
     val scheduleLabel = if (scheduledEntries.isEmpty()) "未排期" else "${scheduledEntries.size}条"
     var noteDraft by remember(item, meta.note) { mutableStateOf(meta.note) }
@@ -2617,9 +2615,9 @@ private fun TargetDetailRouteOverlay(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 DetailPill(if (checked) "切换完成" else "标记完成", active = checked, onClick = onToggleChecked)
-                DetailPill("排入今天", active = false) { onAddToSchedule(today) }
-                DetailPill("排入明天", active = false) { onAddToSchedule(tomorrow) }
-                DetailPill("排入周末", active = false) { onAddToSchedule(weekend) }
+                DetailPill("排入今天", active = false) { onAddToSchedule(dateShortcuts.today) }
+                DetailPill("排入明天", active = false) { onAddToSchedule(dateShortcuts.tomorrow) }
+                DetailPill("排入周末", active = false) { onAddToSchedule(dateShortcuts.weekend) }
                 DetailPill("生成下一步", active = false) {
                     appendDetailNote("下一步：为「$item」安排一个 15 分钟行动")
                     actionHint = "已生成下一步"
@@ -2655,7 +2653,7 @@ private fun TargetDetailRouteOverlay(
                         accent = Color(0xFFB07A8F),
                     ) {
                         appendDetailNote("复盘：本周检查「$item」推进情况")
-                        onAddToSchedule(weekend)
+                        onAddToSchedule(dateShortcuts.weekend)
                         actionHint = "已排入周末复盘"
                     }
                     TargetOptionRow(
@@ -2693,9 +2691,9 @@ private fun TargetDetailRouteOverlay(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    DetailPill("今天", active = meta.deadlineDay == today) { onUpdateDeadline(today) }
-                    DetailPill("明天", active = meta.deadlineDay == tomorrow) { onUpdateDeadline(tomorrow) }
-                    DetailPill("周末", active = meta.deadlineDay == weekend) { onUpdateDeadline(weekend) }
+                    DetailPill("今天", active = meta.deadlineDay == dateShortcuts.today) { onUpdateDeadline(dateShortcuts.today) }
+                    DetailPill("明天", active = meta.deadlineDay == dateShortcuts.tomorrow) { onUpdateDeadline(dateShortcuts.tomorrow) }
+                    DetailPill("周末", active = meta.deadlineDay == dateShortcuts.weekend) { onUpdateDeadline(dateShortcuts.weekend) }
                     DetailPill("清除", active = false) { onUpdateDeadline(null) }
                 }
             }
