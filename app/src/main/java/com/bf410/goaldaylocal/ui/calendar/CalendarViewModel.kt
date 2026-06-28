@@ -267,68 +267,7 @@ class CalendarViewModel(
     }
 
     private fun expandRepeatingEntry(entry: ScheduleEntry) {
-        val interval = entry.repeatInterval.coerceAtLeast(1)
-        val startDate = LocalDate.of(entry.year, entry.month, entry.day)
-        val explicitEndDate = parseRepeatEndDate(entry.repeatEndDate)?.takeIf { !it.isBefore(startDate) }
-        val additions = when (entry.repeatRule) {
-            "daily" -> {
-                val fallbackEndDate = YearMonth.of(entry.year, entry.month).atEndOfMonth()
-                val endDate = explicitEndDate ?: fallbackEndDate
-                generateSequence(startDate.plusDays(interval.toLong())) { it.plusDays(interval.toLong()) }
-                    .takeWhile { !it.isAfter(endDate) }
-                    .take(365)
-                    .map { date ->
-                        entry.copy(
-                            id = java.util.UUID.randomUUID().toString(),
-                            year = date.year,
-                            month = date.monthValue,
-                            day = date.dayOfMonth,
-                            completed = false,
-                        )
-                    }
-                    .toList()
-            }
-            "weekly" -> {
-                val fallbackEndDate = YearMonth.of(entry.year, entry.month).atEndOfMonth()
-                val endDate = explicitEndDate ?: fallbackEndDate
-                generateSequence(startDate.plusWeeks(interval.toLong())) { it.plusWeeks(interval.toLong()) }
-                    .takeWhile { !it.isAfter(endDate) }
-                    .take(365)
-                    .map { date ->
-                        entry.copy(
-                            id = java.util.UUID.randomUUID().toString(),
-                            year = date.year,
-                            month = date.monthValue,
-                            day = date.dayOfMonth,
-                            completed = false,
-                        )
-                    }
-                    .toList()
-            }
-            "monthly" -> {
-                val monthStep = interval.toLong()
-                val startMonth = YearMonth.of(entry.year, entry.month)
-                val maxItems = if (explicitEndDate == null) 11 else 36
-                generateSequence(startMonth.plusMonths(monthStep)) { it.plusMonths(monthStep) }
-                    .take(maxItems)
-                    .mapNotNull { month ->
-                        if (entry.day <= month.lengthOfMonth()) {
-                            val date = month.atDay(entry.day)
-                            if (explicitEndDate != null && date.isAfter(explicitEndDate)) return@mapNotNull null
-                            entry.copy(
-                                id = java.util.UUID.randomUUID().toString(),
-                                year = month.year,
-                                month = month.monthValue,
-                                completed = false,
-                            )
-                        } else {
-                            null
-                        }
-                    }
-                    .toList()
-            }
-            else -> emptyList()
-        }
+        val additions = expandRepeatingScheduleEntry(entry)
         if (additions.isEmpty()) return
         val existing = scheduleRepository.entries()
         val uniqueAdditions = additions.filterNot { candidate ->
@@ -344,12 +283,6 @@ class CalendarViewModel(
             scheduleRepository.saveEntries(existing + uniqueAdditions)
         }
     }
-
-    private fun normalizeRepeatEndDate(value: String): String =
-        parseRepeatEndDate(value)?.toString().orEmpty()
-
-    private fun parseRepeatEndDate(value: String): LocalDate? =
-        runCatching { LocalDate.parse(value.trim()) }.getOrNull()
 
     private fun monthEntries(year: Int, month: Int): List<ScheduleEntry> =
         scheduleRepository.entries()
