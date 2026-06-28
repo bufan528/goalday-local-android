@@ -1023,11 +1023,6 @@ private fun HandbookReplicaPage(
     turnProgress: Float,
     turnDirection: TurnDirection?,
 ) {
-    data class DaySpreadBlock(
-        val day: Int,
-        val done: List<ScheduleEntry>,
-        val todo: List<ScheduleEntry>,
-    )
     val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
     val contentShift = when (turnDirection) {
         TurnDirection.NEXT -> -(eased * 8f)
@@ -1035,47 +1030,39 @@ private fun HandbookReplicaPage(
         null -> 0f
     }
     val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
-    val today = LocalDate.now()
-    val pageMonth = Regex("(\\d{1,2})月")
-        .find(page.title)
-        ?.groupValues
-        ?.getOrNull(1)
-        ?.toIntOrNull()
-        ?.coerceIn(1, 12)
-    val anchorYear = schedulePreviewEntries.firstOrNull()?.year ?: today.year
-    val anchorMonth = pageMonth ?: schedulePreviewEntries.firstOrNull()?.month ?: today.monthValue
-    val sorted = schedulePreviewEntries
-        .filter { it.month == anchorMonth }
-        .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
-    val monthLength = YearMonth.of(anchorYear, anchorMonth).lengthOfMonth()
-    val defaultStart = if (anchorYear == today.year && anchorMonth == today.monthValue) {
-        (today.dayOfMonth - 1).coerceIn(0, monthLength - 1)
-    } else {
-        0
+    val defaultScheduleModel = buildScheduleHandbookModel(
+        page = page,
+        scheduleEntries = schedulePreviewEntries,
+        todayPlanItems = todayPlanItems,
+        todayCompletedItems = todayCompletedItems,
+        requestedWindowStart = null,
+    )
+    var windowStart by remember(page.title, defaultScheduleModel.year, defaultScheduleModel.month) {
+        mutableStateOf(defaultScheduleModel.windowStart)
     }
-    val maxStart = (monthLength - 3).coerceAtLeast(0)
-    var windowStart by remember(page.title, anchorYear, anchorMonth) { mutableStateOf(defaultStart.coerceIn(0, maxStart)) }
-    val start = windowStart.coerceIn(0, maxStart)
-    LaunchedEffect(page.title, anchorYear, anchorMonth, defaultStart, maxStart) {
-        windowStart = defaultStart.coerceIn(0, maxStart)
+    LaunchedEffect(page.title, defaultScheduleModel.year, defaultScheduleModel.month, defaultScheduleModel.windowStart) {
+        windowStart = defaultScheduleModel.windowStart
     }
-    val dayBlocks = List(3) { offset ->
-        val day = start + offset + 1
-        val dayEntries = sorted.filter { it.day == day }
-        DaySpreadBlock(
-            day = day,
-            done = dayEntries.filter { it.completed }.take(5),
-            todo = dayEntries.filterNot { it.completed }.take(5),
-        )
-    }
-    val leftBlocks = dayBlocks
-    val rightBlocks = dayBlocks
-    val visibleDays = rightBlocks.map { it.day }
-    val visibleRangeLabel = "${dayBlocks.first().day}-${dayBlocks.last().day}日"
-    val fallbackLeftDone = todayCompletedItems.take(3)
-    val fallbackRightTodo = todayPlanItems.take(3)
-    val scheduledTitles = sorted.map { it.title }.toSet()
-    val visiblePoolItems = todayPlanItems.filterNot { it in scheduledTitles }.take(6)
+    val scheduleModel = buildScheduleHandbookModel(
+        page = page,
+        scheduleEntries = schedulePreviewEntries,
+        todayPlanItems = todayPlanItems,
+        todayCompletedItems = todayCompletedItems,
+        requestedWindowStart = windowStart,
+    )
+    val anchorYear = scheduleModel.year
+    val anchorMonth = scheduleModel.month
+    val monthLength = scheduleModel.monthLength
+    val start = scheduleModel.windowStart
+    val maxStart = scheduleModel.maxWindowStart
+    val leftBlocks = scheduleModel.dayBlocks
+    val rightBlocks = scheduleModel.dayBlocks
+    val visibleDays = scheduleModel.visibleDays
+    val visibleRangeLabel = scheduleModel.visibleRangeLabel
+    val fallbackLeftDone = scheduleModel.fallbackDone
+    val fallbackRightTodo = scheduleModel.fallbackTodo
+    val visiblePoolItems = scheduleModel.visiblePoolItems
+    val sorted = scheduleModel.sortedEntries
     var draftText by remember(page.title) { mutableStateOf("") }
     var draftDay by remember(page.title) { mutableStateOf(rightBlocks.firstOrNull()?.day ?: 1) }
     LaunchedEffect(visibleDays) {
