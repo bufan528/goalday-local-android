@@ -46,7 +46,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -877,10 +876,9 @@ private fun GoaldayHandbookScreen(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color(0xFF17131A),
-                        Color(0xFF211822),
-                        Color(0xFF3B2A24),
-                        Color(0xFFF1D8BE),
+                        Color(0xFFFFFCF8),
+                        Color(0xFFF7EBDD),
+                        Color(0xFFE8CFB8),
                     ),
                 ),
             ),
@@ -893,7 +891,7 @@ private fun GoaldayHandbookScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+                .padding(horizontal = 10.dp, vertical = 10.dp),
         ) {
             HandbookTopChrome(
                 book = book,
@@ -905,7 +903,7 @@ private fun GoaldayHandbookScreen(
             )
             Spacer(Modifier.height(6.dp))
             Row(
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
@@ -914,12 +912,13 @@ private fun GoaldayHandbookScreen(
                     val selected = realIndex == visiblePageIndex
                     Text(
                         text = monthLabelForPage(page.title, fallback = page.title),
-                        color = if (selected) Color(0xFF2F261D) else Color(0xFF8A7C70),
+                        color = if (selected) Color.White else Color(0xFF73685E),
                         style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                         modifier = Modifier
                             .clip(RoundedCornerShape(99.dp))
-                            .background(if (selected) Color(0x66FFFFFF) else Color(0x24FFFFFF))
-                            .border(0.5.dp, if (selected) Color(0x55B88A58) else Color.Transparent, RoundedCornerShape(99.dp))
+                            .background(if (selected) routeColor(section) else Color.White.copy(alpha = 0.56f))
+                            .border(0.5.dp, if (selected) Color.White.copy(alpha = 0.55f) else Color(0x1AA88966), RoundedCornerShape(99.dp))
                             .clickable {
                                 goToPage(realIndex)
                             }
@@ -937,31 +936,36 @@ private fun GoaldayHandbookScreen(
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .padding(start = 18.dp, top = 20.dp, end = 4.dp, bottom = 12.dp)
-                        .clip(RoundedCornerShape(28.dp))
-                        .background(Color(0x55A87658)),
-                )
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .padding(start = 12.dp, top = 12.dp, end = 10.dp, bottom = 7.dp)
-                        .clip(RoundedCornerShape(28.dp))
-                        .background(Color(0x99F3D7BC)),
-                )
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .padding(start = 4.dp, top = 4.dp, end = 16.dp, bottom = 2.dp)
-                        .shadow(16.dp, RoundedCornerShape(30.dp))
+                        .padding(start = 16.dp, top = 24.dp, end = 8.dp, bottom = 8.dp)
+                        .shadow(12.dp, RoundedCornerShape(30.dp), clip = false)
                         .clip(RoundedCornerShape(30.dp))
+                        .background(Color(0x33886649)),
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(start = 10.dp, top = 14.dp, end = 14.dp, bottom = 5.dp)
+                        .clip(RoundedCornerShape(29.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFFE1B891), Color(0xFFC79370), Color(0xFF8C5941)),
+                            ),
+                        ),
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(start = 4.dp, top = 4.dp, end = 18.dp, bottom = 0.dp)
+                        .shadow(24.dp, RoundedCornerShape(32.dp), clip = false)
+                        .clip(RoundedCornerShape(32.dp))
                         .background(
                             Brush.horizontalGradient(
                                 listOf(
-                                    GoaldayDesign.BookBoardDark,
-                                    GoaldayDesign.BookBoard,
-                                    GoaldayDesign.Paper,
-                                    GoaldayDesign.PaperWarm,
-                                    GoaldayDesign.BookBoard,
+                                    Color(0xFF6B4737),
+                                    Color(0xFFC99473),
+                                    Color(0xFFFFFCF4),
+                                    Color(0xFFFFF5E4),
+                                    Color(0xFFC28B6A),
                                 ),
                             ),
                         ),
@@ -969,14 +973,16 @@ private fun GoaldayHandbookScreen(
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .padding(start = 5.dp, top = 28.dp, bottom = 30.dp)
-                        .width(23.dp)
+                        .padding(start = 8.dp, top = 30.dp, bottom = 30.dp)
+                        .width(26.dp)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(99.dp))
                         .background(
-                            GoaldayDesign.SpineGradient,
+                            Brush.verticalGradient(
+                                listOf(Color(0xFF4E3025), Color(0xFF9F6B53), Color(0xFF4E3025)),
+                            ),
                         )
-                        .border(0.7.dp, Color(0x55F5D7BE), RoundedCornerShape(99.dp)),
+                        .border(0.7.dp, Color(0x66F5D7BE), RoundedCornerShape(99.dp)),
                 )
                 HandbookPhysicalBookDetails(
                     pageProgress = ((visiblePageIndex + 1).toFloat() / book.pages.size.coerceAtLeast(1)).coerceIn(0.08f, 1f),
@@ -984,11 +990,19 @@ private fun GoaldayHandbookScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(start = 24.dp, top = 10.dp, end = 18.dp, bottom = 12.dp)
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(GoaldayDesign.Paper.copy(alpha = 0.97f))
-                        .border(0.8.dp, Color(0x24A88966), RoundedCornerShape(22.dp))
-                        .padding(6.dp),
+                        .padding(start = 33.dp, top = 12.dp, end = 22.dp, bottom = 13.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color(0xFFFFF4E6),
+                                    Color(0xFFFFFEFB),
+                                    Color(0xFFFFF7EB),
+                                ),
+                            ),
+                        )
+                        .border(0.8.dp, Color(0x28A88966), RoundedCornerShape(24.dp))
+                        .padding(7.dp),
                 ) {
                     HandbookRouteSurface(
                         route = section,
@@ -1068,21 +1082,21 @@ private fun HandbookTopChrome(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xE61B171D),
-                        Color(0xC52B2028),
-                        Color(0xB9523A31),
+                        Color.White.copy(alpha = 0.78f),
+                        Color(0xFFFFF4E7).copy(alpha = 0.88f),
+                        routeColor(section).copy(alpha = 0.10f),
                     ),
                     start = Offset.Zero,
                     end = Offset(920f, 220f),
                 ),
             )
-            .border(0.7.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(18.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(7.dp),
+            .border(0.7.dp, Color.White.copy(alpha = 0.70f), RoundedCornerShape(20.dp))
+            .padding(horizontal = 11.dp, vertical = 9.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1090,17 +1104,17 @@ private fun HandbookTopChrome(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.weight(1f)) {
-                Text("Goalday 手账", color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                Text(monthLabelForPage(currentPage.title, fallback = book.title), color = Color(0xFFE8D8C7), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                Text(book.title, color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(monthLabelForPage(currentPage.title, fallback = book.title), color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall, maxLines = 1)
             }
             Text(
                 "${visiblePageIndex + 1}/$pageCount",
-                color = Color(0xFF1B171D),
+                color = Color.White,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0xFFFFE5B6))
+                    .background(routeColor(section))
                     .padding(horizontal = 9.dp, vertical = 4.dp),
             )
         }
@@ -1109,7 +1123,7 @@ private fun HandbookTopChrome(
                 .fillMaxWidth()
                 .height(6.dp)
                 .clip(RoundedCornerShape(99.dp))
-                .background(Color.White.copy(alpha = 0.12f)),
+                .background(Color(0x1A8F684F)),
         ) {
             Box(
                 modifier = Modifier
@@ -1128,7 +1142,7 @@ private fun HandbookTopChrome(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            HandbookStagePill("CINEMA DESK", Color(0xFFFFE5B6))
+            HandbookStagePill("OPEN BOOK", Color(0xFF8F684F))
             HandbookStagePill(section.label, routeColor(section))
             HandbookStagePill("LOCAL", GoaldayDesign.Positive)
         }
@@ -1147,7 +1161,7 @@ private fun HandbookTopChrome(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(if (selected) routeColor(item) else routeColor(item).copy(alpha = 0.12f))
+                        .background(if (selected) routeColor(item) else Color.White.copy(alpha = 0.58f))
                         .border(0.6.dp, routeColor(item).copy(alpha = 0.20f), RoundedCornerShape(99.dp))
                         .clickable { onOpenSection(item) }
                         .padding(horizontal = 10.dp, vertical = 4.dp),
@@ -1175,11 +1189,11 @@ private fun HandbookPageControlDock(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xDFFFFCF7))
-            .border(0.7.dp, Color(0x24A88966), RoundedCornerShape(18.dp))
-            .padding(horizontal = 9.dp, vertical = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(7.dp),
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color.White.copy(alpha = 0.68f))
+            .border(0.7.dp, Color.White.copy(alpha = 0.72f), RoundedCornerShape(20.dp))
+            .padding(horizontal = 9.dp, vertical = 7.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1278,76 +1292,64 @@ private fun BoxScope.HandbookCinematicBackdrop(
     Canvas(modifier = Modifier.matchParentSize()) {
         val w = size.width
         val h = size.height
-        val focusX = w * (0.32f + 0.36f * pageProgress)
-        val focusY = h * 0.42f
+        val focusX = w * (0.30f + 0.40f * pageProgress)
+        val focusY = h * 0.48f
         drawCircle(
             brush = Brush.radialGradient(
-                colors = listOf(accent.copy(alpha = 0.34f), Color.Transparent),
+                colors = listOf(accent.copy(alpha = 0.16f), Color.Transparent),
                 center = Offset(focusX, focusY),
-                radius = w * 0.56f,
+                radius = w * 0.52f,
             ),
-            radius = w * 0.56f,
+            radius = w * 0.52f,
             center = Offset(focusX, focusY),
         )
-        drawCircle(
+        drawOval(
             brush = Brush.radialGradient(
-                colors = listOf(Color(0xFFFFE5B6).copy(alpha = 0.24f), Color.Transparent),
-                center = Offset(w * 0.72f, h * 0.18f),
-                radius = w * 0.38f,
+                colors = listOf(Color(0x663A2418), Color.Transparent),
+                center = Offset(w * 0.50f, h * 0.74f),
+                radius = w * 0.60f,
             ),
-            radius = w * 0.38f,
-            center = Offset(w * 0.72f, h * 0.18f),
+            topLeft = Offset(w * 0.06f, h * 0.55f),
+            size = androidx.compose.ui.geometry.Size(w * 0.88f, h * 0.30f),
         )
-        repeat(34) { index ->
-            val lane = ((index * 37 + section.ordinal * 13) % 100) / 100f
-            val depth = ((index * 17 + pageCount * 7) % 100) / 100f
-            val x = w * ((index * 0.173f + pageProgress * 0.21f + section.ordinal * 0.07f) % 1f)
-            val y = h * (0.05f + lane * 0.54f)
-            val radius = 0.9f + depth * 2.4f
-            val alpha = 0.10f + depth * 0.18f
-            drawCircle(
-                color = if (index % 3 == 0) Color(0xFFFFF6DC).copy(alpha = alpha) else accent.copy(alpha = alpha),
-                radius = radius,
-                center = Offset(x, y),
+        repeat(16) { index ->
+            val y = h * (0.08f + index * 0.045f)
+            drawLine(
+                color = Color.White.copy(alpha = if (index % 2 == 0) 0.16f else 0.08f),
+                start = Offset(w * 0.06f, y),
+                end = Offset(w * 0.94f, y + h * 0.018f),
+                strokeWidth = 0.8f,
+                cap = StrokeCap.Round,
             )
         }
-        val railY = h * 0.79f
+        val railY = h * 0.91f
         val startX = w * 0.13f
         val endX = w * 0.87f
         drawLine(
-            color = Color.White.copy(alpha = 0.16f),
+            color = Color(0x338F684F),
             start = Offset(startX, railY),
-            end = Offset(endX, railY - h * 0.035f),
-            strokeWidth = 2.4f,
+            end = Offset(endX, railY),
+            strokeWidth = 2.0f,
             cap = StrokeCap.Round,
         )
         drawLine(
-            color = accent.copy(alpha = 0.62f),
+            color = accent.copy(alpha = 0.58f),
             start = Offset(startX, railY),
-            end = Offset(startX + (endX - startX) * pageProgress, railY - h * 0.035f * pageProgress),
-            strokeWidth = 3.6f,
+            end = Offset(startX + (endX - startX) * pageProgress, railY),
+            strokeWidth = 3.0f,
             cap = StrokeCap.Round,
         )
         repeat(5) { index ->
             val t = index / 4f
             val x = startX + (endX - startX) * t
-            val y = railY - h * 0.035f * t
+            val y = railY
             val active = t <= pageProgress + 0.02f
             drawCircle(
-                color = if (active) accent.copy(alpha = 0.86f) else Color.White.copy(alpha = 0.24f),
-                radius = if (active) 5.2f else 3.6f,
+                color = if (active) accent.copy(alpha = 0.78f) else Color(0x338F684F),
+                radius = if (active) 4.3f else 3.0f,
                 center = Offset(x, y),
             )
         }
-        drawArc(
-            color = accent.copy(alpha = 0.18f),
-            startAngle = 202f,
-            sweepAngle = 120f * pageProgress.coerceIn(0f, 1f),
-            useCenter = false,
-            topLeft = Offset(w * 0.14f, h * 0.12f),
-            size = androidx.compose.ui.geometry.Size(w * 0.72f, h * 0.58f),
-            style = Stroke(width = 1.4f, cap = StrokeCap.Round),
-        )
     }
 }
 
@@ -1580,16 +1582,60 @@ private fun HandbookRouteSurface(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFFFFFEFC))
-            .border(0.7.dp, Color(0x18A88966), RoundedCornerShape(18.dp))
-            .padding(10.dp),
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(
+                        Color(0xFFFFF6E8),
+                        Color(0xFFFFFEFB),
+                        Color(0xFFFFFBF4),
+                    ),
+                ),
+            )
+            .border(0.7.dp, Color(0x22A88966), RoundedCornerShape(20.dp))
+            .padding(11.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .width(7.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0x1F6D4A35), Color.Transparent),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(9.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color.Transparent, Color(0x12A88966), Color.Transparent),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(horizontal = 10.dp, vertical = 9.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.White.copy(alpha = 0.30f))
+                .border(0.6.dp, Color.White.copy(alpha = 0.52f), RoundedCornerShape(16.dp)),
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(horizontal = 8.dp, vertical = 7.dp),
+        ) {
         when (route) {
             HandbookSection.OVERVIEW -> HandbookOverviewRoute(payload, onOpenSection, onOpenPage)
             HandbookSection.SCHEDULE -> HandbookScheduleRoute(payload, onOpenPage)
             HandbookSection.DIARY -> HandbookDiaryRoute(payload, onOpenPage)
             HandbookSection.TARGET -> HandbookTargetRoute(payload, onOpenPage)
+        }
         }
     }
 }
