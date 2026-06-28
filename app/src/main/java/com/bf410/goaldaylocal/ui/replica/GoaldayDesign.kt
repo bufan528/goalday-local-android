@@ -11,7 +11,7 @@ object GoaldayDesign {
     val SurfaceSoft = Color(0xFFF7F3EE)
     val InkPrimary = Color(0xFF2F2923)
     val InkSecondary = Color(0xFF7D756B)
-    val InkMuted = Color(0xFFA79E92)
+    val InkMuted = Color(0xFF766B60)
     val Accent = Color(0xFFE88FAE)
     val AccentSoft = Color(0xFFFFECF3)
     val Pink = Color(0xFFE88FAE)

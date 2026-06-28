@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +55,22 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
 import com.bf410.goaldaylocal.START_TARGET_DIARY
 import com.tencent.mmkv.MMKV
+
+private val goaldayColorScheme = lightColorScheme(
+    primary = GoaldayDesign.Pink,
+    onPrimary = Color.White,
+    primaryContainer = GoaldayDesign.PinkSoft,
+    onPrimaryContainer = GoaldayDesign.InkPrimary,
+    secondary = GoaldayDesign.RouteDiary,
+    onSecondary = Color.White,
+    surface = GoaldayDesign.Surface,
+    onSurface = GoaldayDesign.InkPrimary,
+    surfaceVariant = GoaldayDesign.SurfaceSoft,
+    onSurfaceVariant = GoaldayDesign.InkSecondary,
+    background = GoaldayDesign.AppBg,
+    onBackground = GoaldayDesign.InkPrimary,
+    outline = GoaldayDesign.InkMuted,
+)
 
 private enum class RootTab(val label: String, val iconText: String) {
     BOOK("手账", "账"),
@@ -160,7 +177,7 @@ fun GoaldayApp(startTarget: String? = null) {
         }
     }
 
-    MaterialTheme {
+    MaterialTheme(colorScheme = goaldayColorScheme) {
         Scaffold(
             containerColor = GoaldayDesign.AppBg,
             bottomBar = {
