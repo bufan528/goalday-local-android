@@ -36,10 +36,14 @@ internal fun buildScheduleHandbookModel(
 ): ScheduleHandbookModel {
     val pageMonth = page.title.extractMonthNumber()
     val anchorMonth = pageMonth ?: scheduleEntries.firstOrNull()?.month ?: today.monthValue
-    val anchorYear = scheduleEntries.firstOrNull { it.year == today.year && it.month == anchorMonth }?.year
-        ?: scheduleEntries.firstOrNull { it.month == anchorMonth }?.year
-        ?: scheduleEntries.firstOrNull()?.year
-        ?: today.year
+    val anchorYear = if (pageMonth != null) {
+        today.year
+    } else {
+        scheduleEntries.firstOrNull { it.year == today.year && it.month == anchorMonth }?.year
+            ?: scheduleEntries.firstOrNull { it.month == anchorMonth }?.year
+            ?: scheduleEntries.firstOrNull()?.year
+            ?: today.year
+    }
     val monthLength = YearMonth.of(anchorYear, anchorMonth).lengthOfMonth()
     val defaultStart = if (anchorYear == today.year && anchorMonth == today.monthValue) {
         (today.dayOfMonth - 1).coerceIn(0, monthLength - 1)

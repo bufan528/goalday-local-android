@@ -29,6 +29,25 @@ class ScheduleHandbookModelTest {
     }
 
     @Test
+    fun title_month_uses_current_year_even_when_only_old_entries_exist() {
+        val model = buildScheduleHandbookModel(
+            page = SchedulePage("6月日程", emptyList()),
+            scheduleEntries = listOf(
+                entry("old", "去年旧任务", 2025, 6, 2),
+            ),
+            todayPlanItems = listOf("今天要做"),
+            todayCompletedItems = emptyList(),
+            requestedWindowStart = 0,
+            today = LocalDate.of(2026, 6, 28),
+        )
+
+        assertEquals(2026, model.year)
+        assertEquals(6, model.month)
+        assertEquals(emptyList<ScheduleEntry>(), model.sortedEntries)
+        assertEquals(listOf("今天要做"), model.visiblePoolItems)
+    }
+
+    @Test
     fun window_start_is_clamped_to_month_end() {
         val model = buildScheduleHandbookModel(
             page = SchedulePage("2月日程", emptyList()),
