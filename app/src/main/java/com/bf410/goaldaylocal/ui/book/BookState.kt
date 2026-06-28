@@ -20,4 +20,5 @@ data class BookUiState(
     val targetItemMeta: Map<String, TargetItemMeta>,
     val customBookCount: Int,
     val inLibraryMode: Boolean,
+    val checkedRevision: Long = 0L,
 )

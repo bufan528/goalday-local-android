@@ -1,5 +1,8 @@
 package com.bf410.goaldaylocal.ui.settings
 
+import android.os.Handler
+import android.os.Looper
+import android.os.Process
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +44,9 @@ import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.data.BackupManager
 import com.bf410.goaldaylocal.data.BackupSnapshot
 import com.tencent.mmkv.MMKV
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -59,6 +66,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val manager = remember { BackupManager(context) }
     val mmkv = remember { MMKV.defaultMMKV() }
+    val scope = rememberCoroutineScope()
     var refreshTick by remember { mutableIntStateOf(0) }
     var selectedFont by remember { mutableStateOf(mmkv.decodeString(KEY_FONT_SIZE, "standard") ?: "standard") }
     var pendingRestore by remember { mutableStateOf<BackupSnapshot?>(null) }
@@ -79,12 +87,14 @@ fun SettingsScreen(
     }
 
     fun createBackup() {
-        val result = manager.backupMmkv()
-        result.onSuccess {
-            refreshBackups()
-            Toast.makeText(context, "备份完成", Toast.LENGTH_SHORT).show()
-        }.onFailure {
-            Toast.makeText(context, it.message ?: "备份失败", Toast.LENGTH_SHORT).show()
+        scope.launch {
+            val result = withContext(Dispatchers.IO) { manager.backupMmkv() }
+            result.onSuccess {
+                refreshBackups()
+                Toast.makeText(context, "备份完成", Toast.LENGTH_SHORT).show()
+            }.onFailure {
+                Toast.makeText(context, it.message ?: "备份失败", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -183,14 +193,20 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    val result = manager.restoreBackup(snapshot.absolutePath)
-                    result.onSuccess {
-                        refreshBackups()
-                        Toast.makeText(context, "恢复完成，请重启应用查看", Toast.LENGTH_LONG).show()
-                    }.onFailure {
-                        Toast.makeText(context, it.message ?: "恢复失败", Toast.LENGTH_SHORT).show()
-                    }
+                    val snapshotToRestore = snapshot
                     pendingRestore = null
+                    scope.launch {
+                        val result = withContext(Dispatchers.IO) { manager.restoreBackup(snapshotToRestore.absolutePath) }
+                        result.onSuccess {
+                            Toast.makeText(context, "恢复完成，应用将重启", Toast.LENGTH_LONG).show()
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                MMKV.onExit()
+                                Process.killProcess(Process.myPid())
+                            }, 800)
+                        }.onFailure {
+                            Toast.makeText(context, it.message ?: "恢复失败", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }) {
                     Text("确认恢复")
                 }

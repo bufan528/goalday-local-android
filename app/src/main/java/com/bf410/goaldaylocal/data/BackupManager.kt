@@ -1,6 +1,7 @@
 package com.bf410.goaldaylocal.data
 
 import android.content.Context
+import com.tencent.mmkv.MMKV
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -21,6 +22,7 @@ class BackupManager(
         get() = File(context.getExternalFilesDir(null), "backups").apply { mkdirs() }
 
     fun backupMmkv(): Result<File> = runCatching {
+        MMKV.defaultMMKV().flush()
         val sourceDir = File(context.filesDir.parentFile, "mmkv")
         require(sourceDir.exists()) { "未找到本地数据目录" }
         val targetDir = File(

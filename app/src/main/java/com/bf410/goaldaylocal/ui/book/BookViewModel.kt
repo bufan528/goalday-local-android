@@ -105,7 +105,7 @@ class BookViewModel(
     fun toggleChecked(pageTitle: String, item: String) {
         val next = !isChecked(pageTitle, item)
         store.setChecked(currentBook().id, pageTitle, item, next)
-        _uiState.update { it.copy() }
+        _uiState.update { it.copy(checkedRevision = it.checkedRevision + 1L) }
     }
 
     fun toggleSavedCurrentBook() {
