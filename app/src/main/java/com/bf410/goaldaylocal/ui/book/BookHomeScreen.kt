@@ -1856,15 +1856,13 @@ private fun HandbookOverviewRoute(
             title = payload.book.title,
             subtitle = payload.book.subtitle,
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(7.dp),
-        ) {
-            HandbookIndexMiniMetric("日程", scheduleCount.toString(), routeColor(HandbookSection.SCHEDULE), Modifier.weight(1f))
-            HandbookIndexMiniMetric("完成", doneCount.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
-            HandbookIndexMiniMetric("日记", diaryBlockCount.toString(), routeColor(HandbookSection.DIARY), Modifier.weight(1f))
-            HandbookIndexMiniMetric("目标", targetCount.toString(), routeColor(HandbookSection.TARGET), Modifier.weight(1f))
-        }
+        HandbookOverviewLedger(
+            pageCount = payload.book.pages.size,
+            scheduleCount = scheduleCount,
+            doneCount = doneCount,
+            diaryBlockCount = diaryBlockCount,
+            targetCount = targetCount,
+        )
         HandbookSection.entries
             .filterNot { it == HandbookSection.OVERVIEW }
             .forEach { item ->
@@ -1883,6 +1881,69 @@ private fun HandbookOverviewRoute(
                 selected = index == payload.uiState.selectedPageIndex,
                 onClick = { onOpenPage(index) },
             )
+        }
+    }
+}
+
+@Composable
+private fun HandbookOverviewLedger(
+    pageCount: Int,
+    scheduleCount: Int,
+    doneCount: Int,
+    diaryBlockCount: Int,
+    targetCount: Int,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(Color(0xFFFFF2DF), Color.White, Color(0xFFFFF7EC)),
+                    start = Offset.Zero,
+                    end = Offset(720f, 260f),
+                ),
+            )
+            .border(0.7.dp, Color(0x24A88966), RoundedCornerShape(18.dp))
+            .padding(10.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .width(5.dp)
+                .fillMaxHeight()
+                .background(Brush.horizontalGradient(listOf(Color(0x248F684F), Color.Transparent))),
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.weight(1f)) {
+                    Text("手账目录", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text("本地页面、日程和目标概览", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                }
+                Text(
+                    "$pageCount 页",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(GoaldayDesign.RouteOverview)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+            ) {
+                HandbookIndexMiniMetric("日程", scheduleCount.toString(), routeColor(HandbookSection.SCHEDULE), Modifier.weight(1f))
+                HandbookIndexMiniMetric("完成", doneCount.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
+                HandbookIndexMiniMetric("日记", diaryBlockCount.toString(), routeColor(HandbookSection.DIARY), Modifier.weight(1f))
+                HandbookIndexMiniMetric("目标", targetCount.toString(), routeColor(HandbookSection.TARGET), Modifier.weight(1f))
+            }
         }
     }
 }
@@ -2096,18 +2157,30 @@ private fun HandbookRouteHeader(
     title: String,
     subtitle: String,
 ) {
+    val accent = routeColor(route)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(routeColor(route).copy(alpha = 0.08f))
-            .border(0.5.dp, routeColor(route).copy(alpha = 0.16f), RoundedCornerShape(12.dp))
-            .padding(horizontal = 9.dp, vertical = 5.dp),
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(accent.copy(alpha = 0.13f), Color.White.copy(alpha = 0.72f), Color.Transparent),
+                ),
+            )
+            .border(0.5.dp, accent.copy(alpha = 0.18f), RoundedCornerShape(14.dp))
+            .padding(horizontal = 9.dp, vertical = 7.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
-            Text(route.label, color = routeColor(route), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .height(32.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(accent),
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+            Text(route.label, color = accent, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
             Text(title, color = Color(0xFF2F261D), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
         Text(
