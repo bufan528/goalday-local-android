@@ -78,6 +78,26 @@ fun applyBoundaryResistance(rawProgress: Float, canTurn: Boolean): Float {
 fun initialEdgeTapProgress(profile: TurnProfile = TurnProfile.DEFAULT): Float =
     if (profile == TurnProfile.HANDBOOK) 0.20f else EDGE_TAP_START_PROGRESS
 
+fun resolveDragTurnDirection(
+    profile: TurnProfile,
+    dragStartX: Float,
+    pageWidthPx: Float,
+    dragAmountPx: Float,
+    edgeGestureRatio: Float,
+    dragStartThreshold: Float,
+): TurnDirection? {
+    val safeWidth = pageWidthPx.coerceAtLeast(1f)
+    val edgeZonePx = safeWidth * edgeGestureRatio.coerceIn(0f, 0.5f)
+    val canStartNextFromEdge = dragStartX >= safeWidth - edgeZonePx
+    val canStartPreviousFromEdge = dragStartX <= edgeZonePx
+    val threshold = if (profile == TurnProfile.HANDBOOK) dragStartThreshold.coerceAtLeast(0.1f) else 0.6f
+    return when {
+        dragAmountPx <= -threshold && canStartNextFromEdge -> TurnDirection.NEXT
+        dragAmountPx >= threshold && canStartPreviousFromEdge -> TurnDirection.PREVIOUS
+        else -> null
+    }
+}
+
 fun updatedTurnProgress(
     currentProgress: Float,
     direction: TurnDirection,

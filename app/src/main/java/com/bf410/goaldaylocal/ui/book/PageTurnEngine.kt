@@ -211,27 +211,17 @@ fun PageTurnEngine(
                             val canStartNextFromEdge = dragStartX >= pageWidthPx - edgeZonePx
                             val canStartPreviousFromEdge = dragStartX <= edgeZonePx
                             val startedAtEdge = canStartNextFromEdge || canStartPreviousFromEdge
-                            val handbookFreeStart = profile == TurnProfile.HANDBOOK
                             if (direction == null && !startedAtEdge) {
-                                if (!handbookFreeStart) return@detectHorizontalDragGestures
+                                return@detectHorizontalDragGestures
                             }
-                            if (direction == null && handbookFreeStart) {
-                                val resolvedDirection = when {
-                                    dragAmount <= -(if (profile == TurnProfile.HANDBOOK) HANDBOOK_DRAG_START_THRESHOLD else 0.6f) -> TurnDirection.NEXT
-                                    dragAmount >= (if (profile == TurnProfile.HANDBOOK) HANDBOOK_DRAG_START_THRESHOLD else 0.6f) -> TurnDirection.PREVIOUS
-                                    else -> null
-                                }
-                                if (resolvedDirection != null) {
-                                    direction = resolvedDirection
-                                } else if (!startedAtEdge) {
-                                    return@detectHorizontalDragGestures
-                                }
-                            }
-                            val resolvedDirection = direction ?: when {
-                                dragAmount <= -(if (profile == TurnProfile.HANDBOOK) HANDBOOK_DRAG_START_THRESHOLD else 0.6f) && canStartNextFromEdge -> TurnDirection.NEXT
-                                dragAmount >= (if (profile == TurnProfile.HANDBOOK) HANDBOOK_DRAG_START_THRESHOLD else 0.6f) && canStartPreviousFromEdge -> TurnDirection.PREVIOUS
-                                else -> null
-                            } ?: return@detectHorizontalDragGestures
+                            val resolvedDirection = direction ?: resolveDragTurnDirection(
+                                profile = profile,
+                                dragStartX = dragStartX,
+                                pageWidthPx = pageWidthPx,
+                                dragAmountPx = dragAmount,
+                                edgeGestureRatio = if (profile == TurnProfile.HANDBOOK) HANDBOOK_EDGE_GESTURE_RATIO else EDGE_GESTURE_RATIO,
+                                dragStartThreshold = HANDBOOK_DRAG_START_THRESHOLD,
+                            ) ?: return@detectHorizontalDragGestures
 
                             direction = resolvedDirection
                             phase = if (resolvedDirection == TurnDirection.NEXT) TurnPhase.DraggingNext else TurnPhase.DraggingPrevious

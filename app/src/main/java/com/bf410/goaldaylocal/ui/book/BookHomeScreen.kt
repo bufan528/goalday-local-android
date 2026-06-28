@@ -849,6 +849,8 @@ private fun GoaldayHandbookScreen(
     val sectionPages = sectionPageEntries.map { it.value }
     val visiblePageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
     val selectedSectionIndex = sectionPageEntries.indexOfFirst { it.index == visiblePageIndex }.coerceAtLeast(0)
+    val sectionPreviousPage = sectionPageEntries.getOrNull(selectedSectionIndex - 1)?.value
+    val sectionNextPage = sectionPageEntries.getOrNull(selectedSectionIndex + 1)?.value
     LaunchedEffect(currentPage.title) {
         if (section != HandbookSection.OVERVIEW && !matchesHandbookSection(currentPage, section)) {
             section = resolveHandbookSection(currentPage)
@@ -993,8 +995,8 @@ private fun GoaldayHandbookScreen(
                         viewModel = viewModel,
                         book = book,
                         currentPage = currentPage,
-                        previousPage = previousPage,
-                        nextPage = nextPage,
+                        previousPage = sectionPreviousPage,
+                        nextPage = sectionNextPage,
                         uiState = uiState,
                         sectionPages = sectionPages,
                         selectedSectionIndex = selectedSectionIndex,
@@ -1010,8 +1012,8 @@ private fun GoaldayHandbookScreen(
                 pageIndex = visiblePageIndex,
                 pageCount = book.pages.size,
                 currentPage = currentPage,
-                previousPage = previousPage,
-                nextPage = nextPage,
+                previousPage = sectionPreviousPage,
+                nextPage = sectionNextPage,
                 sectionPages = sectionPages,
                 selectedSectionIndex = selectedSectionIndex,
                 onPrevious = {

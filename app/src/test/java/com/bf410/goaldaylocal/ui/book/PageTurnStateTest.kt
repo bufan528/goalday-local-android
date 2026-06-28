@@ -125,6 +125,29 @@ class PageTurnStateTest {
     }
 
     @Test
+    fun handbook_drag_turn_starts_only_from_page_edges() {
+        val centerDrag = resolveDragTurnDirection(
+            profile = TurnProfile.HANDBOOK,
+            dragStartX = 200f,
+            pageWidthPx = 400f,
+            dragAmountPx = -80f,
+            edgeGestureRatio = 0.28f,
+            dragStartThreshold = 0.28f,
+        )
+        val edgeDrag = resolveDragTurnDirection(
+            profile = TurnProfile.HANDBOOK,
+            dragStartX = 390f,
+            pageWidthPx = 400f,
+            dragAmountPx = -80f,
+            edgeGestureRatio = 0.28f,
+            dragStartThreshold = 0.28f,
+        )
+
+        assertEquals(null, centerDrag)
+        assertEquals(TurnDirection.NEXT, edgeDrag)
+    }
+
+    @Test
     fun drag_update_for_blocked_turn_uses_boundary_resistance() {
         val next = updatedTurnProgress(
             currentProgress = 0.05f,
