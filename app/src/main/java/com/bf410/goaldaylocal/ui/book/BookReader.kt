@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.graphicsLayer
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.ScheduleEntry
@@ -88,23 +89,82 @@ fun BookReader(
             )
         },
         destination = { progress, direction ->
-            DestinationPageLayer(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = pagePaddingH, vertical = pagePaddingV),
-                bookTitle = bookTitle,
-                subtitle = subtitle,
-                page = when (direction) {
-                    TurnDirection.NEXT -> nextPage
-                    TurnDirection.PREVIOUS -> previousPage
-                    null -> null
-                },
-                pageIndex = pageIndex,
-                pageCount = pageCount,
-                tint = tint,
-                revealProgress = progress,
-                direction = direction,
-            )
+            val destinationPage = when (direction) {
+                TurnDirection.NEXT -> nextPage
+                TurnDirection.PREVIOUS -> previousPage
+                null -> null
+            }
+            val destinationIndex = when (direction) {
+                TurnDirection.NEXT -> pageIndex + 1
+                TurnDirection.PREVIOUS -> pageIndex - 1
+                null -> pageIndex
+            }.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
+            if (handbookMode && destinationPage != null) {
+                ActivePageLayer(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = pagePaddingH, vertical = pagePaddingV)
+                        .graphicsLayer { alpha = destinationRevealAlpha(progress) },
+                    page = destinationPage,
+                    pageIndex = destinationIndex,
+                    pageCount = pageCount,
+                    bookTitle = bookTitle,
+                    subtitle = destinationPageSubtitle(direction, subtitle),
+                    tint = tint,
+                    isSaved = isSaved,
+                    diaryDraft = diaryDraft,
+                    customPageItems = customPageItems,
+                    weeklyTheme = weeklyTheme,
+                    todayPlanItems = todayPlanItems,
+                    todayCompletedItems = todayCompletedItems,
+                    schedulePreviewEntries = schedulePreviewEntries,
+                    targetItemMeta = targetItemMeta,
+                    onToggleSaved = onToggleSaved,
+                    isChecked = isChecked,
+                    onToggleChecked = onToggleChecked,
+                    onDiaryChange = onDiaryChange,
+                    onAddCustomItem = onAddCustomItem,
+                    onAddCustomItemWithDeadline = onAddCustomItemWithDeadline,
+                    onRemoveCustomItem = onRemoveCustomItem,
+                    onRenameCustomItem = onRenameCustomItem,
+                    onAddToSchedule = onAddToSchedule,
+                    onAddHandbookPoolItem = onAddHandbookPoolItem,
+                    onRemoveHandbookPoolItem = onRemoveHandbookPoolItem,
+                    onAddScheduleFromHandbook = onAddScheduleFromHandbook,
+                    onWeeklyThemeChange = onWeeklyThemeChange,
+                    onMoveItemToToday = onMoveItemToToday,
+                    onMoveItemToCompleted = onMoveItemToCompleted,
+                    onRestoreItemFromToday = onRestoreItemFromToday,
+                    onRestoreItemFromCompleted = onRestoreItemFromCompleted,
+                    onUpdateScheduleTitle = onUpdateScheduleTitle,
+                    onMoveScheduleDay = onMoveScheduleDay,
+                    onToggleScheduleCompleted = onToggleScheduleCompleted,
+                    onUpdateTargetNote = onUpdateTargetNote,
+                    onUpdateTargetDeadline = onUpdateTargetDeadline,
+                    onOpenTargetDetail = onOpenTargetDetail,
+                    pendingCommand = diaryCommand,
+                    onCommand = { diaryCommand = it },
+                    contentMode = PageContentMode.Browsing,
+                    onContentModeChange = { },
+                    handbookMode = true,
+                    turnProgress = 0f,
+                    turnDirection = null,
+                )
+            } else {
+                DestinationPageLayer(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = pagePaddingH, vertical = pagePaddingV),
+                    bookTitle = bookTitle,
+                    subtitle = subtitle,
+                    page = destinationPage,
+                    pageIndex = pageIndex,
+                    pageCount = pageCount,
+                    tint = tint,
+                    revealProgress = progress,
+                    direction = direction,
+                )
+            }
         },
         pageBack = { progress, direction, anchorY ->
             PageBackLayer(

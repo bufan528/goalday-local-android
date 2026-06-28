@@ -499,7 +499,7 @@ fun Modifier.turningPageTransform(
 ): Modifier = graphicsLayer {
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
-    transformOrigin = if (draggingToNext) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
+    transformOrigin = TransformOrigin(turnTransformOriginX(profile, direction), 0.5f)
     val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
         val tail = ((visualProgress - 0.82f) / 0.18f).coerceIn(0f, 1f)
         tail * 4f
@@ -507,7 +507,7 @@ fun Modifier.turningPageTransform(
         0f
     }
     val progressCurve = (visualProgress * 0.35f) + (visualProgress * visualProgress * 0.65f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 90f + handbookTailBoost else 118f
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 82f + handbookTailBoost else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve
         TurnDirection.PREVIOUS -> maxRotation * progressCurve
@@ -520,8 +520,16 @@ fun Modifier.turningPageTransform(
         0f
     }
     translationX = when {
-        draggingToNext -> -(visualProgress * 14f + progressCurve * 68f - tailRetract)
-        draggingToPrevious -> visualProgress * 14f + progressCurve * 68f - tailRetract
+        draggingToNext -> if (profile == TurnProfile.HANDBOOK) {
+            -(visualProgress * 4f + progressCurve * 16f - tailRetract * 0.35f)
+        } else {
+            -(visualProgress * 14f + progressCurve * 68f - tailRetract)
+        }
+        draggingToPrevious -> if (profile == TurnProfile.HANDBOOK) {
+            visualProgress * 4f + progressCurve * 16f - tailRetract * 0.35f
+        } else {
+            visualProgress * 14f + progressCurve * 68f - tailRetract
+        }
         else -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
@@ -548,7 +556,7 @@ fun Modifier.pageBackTransform(
     anchorY: Float,
     profile: TurnProfile = TurnProfile.DEFAULT,
 ): Modifier = graphicsLayer {
-    transformOrigin = if (direction == TurnDirection.NEXT) TransformOrigin(0f, 0.5f) else TransformOrigin(1f, 0.5f)
+    transformOrigin = TransformOrigin(turnTransformOriginX(profile, direction), 0.5f)
     val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
         val tail = ((visualProgress - 0.82f) / 0.18f).coerceIn(0f, 1f)
         tail * 3.5f
@@ -556,7 +564,7 @@ fun Modifier.pageBackTransform(
         0f
     }
     val progressCurve = (visualProgress * 0.32f) + (visualProgress * visualProgress * 0.68f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 88f + handbookTailBoost else 118f
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 80f + handbookTailBoost else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve * 0.9f
         TurnDirection.PREVIOUS -> maxRotation * progressCurve * 0.9f

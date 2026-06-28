@@ -90,9 +90,15 @@ fun updatedTurnProgress(
         TurnDirection.NEXT -> (-dragAmountPx) / safeWidth
         TurnDirection.PREVIOUS -> dragAmountPx / safeWidth
     }
-    val delta = directionalDelta.coerceAtLeast(0f)
-    val raw = currentProgress + delta
+    val raw = currentProgress + directionalDelta
     return applyBoundaryResistance(raw, canTurn)
+}
+
+fun turnTransformOriginX(profile: TurnProfile, direction: TurnDirection?): Float {
+    if (profile == TurnProfile.HANDBOOK && direction != null) {
+        return 0.5f
+    }
+    return if (direction == TurnDirection.NEXT) 0f else 1f
 }
 
 fun visualTurnProgress(progress: Float): Float {

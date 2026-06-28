@@ -112,6 +112,19 @@ class PageTurnStateTest {
     }
 
     @Test
+    fun drag_update_allows_reversing_a_started_turn() {
+        val next = updatedTurnProgress(
+            currentProgress = 0.50f,
+            direction = TurnDirection.NEXT,
+            dragAmountPx = 80f,
+            pageWidthPx = 400f,
+            canTurn = true,
+        )
+
+        assertEquals(0.30f, next, 0.0001f)
+    }
+
+    @Test
     fun drag_update_for_blocked_turn_uses_boundary_resistance() {
         val next = updatedTurnProgress(
             currentProgress = 0.05f,
@@ -131,5 +144,13 @@ class PageTurnStateTest {
 
         assertTrue(early < 0.20f)
         assertTrue(late > 0.80f)
+    }
+
+    @Test
+    fun handbook_turn_pivots_from_spine_not_outer_book_edge() {
+        assertEquals(0.5f, turnTransformOriginX(TurnProfile.HANDBOOK, TurnDirection.NEXT), 0.0001f)
+        assertEquals(0.5f, turnTransformOriginX(TurnProfile.HANDBOOK, TurnDirection.PREVIOUS), 0.0001f)
+        assertEquals(0f, turnTransformOriginX(TurnProfile.DEFAULT, TurnDirection.NEXT), 0.0001f)
+        assertEquals(1f, turnTransformOriginX(TurnProfile.DEFAULT, TurnDirection.PREVIOUS), 0.0001f)
     }
 }
