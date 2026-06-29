@@ -63,6 +63,7 @@ private data class FontSizeOption(
 @Composable
 fun SettingsScreen(
     onShowGuide: () -> Unit = {},
+    onFontSizeChange: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     val manager = remember { BackupManager(context) }
@@ -154,6 +155,7 @@ fun SettingsScreen(
                 onSelected = { option ->
                     selectedFont = option.key
                     mmkv.encode(KEY_FONT_SIZE, option.key)
+                    onFontSizeChange(option.key)
                     Toast.makeText(context, "字号已设为：${option.label}", Toast.LENGTH_SHORT).show()
                 },
             )

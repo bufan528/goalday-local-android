@@ -94,12 +94,14 @@ internal fun HandbookReplicaPage(
         null -> 0f
     }
     val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
+    var monthOffset by remember(page.title) { mutableStateOf(0) }
     val defaultScheduleModel = buildScheduleHandbookModel(
         page = page,
         scheduleEntries = schedulePreviewEntries,
         todayPlanItems = todayPlanItems,
         todayCompletedItems = todayCompletedItems,
         requestedWindowStart = null,
+        monthOffset = monthOffset,
     )
     var windowStart by remember(page.title, defaultScheduleModel.year, defaultScheduleModel.month) {
         mutableStateOf(defaultScheduleModel.windowStart)
@@ -113,6 +115,7 @@ internal fun HandbookReplicaPage(
         todayPlanItems = todayPlanItems,
         todayCompletedItems = todayCompletedItems,
         requestedWindowStart = windowStart,
+        monthOffset = monthOffset,
     )
     val anchorYear = scheduleModel.year
     val anchorMonth = scheduleModel.month
@@ -175,18 +178,6 @@ internal fun HandbookReplicaPage(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(
-                        Color(0xFFFFFCF6),
-                        Color(0xFFFFF8EE),
-                        Color(0xFFF7EADA),
-                        Color(0xFFFFF8EE),
-                        Color(0xFFFFFCF6),
-                    ),
-                ),
-            )
-            .border(0.8.dp, Color(0x1FA88966), RoundedCornerShape(GoaldayDesign.RadiusL))
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha
@@ -230,12 +221,12 @@ internal fun HandbookReplicaPage(
             pageCount = pageCount,
             weeklyTheme = weeklyTheme,
             onWeeklyThemeChange = onWeeklyThemeChange,
-            rangeLabel = visibleRangeLabel,
+            rangeLabel = "${anchorMonth}月",
             visibleDays = visibleDays,
-            canShiftPrevious = start > 0,
-            canShiftNext = start < maxStart,
-            onPreviousRange = { windowStart = (start - 3).coerceAtLeast(0) },
-            onNextRange = { windowStart = (start + 3).coerceAtMost(maxStart) },
+            canShiftPrevious = true,
+            canShiftNext = true,
+            onPreviousRange = { monthOffset--; windowStart = 0 },
+            onNextRange = { monthOffset++; windowStart = 0 },
             onSelectMonthDay = { day ->
                 windowStart = (day - 1).coerceIn(0, maxStart)
                 draftDay = day

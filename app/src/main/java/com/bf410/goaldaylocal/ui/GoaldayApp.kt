@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.Typography
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.draw.clip
@@ -43,6 +44,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bf410.goaldaylocal.ui.book.BookEntryMode
 import com.bf410.goaldaylocal.ui.book.BookHomeScreen
@@ -177,7 +179,30 @@ fun GoaldayApp(startTarget: String? = null) {
         }
     }
 
-    MaterialTheme(colorScheme = goaldayColorScheme) {
+    val goaldayMmkv = remember { MMKV.defaultMMKV() }
+    var fontSizeKey by remember { mutableStateOf(goaldayMmkv.decodeString("settings_font_size", "standard") ?: "standard") }
+
+    val goaldayTypography = remember(fontSizeKey) {
+        val scale = when (fontSizeKey) {
+            "compact" -> 0.88f
+            "large" -> 1.12f
+            else -> 1.0f
+        }
+        Typography().run {
+            copy(
+                titleLarge = titleLarge.copy(fontSize = (22 * scale).sp),
+                titleMedium = titleMedium.copy(fontSize = (16 * scale).sp),
+                bodyLarge = bodyLarge.copy(fontSize = (16 * scale).sp),
+                bodyMedium = bodyMedium.copy(fontSize = (14 * scale).sp),
+                bodySmall = bodySmall.copy(fontSize = (12 * scale).sp),
+                labelLarge = labelLarge.copy(fontSize = (14 * scale).sp),
+                labelMedium = labelMedium.copy(fontSize = (12 * scale).sp),
+                labelSmall = labelSmall.copy(fontSize = (11 * scale).sp),
+            )
+        }
+    }
+
+    MaterialTheme(colorScheme = goaldayColorScheme, typography = goaldayTypography) {
         Scaffold(
             containerColor = GoaldayDesign.AppBg,
             bottomBar = {
@@ -295,6 +320,7 @@ fun GoaldayApp(startTarget: String? = null) {
                         )
                         RootTab.SETTINGS -> SettingsScreen(
                             onShowGuide = { showGuide = true },
+                            onFontSizeChange = { fontSizeKey = it },
                         )
                     }
                 }

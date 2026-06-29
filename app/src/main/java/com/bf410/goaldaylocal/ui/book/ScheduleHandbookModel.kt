@@ -33,18 +33,21 @@ internal fun buildScheduleHandbookModel(
     todayCompletedItems: List<String>,
     requestedWindowStart: Int?,
     today: LocalDate = LocalDate.now(),
+    monthOffset: Int = 0,
 ): ScheduleHandbookModel {
     val pageMonth = page.title.extractMonthNumber()
-    val anchorMonth = pageMonth ?: scheduleEntries.firstOrNull()?.month ?: today.monthValue
-    val anchorYear = if (pageMonth != null) {
-        today.year
-    } else {
-        scheduleEntries.firstOrNull { it.year == today.year && it.month == anchorMonth }?.year
-            ?: scheduleEntries.firstOrNull { it.month == anchorMonth }?.year
+    val baseMonth = pageMonth ?: scheduleEntries.firstOrNull()?.month ?: today.monthValue
+    // 应用月份偏移（跨月导航），处理跨年
+    val baseYear = if (pageMonth != null) today.year else (
+        scheduleEntries.firstOrNull { it.year == today.year && it.month == baseMonth }?.year
+            ?: scheduleEntries.firstOrNull { it.month == baseMonth }?.year
             ?: scheduleEntries.firstOrNull()?.year
             ?: today.year
-    }
-    val monthLength = YearMonth.of(anchorYear, anchorMonth).lengthOfMonth()
+    )
+    val adjusted = YearMonth.of(baseYear, baseMonth).plusMonths(monthOffset.toLong())
+    val anchorMonth = adjusted.monthValue
+    val anchorYear = adjusted.year
+    val monthLength = adjusted.lengthOfMonth()
     val defaultStart = if (anchorYear == today.year && anchorMonth == today.monthValue) {
         (today.dayOfMonth - 1).coerceIn(0, monthLength - 1)
     } else {

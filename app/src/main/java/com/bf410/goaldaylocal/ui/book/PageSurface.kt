@@ -703,7 +703,20 @@ fun ActivePageLayer(
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
             )
-            is PlanPage -> Box(modifier = modifier) {
+            is PlanPage -> Box(
+                modifier = modifier
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(GoaldayDesign.Paper, GoaldayDesign.PaperWarm)
+                        )
+                    )
+                    .border(
+                        GoaldayDesign.Hairline,
+                        GoaldayDesign.BorderColor.copy(alpha = 0.22f),
+                        RoundedCornerShape(GoaldayDesign.RadiusXL)
+                    )
+            ) {
                 EditableBulletPage(
                     pageTitle = page.title,
                     baseItems = page.items,
@@ -729,6 +742,14 @@ fun ActivePageLayer(
                     onRestoreItemFromCompleted = onRestoreItemFromCompleted,
                     contentMode = contentMode,
                     onContentModeChange = onContentModeChange,
+                )
+                Text(
+                    "${pageIndex + 1}/$pageCount",
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 6.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GoaldayDesign.InkSecondary,
                 )
             }
             is DiaryPage -> HandbookDiaryReplicaPage(
