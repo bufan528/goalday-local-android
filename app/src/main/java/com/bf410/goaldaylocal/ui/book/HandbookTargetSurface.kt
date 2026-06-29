@@ -184,7 +184,7 @@ internal fun TargetDetailReplicaPage(
                 TargetProgressBar(
                     completed = completedCount,
                     total = items.size,
-                    tint = GoaldayDesign.Positive,
+                    tint = tint,
                 )
             }
         }
@@ -218,7 +218,7 @@ internal fun TargetDetailReplicaPage(
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(99.dp))
-                                .background(if (checked) GoaldayDesign.Positive else Color(0x18E88FAE))
+                                .background(if (checked) GoaldayDesign.Positive else tint.copy(alpha = 0.18f))
                                 .padding(horizontal = 7.dp, vertical = 4.dp),
                         )
                         Text(
@@ -361,10 +361,10 @@ private fun TargetLedgerSummary(
     custom: Int,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
-        TargetLedgerCell("待整理", (total - completed).coerceAtLeast(0).toString(), Color(0xFFB07A8F), Modifier.weight(1f))
+        TargetLedgerCell("待整理", (total - completed).coerceAtLeast(0).toString(), GoaldayDesign.RouteDiary, Modifier.weight(1f))
         TargetLedgerCell("已完成", completed.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
         TargetLedgerCell("已排期", scheduled.toString(), GoaldayDesign.Pink, Modifier.weight(1f))
-        TargetLedgerCell("自定义", custom.toString(), Color(0xFF8F684F), Modifier.weight(1f))
+        TargetLedgerCell("自定义", custom.toString(), GoaldayDesign.RouteOverview, Modifier.weight(1f))
     }
 }
 

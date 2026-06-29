@@ -72,14 +72,15 @@ fun BookShell(
             .clip(outerShape)
             .background(
                 if (shellStyle == ShellStyle.BOOK) {
-                    // 真实书皮：温润的胭粉渐变，避免高饱和原色
+                    // 真实书皮：温润的胭粉渐变（统一走 Pink token 系，原硬编码已收敛）
                     Brush.linearGradient(
-                        listOf(Color(0xFFD8A2AE), Color(0xFFFFF2F6), Color(0xFFE4B5C0)),
+                        listOf(GoaldayDesign.Pink, GoaldayDesign.PinkSoft, GoaldayDesign.Pink.copy(alpha = 0.88f)),
                         start = Offset.Zero,
                         end = Offset(820f, 640f),
                     )
                 } else {
-                    Brush.verticalGradient(listOf(Color(0xFFFDFDFD), Color(0xFFFDFDFD)))
+                    // 非 BOOK 模式：用 Paper 系纸张渐变替代原纯白（提升纸张暖意）
+                    Brush.verticalGradient(listOf(GoaldayDesign.Paper, GoaldayDesign.PaperWarm))
                 },
             )
             .then(
@@ -91,7 +92,7 @@ fun BookShell(
             ),
     ) {
         if (shellStyle == ShellStyle.BOOK) {
-            // 书脊（左侧装订线）：单层柔和阴影，模拟真实书脊
+            // 书脊（左侧装订线）：粉色系阴影（原棕色与粉色书皮不搭，统一到 Pink 系）
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
@@ -99,7 +100,7 @@ fun BookShell(
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color(0x665A3440), Color(0x448A5361), Color.Transparent),
+                            listOf(GoaldayDesign.Pink.copy(alpha = 0.40f), GoaldayDesign.Pink.copy(alpha = 0.27f), Color.Transparent),
                         ),
                     ),
             )
@@ -110,7 +111,7 @@ fun BookShell(
                     .padding(start = 4.dp, top = 28.dp, bottom = 28.dp)
                     .width(1.dp)
                     .fillMaxHeight()
-                    .background(Color(0x44FFF7FA)),
+                    .background(Color.White.copy(alpha = 0.27f)),
             )
             // 书脊烫金标题：用固定尺寸 Box 包裹避免旋转后定位漂移
             Box(
@@ -125,11 +126,11 @@ fun BookShell(
                     "GOALDAY",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFFFDECF1).copy(alpha = 0.88f),
+                    color = GoaldayDesign.PinkSoft.copy(alpha = 0.88f),
                     modifier = Modifier.graphicsLayer { rotationZ = -90f },
                 )
             }
-            // 书页边缘（右侧）：单层柔和阴影暗示书页厚度
+            // 书页边缘（右侧）：PaperAged 系阴影暗示书页厚度（原棕色硬编码已收敛）
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -137,44 +138,21 @@ fun BookShell(
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color.Transparent, Color(0x40A07D5E), Color(0x66EED8C4)),
+                            listOf(Color.Transparent, GoaldayDesign.PaperAged.copy(alpha = 0.25f), GoaldayDesign.PaperAged.copy(alpha = 0.40f)),
                         ),
                     ),
             )
-            // 书顶高光：单层柔和
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .height(24.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color.White.copy(alpha = 0.20f), Color.Transparent),
-                        ),
-                    ),
-            )
-            // 书底阴影：单层柔和
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(20.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color.Transparent, GoaldayDesign.PrimaryAction.copy(alpha = 0.10f)),
-                        ),
-                    ),
-            )
+            // 删除书顶/书底高光阴影（与 OpenBookPaperChrome 内部重复，由其统一负责）
         }
 
-        // 纸张层：非 BOOK 模式渲染白色背景；BOOK 模式由 OpenBookPaperChrome 统一处理
+        // 纸张层：非 BOOK 模式渲染纸张背景；BOOK 模式由 OpenBookPaperChrome 统一处理
         if (shellStyle != ShellStyle.BOOK) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = pageInsetH, vertical = pageInsetV)
                     .clip(innerShape)
-                    .background(Color(0xFFFFFFFF)),
+                    .background(GoaldayDesign.Paper),
             )
         }
 
@@ -239,7 +217,7 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 .fillMaxWidth(0.5f)
                 .background(GoaldayDesign.PaperGradient),
         )
-        // 右页：略亮的纸渐变
+        // 右页：略亮的纸渐变（末段硬编码白收敛到 Surface token）
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -247,13 +225,13 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 .fillMaxWidth(0.5f)
                 .background(
                     Brush.linearGradient(
-                        listOf(GoaldayDesign.PaperAged, GoaldayDesign.PaperWarm, Color(0xFFFFFFFF)),
+                        listOf(GoaldayDesign.PaperAged, GoaldayDesign.PaperWarm, GoaldayDesign.Surface),
                         start = Offset.Zero,
                         end = Offset(680f, 420f),
                     ),
                 ),
         )
-        // 中央书脊阴影：单层柔和
+        // 中央书脊阴影：单层柔和（黑色系中性，保留）
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -265,24 +243,24 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                     ),
                 ),
         )
-        // 顶部高光：单层
+        // 顶部高光：单层（收敛到 White alpha）
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .height(28.dp)
                 .background(
-                    Brush.verticalGradient(listOf(Color(0x44FFFFFF), Color.Transparent)),
+                    Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.27f), Color.Transparent)),
                 ),
         )
-        // 底部柔和阴影：单层
+        // 底部柔和阴影：单层（原棕色硬编码收敛到 Pink 系，与书皮统一）
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .height(32.dp)
                 .background(
-                    Brush.verticalGradient(listOf(Color.Transparent, Color(0x18B88A58))),
+                    Brush.verticalGradient(listOf(Color.Transparent, GoaldayDesign.Pink.copy(alpha = 0.10f))),
                 ),
         )
     }

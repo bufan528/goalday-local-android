@@ -649,7 +649,7 @@ fun ActivePageLayer(
             )
             is PlanPage -> Box(
                 modifier = modifier
-                    .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                     .background(
                         Brush.verticalGradient(
                             listOf(GoaldayDesign.Paper, GoaldayDesign.PaperWarm)
