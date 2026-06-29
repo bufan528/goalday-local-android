@@ -225,13 +225,27 @@ fun BookHomeScreen(
             val currentPage = book.pages[clampedPageIndex]
             val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
             val nextPage = book.pages.getOrNull(clampedPageIndex + 1)
-            GoaldayHandbookScreen(
+            // 复用 BookDetailView：启用 handbookMode 让 BookReader 提供真实翻页动画，
+            // 日程/计划/日记内容直接渲染在书页上，符合"像真实书本能翻动"的目标。
+            BookDetailView(
                 viewModel = viewModel,
                 book = book,
                 currentPage = currentPage,
                 previousPage = previousPage,
                 nextPage = nextPage,
                 uiState = uiState,
+                onBackToLibrary = { },
+                onShowAddPage = {
+                    pageDialogPreset = PageDialogPreset(type = "schedule", title = "日程页")
+                    showPageDialog = true
+                },
+                onShowRenamePage = { showRenamePageDialog = true },
+                onShowEditBook = { showEditBookDialog = true },
+                onToggleManagePanel = { },
+                showManagePanel = false,
+                forcedSegment = null,
+                bookOnlyMode = true,
+                onShowInspiration = { },
             )
         }
 

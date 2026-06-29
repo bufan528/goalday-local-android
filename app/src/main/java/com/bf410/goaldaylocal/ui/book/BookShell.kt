@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.material3.MaterialTheme
@@ -44,117 +43,46 @@ fun BookShell(
     onTapNext: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val outerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(40.dp) else RoundedCornerShape(28.dp)
-    val innerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(30.dp) else RoundedCornerShape(22.dp)
-    val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 4.dp else 10.dp
-    val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 2.dp else 8.dp
+    val outerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(28.dp) else RoundedCornerShape(GoaldayDesign.Radius2XL)
+    val innerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(22.dp) else RoundedCornerShape(GoaldayDesign.RadiusXL)
+    val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 6.dp else 10.dp
+    val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 4.dp else 8.dp
     val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 30.dp else 20.dp
-    val pageInsetH = if (shellStyle == ShellStyle.BOOK) 14.dp else 8.dp
-    val pageInsetV = if (shellStyle == ShellStyle.BOOK) 15.dp else 10.dp
+    val pageInsetH = if (shellStyle == ShellStyle.BOOK) 12.dp else 8.dp
+    val pageInsetV = if (shellStyle == ShellStyle.BOOK) 12.dp else 10.dp
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = outerPaddingH, vertical = outerPaddingV)
-            .shadow(if (shellStyle == ShellStyle.BOOK) 30.dp else 14.dp, outerShape, clip = false)
+            .shadow(
+                if (shellStyle == ShellStyle.BOOK) GoaldayDesign.ShadowLarge else GoaldayDesign.ShadowMedium,
+                outerShape,
+                clip = false,
+            )
             .clip(outerShape)
             .background(
                 if (shellStyle == ShellStyle.BOOK) {
+                    // 真实书皮：温润的胭粉渐变，避免高饱和原色
                     Brush.linearGradient(
-                        listOf(Color(0xFFBF8797), Color(0xFFFFF2F6), Color(0xFFD8A2AE), Color(0xFF9F6674)),
+                        listOf(Color(0xFFD8A2AE), Color(0xFFFFF2F6), Color(0xFFE4B5C0)),
                         start = Offset.Zero,
-                        end = Offset(900f, 700f),
+                        end = Offset(820f, 640f),
                     )
                 } else {
                     Brush.verticalGradient(listOf(Color(0xFFFDFDFD), Color(0xFFFDFDFD)))
                 },
+            )
+            .then(
+                if (shellStyle == ShellStyle.BOOK) {
+                    Modifier.border(GoaldayDesign.Hairline, Color.White.copy(alpha = 0.40f), outerShape)
+                } else {
+                    Modifier
+                },
             ),
     ) {
         if (shellStyle == ShellStyle.BOOK) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .width(26.dp)
-                    .fillMaxHeight()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color(0xC55A3440), Color(0x9A8A5361), Color(0x70C58E9E), Color.Transparent),
-                        ),
-                    ),
-            )
-            Text(
-                "GOALDAY",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFFFDECF1),
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .graphicsLayer { rotationZ = -90f }
-                    .padding(bottom = 2.dp),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 6.dp, top = 24.dp, bottom = 24.dp)
-                    .width(2.dp)
-                    .fillMaxHeight()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color(0x66FFF7FA), Color(0x55F5C8D5), Color(0x66FFF7FA)),
-                        ),
-                    ),
-            )
-            repeat(7) { index ->
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(start = 12.dp, top = (42 + index * 38).dp)
-                        .width(5.dp)
-                        .height(10.dp)
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(
-                            Brush.horizontalGradient(
-                                listOf(Color(0x554C2630), Color(0x66FFF8FB), Color(0x334C2630)),
-                            ),
-                        ),
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .height(14.dp)
-                    .padding(horizontal = 18.dp)
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color(0x55E8B8C4), Color(0xAAFFF8FA), Color(0x55E8B8C4)),
-                        ),
-                    ),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .padding(horizontal = 24.dp)
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color(0x66F3C8D2), Color(0xCCFFF9FB), Color(0x66F3C8D2)),
-                        ),
-                    ),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .height(28.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color(0x26FFFFFF), Color.Transparent),
-                        ),
-                    ),
-            )
+            // 书脊（左侧装订线）：单层柔和阴影，模拟真实书脊
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
@@ -162,59 +90,69 @@ fun BookShell(
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color(0x765A3440), Color(0x4C8A5361), Color(0x2DC58E9E), Color.Transparent),
+                            listOf(Color(0x665A3440), Color(0x448A5361), Color.Transparent),
                         ),
                     ),
             )
+            // 书脊高光线
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
+                    .align(Alignment.CenterStart)
+                    .padding(start = 4.dp, top = 28.dp, bottom = 28.dp)
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(Color(0x44FFF7FA)),
+            )
+            // 书脊烫金标题
+            Text(
+                "GOALDAY",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFFFDECF1).copy(alpha = 0.88f),
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .graphicsLayer { rotationZ = -90f }
+                    .padding(top = 4.dp),
+            )
+            // 书页边缘（右侧）：单层柔和阴影暗示书页厚度
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
                     .width(8.dp)
-                    .height(28.dp)
+                    .fillMaxHeight()
                     .background(
-                        Brush.verticalGradient(
-                            listOf(Color(0xFFE88FAE), Color(0xFFA94F6C)),
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, Color(0x40A07D5E), Color(0x66EED8C4)),
                         ),
                     ),
             )
+            // 书顶高光：单层柔和
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .height(24.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.White.copy(alpha = 0.20f), Color.Transparent),
+                        ),
+                    ),
+            )
+            // 书底阴影：单层柔和
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .height(12.dp)
-                    .padding(horizontal = 20.dp)
+                    .height(20.dp)
                     .background(
-                        Brush.horizontalGradient(
-                            listOf(Color(0x338A6547), Color(0x66FFF7ED), Color(0x338A6547)),
-                        ),
-                    ),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .width(20.dp)
-                    .fillMaxHeight()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color(0x40A68466), Color(0x66EED8C4), Color(0xAAFFF7EC)),
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, GoaldayDesign.PrimaryAction.copy(alpha = 0.10f)),
                         ),
                     ),
             )
         }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        if (shellStyle == ShellStyle.BOOK) {
-                            listOf(Color(0x22FFFFFF), Color.Transparent, Color(0x12000000))
-                        } else {
-                            listOf(Color(0x10FFFFFF), Color.Transparent, Color(0x05000000))
-                        },
-                    ),
-                ),
-        )
 
+        // 纸张层：单层渐变，避免多层堆叠
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -223,7 +161,7 @@ fun BookShell(
                 .background(if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Paper else Color(0xFFFFFFFF))
                 .then(
                     if (shellStyle == ShellStyle.BOOK) {
-                        Modifier.border(1.5.dp, Color(0x40A7896E), innerShape)
+                        Modifier.border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.22f), innerShape)
                     } else {
                         Modifier
                     },
@@ -231,85 +169,34 @@ fun BookShell(
         )
 
         if (shellStyle == ShellStyle.BOOK) {
+            // 简化版纸张纹理：仅左右双页渐变 + 中央书脊线
             OpenBookPaperChrome(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = pageInsetH, vertical = pageInsetV),
             )
-            repeat(5) { layer ->
-                val offset = 2 + layer
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(top = (14 + layer).dp, bottom = (16 + layer).dp, end = (offset).dp)
-                        .width((4 + layer).dp)
-                        .fillMaxHeight()
-                        .background(
-                            Brush.horizontalGradient(
-                                listOf(Color(0x66A07D5E), Color(0xDDFFF8EE)),
-                            ),
-                        ),
-                )
-            }
-            repeat(3) { layer ->
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .padding(start = (14 + layer).dp, end = (14 + layer).dp, bottom = (2 + layer).dp)
-                        .height((2 + layer).dp)
-                        .background(
-                            Brush.horizontalGradient(
-                                listOf(Color(0x33A07D5E), Color(0x66FFF8EE), Color(0x33A07D5E)),
-                            ),
-                        ),
-                )
-            }
         }
 
+        // 中央书脊阴影线
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(if (shellStyle == ShellStyle.BOOK) 4.dp else 1.dp)
+                .width(if (shellStyle == ShellStyle.BOOK) 3.dp else 1.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            if (shellStyle == ShellStyle.BOOK) Color(0x4A5E3E26) else Color.Transparent,
-                            if (shellStyle == ShellStyle.BOOK) Color(0x66F2E4D6) else Color(0x14000000),
-                            if (shellStyle == ShellStyle.BOOK) Color(0x4A5E3E26) else Color.Transparent,
+                            if (shellStyle == ShellStyle.BOOK) Color(0x335E3E26) else Color.Transparent,
+                            if (shellStyle == ShellStyle.BOOK) Color(0x55F2E4D6) else Color(0x14000000),
+                            if (shellStyle == ShellStyle.BOOK) Color(0x335E3E26) else Color.Transparent,
                         ),
                     ),
                 ),
         )
 
-        if (shellStyle == ShellStyle.BOOK) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .height(34.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color.White.copy(alpha = 0.22f), Color.Transparent),
-                        ),
-                    ),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(20.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color.Transparent, GoaldayDesign.PrimaryAction.copy(alpha = 0.12f)),
-                        ),
-                    ),
-            )
-        }
-
         content()
 
+        // 左右翻页热区
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
@@ -330,21 +217,21 @@ fun BookShell(
 
 @Composable
 private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
-    val pageShape = RoundedCornerShape(28.dp)
+    val pageShape = RoundedCornerShape(20.dp)
     Box(
         modifier = modifier
             .clip(pageShape)
             .background(GoaldayDesign.Paper),
     ) {
+        // 左页：温暖纸渐变
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .fillMaxHeight()
                 .fillMaxWidth(0.5f)
-                .background(
-                    GoaldayDesign.PaperGradient,
-                ),
+                .background(GoaldayDesign.PaperGradient),
         )
+        // 右页：略亮的纸渐变
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -352,94 +239,42 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 .fillMaxWidth(0.5f)
                 .background(
                     Brush.linearGradient(
-                        listOf(
-                            GoaldayDesign.PaperAged,
-                            GoaldayDesign.PaperWarm,
-                            Color(0xFFFFFFFF),
-                        ),
+                        listOf(GoaldayDesign.PaperAged, GoaldayDesign.PaperWarm, Color(0xFFFFFFFF)),
                         start = Offset.Zero,
                         end = Offset(680f, 420f),
                     ),
                 ),
         )
+        // 中央书脊阴影：单层柔和
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(34.dp)
+                .width(18.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
-                        listOf(
-                            Color(0x22000000),
-                            Color(0x14A88966),
-                            Color(0x00FFFFFF),
-                            Color(0x18A88966),
-                            Color(0x22000000),
-                        ),
+                        listOf(Color(0x22000000), Color.Transparent, Color(0x14000000)),
                     ),
                 ),
         )
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .width(2.dp)
-                .fillMaxHeight()
-                .background(Color(0x33A88966)),
-        )
-        repeat(9) { index ->
-            val top = 42 + index * 34
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = top.dp, end = 3.dp)
-                    .width((5 + index % 3).dp)
-                    .height(1.dp)
-                    .background(GoaldayDesign.PaperLine),
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(top = (top + 2).dp, start = 3.dp)
-                    .width((4 + index % 2).dp)
-                    .height(1.dp)
-                    .background(GoaldayDesign.PaperLine.copy(alpha = 0.58f)),
-            )
-        }
-        repeat(4) { layer ->
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .offset(x = layer.dp, y = layer.dp)
-                    .padding(end = (6 + layer).dp, bottom = (5 + layer).dp)
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color.Transparent, Color(0x44C5AA8D), Color(0x66FFF9EF)),
-                        ),
-                    ),
-            )
-        }
+        // 顶部高光：单层
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .height(40.dp)
+                .height(28.dp)
                 .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0x66FFFFFF), Color.Transparent),
-                    ),
+                    Brush.verticalGradient(listOf(Color(0x44FFFFFF), Color.Transparent)),
                 ),
         )
+        // 底部柔和阴影：单层
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(44.dp)
+                .height(32.dp)
                 .background(
-                    Brush.verticalGradient(
-                        listOf(Color.Transparent, Color(0x22B88A58)),
-                    ),
+                    Brush.verticalGradient(listOf(Color.Transparent, Color(0x18B88A58))),
                 ),
         )
     }
