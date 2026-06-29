@@ -157,8 +157,8 @@ fun HomeScreen(
                 .fillMaxSize()
                 .background(GoaldayDesign.AppBg)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(horizontal = GoaldayDesign.Space4, vertical = GoaldayDesign.Space3),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
         ) {
             PromoHeader(
                 year = state.year,
@@ -284,9 +284,9 @@ private fun HomeHintPill(text: String) {
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFFFF2F7), RoundedCornerShape(14.dp))
-            .border(0.7.dp, Color(0x28E88FAE), RoundedCornerShape(14.dp))
-            .padding(horizontal = 11.dp, vertical = 8.dp),
+            .background(GoaldayDesign.PinkSoft, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(GoaldayDesign.Hairline, GoaldayDesign.Pink.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusM))
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
     )
 }
 
@@ -306,16 +306,16 @@ private fun PromoHeader(
         modifier = Modifier
             .fillMaxWidth()
             .height(148.dp)
-            .shadow(12.dp, RoundedCornerShape(22.dp), clip = false)
+            .shadow(GoaldayDesign.ShadowMedium, RoundedCornerShape(GoaldayDesign.Radius2XL), clip = false)
             .background(
                 Brush.linearGradient(
                     listOf(Color(0xFFFFF4EA), Color(0xFFFFE4EC), Color(0xFFF2CFB3)),
                     start = Offset.Zero,
                     end = Offset(760f, 420f),
                 ),
-                RoundedCornerShape(22.dp),
+                RoundedCornerShape(GoaldayDesign.Radius2XL),
             )
-            .border(0.8.dp, Color(0x33FFFFFF), RoundedCornerShape(22.dp)),
+            .border(GoaldayDesign.Hairline, Color.White.copy(alpha = 0.20f), RoundedCornerShape(GoaldayDesign.Radius2XL)),
     ) {
         heroBitmap?.let { bitmap ->
             Image(
@@ -427,11 +427,11 @@ private fun PaperPlanner(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(22.dp), clip = false)
-            .background(GoaldayDesign.Surface, RoundedCornerShape(22.dp))
-            .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(22.dp))
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .shadow(GoaldayDesign.ShadowSoft, RoundedCornerShape(GoaldayDesign.Radius2XL), clip = false)
+            .background(GoaldayDesign.Surface, RoundedCornerShape(GoaldayDesign.Radius2XL))
+            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = GoaldayDesign.HairlineAlpha), RoundedCornerShape(GoaldayDesign.Radius2XL))
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space3),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
@@ -821,11 +821,11 @@ private fun EmptyHint(text: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(13.dp))
-            .background(Color(0xFFFFFCF7))
-            .border(0.7.dp, Color(0x1FA88966), RoundedCornerShape(13.dp))
-            .padding(horizontal = 9.dp, vertical = 7.dp),
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
+            .background(GoaldayDesign.Paper)
+            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusM))
+            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space2),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -849,11 +849,11 @@ private fun HomeActionDock(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(6.dp, RoundedCornerShape(18.dp), clip = false)
-            .background(Color(0xCCFFFDF8), RoundedCornerShape(18.dp))
-            .border(0.7.dp, Color(0x20A88966), RoundedCornerShape(18.dp))
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .shadow(GoaldayDesign.ShadowSoft, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
+            .background(Color.White.copy(alpha = 0.80f), RoundedCornerShape(GoaldayDesign.RadiusXL))
+            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusXL))
+            .padding(GoaldayDesign.Space2),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             HomeActionCard("日历", "月视图", "月", GoaldayDesign.Pink, Modifier.weight(1f), onOpenCalendar)
@@ -882,12 +882,12 @@ private fun HomeActionCard(
     Row(
         modifier = modifier
             .height(62.dp)
-            .shadow(2.dp, RoundedCornerShape(14.dp), clip = false)
-            .background(color.copy(alpha = 0.10f), RoundedCornerShape(14.dp))
-            .border(0.7.dp, color.copy(alpha = 0.20f), RoundedCornerShape(14.dp))
+            .shadow(4.dp, RoundedCornerShape(GoaldayDesign.RadiusM), clip = false)
+            .background(color.copy(alpha = 0.10f), RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(GoaldayDesign.Hairline, color.copy(alpha = 0.20f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(

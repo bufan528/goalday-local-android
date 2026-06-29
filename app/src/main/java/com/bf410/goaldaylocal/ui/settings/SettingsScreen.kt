@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.data.BackupManager
 import com.bf410.goaldaylocal.data.BackupSnapshot
+import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -120,10 +121,10 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFAF8F4))
+            .background(GoaldayDesign.AppBg)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(horizontal = GoaldayDesign.Space4, vertical = GoaldayDesign.Space3),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
     ) {
         SettingsHeroCard(
             backupSummary = manager.storageSummary(),
@@ -263,16 +264,37 @@ private fun SettingsHeroCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(18.dp, RoundedCornerShape(26.dp), clip = false)
-            .background(Color(0xFFFFECF3), RoundedCornerShape(26.dp))
-            .border(1.dp, Color(0x33E88FAE), RoundedCornerShape(26.dp))
-            .padding(16.dp),
+            .shadow(
+                elevation = GoaldayDesign.ShadowMedium,
+                shape = RoundedCornerShape(GoaldayDesign.Radius2XL)
+            )
+            .background(GoaldayDesign.PinkSoft, RoundedCornerShape(GoaldayDesign.Radius2XL))
+            .border(
+                width = GoaldayDesign.Hairline,
+                color = GoaldayDesign.Pink.copy(alpha = 0.20f),
+                shape = RoundedCornerShape(GoaldayDesign.Radius2XL)
+            )
+            .padding(GoaldayDesign.Space4),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("LOCAL DATA CENTER", style = MaterialTheme.typography.labelSmall, color = Color(0xFFE88FAE), fontWeight = FontWeight.SemiBold)
-                    Text("Goalday Local", style = MaterialTheme.typography.titleLarge, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+        Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
+                    Text(
+                        "LOCAL DATA CENTER",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = GoaldayDesign.Pink,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        "Goalday Local",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = GoaldayDesign.InkPrimary,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
                 Text(
                     "$backupCount",
@@ -280,31 +302,48 @@ private fun SettingsHeroCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
-                        .background(Color(0xFFE88FAE), RoundedCornerShape(14.dp))
-                        .padding(horizontal = 12.dp, vertical = 7.dp),
+                        .background(GoaldayDesign.Pink, RoundedCornerShape(GoaldayDesign.RadiusM))
+                        .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
                 )
             }
-            Text("无服务器依赖，不设置付费锁。所有日程、手账、日记和组件数据保存在本机。", color = Color(0xFF6C3F50), style = MaterialTheme.typography.bodySmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                StatusPill(backupSummary, Color(0xFFB45E7A))
-                StatusPill(latestBackup?.let { "最近 ${formatBackupDate(it.modifiedAtMillis)}" } ?: "暂无备份", Color(0xFF7A6E66))
+            Text(
+                "无服务器依赖，不设置付费锁。所有日程、手账、日记和组件数据保存在本机。",
+                color = GoaldayDesign.InkSecondary,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StatusPill(backupSummary, GoaldayDesign.Pink)
+                StatusPill(
+                    latestBackup?.let { "最近 ${formatBackupDate(it.modifiedAtMillis)}" } ?: "暂无备份",
+                    GoaldayDesign.InkSecondary
+                )
             }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White.copy(alpha = 0.42f), RoundedCornerShape(16.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.46f), RoundedCornerShape(16.dp))
-                    .padding(horizontal = 11.dp, vertical = 9.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    .background(Color.White.copy(alpha = 0.42f), RoundedCornerShape(GoaldayDesign.RadiusL))
+                    .border(
+                        width = GoaldayDesign.Hairline,
+                        color = Color.White.copy(alpha = 0.46f),
+                        shape = RoundedCornerShape(GoaldayDesign.RadiusL)
+                    )
+                    .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
+                horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LocalDataMetric("离线", "本机运行", Modifier.weight(1f))
                 LocalDataMetric("手账", "本地保存", Modifier.weight(1f))
                 LocalDataMetric("备份", "${backupCount} 份", Modifier.weight(1f))
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                HeroActionButton("立即备份", Color(0xFF2F2923), Modifier.weight(1f), onCreateBackup)
-                HeroActionButton("恢复最近", Color(0xFFE88FAE), Modifier.weight(1f), onRestoreLatest)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                HeroActionButton("立即备份", GoaldayDesign.InkPrimary, Modifier.weight(1f), onCreateBackup)
+                HeroActionButton("恢复最近", GoaldayDesign.Pink, Modifier.weight(1f), onRestoreLatest)
             }
         }
     }
@@ -316,9 +355,9 @@ private fun LocalDataMetric(
     value: String,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(label, color = Color(0xFFB45E7A), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
-        Text(value, color = Color(0xFF4F433A), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
+        Text(label, color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+        Text(value, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -332,10 +371,13 @@ private fun HeroActionButton(
     Box(
         modifier = modifier
             .height(36.dp)
-            .shadow(5.dp, RoundedCornerShape(99.dp), clip = false)
-            .background(color, RoundedCornerShape(99.dp))
+            .shadow(
+                elevation = GoaldayDesign.ShadowSoft,
+                shape = RoundedCornerShape(GoaldayDesign.RadiusPill)
+            )
+            .background(color, RoundedCornerShape(GoaldayDesign.RadiusPill))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = GoaldayDesign.Space3),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -360,23 +402,49 @@ private fun BackupActionPanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(18.dp), clip = false)
-            .background(Color(0xFFFFFBF6), RoundedCornerShape(16.dp))
-            .border(1.dp, Color(0x22B7A893), RoundedCornerShape(16.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .shadow(
+                elevation = GoaldayDesign.ShadowSoft,
+                shape = RoundedCornerShape(GoaldayDesign.RadiusXL)
+            )
+            .background(GoaldayDesign.Paper, RoundedCornerShape(GoaldayDesign.RadiusL))
+            .border(
+                width = GoaldayDesign.Hairline,
+                color = GoaldayDesign.BorderColor.copy(alpha = 0.13f),
+                shape = RoundedCornerShape(GoaldayDesign.RadiusL)
+            )
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space3),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
-                Text("备份操作", style = MaterialTheme.typography.titleSmall, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
-                Text(latestBackup?.let { "最近 ${formatBackupDate(it.modifiedAtMillis)}" } ?: "暂无可恢复备份", color = Color(0xFF6C635A), style = MaterialTheme.typography.bodySmall)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    "备份操作",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = GoaldayDesign.InkPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    latestBackup?.let { "最近 ${formatBackupDate(it.modifiedAtMillis)}" } ?: "暂无可恢复备份",
+                    color = GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
-            StatusPill("$backupCount 个", Color(0xFFB45E7A))
+            StatusPill("$backupCount 个", GoaldayDesign.Pink)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
-            BackupActionChip("创建", Color(0xFF2F2923), Modifier.weight(1f), onCreate)
-            BackupActionChip("恢复最近", Color(0xFFE88FAE), Modifier.weight(1f), onRestoreLatest)
-            BackupActionChip("清理旧备份", Color(0xFF8F684F), Modifier.weight(1f), onCleanup)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            BackupActionChip("创建", GoaldayDesign.InkPrimary, Modifier.weight(1f), onCreate)
+            BackupActionChip("恢复最近", GoaldayDesign.Pink, Modifier.weight(1f), onRestoreLatest)
+            BackupActionChip("清理旧备份", GoaldayDesign.RouteOverview, Modifier.weight(1f), onCleanup)
         }
     }
 }
@@ -391,7 +459,7 @@ private fun BackupActionChip(
     Box(
         modifier = modifier
             .height(34.dp)
-            .background(color, RoundedCornerShape(99.dp))
+            .background(color, RoundedCornerShape(GoaldayDesign.RadiusPill))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -402,7 +470,7 @@ private fun BackupActionChip(
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 6.dp),
+            modifier = Modifier.padding(horizontal = GoaldayDesign.Space1 + 2.dp),
         )
     }
 }
@@ -412,16 +480,28 @@ private fun SettingsSection(
     title: String,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, style = MaterialTheme.typography.labelMedium, color = Color(0xFF8B7A68), fontWeight = FontWeight.SemiBold)
+    Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
+        Text(
+            title,
+            style = MaterialTheme.typography.labelMedium,
+            color = GoaldayDesign.InkSecondary,
+            fontWeight = FontWeight.SemiBold
+        )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(8.dp, RoundedCornerShape(20.dp), clip = false)
-                .background(Color(0xEEFFFFFF), RoundedCornerShape(20.dp))
-                .border(1.dp, Color(0x24B7A893), RoundedCornerShape(20.dp))
-                .padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .shadow(
+                    elevation = GoaldayDesign.ShadowSoft,
+                    shape = RoundedCornerShape(GoaldayDesign.RadiusXL)
+                )
+                .background(Color.White.copy(alpha = 0.93f), RoundedCornerShape(GoaldayDesign.RadiusXL))
+                .border(
+                    width = GoaldayDesign.Hairline,
+                    color = GoaldayDesign.BorderColor.copy(alpha = 0.14f),
+                    shape = RoundedCornerShape(GoaldayDesign.RadiusXL)
+                )
+                .padding(GoaldayDesign.Space3),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
             content = content,
         )
     }
@@ -437,19 +517,43 @@ private fun SettingRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(3.dp, RoundedCornerShape(14.dp), clip = false)
-            .background(Color(0xFFFFFFFF), RoundedCornerShape(14.dp))
-            .border(1.dp, Color(0x14B7A893), RoundedCornerShape(14.dp))
+            .shadow(
+                elevation = GoaldayDesign.ShadowSoft / 2,
+                shape = RoundedCornerShape(GoaldayDesign.RadiusM)
+            )
+            .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(
+                width = GoaldayDesign.Hairline,
+                color = GoaldayDesign.BorderColor.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(GoaldayDesign.RadiusM)
+            )
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space3),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
-            Text(subtitle, color = Color(0xFF6C635A), style = MaterialTheme.typography.bodySmall)
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                color = GoaldayDesign.InkPrimary,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                subtitle,
+                color = GoaldayDesign.InkSecondary,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
-        Text(meta, color = Color(0xFFB45E7A), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+        Text(
+            meta,
+            color = GoaldayDesign.Pink,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
@@ -462,36 +566,55 @@ private fun FontSizeMenu(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(3.dp, RoundedCornerShape(14.dp), clip = false)
-            .background(Color.White, RoundedCornerShape(14.dp))
-            .border(1.dp, Color(0x14B7A893), RoundedCornerShape(14.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .shadow(
+                elevation = GoaldayDesign.ShadowSoft / 2,
+                shape = RoundedCornerShape(GoaldayDesign.RadiusM)
+            )
+            .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(
+                width = GoaldayDesign.Hairline,
+                color = GoaldayDesign.BorderColor.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(GoaldayDesign.RadiusM)
+            )
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space3),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("字号", style = MaterialTheme.typography.titleSmall, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
-                Text("设置会保存在本机偏好中。", color = Color(0xFF6C635A), style = MaterialTheme.typography.bodySmall)
+                Text(
+                    "字号",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = GoaldayDesign.InkPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "设置会保存在本机偏好中。",
+                    color = GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
             Text(
                 options.firstOrNull { it.key == selected }?.label ?: "标准",
-                color = Color(0xFFB45E7A),
+                color = GoaldayDesign.Pink,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
             options.forEach { option ->
                 val active = option.key == selected
                 Text(
                     option.label,
-                    color = if (active) Color.White else Color(0xFF6C635A),
+                    color = if (active) Color.White else GoaldayDesign.InkSecondary,
                     fontSize = option.previewSp.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
-                        .background(if (active) Color(0xFFE88FAE) else Color(0xFFF7EFE6), RoundedCornerShape(99.dp))
+                        .background(
+                            if (active) GoaldayDesign.Pink else GoaldayDesign.SurfaceSoft,
+                            RoundedCornerShape(GoaldayDesign.RadiusPill)
+                        )
                         .clickable { onSelected(option) }
-                        .padding(horizontal = 13.dp, vertical = 6.dp),
+                        .padding(horizontal = GoaldayDesign.Space3 + 1.dp, vertical = GoaldayDesign.Space1 + 2.dp),
                 )
             }
         }
@@ -504,22 +627,35 @@ private fun BackupHistoryList(
     onRestore: (BackupSnapshot) -> Unit,
     onDelete: (BackupSnapshot) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("备份历史", style = MaterialTheme.typography.titleSmall, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.width(8.dp))
-            Text("${snapshots.size} 个", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7A68))
+            Text(
+                "备份历史",
+                style = MaterialTheme.typography.titleSmall,
+                color = GoaldayDesign.InkPrimary,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.width(GoaldayDesign.Space2))
+            Text(
+                "${snapshots.size} 个",
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.InkSecondary
+            )
         }
         if (snapshots.isEmpty()) {
             Text(
                 "暂无备份。创建备份后，这里会显示可恢复的历史记录。",
-                color = Color(0xFF7A6E66),
+                color = GoaldayDesign.InkSecondary,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFFFFBF6), RoundedCornerShape(14.dp))
-                    .border(1.dp, Color(0x18B7A893), RoundedCornerShape(14.dp))
-                    .padding(12.dp),
+                    .background(GoaldayDesign.Paper, RoundedCornerShape(GoaldayDesign.RadiusM))
+                    .border(
+                        width = GoaldayDesign.Hairline,
+                        color = GoaldayDesign.BorderColor.copy(alpha = 0.09f),
+                        shape = RoundedCornerShape(GoaldayDesign.RadiusM)
+                    )
+                    .padding(GoaldayDesign.Space3),
             )
             return
         }
@@ -542,40 +678,58 @@ private fun BackupHistoryRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(3.dp, RoundedCornerShape(14.dp), clip = false)
-            .background(Color(0xFFFFFBF6), RoundedCornerShape(14.dp))
-            .border(1.dp, Color(0x18B7A893), RoundedCornerShape(14.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .shadow(
+                elevation = GoaldayDesign.ShadowSoft / 2,
+                shape = RoundedCornerShape(GoaldayDesign.RadiusM)
+            )
+            .background(GoaldayDesign.Paper, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(
+                width = GoaldayDesign.Hairline,
+                color = GoaldayDesign.BorderColor.copy(alpha = 0.09f),
+                shape = RoundedCornerShape(GoaldayDesign.RadiusM)
+            )
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(snapshot.name, style = MaterialTheme.typography.bodySmall, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)
+        ) {
+            Text(
+                snapshot.name,
+                style = MaterialTheme.typography.bodySmall,
+                color = GoaldayDesign.InkPrimary,
+                fontWeight = FontWeight.SemiBold
+            )
             Text(
                 "${formatBackupDate(snapshot.modifiedAtMillis)} · ${snapshot.fileCount} 文件 · ${BackupManager.formatBytes(snapshot.sizeBytes)}",
-                color = Color(0xFF7A6E66),
+                color = GoaldayDesign.InkSecondary,
                 style = MaterialTheme.typography.labelSmall,
             )
         }
-        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)
+        ) {
             Text(
                 "恢复",
                 color = Color.White,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .background(Color(0xFFE88FAE), RoundedCornerShape(99.dp))
+                    .background(GoaldayDesign.Pink, RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .clickable(onClick = onRestore)
-                    .padding(horizontal = 10.dp, vertical = 5.dp),
+                    .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space1),
             )
             Text(
                 "删除",
-                color = Color(0xFFA15E58),
+                color = GoaldayDesign.Danger,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clickable(onClick = onDelete)
-                    .padding(horizontal = 10.dp, vertical = 3.dp),
+                    .padding(horizontal = GoaldayDesign.Space3, vertical = 3.dp),
             )
         }
     }
@@ -592,9 +746,13 @@ private fun StatusPill(
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
-            .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(99.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.58f), RoundedCornerShape(99.dp))
-            .padding(horizontal = 9.dp, vertical = 4.dp),
+            .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(GoaldayDesign.RadiusPill))
+            .border(
+                width = GoaldayDesign.Hairline,
+                color = Color.White.copy(alpha = 0.58f),
+                shape = RoundedCornerShape(GoaldayDesign.RadiusPill)
+            )
+            .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space1),
     )
 }
 
