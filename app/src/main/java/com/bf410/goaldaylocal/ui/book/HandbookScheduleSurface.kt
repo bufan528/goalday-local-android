@@ -429,7 +429,7 @@ internal fun HandbookReplicaPage(
                         visibleDays = visibleDays,
                         entries = if (idx == 0 && block.todo.isEmpty()) {
                             fallbackRightTodo.mapIndexed { i, text ->
-                                ScheduleEntry(id = "fallback_$i", title = text, day = block.day, month = anchorMonth, year = anchorYear, completed = false, note = "")
+                                ScheduleEntry(id = "fallback_${block.day}_$i", title = text, day = block.day, month = anchorMonth, year = anchorYear, completed = false, note = "")
                             }
                         } else {
                             block.todo

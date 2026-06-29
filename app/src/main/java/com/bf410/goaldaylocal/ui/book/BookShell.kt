@@ -47,7 +47,7 @@ fun BookShell(
     val innerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(22.dp) else RoundedCornerShape(GoaldayDesign.RadiusXL)
     val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 6.dp else 10.dp
     val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 4.dp else 8.dp
-    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 14.dp else 20.dp
+    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 6.dp else 20.dp
     val pageInsetH = if (shellStyle == ShellStyle.BOOK) 12.dp else 8.dp
     val pageInsetV = if (shellStyle == ShellStyle.BOOK) 12.dp else 10.dp
 
