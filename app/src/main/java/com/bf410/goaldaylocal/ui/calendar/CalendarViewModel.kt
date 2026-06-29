@@ -106,8 +106,8 @@ class CalendarViewModel(
         _uiState.update { it.copy(theme = text) }
     }
 
-    fun removeSchedule(id: String) {
-        val updated = scheduleRepository.entries().filterNot { it.id == id }
+    fun removeSchedule(id: String, applySeries: Boolean = false) {
+        val updated = removeScheduleEntries(scheduleRepository.entries(), id, applySeries)
         scheduleRepository.saveEntries(updated)
         refreshEntries()
     }

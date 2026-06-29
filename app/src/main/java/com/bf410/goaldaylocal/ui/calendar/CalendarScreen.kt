@@ -79,6 +79,7 @@ fun CalendarScreen(
     var selectedDay by remember { mutableIntStateOf(LocalDate.now().dayOfMonth) }
     var editingEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
     var deleteCandidate by remember { mutableStateOf<ScheduleEntry?>(null) }
+    var deleteSeries by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
     var showImportPreview by remember { mutableStateOf(false) }
     var showImportSourcePicker by remember { mutableStateOf(false) }
@@ -408,7 +409,15 @@ fun CalendarScreen(
                             editingEntry = entry
                         },
                     )
-                    Text("🗑", color = GoaldayDesign.Danger, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { deleteCandidate = entry })
+                        Text(
+                            "🗑",
+                            color = GoaldayDesign.Danger,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.clickable {
+                                deleteCandidate = entry
+                                deleteSeries = false
+                            },
+                        )
                 }
             }
             Text(
@@ -646,17 +655,37 @@ fun CalendarScreen(
             onDismissRequest = { deleteCandidate = null },
             title = { Text("删除这条日程？") },
             text = {
-                Text(
-                    "将删除「${entry.title}」以及它的本地日程记录。",
-                    color = GoaldayDesign.InkSecondary,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "将删除「${entry.title}」以及它的本地日程记录。",
+                        color = GoaldayDesign.InkSecondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    if (entry.repeatGroupId.isNotBlank()) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf(false to "仅本次", true to "整组重复").forEach { (value, label) ->
+                                Text(
+                                    label,
+                                    color = if (deleteSeries == value) Color.White else GoaldayDesign.InkSecondary,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier
+                                        .background(
+                                            if (deleteSeries == value) GoaldayDesign.PrimaryAction else GoaldayDesign.SurfaceSoft,
+                                            RoundedCornerShape(GoaldayDesign.RadiusPill),
+                                        )
+                                        .clickable { deleteSeries = value }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                )
+                            }
+                        }
+                    }
+                }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.removeSchedule(entry.id)
+                    viewModel.removeSchedule(entry.id, deleteSeries)
                     deleteCandidate = null
-                    toast = "已删除任务"
+                    toast = if (deleteSeries) "已删除整组重复" else "已删除任务"
                 }) { Text("删除") }
             },
             dismissButton = {
