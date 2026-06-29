@@ -2252,10 +2252,14 @@ private fun BookDetailView(
             viewModel.setPage(firstIndex)
         }
     }
-    val filteredPages = remember(book.pages, segment) {
-        book.pages.filter { page ->
-            matchesSegment(page, segment)
-        }.ifEmpty { book.pages }
+    val filteredPages = remember(book.pages, segment, bookOnlyMode) {
+        // HANDBOOK 入口（bookOnlyMode=true）：显示全部页面，允许翻到日记页
+        // 其他入口（DIARY 等）：按 segment 过滤
+        if (bookOnlyMode) {
+            book.pages
+        } else {
+            book.pages.filter { page -> matchesSegment(page, segment) }.ifEmpty { book.pages }
+        }
     }
     val segmentPageIndex = filteredPages.indexOfFirst { it.title == currentPage.title }.coerceAtLeast(0)
     val readerPreviousPage = filteredPages.getOrNull(segmentPageIndex - 1)
@@ -2409,24 +2413,13 @@ private fun BookDetailView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .background(
-                        Brush.radialGradient(
-                            listOf(
-                                Color(0xFFFFF8F1),
-                                Color(0xFFF1DECC),
-                                Color(0xFFE4C8B2),
-                            ),
-                            center = Offset(520f, 260f),
-                            radius = 900f,
-                        ),
-                    )
-                    .padding(top = 6.dp, bottom = 10.dp),
+                    .background(GoaldayDesign.AppBg)
+                    .padding(vertical = 4.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.98f)
-                        .fillMaxHeight(0.9f),
+                        .fillMaxSize(),
                 ) {
                     BookReader(
                         bookId = book.id,

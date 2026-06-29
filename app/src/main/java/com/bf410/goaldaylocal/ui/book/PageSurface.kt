@@ -684,7 +684,7 @@ fun ActivePageLayer(
 ) {
     if (handbookMode) {
         when (page) {
-            is SchedulePage, is PlanPage -> HandbookReplicaPage(
+            is SchedulePage -> HandbookReplicaPage(
                 modifier = modifier,
                 page = page,
                 pageIndex = pageIndex,
@@ -703,6 +703,34 @@ fun ActivePageLayer(
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
             )
+            is PlanPage -> Box(modifier = modifier) {
+                EditableBulletPage(
+                    pageTitle = page.title,
+                    baseItems = page.items,
+                    customItems = customPageItems,
+                    tint = tint,
+                    inputLabel = BookStrings.addPlan,
+                    isSchedulePage = false,
+                    isChecked = isChecked,
+                    onToggleChecked = onToggleChecked,
+                    onAddCustomItem = onAddCustomItem,
+                    onAddCustomItemWithDeadline = onAddCustomItemWithDeadline,
+                    onRemoveCustomItem = onRemoveCustomItem,
+                    onRenameCustomItem = onRenameCustomItem,
+                    onAddToSchedule = onAddToSchedule,
+                    weeklyTheme = weeklyTheme,
+                    todayPlanItems = todayPlanItems,
+                    todayCompletedItems = todayCompletedItems,
+                    schedulePreviewEntries = schedulePreviewEntries,
+                    onWeeklyThemeChange = onWeeklyThemeChange,
+                    onMoveItemToToday = onMoveItemToToday,
+                    onMoveItemToCompleted = onMoveItemToCompleted,
+                    onRestoreItemFromToday = onRestoreItemFromToday,
+                    onRestoreItemFromCompleted = onRestoreItemFromCompleted,
+                    contentMode = contentMode,
+                    onContentModeChange = onContentModeChange,
+                )
+            }
             is DiaryPage -> HandbookDiaryReplicaPage(
                 modifier = modifier,
                 title = page.title,

@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -306,17 +308,19 @@ internal fun HandbookReplicaPage(
                 },
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 58.dp),
+                    .padding(top = 92.dp, bottom = 32.dp),
             )
         } else {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 58.dp),
+                    .padding(top = 92.dp, bottom = 32.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
                 Row(
@@ -353,7 +357,9 @@ internal fun HandbookReplicaPage(
                 }
             }
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Row(
@@ -532,22 +538,6 @@ internal fun HandbookReplicaPage(
                     .padding(horizontal = 7.dp, vertical = 4.dp),
             )
         }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .width(1.5.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color(0x0E000000),
-                            Color(0x20000000),
-                            Color(0x0E000000),
-                        ),
-                    ),
-                ),
-        )
 
         Row(
             modifier = Modifier
