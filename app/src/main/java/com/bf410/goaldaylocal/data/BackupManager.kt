@@ -22,7 +22,7 @@ class BackupManager(
         get() = File(context.getExternalFilesDir(null), "backups").apply { mkdirs() }
 
     fun backupMmkv(): Result<File> = runCatching {
-        MMKV.defaultMMKV().flush()
+        MMKV.defaultMMKV().sync()
         val sourceDir = File(context.filesDir.parentFile, "mmkv")
         require(sourceDir.exists()) { "未找到本地数据目录" }
         val targetDir = File(
