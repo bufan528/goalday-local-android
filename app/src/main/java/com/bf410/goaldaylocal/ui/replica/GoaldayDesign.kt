@@ -41,7 +41,31 @@ object GoaldayDesign {
     val RadiusS = 8.dp
     val RadiusM = 12.dp
     val RadiusL = 16.dp
+    val RadiusXL = 20.dp
+    val Radius2XL = 24.dp
+    val Radius3XL = 28.dp
     val RadiusPill = 99.dp
+
+    // Spacing system (呼吸感)
+    val Space1 = 4.dp
+    val Space2 = 8.dp
+    val Space3 = 12.dp
+    val Space4 = 16.dp
+    val Space5 = 20.dp
+    val Space6 = 24.dp
+    val Space8 = 32.dp
+    val Space10 = 40.dp
+    val Space12 = 48.dp
+
+    // Soft shadows (柔和阴影)
+    val ShadowSoft = 8.dp
+    val ShadowMedium = 12.dp
+    val ShadowLarge = 16.dp
+
+    // Hairline borders (超薄边框)
+    val Hairline = 0.7.dp
+    val HairlineAlpha = 0.10f
+    val BorderColor = Color(0xFFA88966)
 
     val DeskGradient: Brush
         get() = Brush.verticalGradient(listOf(DeskTop, DeskMid, DeskBottom))

@@ -370,10 +370,11 @@ private fun BookRootHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFFFFCF7))
-            .border(0.7.dp, Color(0x18A88966), RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp))
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .background(GoaldayDesign.Paper)
+            .shadow(GoaldayDesign.ShadowSoft, RoundedCornerShape(bottomStart = GoaldayDesign.Radius2XL, bottomEnd = GoaldayDesign.Radius2XL))
+            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = GoaldayDesign.HairlineAlpha), RoundedCornerShape(bottomStart = GoaldayDesign.Radius2XL, bottomEnd = GoaldayDesign.Radius2XL))
+            .padding(horizontal = GoaldayDesign.Space4, vertical = GoaldayDesign.Space3),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -402,10 +403,10 @@ private fun BookRootHeader(
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0xFFFFEDF4))
-                    .border(0.6.dp, GoaldayDesign.Pink.copy(alpha = 0.22f), RoundedCornerShape(99.dp))
-                    .padding(horizontal = 9.dp, vertical = 5.dp),
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .background(GoaldayDesign.PinkSoft)
+                    .border(GoaldayDesign.Hairline, GoaldayDesign.Pink.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
             )
         }
         Row(
@@ -459,16 +460,16 @@ private fun BookRootSegmentChip(
     Row(
         modifier = Modifier
             .height(34.dp)
-            .clip(RoundedCornerShape(99.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(if (selected) GoaldayDesign.Pink else Color.White.copy(alpha = 0.78f))
             .border(
-                width = 0.7.dp,
-                color = if (selected) GoaldayDesign.Pink.copy(alpha = 0.38f) else Color(0x16A88966),
-                shape = RoundedCornerShape(99.dp),
+                width = GoaldayDesign.Hairline,
+                color = if (selected) GoaldayDesign.Pink.copy(alpha = 0.38f) else GoaldayDesign.BorderColor.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(GoaldayDesign.RadiusPill),
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 9.dp, vertical = 5.dp),
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -478,9 +479,9 @@ private fun BookRootSegmentChip(
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
             modifier = Modifier
-                .clip(RoundedCornerShape(99.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(if (selected) Color.White.copy(alpha = 0.20f) else GoaldayDesign.PinkSoft)
-                .padding(horizontal = 6.dp, vertical = 2.dp),
+                .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
         )
         Text(
             label,
@@ -500,21 +501,27 @@ private fun GoaldayBottomDock(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(10.dp, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp), clip = false)
-            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-            .background(Color(0xFFFFFCF7))
-            .border(0.7.dp, Color(0x18A88966), RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
-            .padding(horizontal = 12.dp, vertical = 9.dp),
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
+            .shadow(
+                elevation = GoaldayDesign.ShadowMedium,
+                shape = RoundedCornerShape(topStart = GoaldayDesign.Radius2XL, topEnd = GoaldayDesign.Radius2XL)
+            )
+            .clip(RoundedCornerShape(topStart = GoaldayDesign.Radius2XL, topEnd = GoaldayDesign.Radius2XL))
+            .background(GoaldayDesign.Paper)
+            .border(
+                width = GoaldayDesign.Hairline,
+                color = GoaldayDesign.BorderColor.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(topStart = GoaldayDesign.Radius2XL, topEnd = GoaldayDesign.Radius2XL)
+            )
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RootTab.entries.forEach { item ->
-            val selected = selectedTab == item
+        RootTab.entries.forEach { tab ->
             GoaldayBottomDockItem(
-                tab = item,
-                selected = selected,
-                modifier = Modifier.weight(1f),
-                onClick = { onSelect(item) },
+                tab = tab,
+                selected = selectedTab == tab,
+                onClick = { onSelect(tab) },
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -524,40 +531,43 @@ private fun GoaldayBottomDock(
 private fun GoaldayBottomDockItem(
     tab: RootTab,
     selected: Boolean,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
             .background(
-                if (selected) Color(0xFFFFEDF4) else Color.Transparent,
-                RoundedCornerShape(18.dp),
+                if (selected) GoaldayDesign.PinkSoft
+                else Color.Transparent
             )
             .border(
-                0.7.dp,
-                if (selected) GoaldayDesign.Pink.copy(alpha = 0.30f) else Color.Transparent,
-                RoundedCornerShape(18.dp),
+                width = if (selected) GoaldayDesign.Hairline else 0.dp,
+                color = if (selected) GoaldayDesign.Pink.copy(alpha = 0.30f) else Color.Transparent,
+                shape = RoundedCornerShape(GoaldayDesign.RadiusXL)
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 5.dp, vertical = 7.dp),
+            .padding(horizontal = GoaldayDesign.Space1, vertical = GoaldayDesign.Space2),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
-            tab.iconText,
+            text = tab.iconText,
             color = if (selected) Color.White else GoaldayDesign.InkMuted,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
             maxLines = 1,
             modifier = Modifier
-                .clip(RoundedCornerShape(99.dp))
-                .background(if (selected) GoaldayDesign.Pink else Color(0x10A88966))
-                .padding(horizontal = 8.dp, vertical = 3.dp),
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(
+                    if (selected) GoaldayDesign.Pink
+                    else GoaldayDesign.BorderColor.copy(alpha = 0.06f)
+                )
+                .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
         )
         Text(
-            tab.label,
+            text = tab.label,
             color = if (selected) GoaldayDesign.InkPrimary else GoaldayDesign.InkMuted,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
