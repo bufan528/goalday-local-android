@@ -201,7 +201,7 @@ internal fun TargetDetailReplicaPage(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
-                    .background(if (checked) GoaldayDesign.GreenSoft else Color(0xFFFFFEFC))
+                    .background(if (checked) GoaldayDesign.GreenSoft else GoaldayDesign.Surface)
                     .border(0.8.dp, if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else Color(0x14000000), RoundedCornerShape(GoaldayDesign.RadiusM))
                     .padding(10.dp),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
@@ -325,7 +325,7 @@ internal fun TargetDetailReplicaPage(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                .background(Color(0xFFFFFEFC))
+                .background(GoaldayDesign.Surface)
                 .border(0.6.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),

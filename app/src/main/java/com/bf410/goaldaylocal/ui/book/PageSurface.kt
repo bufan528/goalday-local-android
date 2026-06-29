@@ -788,7 +788,7 @@ fun ActivePageLayer(
             }
         }
         Spacer(Modifier.height(24.dp))
-        Text(text = "${pageIndex + 1} / $pageCount", style = MaterialTheme.typography.labelMedium, color = Color(0xFF7A7065))
+        Text(text = "${pageIndex + 1} / $pageCount", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkSecondary)
     }
 }
 

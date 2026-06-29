@@ -1110,7 +1110,7 @@ private fun BookDetailView(
                     val index = book.pages.indexOfFirst { it === item }.coerceAtLeast(0)
                     Text(
                         text = item.title,
-                        color = if (idx == segmentPageIndex) GoaldayDesign.InkPrimary else Color(0xFF7A7065),
+                        color = if (idx == segmentPageIndex) GoaldayDesign.InkPrimary else GoaldayDesign.InkSecondary,
                         modifier = Modifier
                             .clip(RoundedCornerShape(99.dp))
                             .background(if (idx == segmentPageIndex) Color(0x4DB88A58) else Color(0x18FFFFFF))
@@ -1408,7 +1408,7 @@ private fun TargetDetailRouteOverlay(
             )
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text("TargetDetailActivity", color = GoaldayDesign.RouteDiary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
-                Text("本地目标详情", color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall)
+                Text("本地目标详情", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
             }
             Text(
                 if (checked) "DONE" else "TODO",
@@ -1441,9 +1441,9 @@ private fun TargetDetailRouteOverlay(
             ) {
                 Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
                     Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.weight(1f)) {
-                        Text(pageTitle, color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                        Text(pageTitle, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                         Text(item, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-                        Text("目标 ${itemIndex + 1}/$itemCount · $deadlineLabel · $scheduleLabel", color = Color(0xFF7A7065), style = MaterialTheme.typography.bodySmall)
+                        Text("目标 ${itemIndex + 1}/$itemCount · $deadlineLabel · $scheduleLabel", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.bodySmall)
                     }
                     Box(
                         modifier = Modifier
@@ -1523,7 +1523,7 @@ private fun TargetDetailRouteOverlay(
                     }
                 }
                 if (actionHint.isNotBlank()) {
-                    Text(actionHint, color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall)
+                    Text(actionHint, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                 }
             }
 
@@ -1541,7 +1541,7 @@ private fun TargetDetailRouteOverlay(
             }
 
             TargetDetailPanel(title = "截止日", trailing = deadlineLabel) {
-                Text(meta.deadlineDay?.let { "当前截止：${it}日" } ?: "当前未设置截止日", color = Color(0xFF7A7065), style = MaterialTheme.typography.bodySmall)
+                Text(meta.deadlineDay?.let { "当前截止：${it}日" } ?: "当前未设置截止日", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.bodySmall)
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1556,7 +1556,7 @@ private fun TargetDetailRouteOverlay(
 
             TargetDetailPanel(title = "已排期", trailing = scheduleLabel) {
                 if (scheduledEntries.isEmpty()) {
-                    Text("还没有排入日程", color = Color(0xFF8B7B6B), style = MaterialTheme.typography.bodySmall)
+                    Text("还没有排入日程", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
                 } else {
                     scheduledEntries.take(10).forEach { entry ->
                         TargetScheduledEntryRow(entry = entry)
@@ -1584,7 +1584,7 @@ private fun TargetDetailPanel(
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Text(trailing, color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            Text(trailing, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         }
         content()
     }
@@ -1649,7 +1649,7 @@ private fun TargetDetailMetric(
         verticalArrangement = Arrangement.spacedBy(2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(label, color = Color(0xFF8B7B6B), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(label, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         Text(value, color = if (active) Color(0xFF4F7E55) else GoaldayDesign.RouteDiary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
@@ -1684,7 +1684,7 @@ private fun TargetScheduledEntryRow(entry: ScheduleEntry) {
                 listOf(entry.note.ifBlank { "Goalday 本地日程" }, repeatLabel)
                     .filter(String::isNotBlank)
                     .joinToString(" · "),
-                color = Color(0xFF8B7B6B),
+                color = GoaldayDesign.InkMuted,
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
             )
@@ -1759,7 +1759,7 @@ private fun TargetOptionRow(
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
-            Text(subtitle, color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall, maxLines = 2)
+            Text(subtitle, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 2)
         }
         Text("›", color = accent, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
     }
@@ -1942,8 +1942,8 @@ private fun InspirationCenterView(
                 Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Text("目标详情", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
                     Column(horizontalAlignment = Alignment.End) {
-                        Text(catalogStatus.label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
-                        Text(catalogStatus.assetLabel, style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                        Text(catalogStatus.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                        Text(catalogStatus.assetLabel, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                     }
                 }
                 Row(
@@ -1962,8 +1962,8 @@ private fun InspirationCenterView(
                         fontWeight = FontWeight.SemiBold,
                     )
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("${selected.coverKey}.png", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
-                        Text("${selected.targetKey}.txt · ${loadedTargetItems.size} 条", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8B7B6B))
+                        Text("${selected.coverKey}.png", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                        Text("${selected.targetKey}.txt · ${loadedTargetItems.size} 条", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                     }
                 }
                 editableItems.chunked(2).forEachIndexed { rowIndex, rowItems ->
@@ -1991,7 +1991,7 @@ private fun InspirationCenterView(
                                                 }
                                             },
                                     )
-                                    Text("目标 ${index + 1}", color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall)
+                                    Text("目标 ${index + 1}", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                                 }
                                 OutlinedTextField(
                                     value = item,
@@ -2237,7 +2237,7 @@ private fun CreatePageDialog(
                     ).forEach { (key, label) ->
                         Text(
                             text = label,
-                            color = if (type == key) GoaldayDesign.InkPrimary else Color(0xFF7A7065),
+                            color = if (type == key) GoaldayDesign.InkPrimary else GoaldayDesign.InkSecondary,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(99.dp))
                                 .background(if (type == key) Color(0x33B88A58) else Color.Transparent)
