@@ -175,7 +175,8 @@ internal fun TargetDetailReplicaPage(
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Text(pageTitle, style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-                Text("目标档案 · $completedCount/${items.size} 完成 · $scheduledCount 已排期", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary)
+                // Header 只显示总数，细分统计（已完成/已排期/待整理/自定义）由下方 TargetLedgerSummary 承担，避免信息重复
+                Text("目标档案 · 共 ${items.size} 项", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary)
                 TargetProgressBar(
                     completed = completedCount,
                     total = items.size,
@@ -220,15 +221,18 @@ internal fun TargetDetailReplicaPage(
                             if (checked) "✓" else "□",
                             color = if (checked) GoaldayDesign.Positive else GoaldayDesign.InkMuted,
                             style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.clickable { onToggleChecked(pageTitle, item) },
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                                .clickable { onToggleChecked(pageTitle, item) }
+                                .padding(horizontal = 4.dp, vertical = 2.dp),
                         )
                     }
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text("目标档案", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
-                            Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text("详情", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onOpenTargetDetail(item) })
-                                Text("排入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onAddToSchedule(item, dateShortcuts.today) })
+                            Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
+                                TextActionButton("详情", GoaldayDesign.InkSecondary) { onOpenTargetDetail(item) }
+                                TextActionButton("排入", GoaldayDesign.Pink) { onAddToSchedule(item, dateShortcuts.today) }
                             }
                         }
                         if (editingItem == item) {
@@ -247,12 +251,12 @@ internal fun TargetDetailReplicaPage(
                                     .background(Color(0x08000000), RoundedCornerShape(6.dp))
                                     .padding(horizontal = 7.dp, vertical = 5.dp),
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("保存", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                TextActionButton("保存", GoaldayDesign.Pink) {
                                     if (item in customItems) onRenameCustomItem(item, editingText)
                                     editingItem = null
-                                })
-                                Text("取消", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { editingItem = null })
+                                }
+                                TextActionButton("取消", GoaldayDesign.InkMuted) { editingItem = null }
                             }
                         } else {
                             Text(
@@ -309,7 +313,7 @@ internal fun TargetDetailReplicaPage(
                         TargetDeadlineChip("明", active = meta.deadlineDay == dateShortcuts.tomorrow) { onUpdateTargetDeadline(item, dateShortcuts.tomorrow) }
                         TargetDeadlineChip("清除", active = false) { onUpdateTargetDeadline(item, null) }
                         if (item in customItems) {
-                            Text("删除", color = GoaldayDesign.Danger, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable { onRemoveCustomItem(item) })
+                            TextActionButton("删除", GoaldayDesign.Danger) { onRemoveCustomItem(item) }
                         }
                     }
                 }
@@ -460,5 +464,27 @@ private fun TargetDeadlineChip(
             .background(if (active) GoaldayDesign.Positive else Color(0x14000000))
             .clickable(onClick = onClick)
             .padding(horizontal = 6.dp, vertical = 3.dp),
+    )
+}
+
+/**
+ * 文字型操作按钮：统一处理点击热区（达 30dp+），避免裸 Text clickable 热区仅 20dp 的问题
+ * 与 TargetScheduleChip 风格一致，但 background 透明，保持原视觉
+ */
+@Composable
+private fun TextActionButton(
+    text: String,
+    color: Color,
+    onClick: () -> Unit,
+) {
+    Text(
+        text,
+        color = color,
+        style = MaterialTheme.typography.labelSmall,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 5.dp),
     )
 }

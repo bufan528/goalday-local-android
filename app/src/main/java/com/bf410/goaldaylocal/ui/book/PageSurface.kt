@@ -175,15 +175,8 @@ fun PageSurface(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(28.dp, 28.dp, 32.dp, 32.dp))
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFFFFFDF9),
-                        Color(0xFFFFFBF6),
-                        Color(0xFFFFF8EF),
-                    ),
-                ),
-            )
+            // 基底统一到 PaperGradient，与 handbook 路径一致，消除翻页交接瞬间的背景跳变
+            .background(GoaldayDesign.PaperGradient)
             .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
         // 左侧 10dp 边缘阴影（书脊侧）
@@ -735,10 +728,12 @@ fun ActivePageLayer(
         }
         return
     }
-    val easedShift = turnProgress * turnProgress
+    // 翻页内层视差：统一 smoothstep 缓动，删除原线性项（消除起步瞬时速度导致的跳变）
+    // 量级从 27f 降到 14f，与 handbook 路径 8f 接近，避免 handbook/非 handbook 切换时位移差距过大
+    val easedShift = turnProgress * turnProgress * (3f - 2f * turnProgress)
     val contentShift = when (turnDirection) {
-        TurnDirection.NEXT -> -(easedShift * 22f + turnProgress * 5f)
-        TurnDirection.PREVIOUS -> easedShift * 22f + turnProgress * 5f
+        TurnDirection.NEXT -> -(easedShift * 14f)
+        TurnDirection.PREVIOUS -> easedShift * 14f
         null -> 0f
     }
     val contentAlpha = (1f - turnProgress * 0.24f).coerceIn(0.74f, 1f)
@@ -1059,15 +1054,21 @@ private fun ReferencePlannerBoard(
         onActionAdd = { onMoveItemToToday(it.title) },
         onActionRestore = { onRestoreItemFromDone(it.title) },
         topActions = {
-            Text("切换", modifier = Modifier.clickable(onClick = onSwitchList), color = Color(0xFF6F675D), style = MaterialTheme.typography.labelSmall)
-            Text("↺ 回收", modifier = Modifier.clickable { allRight.firstOrNull { it.id == selectedId }?.let { onRestoreItemFromDone(it.title) } }, color = Color(0xFF8B7E71), style = MaterialTheme.typography.labelSmall)
+            Text("切换", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1, modifier = Modifier
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                .clickable(onClick = onSwitchList)
+                .padding(horizontal = 8.dp, vertical = 5.dp))
+            Text("↺ 回收", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1, modifier = Modifier
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                .clickable { allRight.firstOrNull { it.id == selectedId }?.let { onRestoreItemFromDone(it.title) } }
+                .padding(horizontal = 8.dp, vertical = 5.dp))
             Text(
                 "✓ 完成",
                 color = Color.White,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0xFF222222))
+                    .background(GoaldayDesign.PrimaryAction)
                     .clickable { allRight.firstOrNull { it.id == selectedId }?.let { onMoveItemToCompleted(it.title) } }
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             )
