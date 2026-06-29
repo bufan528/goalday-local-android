@@ -915,6 +915,8 @@ private fun EditableBulletPage(
     onRestoreItemFromCompleted: (String) -> Unit,
     contentMode: PageContentMode,
     onContentModeChange: (PageContentMode) -> Unit,
+    // 时间窗口参数化：默认今天+7天，透传给 ReferencePlannerBoard 实现月历联动
+    windowStart: LocalDate = LocalDate.now(),
 ) {
     val stagedItems = remember(todayPlanItems, todayCompletedItems) { (todayPlanItems + todayCompletedItems).toSet() }
     val sourceBaseItems = remember(baseItems, stagedItems) { baseItems.filterNot { it in stagedItems } }
@@ -950,6 +952,7 @@ private fun EditableBulletPage(
             selectedListName = listNames[selectedListIndex],
             onSwitchList = { selectedListIndex = (selectedListIndex + 1) % listNames.size },
             onMoveItemToToday = onMoveItemToToday,
+            windowStart = windowStart,
             onMoveItemToCompleted = onMoveItemToCompleted,
             onRestoreItemFromDone = onRestoreItemFromCompleted,
         )
@@ -971,7 +974,7 @@ private fun PlannerLedgerSummary(
         PlannerLedgerCell("任务池", sourceCount, tint, Modifier.weight(1f))
         PlannerLedgerCell("今日", todayCount, GoaldayDesign.Pink, Modifier.weight(1f))
         PlannerLedgerCell("已完成", doneCount, GoaldayDesign.Positive, Modifier.weight(1f))
-        PlannerLedgerCell("日程", scheduledCount, Color(0xFF8F684F), Modifier.weight(1f))
+        PlannerLedgerCell("日程", scheduledCount, GoaldayDesign.RouteOverview, Modifier.weight(1f))
     }
 }
 
@@ -982,17 +985,18 @@ private fun PlannerLedgerCell(
     color: Color,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    // 统一为 Column（value 上 label 下），与 TargetLedgerCell 视觉语言一致，便于扫读数字
+    Column(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-            .background(color.copy(alpha = 0.10f))
-            .border(0.7.dp, color.copy(alpha = 0.20f), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(color.copy(alpha = 0.11f))
+            .border(0.7.dp, color.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .padding(horizontal = 7.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(label, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         Text(value.toString(), color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(label, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
@@ -1007,8 +1011,10 @@ private fun ReferencePlannerBoard(
     onMoveItemToToday: (String) -> Unit,
     onMoveItemToCompleted: (String) -> Unit,
     onRestoreItemFromDone: (String) -> Unit,
+    // 时间窗口参数化：默认今天+7天，调用方可传入任意起点实现月历联动
+    windowStart: LocalDate = LocalDate.now(),
 ) {
-    val weekDates = (0..6).map { LocalDate.now().plusDays(it.toLong()) }
+    val weekDates = (0..6).map { windowStart.plusDays(it.toLong()) }
     val weekday = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
     val dayLabels = weekDates.map { date ->
         date.dayOfMonth.toString() to weekday[(date.dayOfWeek.value - 1).coerceIn(0, 6)]

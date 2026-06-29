@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -94,7 +95,7 @@ internal fun HandbookReplicaPage(
         null -> 0f
     }
     val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
-    var monthOffset by remember(page.title) { mutableStateOf(0) }
+    var monthOffset by rememberSaveable(page.title) { mutableStateOf(0) }
     val defaultScheduleModel = buildScheduleHandbookModel(
         page = page,
         scheduleEntries = schedulePreviewEntries,
@@ -130,7 +131,7 @@ internal fun HandbookReplicaPage(
     val fallbackRightTodo = scheduleModel.fallbackTodo
     val visiblePoolItems = scheduleModel.visiblePoolItems
     val sorted = scheduleModel.sortedEntries
-    var draftText by remember(page.title) { mutableStateOf("") }
+    var draftText by rememberSaveable(page.title) { mutableStateOf("") }
     var draftDay by remember(page.title) { mutableStateOf(rightBlocks.firstOrNull()?.day ?: 1) }
     LaunchedEffect(visibleDays) {
         if (draftDay !in visibleDays) {
@@ -138,10 +139,10 @@ internal fun HandbookReplicaPage(
         }
     }
     val selectedDraftDay = if (draftDay in visibleDays) draftDay else visibleDays.firstOrNull() ?: 1
-    var editingId by remember(pageIndex) { mutableStateOf<String?>(null) }
-    var editingText by remember(pageIndex) { mutableStateOf("") }
+    var editingId by rememberSaveable(pageIndex) { mutableStateOf<String?>(null) }
+    var editingText by rememberSaveable(pageIndex) { mutableStateOf("") }
     var saveHint by remember(pageIndex) { mutableStateOf("") }
-    var boardMode by remember(pageIndex) { mutableStateOf(ScheduleBoardMode.SPREAD) }
+    var boardMode by rememberSaveable(pageIndex) { mutableStateOf(ScheduleBoardMode.SPREAD) }
     var spreadOrigin by remember(pageIndex) { mutableStateOf(Offset.Zero) }
     val todoDropBounds = remember(pageIndex) { mutableMapOf<Int, Rect>() }
     val doneDropBounds = remember(pageIndex) { mutableMapOf<Int, Rect>() }

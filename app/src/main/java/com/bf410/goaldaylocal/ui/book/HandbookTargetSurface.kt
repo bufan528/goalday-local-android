@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -136,9 +137,9 @@ internal fun TargetDetailReplicaPage(
     onOpenTargetDetail: (String) -> Unit,
 ) {
     val items = remember(baseItems, customItems) { (baseItems + customItems).distinct() }
-    var draft by remember(pageTitle) { mutableStateOf("") }
-    var editingItem by remember(pageTitle) { mutableStateOf<String?>(null) }
-    var editingText by remember(pageTitle) { mutableStateOf("") }
+    var draft by rememberSaveable(pageTitle) { mutableStateOf("") }
+    var editingItem by rememberSaveable(pageTitle) { mutableStateOf<String?>(null) }
+    var editingText by rememberSaveable(pageTitle) { mutableStateOf("") }
     val dateShortcuts = remember { targetDateShortcuts() }
     val completedCount = items.count { isChecked(pageTitle, it) }
     val scheduledByTitle = remember(schedulePreviewEntries, items) {
