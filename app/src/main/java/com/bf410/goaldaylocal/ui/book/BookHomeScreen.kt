@@ -546,7 +546,7 @@ private fun LibraryView(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0xFF2F2923))
+                    .background(GoaldayDesign.InkPrimary)
                     .clickable(onClick = onCreateBook)
                     .padding(horizontal = 13.dp, vertical = 8.dp),
             )
@@ -692,7 +692,7 @@ private fun FeaturedHandbookCover(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0xFF2F2923))
+                        .background(GoaldayDesign.InkPrimary)
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }
@@ -749,7 +749,7 @@ private fun BookShelfRow(
                         .clip(RoundedCornerShape(99.dp))
                         .background(
                             Brush.verticalGradient(
-                                listOf(Color(0xFFD3A681), Color(0xFF8F6042)),
+                                listOf(GoaldayDesign.ShelfWood, GoaldayDesign.ShelfWoodDark),
                             ),
                         ),
                 )
@@ -1077,8 +1077,8 @@ private fun BookDetailView(
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
                 ) {
-                    ActionChip(label = BookStrings.deletePage, color = Color(0xFF9C5A52), onClick = { confirmDeletePage = true })
-                    ActionChip(label = BookStrings.deleteBook, color = Color(0xFF9C5A52), onClick = { confirmDeleteBook = true })
+                    ActionChip(label = BookStrings.deletePage, color = GoaldayDesign.Danger, onClick = { confirmDeletePage = true })
+                    ActionChip(label = BookStrings.deleteBook, color = GoaldayDesign.Danger, onClick = { confirmDeleteBook = true })
                 }
             }
         }
@@ -1838,7 +1838,7 @@ private fun InspirationCenterView(
                     color = Color.White,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0xFF222222))
+                        .background(GoaldayDesign.PrimaryAction)
                         .clickable {
                             val picked = editableItems.filterIndexed { index, _ ->
                                 checkedStates.getOrNull(index) == true
@@ -2140,7 +2140,7 @@ private fun ActionChip(
     color: Color,
     onClick: () -> Unit,
 ) {
-    val isDanger = color == Color(0xFF9C5A52)
+    val isDanger = color == GoaldayDesign.Danger
     val textColor = if (isDanger) Color(0xFF7A2F2F) else Color(0xFF2D2A26)
     val bgColor = if (isDanger) Color(0x1AD17878) else color.copy(alpha = 0.10f)
     Text(

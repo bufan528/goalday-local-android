@@ -243,7 +243,7 @@ fun CalendarScreen(
         BoardCard(title = "${state.month}月${selectedDay}日 · 今日执行", subtitle = "待办 ${todoEntries.size} / 已完成 ${doneEntries.size}") {
             grabbedPoolEntry?.let { g ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("已抓取：${g.title}（点上/下/晚投放）", color = Color(0xFFB07A8F), style = MaterialTheme.typography.labelSmall)
+                    Text("已抓取：${g.title}（点上/下/晚投放）", color = GoaldayDesign.RouteDiary, style = MaterialTheme.typography.labelSmall)
                     Text("取消", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
                         grabbedPoolEntry = null
                         toast = "已取消抓取"
@@ -426,7 +426,7 @@ fun CalendarScreen(
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier
                     .align(Alignment.End)
-                    .background(Color(0xFFE88FAE), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .background(GoaldayDesign.Pink, RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .clickable { showAddDialog = true }
                     .padding(horizontal = 10.dp, vertical = 4.dp),
             )
@@ -449,7 +449,7 @@ fun CalendarScreen(
                         )
                         .border(
                             0.7.dp,
-                            if (grabbed) GoaldayDesign.Pink.copy(alpha = 0.26f) else Color(0x18A88966),
+                            if (grabbed) GoaldayDesign.Pink.copy(alpha = 0.26f) else GoaldayDesign.BorderColor.copy(alpha = 0.09f),
                             RoundedCornerShape(13.dp),
                         )
                         .combinedClickable(
@@ -520,7 +520,7 @@ fun CalendarScreen(
                     }
                     Text(
                         if (grabbed) "已抓取" else "点按抓取",
-                        color = if (grabbed) GoaldayDesign.Pink else Color(0xFFB07A8F),
+                        color = if (grabbed) GoaldayDesign.Pink else GoaldayDesign.RouteDiary,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -587,7 +587,7 @@ fun CalendarScreen(
             Column(
                 modifier = Modifier
                     .offset { IntOffset(dragPosition.x.toInt(), dragPosition.y.toInt()) }
-                    .background(if (activeDropSlot != null || activeDoneDrop) Color(0xFFE88FAE) else Color(0xDDE88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .background(if (activeDropSlot != null || activeDoneDrop) GoaldayDesign.Pink else GoaldayDesign.Pink.copy(alpha = 0.87f), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .border(if (activeDropSlot != null || activeDoneDrop) 1.2.dp else 0.8.dp, Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -841,7 +841,7 @@ private fun CalendarHeroHeader(
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
                 CalendarHeroMetric("待办", todoCount.toString(), GoaldayDesign.Pink, Modifier.weight(1f))
                 CalendarHeroMetric("完成", doneCount.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
-                CalendarHeroMetric("进度", if (todoCount + doneCount == 0) "0%" else "${doneCount * 100 / (todoCount + doneCount)}%", Color(0xFF8F684F), Modifier.weight(1f))
+                CalendarHeroMetric("进度", if (todoCount + doneCount == 0) "0%" else "${doneCount * 100 / (todoCount + doneCount)}%", GoaldayDesign.RouteOverview, Modifier.weight(1f))
             }
         }
     }
@@ -880,12 +880,12 @@ private fun CalendarMonthControl(
             .fillMaxWidth()
             .shadow(5.dp, RoundedCornerShape(18.dp), clip = false)
             .background(GoaldayDesign.Surface, RoundedCornerShape(18.dp))
-            .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(18.dp))
+            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(18.dp))
             .padding(horizontal = 9.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CalendarControlChip("上月", Color(0xFF8F684F), Modifier.weight(0.8f), onPreviousMonth)
+        CalendarControlChip("上月", GoaldayDesign.RouteOverview, Modifier.weight(0.8f), onPreviousMonth)
         Column(modifier = Modifier.weight(1.2f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text("${year}年${month}月", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
             Text("系统日历可导入", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
@@ -935,7 +935,7 @@ private fun CalendarMonthGrid(
             .fillMaxWidth()
             .shadow(8.dp, RoundedCornerShape(18.dp), clip = false)
             .background(Color(0xFFFFFEFC), RoundedCornerShape(18.dp))
-            .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(18.dp))
+            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(18.dp))
             .padding(horizontal = 9.dp, vertical = 9.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
@@ -1062,7 +1062,7 @@ private fun BoardCard(
             .fillMaxWidth()
             .shadow(7.dp, RoundedCornerShape(GoaldayDesign.RadiusM), clip = false)
             .background(GoaldayDesign.Surface, RoundedCornerShape(GoaldayDesign.RadiusM))
-            .border(0.8.dp, Color(0x18A88966), RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
@@ -1100,7 +1100,7 @@ private fun TimeSlotRow(
                 if (hover) Color(0x3DE88FAE) else if (dropReady && assigned == null) Color(0x22E88FAE) else Color(0xFAFFFDF8),
                 RoundedCornerShape(GoaldayDesign.RadiusS),
             )
-            .border(if (hover) 1.dp else 0.6.dp, if (hover) Color(0xFFE88FAE) else Color(0x18A88966), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .border(if (hover) 1.dp else 0.6.dp, if (hover) GoaldayDesign.Pink else GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .padding(horizontal = 8.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1111,7 +1111,7 @@ private fun TimeSlotRow(
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
-                .background(if (assigned != null) GoaldayDesign.PrimaryAction else Color(0xFFB07A8F), RoundedCornerShape(99.dp))
+                .background(if (assigned != null) GoaldayDesign.PrimaryAction else GoaldayDesign.RouteDiary, RoundedCornerShape(99.dp))
                 .padding(horizontal = 8.dp, vertical = 4.dp),
         )
         if (assigned != null) {
@@ -1124,7 +1124,7 @@ private fun TimeSlotRow(
         } else {
             Text(
                 if (dropReady) "点此放入$slotKey" else "空时段",
-                color = Color(0xFFB07A8F),
+                color = GoaldayDesign.RouteDiary,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.clickable {
@@ -1143,7 +1143,7 @@ private fun DropToSlotChip(label: String, onClick: () -> Unit) {
         color = Color.White,
         style = MaterialTheme.typography.labelSmall,
         modifier = Modifier
-            .background(Color(0xFFB07A8F), RoundedCornerShape(GoaldayDesign.RadiusPill))
+            .background(GoaldayDesign.RouteDiary, RoundedCornerShape(GoaldayDesign.RadiusPill))
             .clickable { onClick() }
             .padding(horizontal = 6.dp, vertical = 2.dp),
     )

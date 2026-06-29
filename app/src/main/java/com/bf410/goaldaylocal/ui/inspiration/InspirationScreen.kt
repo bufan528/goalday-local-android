@@ -120,7 +120,7 @@ fun InspirationScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0x80FFFDF8), RoundedCornerShape(16.dp))
-                .border(0.6.dp, Color(0x20A88966), RoundedCornerShape(16.dp))
+                .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(16.dp))
                 .padding(horizontal = 7.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
@@ -168,7 +168,7 @@ fun InspirationScreen(
                     }
                 },
             )
-            Text("专题封面", color = Color(0xFF2F261D), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text("专题封面", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             InspirationCoverGrid(
                 templates = visibleTemplates,
                 allTemplates = templates,
@@ -219,7 +219,7 @@ fun InspirationScreen(
         )
 
         if (mode == InspirationMode.FLIP) {
-            Text("翻页", style = MaterialTheme.typography.titleLarge, color = Color(0xFF1F1D1A), fontWeight = FontWeight.SemiBold)
+            Text("翻页", style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
             Text("已保存内容可在手账中翻页查看", color = Color(0xFF7E756B), style = MaterialTheme.typography.bodySmall)
         }
     }
@@ -242,12 +242,12 @@ private fun InspirationUnavailableState() {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xEFFFFDF8), RoundedCornerShape(22.dp))
-                .border(0.8.dp, Color(0x24A88966), RoundedCornerShape(22.dp))
+                .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(22.dp))
                 .padding(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("暂无灵感模板", style = MaterialTheme.typography.titleMedium, color = Color(0xFF2F261D), fontWeight = FontWeight.SemiBold)
+            Text("暂无灵感模板", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
             Text("本地模板资源为空，先进入手账或日历继续使用已有功能。", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
         }
     }
@@ -264,13 +264,13 @@ private fun InspirationCatalogStrip(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0x88FFFDF8), RoundedCornerShape(14.dp))
-            .border(0.6.dp, Color(0x20A88966), RoundedCornerShape(14.dp))
+            .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(14.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(catalogLabel, color = Color(0xFF4E453D), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+            Text(catalogLabel, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
             Text(assetLabel, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -372,7 +372,7 @@ private fun InspirationCategoryRail(
                 maxLines = 1,
                 modifier = Modifier
                     .background(if (selected) GoaldayDesign.Pink else Color(0x88FFFDF8), RoundedCornerShape(99.dp))
-                    .border(0.6.dp, if (selected) Color.White.copy(alpha = 0.45f) else Color(0x24A88966), RoundedCornerShape(99.dp))
+                    .border(0.6.dp, if (selected) Color.White.copy(alpha = 0.45f) else GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(99.dp))
                     .clickable { onSelect(category) }
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             )
@@ -448,7 +448,7 @@ private fun InspirationCoverCard(
                 Text(template.category, color = Color(0xFF5F4939), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
         }
-        Text(template.title, color = Color(0xFF2F261D), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(template.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
         Text(template.subtitle, color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall, maxLines = 1)
         Text("${previewItems.size} 项 · ${previewItems.take(2).joinToString(" / ")}", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
@@ -473,7 +473,7 @@ private fun InspirationDraftPanel(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFFFFFEFC), RoundedCornerShape(18.dp))
-                .border(0.8.dp, Color(0x24A88966), RoundedCornerShape(18.dp))
+                .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(18.dp))
                 .padding(horizontal = 10.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
