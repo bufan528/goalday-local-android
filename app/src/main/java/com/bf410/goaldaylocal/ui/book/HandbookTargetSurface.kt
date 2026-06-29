@@ -443,7 +443,7 @@ private fun TargetScheduleChip(
         maxLines = 1,
         modifier = Modifier
             .clip(RoundedCornerShape(99.dp))
-            .background(Color(0x18E88FAE))
+            .background(GoaldayDesign.PinkTint)
             .clickable(onClick = onClick)
             .padding(horizontal = 6.dp, vertical = 3.dp),
     )

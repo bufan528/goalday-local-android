@@ -15,6 +15,9 @@ object GoaldayDesign {
     // 主品牌色：统一用 Pink/PinkSoft 语义（Accent/AccentSoft 别名已合并去重）
     val Pink = Color(0xFFE88FAE)
     val PinkSoft = Color(0xFFFFECF3)
+    // PinkTint：粉色薄叠层（alpha 0.18），用于 chip 背景、高亮底色等场景，替代散落的 Color(0x18E88FAE) 与 Pink.copy(alpha = 0.18f)
+    val PinkTint: Color
+        get() = Pink.copy(alpha = 0.18f)
     val GreenSoft = Color(0xFFEAF4E4)
     val Positive = Color(0xFF769B69)
     val Danger = Color(0xFFA15E58)

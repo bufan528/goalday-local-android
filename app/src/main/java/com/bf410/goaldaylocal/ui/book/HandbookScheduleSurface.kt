@@ -223,7 +223,7 @@ internal fun HandbookReplicaPage(
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(if (boardMode == mode) GoaldayDesign.Pink else GoaldayDesign.Pink.copy(alpha = 0.18f))
+                        .background(if (boardMode == mode) GoaldayDesign.Pink else GoaldayDesign.PinkTint)
                         .clickable { boardMode = mode }
                         .padding(horizontal = 7.dp, vertical = 3.dp),
                 )
@@ -234,7 +234,7 @@ internal fun HandbookReplicaPage(
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(GoaldayDesign.Pink.copy(alpha = 0.18f))
+                    .background(GoaldayDesign.PinkTint)
                     .clickable {
                         longImagePreview = LongImagePreview(
                             title = "Goalday 日程手账",
@@ -251,7 +251,7 @@ internal fun HandbookReplicaPage(
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(GoaldayDesign.Pink.copy(alpha = 0.18f))
+                    .background(GoaldayDesign.PinkTint)
                     .clickable {
                         val uri = exportHandbookScheduleLongImage(context, anchorYear, anchorMonth, visibleDays, sorted, weeklyTheme)
                         exportHint = if (uri != null) "已导出" else "导出失败"
@@ -605,7 +605,7 @@ private fun HandbookMonthBoard(
                                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                                 .background(
                                     when {
-                                        isVisible -> GoaldayDesign.Pink.copy(alpha = 0.18f)
+                                        isVisible -> GoaldayDesign.PinkTint
                                         isToday -> GoaldayDesign.PaperAged.copy(alpha = 0.30f)
                                         else -> GoaldayDesign.Surface
                                     },
@@ -796,7 +796,7 @@ private fun BoxScope.HandbookMonthHeader(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .background(GoaldayDesign.PinkSoft)
-                .border(0.35.dp, GoaldayDesign.Pink.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusS))
+                .border(0.35.dp, GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusS))
                 .padding(horizontal = 7.dp, vertical = 4.dp),
             textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
             decorationBox = { inner ->
@@ -1043,7 +1043,7 @@ private fun HandbookQuickAddRow(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                         .background(Color(0x88FFFFFF))
-                        .border(0.35.dp, GoaldayDesign.Pink.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .border(0.35.dp, GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = 6.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
                     verticalAlignment = Alignment.CenterVertically,

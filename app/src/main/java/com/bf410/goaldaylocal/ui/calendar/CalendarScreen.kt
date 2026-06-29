@@ -347,7 +347,7 @@ fun CalendarScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(if (draggingDayEntry?.id == entry.id) Color(0x18E88FAE) else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .background(if (draggingDayEntry?.id == entry.id) GoaldayDesign.PinkTint else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .onGloballyPositioned { dayRowOrigin = it.boundsInRoot().topLeft }
                         .pointerInput(entry.id, entry.completed) {
                             if (entry.completed) return@pointerInput

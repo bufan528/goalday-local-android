@@ -1358,7 +1358,7 @@ private fun DiaryWorkspaceHeader(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
             DiaryWorkspaceMetric("文字", textCount, GoaldayDesign.InkSecondary, Modifier.weight(1f))
-            DiaryWorkspaceMetric("图片", imageCount, Color(0xFFB07A8F), Modifier.weight(1f))
+            DiaryWorkspaceMetric("图片", imageCount, GoaldayDesign.RouteDiary, Modifier.weight(1f))
             DiaryWorkspaceMetric("目标", targetCount, GoaldayDesign.Positive, Modifier.weight(1f))
             DiaryWorkspaceMetric("待办", todoCount + doneCount, GoaldayDesign.Pink, Modifier.weight(1f))
         }
@@ -1423,7 +1423,7 @@ private fun DiaryExportDock(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFFFFFBF6))
+            .background(GoaldayDesign.Paper)
             .border(0.7.dp, Color(0x22B7A893), RoundedCornerShape(14.dp))
             .padding(horizontal = 9.dp, vertical = 7.dp),
         horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -1501,7 +1501,7 @@ private fun DiaryStartPanel(
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
-            DiaryStartAction("图片", Color(0xFFB07A8F), Modifier.weight(1f), onAddImage)
+            DiaryStartAction("图片", GoaldayDesign.RouteDiary, Modifier.weight(1f), onAddImage)
             DiaryStartAction("目标块", GoaldayDesign.Positive, Modifier.weight(1f), onAddTarget)
         }
     }
@@ -1549,7 +1549,7 @@ private fun DiaryQuickActionRow(
     ) {
         DiaryQuickActionChip("编辑", GoaldayDesign.Pink, onEdit)
         DiaryQuickActionChip("文字", GoaldayDesign.InkSecondary, onAddText)
-        DiaryQuickActionChip("图片", Color(0xFFB07A8F), onAddImage)
+        DiaryQuickActionChip("图片", GoaldayDesign.RouteDiary, onAddImage)
         DiaryQuickActionChip("专题目标", GoaldayDesign.Positive, onAddTopicTarget)
     }
 }
@@ -1605,7 +1605,7 @@ private fun DiaryBlockRail(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DiaryBlockPill("TEXT", "$textBlocks", GoaldayDesign.InkPrimary, Modifier.weight(1f))
-        DiaryBlockPill("IMAGE", "$imageBlocks", Color(0xFFB07A8F), Modifier.weight(1f))
+        DiaryBlockPill("IMAGE", "$imageBlocks", GoaldayDesign.RouteDiary, Modifier.weight(1f))
         DiaryBlockPill("TARGET", "$targetBlocks", GoaldayDesign.Positive, Modifier.weight(1f))
         Text(
             if (editing) "编辑中" else "预览",
@@ -2004,7 +2004,7 @@ internal fun LongImagePreviewDialog(
                         actionHint = "保存失败"
                     }
                 }
-                LongImageActionChip("分享", Color(0xFFB07A8F), Modifier.width(86.dp)) {
+                LongImageActionChip("分享", GoaldayDesign.RouteDiary, Modifier.width(86.dp)) {
                     if (shareLongImagePreview(context, preview)) {
                         recordAction("已打开分享", "分享", selectedPreset.description)
                     } else {
@@ -2520,7 +2520,7 @@ private fun DiaryLinkedTargetStrip(
         if (todo.isNotEmpty()) {
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
                 todo.forEach { item ->
-                    DiaryLinkedTargetChip("○ $item", Color(0xFFB07A8F), Modifier.weight(1f)) { onPickTodo(item) }
+                    DiaryLinkedTargetChip("○ $item", GoaldayDesign.RouteDiary, Modifier.weight(1f)) { onPickTodo(item) }
                 }
             }
         }
@@ -2576,11 +2576,11 @@ internal fun diaryBlockDisplaySubtitle(type: DiaryBlockType): String =
 
 internal fun diaryBlockTypeColor(type: DiaryBlockType): Color =
     when (type) {
-        DiaryBlockType.IMAGE -> Color(0xFFB07A8F)
+        DiaryBlockType.IMAGE -> GoaldayDesign.RouteDiary
         DiaryBlockType.TEXT -> GoaldayDesign.InkSecondary
         DiaryBlockType.TARGET -> GoaldayDesign.Positive
-        DiaryBlockType.TARGET_CHILD -> Color(0xFF6F8E68)
-        DiaryBlockType.TOPIC_TARGET -> Color(0xFFB07A8F)
+        DiaryBlockType.TARGET_CHILD -> GoaldayDesign.RouteTarget
+        DiaryBlockType.TOPIC_TARGET -> GoaldayDesign.RouteDiary
     }
 
 internal fun diaryBlockTypeBackground(type: DiaryBlockType): Color =
@@ -2667,7 +2667,7 @@ private fun StructuredDiaryPreview(
         } else {
             Text(
                 "＋ 添加图片",
-                color = Color(0xFFB07A8F),
+                color = GoaldayDesign.RouteDiary,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .align(Alignment.End)
@@ -2737,7 +2737,7 @@ private fun DiaryEmptyInBookPage(onAddImage: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFFFFFBF6))
+            .background(GoaldayDesign.Paper)
             .border(0.8.dp, Color(0x20B7A893), RoundedCornerShape(12.dp))
             .clickable { onAddImage() }
             .padding(horizontal = 12.dp, vertical = 16.dp),
@@ -3151,7 +3151,7 @@ private fun DiaryToolChip(
 ) {
     Text(
         text = label,
-        color = Color(0xFF8F684F),
+        color = GoaldayDesign.RouteOverview,
         modifier = Modifier
             .clip(RoundedCornerShape(99.dp))
             .background(Color(0x1A8F684F))
