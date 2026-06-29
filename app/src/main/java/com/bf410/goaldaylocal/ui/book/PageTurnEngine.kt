@@ -32,8 +32,12 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 private const val EDGE_GESTURE_RATIO = 0.13f
-private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.28f
-private const val HANDBOOK_DRAG_START_THRESHOLD = 0.28f
+// P0-1 修复：HANDBOOK 热区从 0.28f 收窄到 0.10f，避免覆盖日程项/池子项的拖放手势区域
+// 原值 0.28f 意味着左右各 28% 宽度都算翻页热区，几乎覆盖整页，导致长按拖放被翻页抢占
+private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.10f
+// P0-1 修复：原值 0.28f 作为 px 阈值（极小，任何微动都触发），改为基于页面宽度的比例
+// 0.04f 表示拖动距离需达到页面宽度 4%（约 30px）才判定翻页方向，给长按拖放留出识别空间
+private const val HANDBOOK_DRAG_START_RATIO = 0.04f
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase
@@ -111,16 +115,9 @@ fun PageTurnEngine(
                     )
                     onFlipNext()
                     if (profile == TurnProfile.HANDBOOK) {
-                        clearState()
-                        progress.snapTo(0.12f)
-                        phase = TurnPhase.SettlingBack
-                        progress.animateTo(
-                            0f,
-                            animationSpec = spring(
-                                dampingRatio = 0.97f,
-                                stiffness = 270f,
-                            ),
-                        )
+                        // P0-3 修复：删除原 snapTo(0.12f)→animateTo(0f) 二段动画
+                        // 原逻辑翻完后跳到 0.12 再回弹到 0，造成"翻完又晃一下"的视觉跳变
+                        // 直接归零并清理状态，让翻页在到达 1f 时干净结束
                         progress.snapTo(0f)
                         clearState()
                         return@launch
@@ -137,16 +134,7 @@ fun PageTurnEngine(
                     )
                     onFlipPrevious()
                     if (profile == TurnProfile.HANDBOOK) {
-                        clearState()
-                        progress.snapTo(0.12f)
-                        phase = TurnPhase.SettlingBack
-                        progress.animateTo(
-                            0f,
-                            animationSpec = spring(
-                                dampingRatio = 0.97f,
-                                stiffness = 270f,
-                            ),
-                        )
+                        // P0-3 修复：同 CompleteNext，删除二段回弹动画
                         progress.snapTo(0f)
                         clearState()
                         return@launch
@@ -196,7 +184,11 @@ fun PageTurnEngine(
                     pageWidthPx = it.width.toFloat().coerceAtLeast(1f)
                     pageHeightPx = it.height.toFloat().coerceAtLeast(1f)
                 }
-                .pointerInput(canTurnNext, canTurnPrevious, pageWidthPx, turnEnabled) {
+                .pointerInput(canTurnNext, canTurnPrevious, turnEnabled) {
+                    // P0-4 修复：从 key 中移除 pageWidthPx
+                    // 原代码 pageWidthPx 作为 key，尺寸变化（如旋转、动态布局）时 pointerInput 重启，
+                    // 导致正在进行的手势协程被取消，用户感觉"滑一半手势丢了"
+                    // pageWidthPx 是 var，lambda 内通过闭包读取最新值即可，无需作为 key 触发重启
                     if (!turnEnabled) return@pointerInput
                     detectHorizontalDragGestures(
                         onDragStart = { startOffset ->
@@ -220,7 +212,7 @@ fun PageTurnEngine(
                                 pageWidthPx = pageWidthPx,
                                 dragAmountPx = dragAmount,
                                 edgeGestureRatio = if (profile == TurnProfile.HANDBOOK) HANDBOOK_EDGE_GESTURE_RATIO else EDGE_GESTURE_RATIO,
-                                dragStartThreshold = HANDBOOK_DRAG_START_THRESHOLD,
+                                dragStartThreshold = HANDBOOK_DRAG_START_RATIO,
                             ) ?: return@detectHorizontalDragGestures
 
                             direction = resolvedDirection
@@ -276,65 +268,22 @@ fun PageTurnEngine(
             activePage(visualProgress, direction, turnAnchorY)
 
             if (direction != null && dragProgress > 0.01f) {
+                // P1-2 精简：原 10 层装饰收敛为 3 层核心，消除视觉过载与渲染负担
+                // 删除：4 层 depth 阴影、底部/顶部角落 radial 高光、edge 高光窄条/宽条、顶部/底部 linear 高光
+                // 保留：center 暗带（书脊感）+ 全屏暗角（深度感）+ turnShadow（翻页核心阴影）
                 if (profile == TurnProfile.HANDBOOK) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .width((8f + visualProgress * 18f).dp)
+                            .width((8f + visualProgress * 12f).dp)
                             .fillMaxHeight()
                             .background(
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.12f).coerceAtMost(0.16f)),
-                                        Color.White.copy(alpha = (0.02f + latePhase * 0.14f).coerceAtMost(0.18f)),
-                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.12f).coerceAtMost(0.16f)),
+                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.10f).coerceAtMost(0.14f)),
+                                        Color.White.copy(alpha = (0.02f + latePhase * 0.10f).coerceAtMost(0.14f)),
+                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.10f).coerceAtMost(0.14f)),
                                     ),
-                                ),
-                            ),
-                    )
-                }
-                if (profile == TurnProfile.HANDBOOK) {
-                    repeat(4) { layer ->
-                        val depth = (layer + 1) / 4f
-                        Box(
-                            modifier = Modifier
-                                .align(if (draggingToNext) Alignment.CenterStart else Alignment.CenterEnd)
-                                .width((2f + latePhase * (4f + depth * 11f)).dp)
-                                .fillMaxHeight()
-                                .background(
-                                    Brush.horizontalGradient(
-                                        if (draggingToNext) {
-                                            listOf(
-                                                Color.Black.copy(alpha = (0.02f + latePhase * 0.11f) * depth),
-                                                Color(0x33B79678).copy(alpha = (0.02f + latePhase * 0.09f) * depth),
-                                                Color.Transparent,
-                                            )
-                                        } else {
-                                            listOf(
-                                                Color.Transparent,
-                                                Color(0x33B79678).copy(alpha = (0.02f + latePhase * 0.09f) * depth),
-                                                Color.Black.copy(alpha = (0.02f + latePhase * 0.11f) * depth),
-                                            )
-                                        },
-                                    ),
-                                ),
-                        )
-                    }
-                }
-                if (profile == TurnProfile.HANDBOOK) {
-                    Box(
-                        modifier = Modifier
-                            .align(if (draggingToNext) Alignment.BottomEnd else Alignment.BottomStart)
-                            .width((18f + latePhase * 42f).dp)
-                            .height((22f + latePhase * 48f).dp)
-                            .background(
-                                Brush.radialGradient(
-                                    colors = listOf(
-                                        Color.White.copy(alpha = (0.04f + latePhase * 0.22f).coerceAtMost(0.28f)),
-                                        Color.Black.copy(alpha = (0.01f + latePhase * 0.10f).coerceAtMost(0.12f)),
-                                        Color.Transparent,
-                                    ),
-                                    radius = 160f,
                                 ),
                             ),
                     )
@@ -378,104 +327,6 @@ fun PageTurnEngine(
                             },
                         ),
                 )
-
-                Box(
-                    modifier = Modifier
-                        .align(if (draggingToNext) Alignment.CenterEnd else Alignment.CenterStart)
-                        .width((2f + latePhase * 10f).dp)
-                        .fillMaxHeight()
-                        .background(
-                            Brush.horizontalGradient(
-                                if (draggingToNext) {
-                                    listOf(
-                                        Color.White.copy(alpha = (0.07f + latePhase * 0.24f).coerceAtMost(0.30f)),
-                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.12f).coerceAtMost(0.16f)),
-                                    )
-                                } else {
-                                    listOf(
-                                        Color.Black.copy(alpha = (0.03f + latePhase * 0.12f).coerceAtMost(0.16f)),
-                                        Color.White.copy(alpha = (0.07f + latePhase * 0.24f).coerceAtMost(0.30f)),
-                                    )
-                                },
-                            ),
-                        ),
-                )
-
-                Box(
-                    modifier = Modifier
-                        .align(if (draggingToNext) Alignment.CenterEnd else Alignment.CenterStart)
-                        .width((4f + latePhase * 16f).dp)
-                        .fillMaxHeight()
-                        .background(
-                            Brush.horizontalGradient(
-                                if (draggingToNext) {
-                                    listOf(
-                                        Color.White.copy(alpha = (0.04f + latePhase * 0.20f).coerceAtMost(0.24f)),
-                                        Color.Transparent,
-                                    )
-                                } else {
-                                    listOf(
-                                        Color.Transparent,
-                                        Color.White.copy(alpha = (0.04f + latePhase * 0.20f).coerceAtMost(0.24f)),
-                                    )
-                                },
-                            ),
-                        ),
-                )
-
-                Box(
-                    modifier = Modifier
-                        .align(if (draggingToNext) Alignment.TopEnd else Alignment.TopStart)
-                        .width((18f + visualProgress * 34f).dp)
-                        .height((18f + visualProgress * 34f).dp)
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = (0.06f + latePhase * 0.24f).coerceAtMost(0.30f)),
-                                    Color.Black.copy(alpha = (0.012f + latePhase * 0.09f).coerceAtMost(0.11f)),
-                                    Color.Transparent,
-                                ),
-                                radius = 120f,
-                            ),
-                        ),
-                )
-
-                if (profile == TurnProfile.HANDBOOK) {
-                    Box(
-                        modifier = Modifier
-                            .align(if (draggingToNext) Alignment.TopEnd else Alignment.TopStart)
-                            .width((10f + latePhase * 24f).dp)
-                            .height((22f + latePhase * 38f).dp)
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        Color.White.copy(alpha = (0.08f + latePhase * 0.28f).coerceAtMost(0.34f)),
-                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.10f).coerceAtMost(0.12f)),
-                                        Color.Transparent,
-                                    ),
-                                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                                    end = androidx.compose.ui.geometry.Offset(40f, 80f),
-                                ),
-                            ),
-                    )
-                    Box(
-                        modifier = Modifier
-                            .align(if (draggingToNext) Alignment.BottomEnd else Alignment.BottomStart)
-                            .width((10f + latePhase * 24f).dp)
-                            .height((22f + latePhase * 38f).dp)
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.10f).coerceAtMost(0.12f)),
-                                        Color.White.copy(alpha = (0.08f + latePhase * 0.28f).coerceAtMost(0.34f)),
-                                    ),
-                                    start = androidx.compose.ui.geometry.Offset(0f, 80f),
-                                    end = androidx.compose.ui.geometry.Offset(40f, 0f),
-                                ),
-                            ),
-                    )
-                }
             }
         }
     }

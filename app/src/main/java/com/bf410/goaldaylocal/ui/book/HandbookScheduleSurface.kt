@@ -54,7 +54,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
@@ -104,10 +110,14 @@ internal fun HandbookReplicaPage(
         requestedWindowStart = null,
         monthOffset = monthOffset,
     )
-    var windowStart by remember(page.title, defaultScheduleModel.year, defaultScheduleModel.month) {
+    // P1-1 修复：windowStart 改用 rememberSaveable 持久化，且 LaunchedEffect key 移除 defaultScheduleModel.windowStart
+    // 原代码 LaunchedEffect key 含 defaultScheduleModel.windowStart，数据更新（如勾选日程）会触发 recomposition
+    // 导致 defaultScheduleModel.windowStart 变化，覆盖用户手动滑动的日历窗口位置
+    // 现只在 page.title/year/month 变化（真正切换月份）时重置，同月内用户设置不再被覆盖
+    var windowStart by rememberSaveable(page.title, defaultScheduleModel.year, defaultScheduleModel.month) {
         mutableStateOf(defaultScheduleModel.windowStart)
     }
-    LaunchedEffect(page.title, defaultScheduleModel.year, defaultScheduleModel.month, defaultScheduleModel.windowStart) {
+    LaunchedEffect(page.title, defaultScheduleModel.year, defaultScheduleModel.month) {
         windowStart = defaultScheduleModel.windowStart
     }
     val scheduleModel = buildScheduleHandbookModel(
@@ -493,21 +503,38 @@ internal fun HandbookReplicaPage(
         }
 
         (draggingPoolItem ?: draggingTodoEntry?.title)?.let { text ->
-            val localX = (dragPosition.x - spreadOrigin.x).toInt()
-            val localY = (dragPosition.y - spreadOrigin.y).toInt()
-            Text(
-                text,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White,
-                maxLines = 1,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset { IntOffset(localX, localY) }
-                    .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .background(GoaldayDesign.Pink)
-                    .border(0.8.dp, Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .padding(horizontal = 7.dp, vertical = 4.dp),
-            )
+            // P1-8 修复：用 Popup 渲染拖动跟随 Text，绕过父级 Box 的 clip 裁剪
+            // 原代码 Text 在第 183 行 Box 内，被 .clip(RoundedCornerShape(RadiusL)) 裁剪
+            // 拖动到 Box 边界外时 Text 消失，用户看不到拖动跟随反馈
+            // Popup 在窗口最顶层渲染，不受父级 clip 限制，+8 偏移避免手指遮挡
+            val dragPositionProvider = object : PopupPositionProvider {
+                override fun calculatePosition(
+                    anchorBounds: IntRect,
+                    windowSize: IntSize,
+                    layoutDirection: LayoutDirection,
+                    popupContentSize: IntSize,
+                ): IntOffset = IntOffset(
+                    (dragPosition.x.toInt() + 8).coerceAtLeast(0),
+                    (dragPosition.y.toInt() + 8).coerceAtLeast(0),
+                )
+            }
+            Popup(
+                popupPositionProvider = dragPositionProvider,
+                onDismissRequest = {},
+                properties = PopupProperties(focusable = false, clippingEnabled = false),
+            ) {
+                Text(
+                    text,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .background(GoaldayDesign.Pink)
+                        .border(0.8.dp, Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .padding(horizontal = 7.dp, vertical = 4.dp),
+                )
+            }
         }
 
         Row(
@@ -644,17 +671,10 @@ private fun HandbookMonthBoard(
 
 @Composable
 internal fun BoxScope.HandbookPaperRuling() {
-    // 信纸横线：14 条覆盖更长内容；alpha 从 0x09(3.5%) 提升到 0x14(8%) 让横线在暖纸上可见
-    repeat(14) { index ->
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = (54 + index * 24).dp)
-                .fillMaxWidth()
-                .height(0.45.dp)
-                .background(Color(0x14000000)),
-        )
-    }
+    // P1-3 修复：删除原 14 条信纸横线
+    // 横线用 align(TopCenter)+padding(top=...) 固定在 Box 层，但内容在 verticalScroll 内滚动
+    // 导致滚动时横线不动、内容动，视觉错位"难受"。横线在滚动场景下失去对齐意义，直接删除
+    // 保留左右 2 条垂直粉色线（fillMaxHeight 随 Box 拉伸，不滚动也不错位）
     repeat(2) { index ->
         Box(
             modifier = Modifier

@@ -124,8 +124,15 @@ fun BookHomeScreen(
     var consumedEntryLandingKey by remember { mutableStateOf<String?>(null) }
 
     val hasBooks = uiState.books.isNotEmpty()
-    val safeBookIndex = uiState.selectedBookIndex.coerceIn(0, (uiState.books.lastIndex).coerceAtLeast(0))
     val landingBookIndex = remember(uiState.books, entryMode) { entryLandingBookIndex(uiState.books, entryMode) }
+    // P0-5 修复：HANDBOOK/DIARY 模式下优先用 landingBookIndex 渲染，避免入口 loading 闪烁
+    // 原代码在 selectedBookIndex != landingBookIndex 时 return loading，进入时短暂闪烁
+    // 现在直接用 landingBookIndex 渲染，LaunchedEffect 后台同步 selectedBookIndex，无闪烁
+    val safeBookIndex = if (entryMode == BookEntryMode.HANDBOOK || entryMode == BookEntryMode.DIARY) {
+        landingBookIndex.coerceIn(0, (uiState.books.lastIndex).coerceAtLeast(0))
+    } else {
+        uiState.selectedBookIndex.coerceIn(0, (uiState.books.lastIndex).coerceAtLeast(0))
+    }
     if (!hasBooks) {
         BookUnavailableState(
             title = "还没有可用手账",
@@ -154,19 +161,10 @@ fun BookHomeScreen(
             viewModel.selectBook(landingBookIndex)
         }
     }
-    if ((entryMode == BookEntryMode.HANDBOOK || entryMode == BookEntryMode.DIARY) && hasBooks && uiState.selectedBookIndex != landingBookIndex) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "正在打开本地手账...",
-                color = GoaldayDesign.InkSecondary,
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-        return
-    }
+    // P0-5 修复：删除原 loading return 块
+    // 原代码在此处 return "正在打开本地手账..."，但 selectedBookIndex 与 landingBookIndex
+    // 的短暂不一致会导致进入时 loading 闪烁。现已让 safeBookIndex 直接用 landingBookIndex
+    // 渲染正确内容，LaunchedEffect 在后台同步 viewModel.selectedBookIndex，无需 loading 中转
 
     when (entryMode) {
         BookEntryMode.INSPIRATION -> {
@@ -849,39 +847,31 @@ private fun HandbookReadingDeskHeader(
 ) {
     val route = resolveHandbookSection(currentPage)
     val routeMetrics = metricsForPages(filteredPages)
-    val bookMetrics = metricsForBook(book)
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(GoaldayDesign.CardPaperGradient)
             .border(0.8.dp, Color(0x28A88966), RoundedCornerShape(20.dp))
-            .padding(11.dp),
-        verticalArrangement = Arrangement.spacedBy(9.dp),
+            // P1-4 精简：padding 11dp→10dp，spacedBy 9dp→7dp，压缩整体高度
+            .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(
+            // P1-4 精简：删除原副标题"${book.title} · ${route.label}路线 · 本地保存"
+            // book.title 已在 TopBar 显示，"本地保存"与右侧"离线"chip 重复，route.label 由指标行体现
+            Text(
+                text = monthLabelForPage(currentPage.title, fallback = book.title),
+                color = GoaldayDesign.InkPrimary,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    text = monthLabelForPage(currentPage.title, fallback = book.title),
-                    color = GoaldayDesign.InkPrimary,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                )
-                Text(
-                    text = "${book.title} · ${route.label}路线 · 本地保存",
-                    color = GoaldayDesign.InkSecondary,
-                    style = MaterialTheme.typography.labelSmall,
-                    maxLines = 1,
-                )
-            }
+            )
             Text(
                 text = "离线",
                 color = Color.White,
@@ -897,9 +887,9 @@ private fun HandbookReadingDeskHeader(
             horizontalArrangement = Arrangement.spacedBy(7.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
+            // P1-4 精简：删除"全书"指标（与 TopBar 的书本信息重复），只保留页数+内容
             HandbookDeskMetric("页数", routeMetrics.pageCount.coerceAtLeast(1).toString(), routeColor(route), Modifier.weight(1f))
             HandbookDeskMetric("内容", routeMetrics.itemCount.toString(), GoaldayDesign.RouteOverview, Modifier.weight(1f))
-            HandbookDeskMetric("全书", bookMetrics.pageCount.toString(), GoaldayDesign.Positive, Modifier.weight(1f))
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(7.dp),

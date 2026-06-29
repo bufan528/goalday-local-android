@@ -56,7 +56,10 @@ fun BookShell(
     }
     val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 6.dp else 10.dp
     val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 4.dp else 8.dp
-    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 6.dp else 20.dp
+    // P0-2 修复：BOOK 模式翻页热区从 6dp 提升到 24dp
+    // 原 6dp 宽度过窄，用户难以精确点击翻页，尤其与内容区边缘重合时容易误触
+    // 24dp 宽 + 撑满高度的触控面积满足无障碍标准，且不侵占内容区
+    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 24.dp else 20.dp
     val pageInsetH = if (shellStyle == ShellStyle.BOOK) 12.dp else 8.dp
     val pageInsetV = if (shellStyle == ShellStyle.BOOK) 12.dp else 10.dp
 

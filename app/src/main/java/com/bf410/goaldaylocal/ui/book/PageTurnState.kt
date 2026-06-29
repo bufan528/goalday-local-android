@@ -90,7 +90,14 @@ fun resolveDragTurnDirection(
     val edgeZonePx = safeWidth * edgeGestureRatio.coerceIn(0f, 0.5f)
     val canStartNextFromEdge = dragStartX >= safeWidth - edgeZonePx
     val canStartPreviousFromEdge = dragStartX <= edgeZonePx
-    val threshold = if (profile == TurnProfile.HANDBOOK) dragStartThreshold.coerceAtLeast(0.1f) else 0.6f
+    // P0-1 修复：HANDBOOK 模式下 dragStartThreshold 现在是比例值（0.04f），需乘以页面宽度得到 px 阈值
+    // 原代码用 0.28f 作为 px 值（极小），导致任何微动都触发翻页方向判定，抢占长按拖放手势
+    // DEFAULT 模式仍用 0.6f 作为 px 值（边缘热区窄，敏感度可接受）
+    val threshold = if (profile == TurnProfile.HANDBOOK) {
+        (safeWidth * dragStartThreshold).coerceAtLeast(1f)
+    } else {
+        0.6f
+    }
     return when {
         dragAmountPx <= -threshold && canStartNextFromEdge -> TurnDirection.NEXT
         dragAmountPx >= threshold && canStartPreviousFromEdge -> TurnDirection.PREVIOUS
