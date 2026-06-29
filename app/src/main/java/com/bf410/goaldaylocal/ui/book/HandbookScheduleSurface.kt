@@ -218,22 +218,22 @@ internal fun HandbookReplicaPage(
             ScheduleBoardMode.entries.forEach { mode ->
                 Text(
                     mode.label,
-                    color = if (boardMode == mode) Color.White else Color(0xFF8B6F78),
+                    color = if (boardMode == mode) Color.White else GoaldayDesign.InkMuted,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(if (boardMode == mode) GoaldayDesign.Pink else Color(0x18E88FAE))
+                        .background(if (boardMode == mode) GoaldayDesign.Pink else GoaldayDesign.Pink.copy(alpha = 0.18f))
                         .clickable { boardMode = mode }
                         .padding(horizontal = 7.dp, vertical = 3.dp),
                 )
             }
             Text(
                 "预览",
-                color = Color(0xFF8B6F78),
+                color = GoaldayDesign.InkMuted,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0x18E88FAE))
+                    .background(GoaldayDesign.Pink.copy(alpha = 0.18f))
                     .clickable {
                         longImagePreview = LongImagePreview(
                             title = "Goalday 日程手账",
@@ -246,11 +246,11 @@ internal fun HandbookReplicaPage(
             )
             Text(
                 "快存",
-                color = Color(0xFF8B6F78),
+                color = GoaldayDesign.InkMuted,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(Color(0x18E88FAE))
+                    .background(GoaldayDesign.Pink.copy(alpha = 0.18f))
                     .clickable {
                         val uri = exportHandbookScheduleLongImage(context, anchorYear, anchorMonth, visibleDays, sorted, weeklyTheme)
                         exportHint = if (uri != null) "已导出" else "导出失败"
@@ -258,7 +258,7 @@ internal fun HandbookReplicaPage(
                     .padding(horizontal = 7.dp, vertical = 3.dp),
             )
             if (exportHint.isNotBlank()) {
-                Text(exportHint, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A7065))
+                Text(exportHint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
             }
         }
         if (boardMode == ScheduleBoardMode.MONTH) {
@@ -528,7 +528,7 @@ internal fun HandbookReplicaPage(
             Text(
                 saveHint,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF7A7269),
+                color = GoaldayDesign.InkSecondary,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = 4.dp, bottom = 2.dp),
@@ -792,7 +792,7 @@ private fun BoxScope.HandbookMonthHeader(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .background(GoaldayDesign.PinkSoft)
-                .border(0.35.dp, Color(0x18E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
+                .border(0.35.dp, GoaldayDesign.Pink.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusS))
                 .padding(horizontal = 7.dp, vertical = 4.dp),
             textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
             decorationBox = { inner ->
@@ -934,7 +934,7 @@ private fun HandbookDoneEntryLine(
         Text(
             entry.title,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF6B665F),
+            color = GoaldayDesign.InkMuted,
             textDecoration = TextDecoration.LineThrough,
             maxLines = 1,
             modifier = Modifier.weight(1f),
@@ -1039,7 +1039,7 @@ private fun HandbookQuickAddRow(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                         .background(Color(0x88FFFFFF))
-                        .border(0.35.dp, Color(0x18E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .border(0.35.dp, GoaldayDesign.Pink.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = 6.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1141,7 +1141,7 @@ private fun DaySpreadEditableSection(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-            Text("待办 $todoCount · 完成 $doneCount", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB07A8F))
+            Text("待办 $todoCount · 完成 $doneCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.RouteDiary)
         }
         repeat(visibleLimit.coerceAtLeast(3)) { idx ->
             val entry = visibleEntries.getOrNull(idx)
@@ -1310,7 +1310,7 @@ private fun HandbookEntryLine(
             BasicTextField(
                 value = editingText,
                 onValueChange = onTextChange,
-                textStyle = TextStyle(color = Color(0xFF2F2E2C)),
+                textStyle = TextStyle(color = GoaldayDesign.InkPrimary),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = {
                     onCommit()
@@ -1319,7 +1319,7 @@ private fun HandbookEntryLine(
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(rowEditorFocus)
-                    .background(Color(0x88FFFFFF), RoundedCornerShape(5.dp))
+                    .background(Color(0x88FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 5.dp, vertical = 3.dp),
             )
             Text("Done", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, modifier = Modifier.clickable {
@@ -1419,9 +1419,9 @@ private fun HandbookEntryDetailChip(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(7.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(Color.White.copy(alpha = 0.58f))
-            .border(0.35.dp, color.copy(alpha = 0.16f), RoundedCornerShape(7.dp))
+            .border(0.35.dp, color.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .padding(horizontal = 6.dp, vertical = 3.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
