@@ -412,7 +412,8 @@ internal fun HandbookReplicaPage(
                         },
                         editingId = editingId,
                         editingText = editingText,
-                        activeDrop = activePoolDropDay == block.day,
+                        // 修复：拖动 entry 时排除自身所在槽位高亮，避免反馈自相矛盾
+                        activeDrop = activePoolDropDay == block.day && draggingTodoEntry?.day != block.day,
                         onBounds = { rect -> todoDropBounds[block.day] = rect },
                         onStartEdit = { entry ->
                             if (!entry.id.startsWith("fallback_")) {
@@ -473,6 +474,8 @@ internal fun HandbookReplicaPage(
                                     draftDay = todoTargetDay
                                     saveHint = "已拖到${todoTargetDay}日"
                                 }
+                                // 修复：拖回自己原位时给明确反馈，原代码静默无反馈
+                                entry != null && todoTargetDay == entry.day -> saveHint = "未移动"
                                 entry != null && doneTargetDay != null -> saveHint = "请拖到同日期 done"
                                 entry != null -> saveHint = "未命中日期或 done"
                             }

@@ -650,15 +650,12 @@ fun ActivePageLayer(
             is PlanPage -> Box(
                 modifier = modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(GoaldayDesign.Paper, GoaldayDesign.PaperWarm)
-                        )
-                    )
+                    // 基底统一到 PaperGradient，与 Diary/Target/Schedule 页对齐
+                    .background(GoaldayDesign.PaperGradient)
                     .border(
                         GoaldayDesign.Hairline,
-                        GoaldayDesign.BorderColor.copy(alpha = 0.22f),
-                        RoundedCornerShape(GoaldayDesign.RadiusXL)
+                        GoaldayDesign.BorderColor.copy(alpha = 0.18f),
+                        RoundedCornerShape(GoaldayDesign.RadiusL)
                     )
             ) {
                 EditableBulletPage(
@@ -830,14 +827,9 @@ private fun HandbookDiaryReplicaPage(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
-            .background(
-                Brush.linearGradient(
-                    listOf(Color(0xFFFFFEFB), Color(0xFFFFF7F1), Color(0xFFFFFCF7)),
-                    start = Offset.Zero,
-                    end = Offset(760f, 900f),
-                ),
-            )
-            .border(0.8.dp, Color(0x22B7A893), RoundedCornerShape(GoaldayDesign.RadiusL))
+            // 基底统一到 PaperGradient，与 Target/Plan/Schedule 页对齐，避免翻页时背景跳变
+            .background(GoaldayDesign.PaperGradient)
+            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha

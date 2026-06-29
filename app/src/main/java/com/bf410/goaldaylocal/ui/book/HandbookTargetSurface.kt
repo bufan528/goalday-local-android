@@ -74,14 +74,9 @@ internal fun HandbookTargetReplicaPage(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
-            .background(
-                Brush.linearGradient(
-                    listOf(Color(0xFFFFFCF7), tint.copy(alpha = 0.13f), Color(0xFFFFFEFB)),
-                    start = Offset.Zero,
-                    end = Offset(760f, 900f),
-                ),
-            )
-            .border(0.8.dp, Color(0x1FA88966), RoundedCornerShape(GoaldayDesign.RadiusL))
+            // 基底统一到 PaperGradient（tint 已在 SectionStamp/卡片内部体现，不再叠到页面基底）
+            .background(GoaldayDesign.PaperGradient)
+            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha
