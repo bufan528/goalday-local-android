@@ -186,22 +186,7 @@ fun PageSurface(
             )
             .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .alpha(0.08f)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color.Transparent,
-                            GoaldayDesign.Accent.copy(alpha = 0.06f),
-                            Color.Transparent,
-                            GoaldayDesign.Accent.copy(alpha = 0.05f),
-                            Color.Transparent,
-                        ),
-                    ),
-                ),
-        )
+        // 左侧 10dp 边缘阴影（书脊侧）
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
@@ -213,6 +198,7 @@ fun PageSurface(
                     ),
                 ),
         )
+        // 右侧 8dp 边缘阴影
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -224,32 +210,15 @@ fun PageSurface(
                     ),
                 ),
         )
+        // 中央折痕：合并原 3 层（2dp 暗线 + 8dp 高光 + 14dp 色带）为单层 10dp
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(2.dp)
-                .fillMaxHeight()
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0x12000000), Color.Transparent))),
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .width(8.dp)
+                .width(10.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
-                        listOf(Color(0x12000000), Color(0x10F7E9D7), Color(0x12000000)),
-                    ),
-                ),
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .width(14.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color.Transparent, Color(0x10A88A6C), Color.Transparent),
+                        listOf(Color.Transparent, Color(0x14000000), Color(0x10F7E9D7), Color(0x14000000), Color.Transparent),
                     ),
                 ),
         )
@@ -278,17 +247,6 @@ fun PageSurface(
         )
         Box(
             modifier = Modifier
-                .align(Alignment.CenterStart)
-                .width(4.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color(0x12000000), Color.Transparent),
-                    ),
-                ),
-        )
-        Box(
-            modifier = Modifier
                 .align(Alignment.TopEnd)
                 .width(20.dp)
                 .height(20.dp)
@@ -300,21 +258,7 @@ fun PageSurface(
                     ),
                 ),
         )
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(start = 14.dp, top = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            repeat(8) {
-                Box(
-                    modifier = Modifier
-                        .width(6.dp)
-                        .height(1.dp)
-                        .background(Color(0x2A95785E)),
-                )
-            }
-        }
+        // 右边距 4 个彩色书签色标
         Column(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -3124,37 +3068,6 @@ internal fun DiaryEditField(
         maxLines = 3,
         shape = RoundedCornerShape(8.dp),
     )
-}
-
-@Composable
-private fun NotebookSpread(content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(Color(0xFFFFFEFB), Color(0xFFFFFCF7), Color(0xFFFEF8EF)),
-                ),
-            )
-            .border(1.dp, Color(0xFFE8DFD3), RoundedCornerShape(18.dp))
-            .padding(12.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(2.dp)
-                .background(Brush.horizontalGradient(listOf(Color(0x22C6B8A5), Color.Transparent, Color(0x22C6B8A5)))),
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(Brush.horizontalGradient(listOf(Color.Transparent, Color(0x18BFA991), Color.Transparent))),
-        )
-        content()
-    }
 }
 
 @Composable

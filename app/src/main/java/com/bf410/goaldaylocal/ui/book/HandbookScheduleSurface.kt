@@ -646,7 +646,8 @@ private fun HandbookMonthBoard(
 
 @Composable
 internal fun BoxScope.HandbookPaperRuling() {
-    repeat(9) { index ->
+    // 信纸横线：14 条覆盖更长内容（原 9 条在长内容时会断档）
+    repeat(14) { index ->
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -750,20 +751,28 @@ private fun BoxScope.HandbookMonthHeader(
                     (1..monthModel.lengthOfMonth()).forEach { day ->
                         val visible = day in visibleDaySet
                         val isToday = today.year == year && today.monthValue == month && today.dayOfMonth == day
+                        // 外层扩大热区（22dp 高 + clickable），内层小圆点保持原视觉
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(if (visible) 9.dp else 5.dp)
-                                .clip(RoundedCornerShape(99.dp))
-                                .clickable { onSelectMonthDay(day) }
-                                .background(
-                                    when {
-                                        visible -> GoaldayDesign.Pink
-                                        isToday -> GoaldayDesign.InkPrimary.copy(alpha = 0.45f)
-                                        else -> Color(0x1A000000)
-                                    },
-                                ),
-                        )
+                                .height(22.dp)
+                                .clickable { onSelectMonthDay(day) },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(if (visible) 9.dp else 5.dp)
+                                    .clip(RoundedCornerShape(99.dp))
+                                    .background(
+                                        when {
+                                            visible -> GoaldayDesign.Pink
+                                            isToday -> GoaldayDesign.InkPrimary.copy(alpha = 0.45f)
+                                            else -> Color(0x1A000000)
+                                        },
+                                    ),
+                            )
+                        }
                     }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

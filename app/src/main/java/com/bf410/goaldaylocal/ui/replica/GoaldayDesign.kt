@@ -12,8 +12,7 @@ object GoaldayDesign {
     val InkPrimary = Color(0xFF2F2923)
     val InkSecondary = Color(0xFF7D756B)
     val InkMuted = Color(0xFF766B60)
-    val Accent = Color(0xFFE88FAE)
-    val AccentSoft = Color(0xFFFFECF3)
+    // 主品牌色：统一用 Pink/PinkSoft 语义（Accent/AccentSoft 别名已合并去重）
     val Pink = Color(0xFFE88FAE)
     val PinkSoft = Color(0xFFFFECF3)
     val GreenSoft = Color(0xFFEAF4E4)

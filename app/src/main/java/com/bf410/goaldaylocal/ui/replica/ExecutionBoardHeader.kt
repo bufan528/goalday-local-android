@@ -23,7 +23,7 @@ fun ExecutionBoardHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(GoaldayDesign.AccentSoft, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .background(GoaldayDesign.PinkSoft, RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 10.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,

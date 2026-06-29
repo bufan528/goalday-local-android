@@ -43,8 +43,17 @@ fun BookShell(
     onTapNext: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val outerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(28.dp) else RoundedCornerShape(GoaldayDesign.Radius2XL)
-    val innerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(22.dp) else RoundedCornerShape(GoaldayDesign.RadiusXL)
+    // 真实书本造型：书脊侧（start/左）保留极小圆角近似直角，书口侧（end/右）大圆角
+    val outerShape = if (shellStyle == ShellStyle.BOOK) {
+        RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 28.dp, bottomEnd = 28.dp)
+    } else {
+        RoundedCornerShape(GoaldayDesign.Radius2XL)
+    }
+    val innerShape = if (shellStyle == ShellStyle.BOOK) {
+        RoundedCornerShape(topStart = 2.dp, bottomStart = 2.dp, topEnd = 22.dp, bottomEnd = 22.dp)
+    } else {
+        RoundedCornerShape(GoaldayDesign.RadiusXL)
+    }
     val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 6.dp else 10.dp
     val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 4.dp else 8.dp
     val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 6.dp else 20.dp
@@ -103,17 +112,23 @@ fun BookShell(
                     .fillMaxHeight()
                     .background(Color(0x44FFF7FA)),
             )
-            // 书脊烫金标题
-            Text(
-                "GOALDAY",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFFFDECF1).copy(alpha = 0.88f),
+            // 书脊烫金标题：用固定尺寸 Box 包裹避免旋转后定位漂移
+            Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .graphicsLayer { rotationZ = -90f }
-                    .padding(top = 4.dp),
-            )
+                    .width(22.dp)
+                    .fillMaxHeight()
+                    .padding(top = 28.dp, bottom = 28.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    "GOALDAY",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFFFDECF1).copy(alpha = 0.88f),
+                    modifier = Modifier.graphicsLayer { rotationZ = -90f },
+                )
+            }
             // 书页边缘（右侧）：单层柔和阴影暗示书页厚度
             Box(
                 modifier = Modifier

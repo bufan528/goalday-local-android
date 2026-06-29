@@ -444,9 +444,9 @@ private fun BackupActionPanel(
             horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
             modifier = Modifier.fillMaxWidth()
         ) {
-            BackupActionChip("创建", GoaldayDesign.InkPrimary, Modifier.weight(1f), onCreate)
+            BackupActionChip("创建", GoaldayDesign.PrimaryAction, Modifier.weight(1f), onCreate)
             BackupActionChip("恢复最近", GoaldayDesign.Pink, Modifier.weight(1f), onRestoreLatest)
-            BackupActionChip("清理旧备份", GoaldayDesign.RouteOverview, Modifier.weight(1f), onCleanup)
+            BackupActionChip("清理旧备份", GoaldayDesign.Danger, Modifier.weight(1f), onCleanup)
         }
     }
 }
