@@ -201,7 +201,7 @@ internal fun HandbookReplicaPage(
                 .align(Alignment.CenterStart)
                 .fillMaxHeight()
                 .fillMaxWidth(0.5f)
-                .padding(top = 52.dp, end = 5.dp)
+                .padding(top = 92.dp, bottom = 32.dp, end = 5.dp)
                 .clip(RoundedCornerShape(14.dp, 4.dp, 14.dp, 4.dp))
                 .background(
                     Brush.verticalGradient(
@@ -214,7 +214,7 @@ internal fun HandbookReplicaPage(
                 .align(Alignment.CenterEnd)
                 .fillMaxHeight()
                 .fillMaxWidth(0.5f)
-                .padding(top = 52.dp, start = 5.dp)
+                .padding(top = 92.dp, bottom = 32.dp, start = 5.dp)
                 .clip(RoundedCornerShape(4.dp, 14.dp, 4.dp, 14.dp))
                 .background(
                     Brush.verticalGradient(
@@ -308,13 +308,13 @@ internal fun HandbookReplicaPage(
                 },
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 92.dp, bottom = 32.dp),
+                    .padding(start = 14.dp, end = 14.dp, top = 92.dp, bottom = 32.dp),
             )
         } else {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 92.dp, bottom = 32.dp),
+                    .padding(start = 14.dp, end = 14.dp, top = 92.dp, bottom = 32.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Column(
@@ -554,13 +554,6 @@ internal fun HandbookReplicaPage(
                 style = MaterialTheme.typography.labelSmall,
                 color = GoaldayDesign.InkSecondary,
                 modifier = Modifier.alpha(0.86f),
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = "${pageIndex + 1}/$pageCount",
-                style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.InkSecondary,
-                modifier = Modifier.alpha(0.78f),
                 textAlign = TextAlign.Center,
             )
         }
@@ -1406,15 +1399,6 @@ private fun HandbookEntryLine(
                 )
             }
         }
-        }
-        if (editingId != entry.id) {
-            HandbookEntryMetaRail(
-                entry = entry,
-                repeatLabel = repeatLabel,
-                statusColor = statusColor,
-                canMovePrevious = canMovePrevious,
-                canMoveNext = canMoveNext,
-            )
         }
         if (expanded && editingId != entry.id) {
             Column(

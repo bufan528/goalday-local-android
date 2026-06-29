@@ -284,7 +284,7 @@ fun GoaldayApp(startTarget: String? = null) {
                                         viewModel = bookViewModel,
                                         onOpenHandbook = { openBookMode(BookEntryMode.HANDBOOK) },
                                     )
-                                    BookRootSurface.BOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = currentRoute.bookEntryMode)
+                                    BookRootSurface.BOOK -> BookHomeScreen(viewModel = bookViewModel, entryMode = currentRoute.bookEntryMode, onBack = { navigateBackInsideApp() })
                                 }
                             }
                         }

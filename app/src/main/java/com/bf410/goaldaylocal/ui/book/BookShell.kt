@@ -47,7 +47,7 @@ fun BookShell(
     val innerShape = if (shellStyle == ShellStyle.BOOK) RoundedCornerShape(22.dp) else RoundedCornerShape(GoaldayDesign.RadiusXL)
     val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 6.dp else 10.dp
     val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 4.dp else 8.dp
-    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 30.dp else 20.dp
+    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 14.dp else 20.dp
     val pageInsetH = if (shellStyle == ShellStyle.BOOK) 12.dp else 8.dp
     val pageInsetV = if (shellStyle == ShellStyle.BOOK) 12.dp else 10.dp
 
@@ -152,24 +152,19 @@ fun BookShell(
             )
         }
 
-        // 纸张层：单层渐变，避免多层堆叠
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = pageInsetH, vertical = pageInsetV)
-                .clip(innerShape)
-                .background(if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Paper else Color(0xFFFFFFFF))
-                .then(
-                    if (shellStyle == ShellStyle.BOOK) {
-                        Modifier.border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.22f), innerShape)
-                    } else {
-                        Modifier
-                    },
-                ),
-        )
+        // 纸张层：非 BOOK 模式渲染白色背景；BOOK 模式由 OpenBookPaperChrome 统一处理
+        if (shellStyle != ShellStyle.BOOK) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = pageInsetH, vertical = pageInsetV)
+                    .clip(innerShape)
+                    .background(Color(0xFFFFFFFF)),
+            )
+        }
 
         if (shellStyle == ShellStyle.BOOK) {
-            // 简化版纸张纹理：仅左右双页渐变 + 中央书脊线
+            // BOOK 模式：OpenBookPaperChrome 统一处理纸张背景 + 左右页渐变 + 中央书脊
             OpenBookPaperChrome(
                 modifier = Modifier
                     .fillMaxSize()
@@ -177,22 +172,20 @@ fun BookShell(
             )
         }
 
-        // 中央书脊阴影线
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .width(if (shellStyle == ShellStyle.BOOK) 3.dp else 1.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            if (shellStyle == ShellStyle.BOOK) Color(0x335E3E26) else Color.Transparent,
-                            if (shellStyle == ShellStyle.BOOK) Color(0x55F2E4D6) else Color(0x14000000),
-                            if (shellStyle == ShellStyle.BOOK) Color(0x335E3E26) else Color.Transparent,
+        // 中央书脊线：仅非 BOOK 模式（BOOK 模式由 OpenBookPaperChrome 内部处理）
+        if (shellStyle != ShellStyle.BOOK) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, Color(0x14000000), Color.Transparent),
                         ),
                     ),
-                ),
-        )
+            )
+        }
 
         content()
 

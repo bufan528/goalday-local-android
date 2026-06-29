@@ -114,6 +114,7 @@ private fun entryLandingBookIndex(books: List<TopicBook>, entryMode: BookEntryMo
 fun BookHomeScreen(
     viewModel: BookViewModel,
     entryMode: BookEntryMode = BookEntryMode.PLANNER,
+    onBack: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -234,7 +235,7 @@ fun BookHomeScreen(
                 previousPage = previousPage,
                 nextPage = nextPage,
                 uiState = uiState,
-                onBackToLibrary = { },
+                onBackToLibrary = onBack,
                 onShowAddPage = {
                     pageDialogPreset = PageDialogPreset(type = "schedule", title = "日程页")
                     showPageDialog = true
@@ -2293,10 +2294,8 @@ private fun BookDetailView(
         Column(Modifier.fillMaxSize()) {
             GoaldayTopBar(
             leftTitle = if (handbookMode) "手账本" else "14周",
-            rightPrimaryText = if (handbookMode) "离线手账" else "完成",
-            onRightPrimaryClick = {
-                if (!handbookMode) onBackToLibrary()
-            },
+            rightPrimaryText = if (handbookMode) "返回" else "完成",
+            onRightPrimaryClick = { onBackToLibrary() },
             rightSecondary = {
                 if (!handbookMode && forcedSegment != BookSegment.DIARY) {
                     Text("＋灵感", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onShowInspiration))

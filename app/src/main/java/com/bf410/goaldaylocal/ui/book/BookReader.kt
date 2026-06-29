@@ -104,7 +104,7 @@ fun BookReader(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = pagePaddingH, vertical = pagePaddingV)
-                        .graphicsLayer { alpha = destinationRevealAlpha(progress) },
+                        .graphicsLayer { alpha = destinationRevealAlpha(progress, turnProfile) },
                     page = destinationPage,
                     pageIndex = destinationIndex,
                     pageCount = pageCount,

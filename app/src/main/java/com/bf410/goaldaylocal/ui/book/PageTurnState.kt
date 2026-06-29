@@ -137,7 +137,7 @@ fun visualTurnProgress(progress: Float, profile: TurnProfile): Float {
     return (clamped * 0.08f + curveA * 0.30f + curveB * 0.42f + committedCurve * 0.40f).coerceIn(0f, 1f)
 }
 
-fun destinationRevealAlpha(progress: Float): Float {
-    val emphasized = visualTurnProgress(progress).coerceIn(0f, 1f)
+fun destinationRevealAlpha(progress: Float, profile: TurnProfile = TurnProfile.DEFAULT): Float {
+    val emphasized = visualTurnProgress(progress, profile).coerceIn(0f, 1f)
     return (0.05f + emphasized * 0.95f).coerceIn(0.05f, 1f)
 }
