@@ -25,11 +25,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -309,7 +317,13 @@ fun CalendarScreen(
                 ) {
                     Text("done", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                     if (doneEntries.isEmpty()) {
-                        Text(if (activeDoneDrop) "释放放入 done" else "○", color = if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(if (activeDoneDrop) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked, contentDescription = null, tint = if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.InkMuted, modifier = Modifier.size(12.dp))
+                            if (activeDoneDrop) {
+                                Spacer(Modifier.width(4.dp))
+                                Text("释放放入 done", color = GoaldayDesign.Positive, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                     } else {
                         doneEntries.take(4).forEach { entry ->
                             Text(
@@ -325,7 +339,7 @@ fun CalendarScreen(
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text("todo", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                     if (todoEntries.isEmpty()) {
-                        Text("○", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                        Icon(Icons.Filled.RadioButtonUnchecked, contentDescription = null, tint = GoaldayDesign.InkMuted, modifier = Modifier.size(12.dp))
                     } else {
                         todoEntries.take(4).forEach { entry ->
                             Text(
@@ -384,11 +398,13 @@ fun CalendarScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text(
-                        if (entry.completed) "✓" else "○",
-                        color = if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.InkMuted,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.clickable { viewModel.toggleScheduleCompleted(entry.id) },
+                    Icon(
+                        if (entry.completed) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
+                        contentDescription = if (entry.completed) "已完成" else "待办",
+                        tint = if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.InkMuted,
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clickable { viewModel.toggleScheduleCompleted(entry.id) },
                     )
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                         Text(
@@ -401,35 +417,45 @@ fun CalendarScreen(
                             Text(meta, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                         }
                     }
-                    Text(
-                        "✎",
-                        color = GoaldayDesign.InkSecondary,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.clickable {
-                            editingEntry = entry
-                        },
-                    )
-                        Text(
-                            "🗑",
-                            color = GoaldayDesign.Danger,
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.clickable {
-                                deleteCandidate = entry
-                                deleteSeries = false
+                    Icon(
+                        Icons.Filled.Edit,
+                        contentDescription = "编辑",
+                        tint = GoaldayDesign.InkSecondary,
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clickable {
+                                editingEntry = entry
                             },
+                    )
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = "删除",
+                            tint = GoaldayDesign.Danger,
+                            modifier = Modifier
+                                .size(14.dp)
+                                .clickable {
+                                    deleteCandidate = entry
+                                    deleteSeries = false
+                                },
                         )
                 }
             }
-            Text(
-                "＋ 新增当天任务",
-                color = Color.White,
-                style = MaterialTheme.typography.labelMedium,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .align(Alignment.End)
                     .background(GoaldayDesign.Pink, RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .clickable { showAddDialog = true }
                     .padding(horizontal = 10.dp, vertical = 4.dp),
-            )
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "新增", tint = Color.White, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    "新增当天任务",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
         }
 
         BoardCard(title = "计划池", subtitle = "从其他日期移动到今天") {

@@ -1,6 +1,9 @@
 package com.bf410.goaldaylocal.ui.home
 
 import android.graphics.BitmapFactory
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,6 +31,17 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +63,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
@@ -691,7 +706,7 @@ private fun QuickInput(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text("□", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                    Icon(Icons.Filled.CheckBoxOutlineBlank, contentDescription = null, tint = GoaldayDesign.InkMuted, modifier = Modifier.size(12.dp))
                     Box(Modifier.weight(1f)) {
                         if (value.isBlank()) {
                             Text("列出一周要做的所有事", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
@@ -797,16 +812,20 @@ private fun TaskLine(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
-        Text(
-            if (entry.completed) "✓" else "○",
-            color = Color.White,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
+        Box(
             modifier = Modifier
                 .graphicsLayer { scaleX = bounce.value; scaleY = bounce.value }
                 .background(if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.Pink, RoundedCornerShape(99.dp))
                 .padding(horizontal = 6.dp, vertical = 2.dp),
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                if (entry.completed) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
+                contentDescription = if (entry.completed) "已完成" else "待办",
+                tint = Color.White,
+                modifier = Modifier.size(12.dp),
+            )
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 entry.title,
@@ -872,15 +891,15 @@ private fun HomeActionDock(
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            HomeActionCard("日历", "月视图", "月", GoaldayDesign.Pink, Modifier.weight(1f), onOpenCalendar)
-            HomeActionCard("灵感", "专题库", "灵", Color(0xFFB88A58), Modifier.weight(1f), onOpenInspiration)
+            HomeActionCard("日历", "月视图", Icons.Filled.CalendarMonth, GoaldayDesign.Pink, Modifier.weight(1f), onOpenCalendar)
+            HomeActionCard("灵感", "专题库", Icons.Filled.Lightbulb, GoaldayDesign.Today, Modifier.weight(1f), onOpenInspiration)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            HomeActionCard("书库", "本子", "书", Color(0xFF8F684F), Modifier.weight(1f), onOpenBook)
-            HomeActionCard("手账", "书内页", "账", Color(0xFF6F8B6A), Modifier.weight(1f), onOpenHandbook)
+            HomeActionCard("书库", "本子", Icons.Filled.Book, GoaldayDesign.RouteOverview, Modifier.weight(1f), onOpenBook)
+            HomeActionCard("手账", "书内页", Icons.AutoMirrored.Filled.Article, GoaldayDesign.RouteTarget, Modifier.weight(1f), onOpenHandbook)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            HomeActionCard("日记", "记录块", "记", Color(0xFFB07A8F), Modifier.weight(1f), onOpenDiary)
+            HomeActionCard("日记", "记录块", Icons.Filled.EditNote, GoaldayDesign.RouteDiary, Modifier.weight(1f), onOpenDiary)
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -890,7 +909,7 @@ private fun HomeActionDock(
 private fun HomeActionCard(
     title: String,
     subtitle: String,
-    code: String,
+    icon: ImageVector,
     color: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
@@ -912,7 +931,7 @@ private fun HomeActionCard(
                 .background(color, RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Text(code.take(1), color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Icon(icon, contentDescription = title, tint = Color.White, modifier = Modifier.size(18.dp))
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
@@ -930,6 +949,6 @@ private fun FloatingAddButton(modifier: Modifier, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text("+", color = Color.White, style = MaterialTheme.typography.titleLarge)
+        Icon(Icons.Filled.Add, contentDescription = "新增", tint = Color.White, modifier = Modifier.size(24.dp))
     }
 }

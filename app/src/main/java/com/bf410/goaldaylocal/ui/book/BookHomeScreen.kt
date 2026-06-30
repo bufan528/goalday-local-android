@@ -21,8 +21,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -43,6 +51,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -286,7 +295,7 @@ fun BookHomeScreen(
                 previousPage = previousPage,
                 nextPage = nextPage,
                 uiState = uiState,
-                onBackToLibrary = { },
+                onBackToLibrary = onBack,
                 onShowAddPage = {
                     pageDialogPreset = PageDialogPreset(type = "diary", title = "日记页")
                     showPageDialog = true
@@ -664,7 +673,7 @@ private fun FeaturedHandbookCover(
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("LOCAL HANDBOOK", style = MaterialTheme.typography.labelSmall, color = Color(0xAA2F261D), fontWeight = FontWeight.SemiBold)
+                Text("本地手账", style = MaterialTheme.typography.labelSmall, color = Color(0xAA2F261D), fontWeight = FontWeight.SemiBold)
                 Text(book.title, style = MaterialTheme.typography.headlineSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
                 Text(book.subtitle, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF4B3D31))
             }
@@ -842,7 +851,10 @@ private fun AddBookShelfCard(onCreateBook: () -> Unit) {
             .padding(horizontal = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text("+ 新建一本手账", color = Color(0xFF6F4D3A), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(Icons.Filled.Add, contentDescription = null, tint = Color(0xFF6F4D3A), modifier = Modifier.size(16.dp))
+            Text("新建一本手账", color = Color(0xFF6F4D3A), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        }
     }
 }
 
@@ -1034,10 +1046,30 @@ private fun BookDetailView(
             onRightPrimaryClick = { onBackToLibrary() },
             rightSecondary = {
                 if (!handbookMode && forcedSegment != BookSegment.DIARY) {
-                    Text("＋灵感", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onShowInspiration))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .clickable(onClick = onShowInspiration)
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                    ) {
+                        Icon(Icons.Filled.Lightbulb, contentDescription = "灵感", tint = Color(0xFF7A736A), modifier = Modifier.size(14.dp))
+                        Text("灵感", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall)
+                    }
                 }
                 if (!handbookMode && book.id.startsWith("custom_")) {
-                    Text("⚙管理", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onToggleManagePanel))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .clickable(onClick = onToggleManagePanel)
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                    ) {
+                        Icon(Icons.Filled.Settings, contentDescription = "管理", tint = Color(0xFF7A736A), modifier = Modifier.size(14.dp))
+                        Text("管理", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             },
             )
@@ -1402,23 +1434,29 @@ private fun TargetDetailRouteOverlay(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                "‹ 返回",
-                color = Color(0xFF6F5B4B),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
                     .background(Color(0x10A88966))
                     .clickable(onClick = onClose)
                     .padding(horizontal = 10.dp, vertical = 6.dp),
-            )
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回", tint = Color(0xFF6F5B4B), modifier = Modifier.size(14.dp))
+                Text(
+                    "返回",
+                    color = Color(0xFF6F5B4B),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text("TargetDetailActivity", color = GoaldayDesign.RouteDiary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text("目标详情", color = GoaldayDesign.RouteDiary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                 Text("本地目标详情", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
             }
             Text(
-                if (checked) "DONE" else "TODO",
+                if (checked) "已完成" else "待办",
                 color = if (checked) Color(0xFF4F7E55) else GoaldayDesign.Pink,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
@@ -1768,7 +1806,7 @@ private fun TargetOptionRow(
             Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
             Text(subtitle, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 2)
         }
-        Text("›", color = accent, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = accent, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -2016,16 +2054,19 @@ private fun InspirationCenterView(
                     }
                 }
                 if (editableItems.size < 60) {
-                    Text(
-                        "＋ 添加目标",
-                        color = GoaldayDesign.Pink,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
                         modifier = Modifier
                             .clickable {
                                 editableItems = editableItems + "新目标"
                                 checkedStates = checkedStates + true
                             }
                             .padding(vertical = 4.dp),
-                    )
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = null, tint = GoaldayDesign.Pink, modifier = Modifier.size(14.dp))
+                        Text("添加目标", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     ActionChip(

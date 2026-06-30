@@ -23,6 +23,12 @@ import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -1366,7 +1372,7 @@ private fun DiaryWorkspaceHeader(
                 )
                 Text(
                     diaryDateLabel(state.date),
-                    color = GoaldayDesign.Pink,
+                    color = GoaldayDesign.InkSecondary,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
@@ -1912,7 +1918,7 @@ internal fun LongImagePreviewDialog(
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
-                    Text("LongImageDisplayActivity", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+                    Text("长图预览", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
                     Text(preview.title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
                     Text(preview.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                 }
@@ -2052,7 +2058,7 @@ internal fun LongImagePreviewDialog(
                     }
                 }
                 if (actionHint.isNotBlank()) {
-                    Text(actionHint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+                    Text(actionHint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -2075,7 +2081,7 @@ private fun LongImagePrintPanel(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("PrintPage", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+            Text("导出预设", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
             Text(preset.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, maxLines = 1)
         }
         LongImageInfoPill("纸张", preset.paperLabel)
@@ -2099,7 +2105,7 @@ private fun LongImageShortcutPanel(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text("快捷导出", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+                Text("快捷导出", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
                 Text(mode.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
             }
             Text(mode.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
@@ -2686,15 +2692,21 @@ private fun StructuredDiaryPreview(
         } else if (photoNotes.isNotEmpty()) {
             DiaryPhotoNoteGrid(notes = photoNotes)
         } else {
-            Text(
-                "＋ 添加图片",
-                color = GoaldayDesign.RouteDiary,
-                style = MaterialTheme.typography.labelSmall,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .align(Alignment.End)
                     .clickable { onAddImage() }
                     .padding(horizontal = 4.dp, vertical = 2.dp),
-            )
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "添加图片", tint = GoaldayDesign.RouteDiary, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(2.dp))
+                Text(
+                    "添加图片",
+                    color = GoaldayDesign.RouteDiary,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
         }
         if (state.richHtml.isNotBlank()) {
             DiaryBlock("富文本记录", plainTextFromHtml(state.richHtml))
@@ -2735,7 +2747,7 @@ private fun DiaryInBookHeader(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold, maxLines = 1)
                 Text(subtitle, style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E), fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(1.dp)) {

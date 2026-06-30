@@ -9,3 +9,5 @@ captures/
 externalNativeBuild/
 .cxx/
 .worktrees/
+# 构建日志
+*.log

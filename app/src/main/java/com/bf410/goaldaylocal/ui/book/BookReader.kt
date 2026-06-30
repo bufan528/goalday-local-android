@@ -73,7 +73,7 @@ fun BookReader(
 
     val turnStyle = remember {
         val raw = MMKV.defaultMMKV().decodeString("page_turn_style", "SIMULATION")
-        runCatching { PageTurnStyle.valueOf(raw.uppercase()) }.getOrDefault(PageTurnStyle.SIMULATION)
+        runCatching { PageTurnStyle.valueOf((raw ?: "SIMULATION").uppercase()) }.getOrDefault(PageTurnStyle.SIMULATION)
     }
 
     @Composable
