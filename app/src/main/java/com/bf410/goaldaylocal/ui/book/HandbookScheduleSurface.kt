@@ -295,7 +295,7 @@ internal fun HandbookReplicaPage(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     SectionStamp(
-                        label = "DONE",
+                        label = "完成",
                         color = GoaldayDesign.Positive,
                     )
                     Text(

@@ -295,7 +295,7 @@ fun DestinationPageLayer(
         Text(
             text = condensedPreviewText(page?.let(::pagePreviewText) ?: subtitle, maxLength = 92),
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF6A5D4F).copy(alpha = destinationRevealAlpha(revealProgress)),
+            color = GoaldayDesign.adaptiveInkSecondary.copy(alpha = destinationRevealAlpha(revealProgress)),
         )
         Spacer(Modifier.weight(1f))
     }
@@ -2487,7 +2487,7 @@ private fun DiaryLinkedTargetStrip(
             .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
-        Text("关联目标", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A6B5F), fontWeight = FontWeight.Medium)
+        Text("关联目标", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.Medium)
         if (done.isNotEmpty()) {
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
                 done.forEach { item ->
@@ -2590,7 +2590,7 @@ internal fun diaryBlockTextStyle(block: DiaryEntryBlock): TextStyle {
     return when (block.style) {
         DiaryBlockStyle.BODY -> base
         DiaryBlockStyle.BOLD -> base.copy(fontWeight = FontWeight.SemiBold)
-        DiaryBlockStyle.QUOTE -> base.copy(color = Color(0xFF6E665D))
+        DiaryBlockStyle.QUOTE -> base.copy(color = GoaldayDesign.adaptiveInkSecondary)
         DiaryBlockStyle.CHECK -> base.copy(textDecoration = TextDecoration.None)
     }
 }
@@ -2611,11 +2611,11 @@ private fun StructuredDiaryPreview(
         (state.imageBlockUris + state.legacyImageUris).distinct()
     }
     val summaryRows = listOf(
-        DiaryPreviewRow("DONE", "今日完成", state.todayDone, DiaryBlockType.TARGET),
-        DiaryPreviewRow("WORK", "工作任务", state.workTasks, DiaryBlockType.TARGET),
-        DiaryPreviewRow("JOY", "小幸福", state.smallJoy, DiaryBlockType.TEXT),
-        DiaryPreviewRow("FIX", "可改进", state.canImprove, DiaryBlockType.TEXT),
-        DiaryPreviewRow("PHOTO", "图片描述", state.photoText, DiaryBlockType.IMAGE),
+        DiaryPreviewRow("完成", "今日完成", state.todayDone, DiaryBlockType.TARGET),
+        DiaryPreviewRow("工作", "工作任务", state.workTasks, DiaryBlockType.TARGET),
+        DiaryPreviewRow("幸福", "小幸福", state.smallJoy, DiaryBlockType.TEXT),
+        DiaryPreviewRow("改进", "可改进", state.canImprove, DiaryBlockType.TEXT),
+        DiaryPreviewRow("图片", "图片描述", state.photoText, DiaryBlockType.IMAGE),
     )
     val hasContent = moodItems.isNotEmpty() ||
         photoNotes.isNotEmpty() ||
@@ -2699,10 +2699,10 @@ private fun DiaryInBookHeader(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                Text(subtitle, style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E), fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(subtitle, style = MaterialTheme.typography.titleSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text("书内日记", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB7A893), maxLines = 1)
+                Text("书内日记", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
                 Text("$blockCount 条目 · $imageCount 图片", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
             }
         }
@@ -2779,7 +2779,7 @@ private fun DiaryPhotoNoteGrid(notes: List<String>) {
                     .border(1.dp, Color(0xFFE6DED2), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(6.dp),
             ) {
-                Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258), maxLines = 3)
+                Text(note, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 3)
             }
         }
         repeat((3 - notes.take(3).size).coerceAtLeast(0)) {
@@ -2988,7 +2988,7 @@ internal fun DiaryImageTile(
             Text(
                 "图片不可读",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF8B7A68),
+                color = GoaldayDesign.adaptiveInkMuted,
                 modifier = Modifier.align(Alignment.Center),
             )
         }
@@ -3023,16 +3023,16 @@ private fun DiaryBlock(title: String, content: String) {
             .border(1.dp, Color(0x22C8AF91), RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 9.dp, vertical = 7.dp),
     ) {
-        Text(content, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF342C24))
+        Text(content, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.adaptiveInkPrimary)
     }
 }
 
 @Composable
 private fun DiaryLine(title: String, content: String) {
     if (content.isBlank()) return
-    Text(title, style = MaterialTheme.typography.labelMedium, color = Color(0xFF5A4A3B))
+    Text(title, style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.adaptiveInkSecondary)
     content.lines().map(String::trim).filter(String::isNotBlank).take(3).forEachIndexed { index, line ->
-        Text("${index + 1}. $line", style = MaterialTheme.typography.bodySmall, color = Color(0xFF2F2922))
+        Text("${index + 1}. $line", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkPrimary)
     }
 }
 
@@ -3042,7 +3042,7 @@ internal fun DiaryEditField(
     value: String,
     onValueChange: (String) -> Unit,
 ) {
-    Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF5A4A3B))
+    Text(label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary)
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -3058,7 +3058,7 @@ private fun DiarySticker(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelMedium,
-        color = Color(0xFF5B4A3C),
+        color = GoaldayDesign.adaptiveInkSecondary,
         modifier = Modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(Color(0x33E9D6BC))
@@ -3114,16 +3114,16 @@ private fun PageHeaderLine(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(GoaldayDesign.RadiusPill)).background(tint))
                 Spacer(Modifier.width(6.dp))
-                Text(bookTitle, style = MaterialTheme.typography.titleSmall, color = Color(0xFF342C24))
+                Text(bookTitle, style = MaterialTheme.typography.titleSmall, color = GoaldayDesign.adaptiveInkPrimary)
             }
             Text(
                 text = savedText,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF8B7660),
+                color = GoaldayDesign.adaptiveInkMuted,
                 modifier = if (onSavedClick != null) Modifier.clickable(onClick = onSavedClick) else Modifier,
             )
         }
-        Text(subtitle, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7B6A59))
+        Text(subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x1A9C7C5C)))
     }
 }

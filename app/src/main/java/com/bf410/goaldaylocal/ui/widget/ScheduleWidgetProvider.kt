@@ -80,7 +80,7 @@ enum class ScheduleWidgetStyle(
     MINT(
         raw = "mint",
         label = "薄荷清单",
-        title = "Goalday List",
+        title = "Goalday 清单",
         dotResourceName = "ic_widget_dot_bbd1ad",
         backgroundColor = Color.rgb(240, 248, 242),
         titleColor = Color.rgb(42, 64, 52),
@@ -197,9 +197,9 @@ enum class ScheduleWidgetScope(
     val label: String,
     val shortLabel: String,
 ) {
-    TODAY("today", "今天", "TODAY"),
-    UPCOMING("upcoming", "未来7天", "NEXT 7"),
-    WEEK("week", "本周", "WEEK");
+    TODAY("today", "今天", "今日"),
+    UPCOMING("upcoming", "未来7天", "未来"),
+    WEEK("week", "本周", "本周");
 
     companion object {
         fun fromRaw(raw: String?): ScheduleWidgetScope =

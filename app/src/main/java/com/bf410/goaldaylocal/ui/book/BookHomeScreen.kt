@@ -539,12 +539,12 @@ private fun LibraryView(
                     text = BookStrings.appTitle,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF2A211A),
+                    color = GoaldayDesign.adaptiveInkPrimary,
                 )
                 Text(
                     text = BookStrings.librarySummary.format(books.size, customBookCount),
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF7A6657),
+                    color = GoaldayDesign.adaptiveInkSecondary,
                 )
             }
             Text(
@@ -563,7 +563,7 @@ private fun LibraryView(
         Text(
             text = BookStrings.librarySubtitle,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF6F675D),
+            color = GoaldayDesign.adaptiveInkSecondary,
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
@@ -675,11 +675,11 @@ private fun FeaturedHandbookCover(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("本地手账", style = MaterialTheme.typography.labelSmall, color = Color(0xAA2F261D), fontWeight = FontWeight.SemiBold)
                 Text(book.title, style = MaterialTheme.typography.headlineSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
-                Text(book.subtitle, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF4B3D31))
+                Text(book.subtitle, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.adaptiveInkSecondary)
             }
             Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("${book.pages.size} ${BookStrings.pageUnit}", style = MaterialTheme.typography.labelLarge, color = Color(0xFF5D4B3D))
+                    Text("${book.pages.size} ${BookStrings.pageUnit}", style = MaterialTheme.typography.labelLarge, color = GoaldayDesign.adaptiveInkSecondary)
                     book.pages.take(3).forEach { page ->
                         Text(
                             pageRouteLabel(page),
@@ -717,10 +717,10 @@ private fun BookShelfRow(
     if (books.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("书架", color = Color(0xFF3A2D24), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text("书架", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(
                 "${books.size} 本",
-                color = Color(0xFF6F4D3A),
+                color = GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
@@ -790,7 +790,7 @@ private fun ShelfBookCover(
                 // 书页厚度堆叠线：右侧 3 条递减细线，模拟内页层叠纹理
                 val w = size.width
                 val h = size.height
-                val lineColor = Color(0xFF5D4B3D)
+                val lineColor = GoaldayDesign.adaptiveInkSecondary
                 val top = 6.dp.toPx()
                 repeat(3) { i ->
                     val x = w - 4.dp.toPx() - i * 3.dp.toPx()
@@ -831,7 +831,7 @@ private fun ShelfBookCover(
                         )
                     }
                 }
-                Text("${book.pages.size}页", color = Color(0xFF5D4B3D), style = MaterialTheme.typography.labelSmall)
+                Text("${book.pages.size}页", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
             }
         }
     }
@@ -852,8 +852,8 @@ private fun AddBookShelfCard(onCreateBook: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Icon(Icons.Filled.Add, contentDescription = null, tint = Color(0xFF6F4D3A), modifier = Modifier.size(16.dp))
-            Text("新建一本手账", color = Color(0xFF6F4D3A), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Icon(Icons.Filled.Add, contentDescription = null, tint = GoaldayDesign.adaptiveInkSecondary, modifier = Modifier.size(16.dp))
+            Text("新建一本手账", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -1054,8 +1054,8 @@ private fun BookDetailView(
                             .clickable(onClick = onShowInspiration)
                             .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
-                        Icon(Icons.Filled.Lightbulb, contentDescription = "灵感", tint = Color(0xFF7A736A), modifier = Modifier.size(14.dp))
-                        Text("灵感", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall)
+                        Icon(Icons.Filled.Lightbulb, contentDescription = "灵感", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
+                        Text("灵感", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                     }
                 }
                 if (!handbookMode && book.id.startsWith("custom_")) {
@@ -1067,8 +1067,8 @@ private fun BookDetailView(
                             .clickable(onClick = onToggleManagePanel)
                             .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
-                        Icon(Icons.Filled.Settings, contentDescription = "管理", tint = Color(0xFF7A736A), modifier = Modifier.size(14.dp))
-                        Text("管理", color = Color(0xFF7A736A), style = MaterialTheme.typography.labelSmall)
+                        Icon(Icons.Filled.Settings, contentDescription = "管理", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
+                        Text("管理", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                     }
                 }
             },
@@ -1095,7 +1095,7 @@ private fun BookDetailView(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("手账管理", color = Color(0xFF5F4E40), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    Text("手账管理", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                     Text("${uiState.selectedPageIndex + 1}/${book.pages.size}", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                 }
                 Row(
@@ -1443,10 +1443,10 @@ private fun TargetDetailRouteOverlay(
                     .clickable(onClick = onClose)
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回", tint = Color(0xFF6F5B4B), modifier = Modifier.size(14.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回", tint = GoaldayDesign.adaptiveInkSecondary, modifier = Modifier.size(14.dp))
                 Text(
                     "返回",
-                    color = Color(0xFF6F5B4B),
+                    color = GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -1763,7 +1763,7 @@ private fun DetailPill(
 ) {
     Text(
         label,
-        color = if (active) Color.White else Color(0xFF6F5B4B),
+        color = if (active) Color.White else GoaldayDesign.adaptiveInkSecondary,
         style = MaterialTheme.typography.labelMedium,
         modifier = Modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
@@ -2003,7 +2003,7 @@ private fun InspirationCenterView(
                     Text(
                         "本地资源",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF5E5147),
+                        color = GoaldayDesign.adaptiveInkSecondary,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Column(horizontalAlignment = Alignment.End) {
@@ -2189,7 +2189,7 @@ private fun ActionChip(
     onClick: () -> Unit,
 ) {
     val isDanger = color == GoaldayDesign.Danger
-    val textColor = if (isDanger) Color(0xFF7A2F2F) else Color(0xFF2D2A26)
+    val textColor = if (isDanger) Color(0xFF7A2F2F) else GoaldayDesign.adaptiveInkPrimary
     val bgColor = if (isDanger) Color(0x1AD17878) else color.copy(alpha = 0.10f)
     Text(
         text = label,
