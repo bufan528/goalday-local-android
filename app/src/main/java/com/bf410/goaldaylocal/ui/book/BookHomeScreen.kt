@@ -480,14 +480,14 @@ private fun BookUnavailableState(
         ) {
             Text(
                 title,
-                color = GoaldayDesign.InkPrimary,
+                color = GoaldayDesign.adaptiveInkPrimary,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
             )
             Text(
                 body,
-                color = GoaldayDesign.InkMuted,
+                color = GoaldayDesign.adaptiveInkMuted,
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
             )
@@ -554,7 +554,7 @@ private fun LibraryView(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(GoaldayDesign.InkPrimary)
+                    .background(GoaldayDesign.adaptiveInkPrimary)
                     .clickable(onClick = onCreateBook)
                     .padding(horizontal = 13.dp, vertical = 8.dp),
             )
@@ -674,7 +674,7 @@ private fun FeaturedHandbookCover(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("本地手账", style = MaterialTheme.typography.labelSmall, color = Color(0xAA2F261D), fontWeight = FontWeight.SemiBold)
-                Text(book.title, style = MaterialTheme.typography.headlineSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                Text(book.title, style = MaterialTheme.typography.headlineSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
                 Text(book.subtitle, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF4B3D31))
             }
             Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -700,7 +700,7 @@ private fun FeaturedHandbookCover(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(GoaldayDesign.InkPrimary)
+                        .background(GoaldayDesign.adaptiveInkPrimary)
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }
@@ -818,7 +818,7 @@ private fun ShelfBookCover(
                 .padding(start = 20.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(book.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 3)
+            Text(book.title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 3)
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
                     book.pages.take(3).forEach { page ->
@@ -895,7 +895,7 @@ private fun HandbookReadingDeskHeader(
             // book.title 已在 TopBar 显示，"本地保存"与右侧"离线"chip 重复，route.label 由指标行体现
             Text(
                 text = monthLabelForPage(currentPage.title, fallback = book.title),
-                color = GoaldayDesign.InkPrimary,
+                color = GoaldayDesign.adaptiveInkPrimary,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -930,7 +930,7 @@ private fun HandbookReadingDeskHeader(
                 val selected = book.pages.indexOf(item) == selectedRealPageIndex
                 Text(
                     text = monthLabelForPage(item.title, fallback = item.title),
-                    color = if (selected) Color.White else GoaldayDesign.InkSecondary,
+                    color = if (selected) Color.White else GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier
@@ -961,7 +961,7 @@ private fun HandbookDeskMetric(
         verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         Text(value, color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(label, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(label, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
@@ -1096,7 +1096,7 @@ private fun BookDetailView(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text("手账管理", color = Color(0xFF5F4E40), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                    Text("${uiState.selectedPageIndex + 1}/${book.pages.size}", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                    Text("${uiState.selectedPageIndex + 1}/${book.pages.size}", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1149,7 +1149,7 @@ private fun BookDetailView(
                     val index = book.pages.indexOfFirst { it === item }.coerceAtLeast(0)
                     Text(
                         text = item.title,
-                        color = if (idx == segmentPageIndex) GoaldayDesign.InkPrimary else GoaldayDesign.InkSecondary,
+                        color = if (idx == segmentPageIndex) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkSecondary,
                         modifier = Modifier
                             .clip(RoundedCornerShape(99.dp))
                             .background(if (idx == segmentPageIndex) Color(0x4DB88A58) else Color(0x18FFFFFF))
@@ -1349,7 +1349,7 @@ private fun DangerConfirmDialog(
         text = {
             Text(
                 body,
-                color = GoaldayDesign.InkSecondary,
+                color = GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.bodyMedium,
             )
         },
@@ -1453,7 +1453,7 @@ private fun TargetDetailRouteOverlay(
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text("目标详情", color = GoaldayDesign.RouteDiary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
-                Text("本地目标详情", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                Text("本地目标详情", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
             }
             Text(
                 if (checked) "已完成" else "待办",
@@ -1486,9 +1486,9 @@ private fun TargetDetailRouteOverlay(
             ) {
                 Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
                     Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.weight(1f)) {
-                        Text(pageTitle, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                        Text(item, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-                        Text("目标 ${itemIndex + 1}/$itemCount · $deadlineLabel · $scheduleLabel", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.bodySmall)
+                        Text(pageTitle, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                        Text(item, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                        Text("目标 ${itemIndex + 1}/$itemCount · $deadlineLabel · $scheduleLabel", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.bodySmall)
                     }
                     Box(
                         modifier = Modifier
@@ -1568,7 +1568,7 @@ private fun TargetDetailRouteOverlay(
                     }
                 }
                 if (actionHint.isNotBlank()) {
-                    Text(actionHint, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                    Text(actionHint, color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
                 }
             }
 
@@ -1586,7 +1586,7 @@ private fun TargetDetailRouteOverlay(
             }
 
             TargetDetailPanel(title = "截止日", trailing = deadlineLabel) {
-                Text(meta.deadlineDay?.let { "当前截止：${it}日" } ?: "当前未设置截止日", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.bodySmall)
+                Text(meta.deadlineDay?.let { "当前截止：${it}日" } ?: "当前未设置截止日", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.bodySmall)
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1601,7 +1601,7 @@ private fun TargetDetailRouteOverlay(
 
             TargetDetailPanel(title = "已排期", trailing = scheduleLabel) {
                 if (scheduledEntries.isEmpty()) {
-                    Text("还没有排入日程", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                    Text("还没有排入日程", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)
                 } else {
                     scheduledEntries.take(10).forEach { entry ->
                         TargetScheduledEntryRow(entry = entry)
@@ -1628,8 +1628,8 @@ private fun TargetDetailPanel(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Text(trailing, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            Text(title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(trailing, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         }
         content()
     }
@@ -1694,7 +1694,7 @@ private fun TargetDetailMetric(
         verticalArrangement = Arrangement.spacedBy(2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(label, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(label, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         Text(value, color = if (active) Color(0xFF4F7E55) else GoaldayDesign.RouteDiary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
@@ -1723,13 +1723,13 @@ private fun TargetScheduledEntryRow(entry: ScheduleEntry) {
                 .padding(horizontal = 7.dp, vertical = 4.dp),
         )
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text(entry.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+            Text(entry.title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall, maxLines = 1)
             val repeatLabel = targetScheduleRepeatLabel(entry)
             Text(
                 listOf(entry.note.ifBlank { "Goalday 本地日程" }, repeatLabel)
                     .filter(String::isNotBlank)
                     .joinToString(" · "),
-                color = GoaldayDesign.InkMuted,
+                color = GoaldayDesign.adaptiveInkMuted,
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
             )
@@ -1803,8 +1803,8 @@ private fun TargetOptionRow(
             Text(code, color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
-            Text(subtitle, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 2)
+            Text(title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(subtitle, color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 2)
         }
         Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = accent, modifier = Modifier.size(18.dp))
     }
@@ -1985,10 +1985,10 @@ private fun InspirationCenterView(
                     }
                 }
                 Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text("目标详情", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                    Text("目标详情", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
                     Column(horizontalAlignment = Alignment.End) {
-                        Text(catalogStatus.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
-                        Text(catalogStatus.assetLabel, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                        Text(catalogStatus.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
+                        Text(catalogStatus.assetLabel, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
                     }
                 }
                 Row(
@@ -2007,8 +2007,8 @@ private fun InspirationCenterView(
                         fontWeight = FontWeight.SemiBold,
                     )
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("${selected.coverKey}.png", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
-                        Text("${selected.targetKey}.txt · ${loadedTargetItems.size} 条", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                        Text("${selected.coverKey}.png", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
+                        Text("${selected.targetKey}.txt · ${loadedTargetItems.size} 条", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
                     }
                 }
                 editableItems.chunked(2).forEachIndexed { rowIndex, rowItems ->
@@ -2036,7 +2036,7 @@ private fun InspirationCenterView(
                                                 }
                                             },
                                     )
-                                    Text("目标 ${index + 1}", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                                    Text("目标 ${index + 1}", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
                                 }
                                 OutlinedTextField(
                                     value = item,
@@ -2120,8 +2120,8 @@ private fun EmbeddedInspirationUnavailable(onBack: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(9.dp),
         ) {
-            Text("暂无灵感模板", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-            Text("本地模板资源为空，返回手账继续编辑已有页面。", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted, textAlign = TextAlign.Center)
+            Text("暂无灵感模板", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
+            Text("本地模板资源为空，返回手账继续编辑已有页面。", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkMuted, textAlign = TextAlign.Center)
             Text(
                 "返回手账",
                 color = Color.White,
@@ -2285,7 +2285,7 @@ private fun CreatePageDialog(
                     ).forEach { (key, label) ->
                         Text(
                             text = label,
-                            color = if (type == key) GoaldayDesign.InkPrimary else GoaldayDesign.InkSecondary,
+                            color = if (type == key) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkSecondary,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(99.dp))
                                 .background(if (type == key) Color(0x33B88A58) else Color.Transparent)

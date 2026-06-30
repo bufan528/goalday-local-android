@@ -186,7 +186,7 @@ fun PageSurface(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL))
             // 基底统一到 PaperGradient，与 handbook 路径一致，消除翻页交接瞬间的背景跳变
-            .background(GoaldayDesign.PaperGradient)
+            .background(GoaldayDesign.adaptivePaperGradient)
             .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
         // 中央折痕：书脊感，单层 10dp 渐变（P0 精简：删除左右阴影/顶部细线/斑驳层/角部高光 4 层冗余装饰）
@@ -244,7 +244,7 @@ fun PageSurface(
                 onSavedClick = onSavedClick,
             )
             Spacer(Modifier.height(6.dp))
-            Text(text = title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary)
+            Text(text = title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.adaptiveInkPrimary)
             Spacer(Modifier.height(8.dp))
             body()
         }
@@ -462,7 +462,7 @@ fun ActivePageLayer(
                 modifier = modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                     // 基底统一到 PaperGradient，与 Diary/Target/Schedule 页对齐
-                    .background(GoaldayDesign.PaperGradient)
+                    .background(GoaldayDesign.adaptivePaperGradient)
                     .border(
                         GoaldayDesign.Hairline,
                         GoaldayDesign.BorderColor.copy(alpha = 0.18f),
@@ -501,7 +501,7 @@ fun ActivePageLayer(
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 6.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    color = GoaldayDesign.InkSecondary,
+                    color = GoaldayDesign.adaptiveInkSecondary,
                 )
             }
             is DiaryPage -> HandbookDiaryReplicaPage(
@@ -606,7 +606,7 @@ fun ActivePageLayer(
             }
         }
         Spacer(Modifier.height(24.dp))
-        Text(text = "${pageIndex + 1} / $pageCount", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkSecondary)
+        Text(text = "${pageIndex + 1} / $pageCount", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.adaptiveInkSecondary)
     }
 }
 
@@ -641,7 +641,7 @@ private fun HandbookDiaryReplicaPage(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             // 基底统一到 PaperGradient，与 Target/Plan/Schedule 页对齐，避免翻页时背景跳变
-            .background(GoaldayDesign.PaperGradient)
+            .background(GoaldayDesign.adaptivePaperGradient)
             .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .graphicsLayer {
                 translationX = contentShift
@@ -663,8 +663,8 @@ private fun HandbookDiaryReplicaPage(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                SectionStamp("DIARY", GoaldayDesign.Pink)
-                Text("${pageIndex + 1}/$pageCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                SectionStamp("日记", GoaldayDesign.Pink)
+                Text("${pageIndex + 1}/$pageCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
             }
             if (editing) {
                 DiarySection(
@@ -701,7 +701,7 @@ private fun HandbookDiaryReplicaPage(
                             .clickable { onContentModeChange(PageContentMode.EditingDiary(title)) }
                             .padding(horizontal = 12.dp, vertical = 7.dp),
                     )
-                    Text(prompt, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 2, modifier = Modifier.weight(1f))
+                    Text(prompt, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 2, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -816,7 +816,7 @@ private fun PlannerLedgerCell(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(value.toString(), color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(label, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(label, color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
@@ -880,11 +880,11 @@ private fun ReferencePlannerBoard(
         onActionAdd = { onMoveItemToToday(it.title) },
         onActionRestore = { onRestoreItemFromDone(it.title) },
         topActions = {
-            Text("切换", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1, modifier = Modifier
+            Text("切换", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1, modifier = Modifier
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .clickable(onClick = onSwitchList)
                 .padding(horizontal = 8.dp, vertical = 5.dp))
-            Text("↺ 回收", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1, modifier = Modifier
+            Text("↺ 回收", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1, modifier = Modifier
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .clickable { allRight.firstOrNull { it.id == selectedId }?.let { onRestoreItemFromDone(it.title) } }
                 .padding(horizontal = 8.dp, vertical = 5.dp))
@@ -1134,7 +1134,7 @@ private fun OnThisDayFlashbackStrip(
             Text(
                 "${flashbacks.size} 条回忆",
                 style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.InkMuted,
+                color = GoaldayDesign.adaptiveInkMuted,
             )
         }
         Row(
@@ -1179,13 +1179,13 @@ private fun OnThisDayFlashbackChip(
             Text(
                 diaryDateLabel(flashback.date),
                 style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.InkMuted,
+                color = GoaldayDesign.adaptiveInkMuted,
             )
         }
         Text(
             flashback.preview.ifBlank { "（这一天没有留下文字）" },
             style = MaterialTheme.typography.bodySmall,
-            color = GoaldayDesign.InkSecondary,
+            color = GoaldayDesign.adaptiveInkSecondary,
             maxLines = 2,
         )
     }
@@ -1225,11 +1225,11 @@ private fun OnThisDayFlashbackDialog(
                         Text(
                             flashback.date.toString(),
                             style = MaterialTheme.typography.labelSmall,
-                            color = GoaldayDesign.InkMuted,
+                            color = GoaldayDesign.adaptiveInkMuted,
                         )
                     }
                     TextButton(onClick = onDismiss) {
-                        Text("关闭", color = GoaldayDesign.InkSecondary)
+                        Text("关闭", color = GoaldayDesign.adaptiveInkSecondary)
                     }
                 }
                 if (flashback.moodTags.isNotBlank()) {
@@ -1242,12 +1242,12 @@ private fun OnThisDayFlashbackDialog(
                 Text(
                     flashback.preview.ifBlank { "（这一天没有留下更多文字）" },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = GoaldayDesign.InkPrimary,
+                    color = GoaldayDesign.adaptiveInkPrimary,
                 )
                 Text(
                     "来自《${flashback.bookTitle}》· ${flashback.pageTitle}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = GoaldayDesign.InkMuted,
+                    color = GoaldayDesign.adaptiveInkMuted,
                 )
             }
         }
@@ -1295,14 +1295,14 @@ private fun DiaryWorkspaceHeader(
             ) {
                 Text(
                     title.ifBlank { "日记页" },
-                    color = GoaldayDesign.InkPrimary,
+                    color = GoaldayDesign.adaptiveInkPrimary,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                 )
                 Text(
                     prompt,
-                    color = GoaldayDesign.InkSecondary,
+                    color = GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.labelSmall,
                     maxLines = 2,
                 )
@@ -1323,7 +1323,7 @@ private fun DiaryWorkspaceHeader(
                 )
                 Text(
                     diaryDateLabel(state.date),
-                    color = GoaldayDesign.InkSecondary,
+                    color = GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
@@ -1335,7 +1335,7 @@ private fun DiaryWorkspaceHeader(
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-            DiaryWorkspaceMetric("文字", textCount, GoaldayDesign.InkSecondary, Modifier.weight(1f))
+            DiaryWorkspaceMetric("文字", textCount, GoaldayDesign.adaptiveInkSecondary, Modifier.weight(1f))
             DiaryWorkspaceMetric("图片", imageCount, GoaldayDesign.RouteDiary, Modifier.weight(1f))
             DiaryWorkspaceMetric("目标", targetCount, GoaldayDesign.Positive, Modifier.weight(1f))
             DiaryWorkspaceMetric("待办", todoCount + doneCount, GoaldayDesign.Pink, Modifier.weight(1f))
@@ -1351,14 +1351,14 @@ private fun DiaryWorkspaceHeader(
         ) {
             Text(
                 if (state.hasUserContent) "日记已经保存为本地书页" else "今天还没有内容，先写一条记录",
-                color = GoaldayDesign.InkMuted,
+                color = GoaldayDesign.adaptiveInkMuted,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
             )
             Text(
                 if (editing) "继续写" else "进入编辑",
-                color = GoaldayDesign.InkSecondary,
+                color = GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
@@ -1387,7 +1387,7 @@ private fun DiaryWorkspaceMetric(
         verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         Text(count.toString(), color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(label, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(label, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
@@ -1409,7 +1409,7 @@ private fun DiaryExportDock(
     ) {
         Text(
             "导出",
-            color = GoaldayDesign.InkPrimary,
+            color = GoaldayDesign.adaptiveInkPrimary,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.width(42.dp),
@@ -1417,7 +1417,7 @@ private fun DiaryExportDock(
         DiaryDockAction("预览长图", GoaldayDesign.Pink, Modifier.weight(1f), onPreview)
         DiaryDockAction("快速导出", GoaldayDesign.Positive, Modifier.weight(1f), onExport)
         if (hint.isNotBlank()) {
-            Text(hint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+            Text(hint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
         }
     }
 }
@@ -1463,8 +1463,8 @@ private fun DiaryStartPanel(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
-                Text("开始今天的日记", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Text("会自动关联今日待办 $todoCount 条、已完成 $doneCount 条", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                Text("开始今天的日记", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text("会自动关联今日待办 $todoCount 条、已完成 $doneCount 条", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
             }
             Text(
                 "写一条",
@@ -1526,7 +1526,7 @@ private fun DiaryQuickActionRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DiaryQuickActionChip("编辑", GoaldayDesign.Pink, onEdit)
-        DiaryQuickActionChip("文字", GoaldayDesign.InkSecondary, onAddText)
+        DiaryQuickActionChip("文字", GoaldayDesign.adaptiveInkSecondary, onAddText)
         DiaryQuickActionChip("图片", GoaldayDesign.RouteDiary, onAddImage)
         DiaryQuickActionChip("专题目标", GoaldayDesign.Positive, onAddTopicTarget)
     }
@@ -1582,13 +1582,13 @@ private fun DiaryBlockRail(
         horizontalArrangement = Arrangement.spacedBy(5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        DiaryBlockPill("TEXT", "$textBlocks", GoaldayDesign.InkPrimary, Modifier.weight(1f))
+        DiaryBlockPill("TEXT", "$textBlocks", GoaldayDesign.adaptiveInkPrimary, Modifier.weight(1f))
         DiaryBlockPill("IMAGE", "$imageBlocks", GoaldayDesign.RouteDiary, Modifier.weight(1f))
         DiaryBlockPill("TARGET", "$targetBlocks", GoaldayDesign.Positive, Modifier.weight(1f))
         Text(
             if (editing) "编辑中" else "预览",
             style = MaterialTheme.typography.labelSmall,
-            color = GoaldayDesign.InkMuted,
+            color = GoaldayDesign.adaptiveInkMuted,
         )
     }
 }
@@ -1609,7 +1609,7 @@ private fun DiaryBlockPill(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(count, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+        Text(count, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
     }
 }
 
@@ -1860,7 +1860,7 @@ internal fun LongImagePreviewDialog(
                 Text(
                     "‹ 返回",
                     style = MaterialTheme.typography.labelSmall,
-                    color = GoaldayDesign.InkSecondary,
+                    color = GoaldayDesign.adaptiveInkSecondary,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
@@ -1869,14 +1869,14 @@ internal fun LongImagePreviewDialog(
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
-                    Text("长图预览", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
-                    Text(preview.title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-                    Text(preview.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                    Text("长图预览", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
+                    Text(preview.title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
+                    Text(preview.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
                 }
                 Text(
                     "打印预设",
                     style = MaterialTheme.typography.labelSmall,
-                    color = GoaldayDesign.InkMuted,
+                    color = GoaldayDesign.adaptiveInkMuted,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
@@ -1949,7 +1949,7 @@ internal fun LongImagePreviewDialog(
                         .padding(9.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text("最近导出", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, fontWeight = FontWeight.SemiBold)
+                    Text("最近导出", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, fontWeight = FontWeight.SemiBold)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1989,7 +1989,7 @@ internal fun LongImagePreviewDialog(
                         actionHint = "分享失败"
                     }
                 }
-                LongImageActionChip("打印", GoaldayDesign.InkSecondary, Modifier.width(86.dp)) {
+                LongImageActionChip("打印", GoaldayDesign.adaptiveInkSecondary, Modifier.width(86.dp)) {
                     if (printLongImagePreview(context, preview, selectedPreset)) {
                         recordAction("已打开${selectedPreset.label}打印", "打印", selectedPreset.description)
                     } else {
@@ -2009,7 +2009,7 @@ internal fun LongImagePreviewDialog(
                     }
                 }
                 if (actionHint.isNotBlank()) {
-                    Text(actionHint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
+                    Text(actionHint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -2032,8 +2032,8 @@ private fun LongImagePrintPanel(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("导出预设", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
-            Text(preset.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, maxLines = 1)
+            Text("导出预设", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
+            Text(preset.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 1)
         }
         LongImageInfoPill("纸张", preset.paperLabel)
         LongImageInfoPill("比例", if (preset == LongImageExportPreset.PHONE) "9:16" else "${preview.bitmap.width}:${preview.bitmap.height}")
@@ -2056,10 +2056,10 @@ private fun LongImageShortcutPanel(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text("快捷导出", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
-                Text(mode.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+                Text("快捷导出", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
+                Text(mode.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
             }
-            Text(mode.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
+            Text(mode.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
         }
         Row(
             modifier = Modifier
@@ -2088,7 +2088,7 @@ private fun LongImageShortcutChip(
     Text(
         mode.label,
         style = MaterialTheme.typography.labelSmall,
-        color = if (selected) Color.White else GoaldayDesign.InkSecondary,
+        color = if (selected) Color.White else GoaldayDesign.adaptiveInkSecondary,
         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
         maxLines = 1,
         modifier = Modifier
@@ -2111,9 +2111,9 @@ private fun LongImageHistoryChip(item: LongImageExportHistoryItem) {
             .padding(horizontal = 9.dp, vertical = 7.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text("${item.action} · ${item.preset}", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(item.displayTime(), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
-        Text(item.title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, maxLines = 1)
+        Text("${item.action} · ${item.preset}", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(item.displayTime(), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
+        Text(item.title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 1)
     }
 }
 
@@ -2137,8 +2137,8 @@ private fun LongImagePresetChip(
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(preset.label, style = MaterialTheme.typography.labelMedium, color = if (selected) GoaldayDesign.Pink else GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-        Text(preset.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 2)
+        Text(preset.label, style = MaterialTheme.typography.labelMedium, color = if (selected) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
+        Text(preset.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 2)
     }
 }
 
@@ -2156,8 +2156,8 @@ private fun LongImageInfoPill(
         horizontalArrangement = Arrangement.spacedBy(5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
-        Text(value, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
+        Text(value, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -2555,7 +2555,7 @@ internal fun diaryBlockDisplaySubtitle(type: DiaryBlockType): String =
 internal fun diaryBlockTypeColor(type: DiaryBlockType): Color =
     when (type) {
         DiaryBlockType.IMAGE -> GoaldayDesign.RouteDiary
-        DiaryBlockType.TEXT -> GoaldayDesign.InkSecondary
+        DiaryBlockType.TEXT -> GoaldayDesign.adaptiveInkSecondary
         DiaryBlockType.TARGET -> GoaldayDesign.Positive
         DiaryBlockType.TARGET_CHILD -> GoaldayDesign.RouteTarget
         DiaryBlockType.TOPIC_TARGET -> GoaldayDesign.RouteDiary
@@ -2586,7 +2586,7 @@ internal fun plainTextFromHtml(html: String): String =
 
 @Composable
 internal fun diaryBlockTextStyle(block: DiaryEntryBlock): TextStyle {
-    val base = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary)
+    val base = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary)
     return when (block.style) {
         DiaryBlockStyle.BODY -> base
         DiaryBlockStyle.BOLD -> base.copy(fontWeight = FontWeight.SemiBold)
@@ -2626,7 +2626,7 @@ private fun StructuredDiaryPreview(
 
     Column(verticalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
         DiaryInBookHeader(
-            title = "DIARY ACTIVITY",
+            title = "日记活动",
             subtitle = dateLabel,
             blockCount = state.blocks.size,
             imageCount = imageUris.size,
@@ -2698,12 +2698,12 @@ private fun DiaryInBookHeader(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold, maxLines = 1)
                 Text(subtitle, style = MaterialTheme.typography.titleSmall, color = Color(0xFF3A342E), fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text("书内日记", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB7A893), maxLines = 1)
-                Text("$blockCount 条目 · $imageCount 图片", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+                Text("$blockCount 条目 · $imageCount 图片", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
             }
         }
         Box(
@@ -2728,8 +2728,8 @@ private fun DiaryEmptyInBookPage(onAddImage: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
-        Text("今日还没有日记", style = MaterialTheme.typography.labelLarge, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-        Text("点击添加图片，或进入编辑补充文字、目标和专题条目。", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, textAlign = TextAlign.Center)
+        Text("今日还没有日记", style = MaterialTheme.typography.labelLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
+        Text("点击添加图片，或进入编辑补充文字、目标和专题条目。", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, textAlign = TextAlign.Center)
     }
 }
 
@@ -2815,17 +2815,17 @@ private fun DiaryInBookRow(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(code, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold, maxLines = 1)
-            Text("内页", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+            Text("内页", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(title, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
-                Text(diaryBlockDisplayTitle(type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+                Text(diaryBlockDisplayTitle(type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
             }
             Text(
                 content.ifBlank { "暂未填写" },
                 style = MaterialTheme.typography.bodySmall,
-                color = if (content.isBlank()) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
+                color = if (content.isBlank()) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                 maxLines = 4,
             )
         }
@@ -2855,10 +2855,10 @@ private fun DiaryTypedBlockPreview(
                         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                                 Text(diaryBlockDisplayTitle(block.type), style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
-                                Text(diaryInBookItemLabel(block.type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+                                Text(diaryInBookItemLabel(block.type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
                             }
                             if (block.type != DiaryBlockType.IMAGE) {
-                                Text(block.style.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                                Text(block.style.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
                             }
                         }
                         if (block.type == DiaryBlockType.IMAGE) {
@@ -2871,7 +2871,7 @@ private fun DiaryTypedBlockPreview(
                             Text(
                                 block.mainText.ifBlank { "空内容" },
                                 style = diaryBlockTextStyle(block),
-                                color = GoaldayDesign.InkPrimary,
+                                color = GoaldayDesign.adaptiveInkPrimary,
                             )
                         }
                     }
@@ -2903,7 +2903,7 @@ private fun DiaryInBookTypeMarker(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(diaryBlockTypeIcon(type), color = color, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text("ITEM %02d".format(index), color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text("条目 %02d".format(index), color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
@@ -2924,7 +2924,7 @@ private fun DiaryChildPreviewRow(
             .padding(horizontal = 7.dp, vertical = 4.dp),
     ) {
         Text("%02d".format(index), style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.72f), maxLines = 1)
-        Text(text, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.weight(1f))
+        Text(text, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, modifier = Modifier.weight(1f))
     }
 }
 

@@ -1,6 +1,7 @@
 package com.bf410.goaldaylocal.ui.replica
 
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -113,6 +114,26 @@ object GoaldayDesign {
     val DarkPaper = Color(0xFF2A2620)
     val DarkPaperWarm = Color(0xFF2F2A22)
     val DarkDivider = Color(0x14FFFFFF)
+
+    // 暗色自适应颜色（@Composable getter，自动按 LocalGoaldayDarkMode.current 切换亮/暗）
+    // screen 层改用这些属性即可获得暗色模式支持，无需在每个引用处写 if-else
+    val adaptiveAppBg: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkAppBg else AppBg
+    val adaptiveSurface: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkSurface else Surface
+    val adaptiveSurfaceSoft: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkSurfaceSoft else SurfaceSoft
+    val adaptiveInkPrimary: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkInkPrimary else InkPrimary
+    val adaptiveInkSecondary: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkInkSecondary else InkSecondary
+    val adaptiveInkMuted: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkInkMuted else InkMuted
+    val adaptivePaper: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkPaper else Paper
+    val adaptivePaperWarm: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkPaperWarm else PaperWarm
+    val adaptiveDivider: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkDivider else Color(0x14000000)
+
+    // 暗色自适应纸张渐变（书页背景）
+    val adaptivePaperGradient: Brush @Composable get() =
+        if (LocalGoaldayDarkMode.current) Brush.linearGradient(
+            listOf(DarkPaper, DarkPaperWarm, DarkPaper),
+            start = Offset.Zero,
+            end = Offset(680f, 420f),
+        ) else PaperGradient
 
     // 字体族 token：封面/大标题用衬线（宋体感）建立手账氛围，UI 正文用默认无衬线保可读性
     val DisplayFontFamily: FontFamily get() = FontFamily.Serif

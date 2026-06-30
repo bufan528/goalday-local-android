@@ -173,7 +173,7 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(GoaldayDesign.AppBg)
+                .background(GoaldayDesign.adaptiveAppBg)
                 .verticalScroll(rememberScrollState())
             .padding(horizontal = GoaldayDesign.Space4, vertical = GoaldayDesign.Space3),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
@@ -297,7 +297,7 @@ fun HomeScreen(
 private fun HomeHintPill(text: String) {
     Text(
         text,
-        color = GoaldayDesign.InkPrimary,
+        color = GoaldayDesign.adaptiveInkPrimary,
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
@@ -364,7 +364,7 @@ private fun PromoHeader(
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "TODAY",
+                    "今日",
                     color = GoaldayDesign.Pink,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
@@ -377,14 +377,14 @@ private fun PromoHeader(
                     color = Color.White,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
-                        .background(GoaldayDesign.InkPrimary, RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .background(GoaldayDesign.adaptiveInkPrimary, RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable(onClick = onToday)
                         .padding(horizontal = 13.dp, vertical = 7.dp),
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text("Goalday", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-                Text("${year}年${month}月 · 本地日程手账", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelMedium)
+                Text("Goalday", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                Text("${year}年${month}月 · 本地日程手账", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     HomeHeroPill("离线", GoaldayDesign.Positive)
                     HomeHeroPill("周计划", GoaldayDesign.Pink)
@@ -454,7 +454,7 @@ private fun PaperPlanner(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text("日程动态", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
-                Text("${month}月周视图", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                Text("${month}月周视图", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
                 PlannerMetric("待办", todoEntries.size.toString(), GoaldayDesign.Pink)
@@ -466,7 +466,7 @@ private fun PaperPlanner(
             value = weeklyGoal,
             onValueChange = onWeeklyGoalChange,
             singleLine = true,
-            textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+            textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary),
             decorationBox = { inner ->
                 Row(
                     modifier = Modifier
@@ -480,7 +480,7 @@ private fun PaperPlanner(
                     Text("本周主题", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                     Box(Modifier.weight(1f)) {
                         if (weeklyGoal.isBlank()) {
-                            Text("写下最重要的目标", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                            Text("写下最重要的目标", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)
                         }
                         inner()
                     }
@@ -490,7 +490,7 @@ private fun PaperPlanner(
 
         Row(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1.03f), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                Text("日期", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                Text("日期", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                 weekDays.forEach { day ->
                     val dayEntries = entries.filter { it.day == day }
                     TimelineDayRow(
@@ -580,7 +580,7 @@ private fun PaperPlanner(
                         doneEntries.forEach { entry ->
                             Text(
                                 "✓ ${entry.title}",
-                                color = GoaldayDesign.InkSecondary,
+                                color = GoaldayDesign.adaptiveInkSecondary,
                                 style = MaterialTheme.typography.bodySmall,
                                 textDecoration = TextDecoration.LineThrough,
                                 maxLines = 1,
@@ -649,7 +649,7 @@ private fun TimelineDayRow(
                     .background(if (selected) GoaldayDesign.Pink else Color(0x12E88FAE), RoundedCornerShape(99.dp))
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             )
-            Text(week, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+            Text(week, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             if (entries.isEmpty()) {
@@ -658,7 +658,7 @@ private fun TimelineDayRow(
                 entries.take(2).forEach { entry ->
                     Text(
                         (if (entry.completed) "✓ " else "· ") + entry.title,
-                        color = if (entry.completed) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
+                        color = if (entry.completed) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveInkPrimary,
                         style = MaterialTheme.typography.labelSmall,
                         textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                         maxLines = 1,
@@ -689,7 +689,7 @@ private fun QuickInput(
         onValueChange = onValueChange,
         singleLine = true,
         modifier = Modifier.focusRequester(focusRequester),
-        textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+        textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { submitAndKeepFocus() }),
         decorationBox = { inner ->
@@ -706,17 +706,17 @@ private fun QuickInput(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Icon(Icons.Filled.CheckBoxOutlineBlank, contentDescription = null, tint = GoaldayDesign.InkMuted, modifier = Modifier.size(12.dp))
+                    Icon(Icons.Filled.CheckBoxOutlineBlank, contentDescription = null, tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(12.dp))
                     Box(Modifier.weight(1f)) {
                         if (value.isBlank()) {
-                            Text("列出一周要做的所有事", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                            Text("列出一周要做的所有事", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)
                         }
                         inner()
                     }
                     Text("加入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = ::submitAndKeepFocus))
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("日期", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                    Text("日期", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                     DateChipRow(days = weekDays.take(4), selectedDay = selectedDay, onSelectDay = onSelectDay)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -737,7 +737,7 @@ private fun DateChipRow(
     days.forEach { day ->
         Text(
             "${day}日",
-            color = if (day == selectedDay) Color.White else GoaldayDesign.InkSecondary,
+            color = if (day == selectedDay) Color.White else GoaldayDesign.adaptiveInkSecondary,
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier
                 .background(if (day == selectedDay) GoaldayDesign.Pink else Color(0x0F000000), RoundedCornerShape(GoaldayDesign.RadiusPill))
@@ -761,7 +761,7 @@ private fun PlannerMetric(
         verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         Text(value, color = color, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(label, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(label, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
@@ -829,12 +829,12 @@ private fun TaskLine(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 entry.title,
-                color = if (entry.completed) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
+                color = if (entry.completed) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveInkPrimary,
                 style = MaterialTheme.typography.bodySmall,
                 textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                 maxLines = 2,
             )
-            Text("${entry.day}日", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+            Text("${entry.day}日", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
         }
     }
 }
@@ -846,7 +846,7 @@ private fun MiniSection(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        Text(title, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+        Text(title, color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
         content()
     }
 }
@@ -869,7 +869,7 @@ private fun EmptyHint(text: String) {
                 .clip(RoundedCornerShape(99.dp))
                 .background(GoaldayDesign.Pink.copy(alpha = 0.72f)),
         )
-        Text(text, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+        Text(text, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -934,8 +934,8 @@ private fun HomeActionCard(
             Icon(icon, contentDescription = title, tint = Color.White, modifier = Modifier.size(18.dp))
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
-            Text(subtitle, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            Text(title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(subtitle, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         }
     }
 }

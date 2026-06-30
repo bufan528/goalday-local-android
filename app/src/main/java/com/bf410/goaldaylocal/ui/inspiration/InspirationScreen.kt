@@ -166,7 +166,7 @@ fun InspirationScreen(
                     }
                 },
             )
-            Text("专题封面", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text("专题封面", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             InspirationCoverGrid(
                 templates = visibleTemplates,
                 allTemplates = templates,
@@ -217,7 +217,7 @@ fun InspirationScreen(
         )
 
         if (mode == InspirationMode.FLIP) {
-            Text("翻页", style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+            Text("翻页", style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
             Text("已保存内容可在手账中翻页查看", color = Color(0xFF7E756B), style = MaterialTheme.typography.bodySmall)
         }
     }
@@ -243,8 +243,8 @@ private fun InspirationUnavailableState() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("暂无灵感模板", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-            Text("本地模板资源为空，先进入手账或日历继续使用已有功能。", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
+            Text("暂无灵感模板", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
+            Text("本地模板资源为空，先进入手账或日历继续使用已有功能。", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkMuted)
         }
     }
 }
@@ -266,8 +266,8 @@ private fun InspirationCatalogStrip(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(catalogLabel, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-            Text(assetLabel, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+            Text(catalogLabel, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+            Text(assetLabel, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text("${template.coverKey}.png", color = Color(0xFF6F5E51), style = MaterialTheme.typography.labelSmall)
@@ -444,9 +444,9 @@ private fun InspirationCoverCard(
                 Text(template.category, color = Color(0xFF5F4939), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
         }
-        Text(template.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(template.title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
         Text(template.subtitle, color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall, maxLines = 1)
-        Text("${previewItems.size} 项 · ${previewItems.take(2).joinToString(" / ")}", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text("${previewItems.size} 项 · ${previewItems.take(2).joinToString(" / ")}", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
@@ -485,7 +485,7 @@ private fun InspirationDraftPanel(
                     color = Color(0xFF28241F),
                     fontWeight = FontWeight.SemiBold,
                 )
-                Text("${draftItems.count { it.selected }}/${draftItems.size} 已选", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                Text("${draftItems.count { it.selected }}/${draftItems.size} 已选", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
             }
             Text(
                 if (selectedTemplate.linkToSchedule) "目标模板" else "记录模板",
@@ -531,7 +531,7 @@ private fun InspirationDraftPanel(
             ) {
                 Text("灵感草稿", style = MaterialTheme.typography.bodySmall, color = Color(0xFF575757))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("删除", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onRemoveFocused))
+                    Text("删除", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onRemoveFocused))
                     Text("插入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onInsertDraft))
                     Text("勾选", color = GoaldayDesign.Positive, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onToggleFocused))
                 }
@@ -557,7 +557,7 @@ private fun InspirationDraftPanel(
                     color = Color.White,
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier
-                        .background(GoaldayDesign.InkPrimary, RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .background(GoaldayDesign.adaptiveInkPrimary, RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable(onClick = onImport)
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 )

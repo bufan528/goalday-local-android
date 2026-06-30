@@ -246,9 +246,9 @@ private fun DiaryEditorToolbar(
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            DiaryEditorCountPill("TEXT", textCount, GoaldayDesign.InkSecondary, Modifier.weight(1f))
-            DiaryEditorCountPill("IMG", imageCount, Color(0xFFB07A8F), Modifier.weight(1f))
-            DiaryEditorCountPill("TARGET", targetCount, GoaldayDesign.Positive, Modifier.weight(1f))
+            DiaryEditorCountPill("文本", textCount, GoaldayDesign.InkSecondary, Modifier.weight(1f))
+            DiaryEditorCountPill("图片", imageCount, Color(0xFFB07A8F), Modifier.weight(1f))
+            DiaryEditorCountPill("目标", targetCount, GoaldayDesign.Positive, Modifier.weight(1f))
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(5.dp),

@@ -243,7 +243,7 @@ fun CalendarScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(weekday, color = if (day == selectedDay) Color(0xFFDECFC3) else Color(0xFF8D857C), style = MaterialTheme.typography.labelSmall)
-                    Text(day.toString(), color = if (day == selectedDay) Color.White else GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                    Text(day.toString(), color = if (day == selectedDay) Color.White else GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -252,7 +252,7 @@ fun CalendarScreen(
             grabbedPoolEntry?.let { g ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("已抓取：${g.title}（点上/下/晚投放）", color = GoaldayDesign.RouteDiary, style = MaterialTheme.typography.labelSmall)
-                    Text("取消", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
+                    Text("取消", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
                         grabbedPoolEntry = null
                         toast = "已取消抓取"
                     })
@@ -315,10 +315,10 @@ fun CalendarScreen(
                         .onGloballyPositioned { doneDropBounds = it.boundsInRoot() },
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    Text("已完成", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                    Text("已完成", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
                     if (doneEntries.isEmpty()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(if (activeDoneDrop) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked, contentDescription = null, tint = if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.InkMuted, modifier = Modifier.size(12.dp))
+                            Icon(if (activeDoneDrop) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked, contentDescription = null, tint = if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(12.dp))
                             if (activeDoneDrop) {
                                 Spacer(Modifier.width(4.dp))
                                 Text("释放放入 done", color = GoaldayDesign.Positive, style = MaterialTheme.typography.bodySmall)
@@ -328,7 +328,7 @@ fun CalendarScreen(
                         doneEntries.take(4).forEach { entry ->
                             Text(
                                 "✓ ${entry.title}",
-                                color = GoaldayDesign.InkSecondary,
+                                color = GoaldayDesign.adaptiveInkSecondary,
                                 style = MaterialTheme.typography.bodySmall,
                                 textDecoration = TextDecoration.LineThrough,
                                 maxLines = 1,
@@ -337,14 +337,14 @@ fun CalendarScreen(
                     }
                 }
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("待办", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                    Text("待办", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
                     if (todoEntries.isEmpty()) {
-                        Icon(Icons.Filled.RadioButtonUnchecked, contentDescription = null, tint = GoaldayDesign.InkMuted, modifier = Modifier.size(12.dp))
+                        Icon(Icons.Filled.RadioButtonUnchecked, contentDescription = null, tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(12.dp))
                     } else {
                         todoEntries.take(4).forEach { entry ->
                             Text(
                                 "○ ${entry.title}",
-                                color = GoaldayDesign.InkPrimary,
+                                color = GoaldayDesign.adaptiveInkPrimary,
                                 style = MaterialTheme.typography.bodySmall,
                                 maxLines = 1,
                             )
@@ -354,7 +354,7 @@ fun CalendarScreen(
             }
             Spacer(Modifier.height(6.dp))
             if (dayEntries.isEmpty()) {
-                Text("当天暂无任务", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.bodySmall)
+                Text("当天暂无任务", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.bodySmall)
             }
             dayEntries.forEach { entry ->
                 var dayRowOrigin by remember(entry.id) { mutableStateOf(Offset.Zero) }
@@ -401,7 +401,7 @@ fun CalendarScreen(
                     Icon(
                         if (entry.completed) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
                         contentDescription = if (entry.completed) "已完成" else "待办",
-                        tint = if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.InkMuted,
+                        tint = if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkMuted,
                         modifier = Modifier
                             .size(14.dp)
                             .clickable { viewModel.toggleScheduleCompleted(entry.id) },
@@ -410,17 +410,17 @@ fun CalendarScreen(
                         Text(
                             entry.title,
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (entry.completed) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
+                            color = if (entry.completed) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveInkPrimary,
                             textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                         )
                         scheduleMetaText(entry).takeIf { it.isNotBlank() }?.let { meta ->
-                            Text(meta, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                            Text(meta, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                         }
                     }
                     Icon(
                         Icons.Filled.Edit,
                         contentDescription = "编辑",
-                        tint = GoaldayDesign.InkSecondary,
+                        tint = GoaldayDesign.adaptiveInkSecondary,
                         modifier = Modifier
                             .size(14.dp)
                             .clickable {
@@ -460,7 +460,7 @@ fun CalendarScreen(
 
         BoardCard(title = "计划池", subtitle = "从其他日期移动到今天") {
             if (poolEntries.isEmpty()) {
-                Text("暂无可移动任务", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.bodySmall)
+                Text("暂无可移动任务", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.bodySmall)
             }
             poolEntries.forEach { entry ->
                 var rowOrigin by remember(entry.id) { mutableStateOf(Offset.Zero) }
@@ -539,9 +539,9 @@ fun CalendarScreen(
                             .padding(horizontal = 7.dp, vertical = 3.dp),
                     )
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                        Text(entry.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                        Text(entry.title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
                         scheduleMetaText(entry).takeIf { it.isNotBlank() }?.let { meta ->
-                            Text(meta, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                            Text(meta, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                         }
                     }
                     Text(
@@ -584,7 +584,7 @@ fun CalendarScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("快速投放：${entry.title}", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
+                Text("快速投放：${entry.title}", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     DropToSlotChip("上") {
                         viewModel.moveScheduleToDay(entry.id, selectedDay)
@@ -684,7 +684,7 @@ fun CalendarScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         "将删除「${entry.title}」以及它的本地日程记录。",
-                        color = GoaldayDesign.InkSecondary,
+                        color = GoaldayDesign.adaptiveInkSecondary,
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     if (entry.repeatGroupId.isNotBlank()) {
@@ -692,7 +692,7 @@ fun CalendarScreen(
                             listOf(false to "仅本次", true to "整组重复").forEach { (value, label) ->
                                 Text(
                                     label,
-                                    color = if (deleteSeries == value) Color.White else GoaldayDesign.InkSecondary,
+                                    color = if (deleteSeries == value) Color.White else GoaldayDesign.adaptiveInkSecondary,
                                     style = MaterialTheme.typography.labelSmall,
                                     modifier = Modifier
                                         .background(
@@ -780,7 +780,7 @@ fun CalendarScreen(
 private fun CalendarHintPill(text: String) {
     Text(
         text,
-        color = GoaldayDesign.InkPrimary,
+        color = GoaldayDesign.adaptiveInkPrimary,
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
@@ -800,7 +800,7 @@ private fun CalendarThemeField(
         value = value,
         onValueChange = onValueChange,
         singleLine = true,
-        textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+        textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary),
         decorationBox = { inner ->
             Row(
                 modifier = Modifier
@@ -813,7 +813,7 @@ private fun CalendarThemeField(
                 Text("本周主题", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                 Box(Modifier.weight(1f)) {
                     if (value.isBlank()) {
-                        Text("写下最重要的目标", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                        Text("写下最重要的目标", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)
                     }
                     inner()
                 }
@@ -849,9 +849,9 @@ private fun CalendarHeroHeader(
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("月度日程", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
-                    Text("${year}年${month}月", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-                    Text("当前查看 ${selectedDay} 日 · 本地日历", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                    Text("月度日程", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                    Text("${year}年${month}月", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                    Text("当前查看 ${selectedDay} 日 · 本地日历", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
                 }
                 Text(
                     "今天",
@@ -889,7 +889,7 @@ private fun CalendarHeroMetric(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(value, color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(label, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(label, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
@@ -913,8 +913,8 @@ private fun CalendarMonthControl(
     ) {
         CalendarControlChip("上月", GoaldayDesign.RouteOverview, Modifier.weight(0.8f), onPreviousMonth)
         Column(modifier = Modifier.weight(1.2f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text("${year}年${month}月", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
-            Text("系统日历可导入", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            Text("${year}年${month}月", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text("系统日历可导入", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         }
         CalendarControlChip("下月", GoaldayDesign.Pink, Modifier.weight(0.8f), onNextMonth)
         CalendarControlChip("导入", GoaldayDesign.PrimaryAction, Modifier.weight(0.8f), onImportCalendar)
@@ -967,16 +967,16 @@ private fun CalendarMonthGrid(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text("月份网格", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
-                Text("点击日期切换今日执行", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                Text("月份网格", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text("点击日期切换今日执行", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
             }
-            Text("${entries.size} 条", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+            Text("${entries.size} 条", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
             listOf("一", "二", "三", "四", "五", "六", "日").forEach { label ->
                 Text(
                     label,
-                    color = GoaldayDesign.InkMuted,
+                    color = GoaldayDesign.adaptiveInkMuted,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f),
@@ -1047,7 +1047,7 @@ private fun CalendarMonthDayCell(
     ) {
         Text(
             day.toString(),
-            color = if (selected) Color.White else GoaldayDesign.InkPrimary,
+            color = if (selected) Color.White else GoaldayDesign.adaptiveInkPrimary,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
@@ -1093,10 +1093,10 @@ private fun BoardCard(
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Text(
                 subtitle,
-                color = GoaldayDesign.InkSecondary,
+                color = GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .background(Color(0x0FA88966), RoundedCornerShape(99.dp))
@@ -1142,9 +1142,9 @@ private fun TimeSlotRow(
         )
         if (assigned != null) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text(assigned.title, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(assigned.title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
                 scheduleMetaText(assigned).takeIf { it.isNotBlank() }?.let { meta ->
-                    Text(meta, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                    Text(meta, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 }
             }
         } else {
@@ -1227,7 +1227,7 @@ private fun CalendarImportRangeDialog(
                 options.forEach { (months, label) ->
                     Text(
                         label,
-                        color = if (draftMonths == months) Color.White else GoaldayDesign.InkSecondary,
+                        color = if (draftMonths == months) Color.White else GoaldayDesign.adaptiveInkSecondary,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1274,7 +1274,7 @@ private fun CalendarImportSourceDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 val rangeText = if (rangeMonths <= 1) "本月" else "未来${rangeMonths}个月"
-                Text("$rangeText 找到 ${events.size} 条系统日历事件", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                Text("$rangeText 找到 ${events.size} 条系统日历事件", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
                 sourceCounts.forEach { (source, count) ->
                     val selected = source in selectedCalendars
                     Row(
@@ -1294,8 +1294,8 @@ private fun CalendarImportSourceDialog(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(source, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall)
-                        Text("${count}条", color = if (selected) GoaldayDesign.PrimaryAction else GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                        Text(source, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall)
+                        Text("${count}条", color = if (selected) GoaldayDesign.PrimaryAction else GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -1330,7 +1330,7 @@ private fun CalendarImportPreviewDialog(
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
                 val rangeText = if (rangeMonths <= 1) "${year}年${month}月" else "${year}年${month}月起 · ${rangeMonths}个月"
-                Text("$rangeText · ${events.size} 条系统日历", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                Text("$rangeText · ${events.size} 条系统日历", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
                 events.take(12).forEach { event ->
                     Column(
                         modifier = Modifier
@@ -1345,14 +1345,14 @@ private fun CalendarImportPreviewDialog(
                         } else {
                             "${event.year}年${event.month}月${event.day}日"
                         }
-                        Text("$dateText$time · ${event.title}", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall)
+                        Text("$dateText$time · ${event.title}", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall)
                         if (event.note.isNotBlank()) {
-                            Text(event.note, color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                            Text(event.note, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                         }
                     }
                 }
                 if (events.size > 12) {
-                    Text("还有 ${events.size - 12} 条将在确认后一起导入", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                    Text("还有 ${events.size - 12} 条将在确认后一起导入", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                 }
             }
         },
@@ -1484,7 +1484,7 @@ private fun ScheduleDialog(
                     repeatOptions.forEach { (rule, label) ->
                         Text(
                             label,
-                            color = if (draftRepeatRule == rule) Color.White else GoaldayDesign.InkSecondary,
+                            color = if (draftRepeatRule == rule) Color.White else GoaldayDesign.adaptiveInkSecondary,
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier
                                 .background(
@@ -1524,7 +1524,7 @@ private fun ScheduleDialog(
                         listOf(false to "仅本次", true to "整组").forEach { (value, label) ->
                             Text(
                                 label,
-                                color = if (applySeries == value) Color.White else GoaldayDesign.InkSecondary,
+                                color = if (applySeries == value) Color.White else GoaldayDesign.adaptiveInkSecondary,
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier
                                     .background(

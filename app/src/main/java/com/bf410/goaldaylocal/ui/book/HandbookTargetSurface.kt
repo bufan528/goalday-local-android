@@ -96,7 +96,7 @@ internal fun HandbookTargetReplicaPage(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                SectionStamp("TARGET", tint)
+                SectionStamp("目标", tint)
                 Text("${pageIndex + 1}/$pageCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
             }
             TargetDetailReplicaPage(

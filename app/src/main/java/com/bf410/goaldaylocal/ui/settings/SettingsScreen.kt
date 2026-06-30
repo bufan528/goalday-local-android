@@ -332,7 +332,7 @@ private fun SettingsHeroCard(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                     Text(
-                        "LOCAL DATA CENTER",
+                        "本地数据中心",
                         style = MaterialTheme.typography.labelSmall,
                         color = GoaldayDesign.Pink,
                         fontWeight = FontWeight.SemiBold
