@@ -98,9 +98,7 @@ fun InspirationScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFFFFFBF5), Color(0xFFF3E6D9), Color(0xFFEAD2BD)),
-                ),
+                GoaldayDesign.DeskGradient,
             )
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 12.dp)
@@ -231,9 +229,7 @@ private fun InspirationUnavailableState() {
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFFFFFBF5), Color(0xFFF3E6D9), Color(0xFFEAD2BD)),
-                ),
+                GoaldayDesign.DeskGradient,
             )
             .padding(18.dp),
         contentAlignment = Alignment.Center,
@@ -561,13 +557,13 @@ private fun InspirationDraftPanel(
                     color = Color.White,
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier
-                        .background(Color(0xFF212121), RoundedCornerShape(99.dp))
+                        .background(GoaldayDesign.InkPrimary, RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable(onClick = onImport)
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 )
                 Text(
                     "导入并打开手账",
-                    color = Color(0xFFE88FAE),
+                    color = GoaldayDesign.Pink,
                     modifier = Modifier
                         .clickable(onClick = onImportAndOpen)
                         .padding(horizontal = 6.dp, vertical = 4.dp),

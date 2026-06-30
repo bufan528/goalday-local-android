@@ -184,36 +184,12 @@ fun PageSurface(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(28.dp, 28.dp, 32.dp, 32.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL))
             // 基底统一到 PaperGradient，与 handbook 路径一致，消除翻页交接瞬间的背景跳变
             .background(GoaldayDesign.PaperGradient)
             .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
-        // 左侧 10dp 边缘阴影（书脊侧）
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .width(10.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color(0x1F8C6A4B), Color(0x0EA07E5D), Color.Transparent),
-                    ),
-                ),
-        )
-        // 右侧 8dp 边缘阴影
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .width(8.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color.Transparent, Color(0x0C8D7A66), Color(0x14806A54)),
-                    ),
-                ),
-        )
-        // 中央折痕：合并原 3 层（2dp 暗线 + 8dp 高光 + 14dp 色带）为单层 10dp
+        // 中央折痕：书脊感，单层 10dp 渐变（P0 精简：删除左右阴影/顶部细线/斑驳层/角部高光 4 层冗余装饰）
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -221,43 +197,13 @@ fun PageSurface(
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
-                        listOf(Color.Transparent, Color(0x14000000), Color(0x10F7E9D7), Color(0x14000000), Color.Transparent),
-                    ),
-                ),
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(Color(0x12A48A70)),
-        )
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .alpha(0.12f)
-                .background(
-                    Brush.verticalGradient(
                         listOf(
-                            Color(0x10C7B39C),
                             Color.Transparent,
-                            Color(0x08C7B39C),
+                            Color.Black.copy(alpha = 0.08f),
+                            GoaldayDesign.PaperWarm.copy(alpha = 0.06f),
+                            Color.Black.copy(alpha = 0.08f),
                             Color.Transparent,
-                            Color(0x0CC7B39C),
                         ),
-                    ),
-                ),
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .width(20.dp)
-                .height(20.dp)
-                .background(
-                    Brush.linearGradient(
-                        listOf(Color.Transparent, Color(0x12C2AE95)),
-                        start = Offset(0f, 20f),
-                        end = Offset(20f, 0f),
                     ),
                 ),
         )
@@ -269,12 +215,17 @@ fun PageSurface(
             verticalArrangement = Arrangement.spacedBy(5.dp),
             horizontalAlignment = Alignment.End,
         ) {
-            listOf(Color(0x66E693B1), Color(0x66F0C187), Color(0x6694C8E8), Color(0x669FD39B)).forEach { c ->
+            listOf(
+                GoaldayDesign.Pink.copy(alpha = 0.5f),
+                GoaldayDesign.Today.copy(alpha = 0.5f),
+                GoaldayDesign.RouteTarget.copy(alpha = 0.5f),
+                GoaldayDesign.Positive.copy(alpha = 0.5f),
+            ).forEach { c ->
                 Box(
                     modifier = Modifier
                         .width(4.dp)
                         .height(22.dp)
-                        .clip(RoundedCornerShape(99.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(c),
                 )
             }
@@ -293,7 +244,7 @@ fun PageSurface(
                 onSavedClick = onSavedClick,
             )
             Spacer(Modifier.height(6.dp))
-            Text(text = title, style = MaterialTheme.typography.titleMedium, color = Color(0xFF26211C))
+            Text(text = title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.InkPrimary)
             Spacer(Modifier.height(8.dp))
             body()
         }
@@ -305,7 +256,7 @@ fun PageSurface(
                 .height(10.dp)
                 .background(
                     Brush.verticalGradient(
-                        listOf(Color.Transparent, Color(0x1A000000)),
+                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.1f)),
                     ),
                 ),
         )

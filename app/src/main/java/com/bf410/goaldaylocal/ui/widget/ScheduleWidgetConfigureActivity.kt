@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.R
 import com.bf410.goaldaylocal.data.LocalStateStore
 import com.bf410.goaldaylocal.data.ScheduleEntry
+import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.tencent.mmkv.MMKV
 import java.time.LocalDate
 
@@ -142,9 +143,9 @@ private fun ScheduleWidgetConfigureScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text("添加小组件", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFFE88FAE))
-            Text(kind.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2F2922))
-            Text(kind.subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A7065))
+            Text("添加小组件", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.Pink)
+            Text(kind.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.InkPrimary)
+            Text(kind.subtitle, style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary)
         }
         WidgetKindSignalStrip(kind = kind)
         WidgetLocalUnlockCard(kind = kind)
@@ -184,7 +185,7 @@ private fun ScheduleWidgetConfigureScreen(
             Text(
                 "日记组件使用同一套颜色配置，点击桌面组件会直接进入本地日记页。",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF7A7065),
+                color = GoaldayDesign.InkSecondary,
                 modifier = Modifier
                     .clip(RoundedCornerShape(14.dp))
                     .background(Color.White.copy(alpha = 0.72f))
@@ -225,7 +226,7 @@ private fun WidgetKindSignalStrip(kind: WidgetConfigureKind) {
             modifier = Modifier.fillMaxWidth(),
         ) {
             WidgetSignalPill(kind.referenceSignal, Color(0xFFB07A8F), Modifier.weight(1f))
-            WidgetSignalPill(kind.colorSignal, Color(0xFFE88FAE), Modifier.weight(1f))
+            WidgetSignalPill(kind.colorSignal, GoaldayDesign.Pink, Modifier.weight(1f))
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -486,7 +487,7 @@ private fun <T> SegmentedPicker(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (active) Color(0xFFE88FAE) else Color.Transparent)
+                    .background(if (active) GoaldayDesign.Pink else Color.Transparent)
                     .clickable { onSelect(item) }
                     .padding(vertical = 9.dp),
             )
