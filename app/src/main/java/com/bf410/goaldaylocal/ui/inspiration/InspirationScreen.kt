@@ -131,7 +131,7 @@ fun InspirationScreen(
                         .background(if (mode == target) Color.White else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable { mode = target }
                         .padding(vertical = 6.dp),
-                    color = if (mode == target) GoaldayDesign.Pink else Color(0xFF8C7F73),
+                    color = if (mode == target) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkMuted,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -218,7 +218,7 @@ fun InspirationScreen(
 
         if (mode == InspirationMode.FLIP) {
             Text("翻页", style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
-            Text("已保存内容可在手账中翻页查看", color = Color(0xFF7E756B), style = MaterialTheme.typography.bodySmall)
+            Text("已保存内容可在手账中翻页查看", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -270,7 +270,7 @@ private fun InspirationCatalogStrip(
             Text(assetLabel, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("${template.coverKey}.png", color = Color(0xFF6F5E51), style = MaterialTheme.typography.labelSmall)
+            Text("${template.coverKey}.png", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
             Text("${template.targetKey}.txt · $itemCount 条", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
         }
     }
@@ -362,7 +362,7 @@ private fun InspirationCategoryRail(
             val selected = category == selectedCategory
             Text(
                 category,
-                color = if (selected) Color.White else Color(0xFF715B4B),
+                color = if (selected) Color.White else GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -421,8 +421,8 @@ private fun InspirationCoverCard(
     Column(
         modifier = modifier
             .height(176.dp)
-            .background(Color(0xFFFFFDF8), RoundedCornerShape(GoaldayDesign.RadiusL))
-            .border(if (selected) 1.6.dp else 0.7.dp, if (selected) GoaldayDesign.Pink else Color(0x22A88966), RoundedCornerShape(GoaldayDesign.RadiusL))
+            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusL))
+            .border(if (selected) 1.6.dp else 0.7.dp, if (selected) GoaldayDesign.Pink else GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .clickable(onClick = onClick)
             .padding(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -441,11 +441,11 @@ private fun InspirationCoverCard(
                     .background(Color(0x66FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .padding(horizontal = 6.dp, vertical = 2.dp),
             ) {
-                Text(template.category, color = Color(0xFF5F4939), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(template.category, color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
         }
         Text(template.title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(template.subtitle, color = Color(0xFF7A7065), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(template.subtitle, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         Text("${previewItems.size} 项 · ${previewItems.take(2).joinToString(" / ")}", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
@@ -468,7 +468,7 @@ private fun InspirationDraftPanel(
     Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFFFFEFC), RoundedCornerShape(18.dp))
+                .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(18.dp))
                 .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(18.dp))
                 .padding(horizontal = 10.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
@@ -482,7 +482,7 @@ private fun InspirationDraftPanel(
                         InspirationMode.FLIP -> "翻页"
                     },
                     style = MaterialTheme.typography.titleSmall,
-                    color = Color(0xFF28241F),
+                    color = GoaldayDesign.adaptiveInkPrimary,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text("${draftItems.count { it.selected }}/${draftItems.size} 已选", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
@@ -492,7 +492,7 @@ private fun InspirationDraftPanel(
                 style = MaterialTheme.typography.labelSmall,
                 color = GoaldayDesign.Pink,
                 modifier = Modifier
-                    .background(Color(0x12E88FAE), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .background(GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             )
         }
@@ -501,14 +501,14 @@ private fun InspirationDraftPanel(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(if (index == focusedIndex) Color(0xFFFFF4F8) else Color.Transparent, RoundedCornerShape(10.dp))
+                    .background(if (index == focusedIndex) GoaldayDesign.PinkSoft else Color.Transparent, RoundedCornerShape(10.dp))
                     .clickable { onFocusedIndexChange(index) }
                     .padding(horizontal = 6.dp, vertical = 5.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         if (item.selected) "✓" else "□",
-                        color = if (item.selected) GoaldayDesign.Positive else Color(0xFFB4ADA4),
+                        color = if (item.selected) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkMuted,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
                             .size(22.dp)
@@ -516,7 +516,7 @@ private fun InspirationDraftPanel(
                                 draftItems[index] = draftItems[index].copy(selected = !draftItems[index].selected)
                             },
                     )
-                    Text(item.text, modifier = Modifier.weight(1f), color = Color(0xFF2F2A24), style = MaterialTheme.typography.bodySmall)
+                    Text(item.text, modifier = Modifier.weight(1f), color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -524,12 +524,12 @@ private fun InspirationDraftPanel(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFF6F0EA), RoundedCornerShape(GoaldayDesign.RadiusM))
+                    .background(GoaldayDesign.adaptiveSurfaceSoft, RoundedCornerShape(GoaldayDesign.RadiusM))
                     .padding(horizontal = 9.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("灵感草稿", style = MaterialTheme.typography.bodySmall, color = Color(0xFF575757))
+                Text("灵感草稿", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkMuted)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("删除", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onRemoveFocused))
                     Text("插入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onInsertDraft))
@@ -540,13 +540,13 @@ private fun InspirationDraftPanel(
             BasicTextField(
                 value = inputText,
                 onValueChange = onInputTextChange,
-                textStyle = TextStyle(color = Color(0xFF2C2925)),
+                textStyle = TextStyle(color = GoaldayDesign.adaptiveInkPrimary),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0x0A000000), RoundedCornerShape(10.dp))
+                    .background(GoaldayDesign.adaptiveDivider, RoundedCornerShape(10.dp))
                     .padding(horizontal = 9.dp, vertical = 7.dp),
                 decorationBox = { inner ->
-                    if (inputText.isBlank()) Text("输入灵感内容，点 + 插入", color = Color(0xFF9A9188), style = MaterialTheme.typography.bodySmall)
+                    if (inputText.isBlank()) Text("输入灵感内容，点 + 插入", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)
                     inner()
                 },
             )

@@ -388,7 +388,7 @@ private fun PromoHeader(
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     HomeHeroPill("离线", GoaldayDesign.Positive)
                     HomeHeroPill("周计划", GoaldayDesign.Pink)
-                    HomeHeroPill("可拖拽", Color(0xFF8F684F))
+                    HomeHeroPill("可拖拽", GoaldayDesign.RouteOverview)
                 }
             }
         }
@@ -515,7 +515,7 @@ private fun PaperPlanner(
                 modifier = Modifier
                     .width(1.dp)
                     .height(430.dp)
-                    .background(Color(0x11000000)),
+                    .background(GoaldayDesign.adaptiveDivider),
             )
 
             Column(
@@ -571,20 +571,31 @@ private fun PaperPlanner(
                         .fillMaxWidth()
                         .onGloballyPositioned { onDoneBounds(it.boundsInRoot()) }
                         .background(if (activeDoneDrop) GoaldayDesign.GreenSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .border(0.7.dp, if (activeDoneDrop) GoaldayDesign.Positive else Color(0x14000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .border(0.7.dp, if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = 6.dp, vertical = 5.dp),
                 ) {
                     if (doneEntries.isEmpty()) {
                         EmptyHint("把完成的事项拖入")
                     } else {
                         doneEntries.forEach { entry ->
-                            Text(
-                                "✓ ${entry.title}",
-                                color = GoaldayDesign.adaptiveInkSecondary,
-                                style = MaterialTheme.typography.bodySmall,
-                                textDecoration = TextDecoration.LineThrough,
-                                maxLines = 1,
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Icon(
+                                    Icons.Filled.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(12.dp),
+                                    tint = GoaldayDesign.adaptiveInkSecondary,
+                                )
+                                Text(
+                                    entry.title,
+                                    color = GoaldayDesign.adaptiveInkSecondary,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    textDecoration = TextDecoration.LineThrough,
+                                    maxLines = 1,
+                                )
+                            }
                         }
                     }
                     grabbedEntry?.let {
@@ -631,7 +642,7 @@ private fun TimelineDayRow(
             .fillMaxWidth()
             .onGloballyPositioned { onBounds(it.boundsInRoot()) }
             .background(
-                if (activeDrop) GoaldayDesign.PinkSoft else if (selected) Color(0x0DE88FAE) else Color.Transparent,
+                if (activeDrop) GoaldayDesign.PinkSoft else if (selected) GoaldayDesign.PinkTint else Color.Transparent,
                 RoundedCornerShape(GoaldayDesign.RadiusS),
             )
             .combinedClickable(onClick = onSelect, onLongClick = onOpen)
@@ -646,7 +657,7 @@ private fun TimelineDayRow(
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .background(if (selected) GoaldayDesign.Pink else Color(0x12E88FAE), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .background(if (selected) GoaldayDesign.Pink else GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             )
             Text(week, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
@@ -656,13 +667,24 @@ private fun TimelineDayRow(
                 Text(if (activeDrop) "点此拖入" else " ", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = onGrabDrop))
             } else {
                 entries.take(2).forEach { entry ->
-                    Text(
-                        (if (entry.completed) "✓ " else "· ") + entry.title,
-                        color = if (entry.completed) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveInkPrimary,
-                        style = MaterialTheme.typography.labelSmall,
-                        textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
-                        maxLines = 1,
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    ) {
+                        Icon(
+                            if (entry.completed) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
+                            contentDescription = null,
+                            modifier = Modifier.size(10.dp),
+                            tint = if (entry.completed) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveInkMuted,
+                        )
+                        Text(
+                            entry.title,
+                            color = if (entry.completed) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveInkPrimary,
+                            style = MaterialTheme.typography.labelSmall,
+                            textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                            maxLines = 1,
+                        )
+                    }
                 }
             }
         }
@@ -700,8 +722,8 @@ private fun QuickInput(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFAFFFDF8), RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .border(0.7.dp, Color(0x16000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .border(0.7.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -740,7 +762,7 @@ private fun DateChipRow(
             color = if (day == selectedDay) Color.White else GoaldayDesign.adaptiveInkSecondary,
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier
-                .background(if (day == selectedDay) GoaldayDesign.Pink else Color(0x0F000000), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(if (day == selectedDay) GoaldayDesign.Pink else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .clickable { onSelectDay(day) }
                 .padding(horizontal = 6.dp, vertical = 3.dp),
         )
@@ -790,8 +812,8 @@ private fun TaskLine(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(if (entry.completed) 0.dp else 2.dp, RoundedCornerShape(GoaldayDesign.RadiusM), clip = false)
-            .background(if (entry.completed) Color(0x0D39A76D) else Color(0xFAFFFDF8), RoundedCornerShape(GoaldayDesign.RadiusM))
-            .border(0.6.dp, if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.14f) else Color(0x18A88966), RoundedCornerShape(GoaldayDesign.RadiusM))
+            .background(if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.05f) else GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(0.6.dp, if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.14f) else GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .combinedClickable(onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onToggleDone(entry)

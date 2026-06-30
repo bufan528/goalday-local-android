@@ -242,7 +242,7 @@ fun CalendarScreen(
                         .padding(vertical = 7.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(weekday, color = if (day == selectedDay) Color(0xFFDECFC3) else Color(0xFF8D857C), style = MaterialTheme.typography.labelSmall)
+                    Text(weekday, color = if (day == selectedDay) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                     Text(day.toString(), color = if (day == selectedDay) Color.White else GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                 }
             }
@@ -305,7 +305,7 @@ fun CalendarScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(if (activeDoneDrop) GoaldayDesign.GreenSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .border(0.5.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .border(0.5.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 8.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -326,13 +326,24 @@ fun CalendarScreen(
                         }
                     } else {
                         doneEntries.take(4).forEach { entry ->
-                            Text(
-                                "✓ ${entry.title}",
-                                color = GoaldayDesign.adaptiveInkSecondary,
-                                style = MaterialTheme.typography.bodySmall,
-                                textDecoration = TextDecoration.LineThrough,
-                                maxLines = 1,
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Icon(
+                                    Icons.Filled.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(12.dp),
+                                    tint = GoaldayDesign.adaptiveInkSecondary,
+                                )
+                                Text(
+                                    entry.title,
+                                    color = GoaldayDesign.adaptiveInkSecondary,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    textDecoration = TextDecoration.LineThrough,
+                                    maxLines = 1,
+                                )
+                            }
                         }
                     }
                 }
@@ -342,12 +353,23 @@ fun CalendarScreen(
                         Icon(Icons.Filled.RadioButtonUnchecked, contentDescription = null, tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(12.dp))
                     } else {
                         todoEntries.take(4).forEach { entry ->
-                            Text(
-                                "○ ${entry.title}",
-                                color = GoaldayDesign.adaptiveInkPrimary,
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1,
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Icon(
+                                    Icons.Filled.RadioButtonUnchecked,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(12.dp),
+                                    tint = GoaldayDesign.adaptiveInkMuted,
+                                )
+                                Text(
+                                    entry.title,
+                                    color = GoaldayDesign.adaptiveInkPrimary,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 1,
+                                )
+                            }
                         }
                     }
                 }
@@ -470,7 +492,7 @@ fun CalendarScreen(
                         .fillMaxWidth()
                         .shadow(if (grabbed) 5.dp else 0.dp, RoundedCornerShape(13.dp), clip = false)
                         .background(
-                            if (grabbed) Color(0xFFFFEDF4) else Color(0xFAFFFDF8),
+                            if (grabbed) GoaldayDesign.PinkSoft else GoaldayDesign.adaptiveSurface,
                             RoundedCornerShape(13.dp),
                         )
                         .border(
@@ -535,7 +557,7 @@ fun CalendarScreen(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
-                            .background(if (grabbed) GoaldayDesign.Pink else Color(0x12E88FAE), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                            .background(if (grabbed) GoaldayDesign.Pink else GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .padding(horizontal = 7.dp, vertical = 3.dp),
                     )
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
@@ -578,8 +600,8 @@ fun CalendarScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0x1AE88FAE), RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .border(0.8.dp, Color(0x22E88FAE), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .background(GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .border(0.8.dp, GoaldayDesign.Pink.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .padding(horizontal = 10.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
@@ -785,8 +807,8 @@ private fun CalendarHintPill(text: String) {
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFFFF2F7), RoundedCornerShape(14.dp))
-            .border(0.7.dp, Color(0x28E88FAE), RoundedCornerShape(14.dp))
+            .background(GoaldayDesign.PinkSoft, RoundedCornerShape(14.dp))
+            .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.16f), RoundedCornerShape(14.dp))
             .padding(horizontal = 11.dp, vertical = 8.dp),
     )
 }
@@ -960,7 +982,7 @@ private fun CalendarMonthGrid(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(8.dp, RoundedCornerShape(18.dp), clip = false)
-            .background(Color(0xFFFFFEFC), RoundedCornerShape(18.dp))
+            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(18.dp))
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(18.dp))
             .padding(horizontal = 9.dp, vertical = 9.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
@@ -1029,9 +1051,9 @@ private fun CalendarMonthDayCell(
                 if (selected) {
                     GoaldayDesign.PrimaryAction
                 } else if (todoCount + doneCount > 0) {
-                    Color(0xFFFFF3F7)
+                    GoaldayDesign.PinkSoft
                 } else {
-                    Color(0xFFF9F4EC)
+                    GoaldayDesign.adaptiveSurfaceSoft
                 },
                 RoundedCornerShape(12.dp),
             )
@@ -1099,7 +1121,7 @@ private fun BoardCard(
                 color = GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
-                    .background(Color(0x0FA88966), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .background(GoaldayDesign.BorderColor.copy(alpha = 0.06f), RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             )
         }
@@ -1123,7 +1145,7 @@ private fun TimeSlotRow(
             .fillMaxWidth()
             .onGloballyPositioned { coords -> onZoneBounds(coords.boundsInRoot()) }
             .background(
-                if (hover) Color(0x3DE88FAE) else if (dropReady && assigned == null) Color(0x22E88FAE) else Color(0xFAFFFDF8),
+                if (hover) GoaldayDesign.Pink.copy(alpha = 0.24f) else if (dropReady && assigned == null) GoaldayDesign.Pink.copy(alpha = 0.13f) else GoaldayDesign.adaptiveSurface,
                 RoundedCornerShape(GoaldayDesign.RadiusS),
             )
             .border(if (hover) 1.dp else 0.6.dp, if (hover) GoaldayDesign.Pink else GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusS))
@@ -1286,7 +1308,7 @@ private fun CalendarImportSourceDialog(
                             )
                             .border(
                                 if (selected) 1.dp else 0.5.dp,
-                                if (selected) GoaldayDesign.PrimaryAction else Color(0x12000000),
+                                if (selected) GoaldayDesign.PrimaryAction else GoaldayDesign.adaptiveDivider,
                                 RoundedCornerShape(GoaldayDesign.RadiusS),
                             )
                             .clickable { onToggle(source) }

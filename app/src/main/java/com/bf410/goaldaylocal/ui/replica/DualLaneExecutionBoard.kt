@@ -13,14 +13,23 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.RadioButtonChecked
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -89,7 +98,12 @@ fun DualLaneExecutionBoard(
                             Text(day.first, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.InkPrimary)
                             Text(day.second, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
                         }
-                        Text("✓", color = if (dayTask.isNotBlank()) GoaldayDesign.Positive else Color(0xFFE0D7CD), style = MaterialTheme.typography.labelSmall)
+                        Icon(
+                            Icons.Filled.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = if (dayTask.isNotBlank()) GoaldayDesign.Positive else Color(0xFFE0D7CD),
+                        )
                     }
                     Text(dayTask, style = MaterialTheme.typography.bodySmall, color = if (dayTask.isBlank()) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary, maxLines = 2)
                 }
@@ -127,15 +141,15 @@ fun DualLaneExecutionBoard(
             ) {
                 Text("今日 Todo", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                 todayTasks.forEach { task ->
-                    BoardRow(task = task, selected = selectedTaskId == task.id, actionLabel = "✓", onSelect = { onSelectTask(task.id) }, onAction = { onActionDone(task) })
+                    BoardRow(task = task, selected = selectedTaskId == task.id, actionIcon = Icons.Filled.Check, onSelect = { onSelectTask(task.id) }, onAction = { onActionDone(task) })
                 }
                 Text("任务池", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
                 poolTasks.forEach { task ->
-                    BoardRow(task = task, selected = selectedTaskId == task.id, actionLabel = "＋", onSelect = { onSelectTask(task.id) }, onAction = { onActionAdd(task) })
+                    BoardRow(task = task, selected = selectedTaskId == task.id, actionIcon = Icons.Filled.Add, onSelect = { onSelectTask(task.id) }, onAction = { onActionAdd(task) })
                 }
                 Text("已完成", color = GoaldayDesign.Positive, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
                 donePreviewTasks.forEach { task ->
-                    BoardRow(task = task, selected = selectedTaskId == task.id, actionLabel = "↺", onSelect = { onSelectTask(task.id) }, onAction = { onActionRestore(task) }, completed = true)
+                    BoardRow(task = task, selected = selectedTaskId == task.id, actionIcon = Icons.Filled.Restore, onSelect = { onSelectTask(task.id) }, onAction = { onActionRestore(task) }, completed = true)
                 }
             }
             Spacer(modifier = Modifier.weight(1f))
@@ -147,7 +161,7 @@ fun DualLaneExecutionBoard(
 private fun BoardRow(
     task: BoardTask,
     selected: Boolean,
-    actionLabel: String,
+    actionIcon: ImageVector,
     completed: Boolean = false,
     onSelect: () -> Unit,
     onAction: () -> Unit,
@@ -160,9 +174,11 @@ private fun BoardRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        Text(
-            if (selected) "◉" else if (completed) "✓" else "·",
-            color = if (completed) GoaldayDesign.Positive else if (selected) GoaldayDesign.InkSecondary else Color(0xFFD8CFC5),
+        Icon(
+            if (selected) Icons.Filled.RadioButtonChecked else if (completed) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
+            contentDescription = null,
+            modifier = Modifier.size(12.dp),
+            tint = if (completed) GoaldayDesign.Positive else if (selected) GoaldayDesign.InkSecondary else Color(0xFFD8CFC5),
         )
         Column(
             modifier = Modifier
@@ -179,6 +195,13 @@ private fun BoardRow(
                 Text(task.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, maxLines = 1)
             }
         }
-        Text(actionLabel, color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable { onAction() })
+        Icon(
+            actionIcon,
+            contentDescription = null,
+            modifier = Modifier
+                .size(16.dp)
+                .clickable { onAction() },
+            tint = GoaldayDesign.InkSecondary,
+        )
     }
 }
