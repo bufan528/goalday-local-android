@@ -110,6 +110,7 @@ fun BoxScope.SpineLayer(
     active: Boolean,
     profile: TurnProfile = TurnProfile.DEFAULT,
 ) {
+    // spine：颜色 token 化，与深棕书皮（BookSpine）统一，原硬编码 0xFF6E4229/0xFFF8E8D5 收敛
     val baseWidth = if (profile == TurnProfile.HANDBOOK) 28.dp else 20.dp
     Box(
         modifier = Modifier
@@ -119,9 +120,9 @@ fun BoxScope.SpineLayer(
             .background(
                 Brush.horizontalGradient(
                     listOf(
-                        Color(0xFF6E4229).copy(alpha = if (active) 0.92f else 0.78f),
-                        Color(0xFFF8E8D5),
-                        Color(0xFF6E4229).copy(alpha = if (active) 0.92f else 0.78f),
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.92f else 0.78f),
+                        GoaldayDesign.PaperWarm,
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.92f else 0.78f),
                     ),
                 ),
             ),
@@ -151,9 +152,9 @@ fun BoxScope.SpineLayer(
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            Color(0x44FFF0DF).copy(alpha = (0.24f + visualProgress * 0.24f).coerceAtMost(0.46f)),
+                            GoaldayDesign.PaperWarm.copy(alpha = (0.24f + visualProgress * 0.24f).coerceAtMost(0.46f)),
                             Color(0x11000000),
-                            Color(0x44FFF0DF).copy(alpha = (0.24f + visualProgress * 0.24f).coerceAtMost(0.46f)),
+                            GoaldayDesign.PaperWarm.copy(alpha = (0.24f + visualProgress * 0.24f).coerceAtMost(0.46f)),
                         ),
                     ),
                 ),

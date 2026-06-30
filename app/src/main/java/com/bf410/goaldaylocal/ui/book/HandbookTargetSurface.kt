@@ -142,6 +142,8 @@ internal fun TargetDetailReplicaPage(
     var draft by rememberSaveable(pageTitle) { mutableStateOf("") }
     var editingItem by rememberSaveable(pageTitle) { mutableStateOf<String?>(null) }
     var editingText by rememberSaveable(pageTitle) { mutableStateOf("") }
+    // P1-3 精简：备注框+chip 行默认折叠，点击"展开"才显示，避免每项都像数据看板卡片
+    var expandedItem by rememberSaveable(pageTitle) { mutableStateOf<String?>(null) }
     val dateShortcuts = remember { targetDateShortcuts() }
     val completedCount = items.count { isChecked(pageTitle, it) }
     val scheduledByTitle = remember(schedulePreviewEntries, items) {
@@ -232,10 +234,16 @@ internal fun TargetDetailReplicaPage(
                     }
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            Text("目标档案", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                            // P1-3 精简：删除冗余"目标档案"标签，改为调度元信息直接显示
+                            TargetScheduleMeta(entries = scheduledEntries)
                             Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
-                                TextActionButton("详情", GoaldayDesign.InkSecondary) { onOpenTargetDetail(item) }
-                                TextActionButton("排入", GoaldayDesign.Pink) { onAddToSchedule(item, dateShortcuts.today) }
+                                // P1-3：合并"详情/排入"为单个"展开"切换，点击切换备注+chip 行的显隐
+                                TextActionButton(
+                                    if (expandedItem == item) "收起" else "展开",
+                                    GoaldayDesign.InkSecondary,
+                                ) {
+                                    expandedItem = if (expandedItem == item) null else item
+                                }
                             }
                         }
                         if (editingItem == item) {
@@ -277,47 +285,52 @@ internal fun TargetDetailReplicaPage(
                                 },
                             )
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            TargetScheduleMeta(entries = scheduledEntries)
-                            meta.deadlineDay?.let {
-                                Text("截止 ${it}日", color = GoaldayDesign.Positive, style = MaterialTheme.typography.labelSmall)
-                            }
+                        // P1-3：截止日期常驻显示（轻量信息），调度元信息已移到上方行
+                        meta.deadlineDay?.let {
+                            Text("截止 ${it}日", color = GoaldayDesign.Positive, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
-                BasicTextField(
-                    value = noteDraft,
-                    onValueChange = {
-                        noteDraft = it
-                        onUpdateTargetNote(item, it)
-                    },
-                    textStyle = MaterialTheme.typography.labelSmall.copy(color = GoaldayDesign.InkSecondary),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .background(Color(0x40FFFFFF))
-                        .border(0.45.dp, Color(0x12A88966), RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .padding(horizontal = 7.dp, vertical = 5.dp),
-                    decorationBox = { inner ->
-                        if (noteDraft.isBlank()) {
-                            Text("备注 / 做法 / 灵感", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                // P1-3 大修：备注框 + chip 行默认折叠，点击"展开"才显示
+                // 原代码每项都常驻 BasicTextField + 6 个 chip，10+ 交互元素像数据看板
+                // 折叠后每项仅 5-6 个元素（编号/勾选/标题/调度元信息/截止/展开按钮），回归手账节奏
+                if (expandedItem == item) {
+                    BasicTextField(
+                        value = noteDraft,
+                        onValueChange = {
+                            noteDraft = it
+                            onUpdateTargetNote(item, it)
+                        },
+                        textStyle = MaterialTheme.typography.labelSmall.copy(color = GoaldayDesign.InkSecondary),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .background(Color(0x40FFFFFF))
+                            .border(0.45.dp, Color(0x12A88966), RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .padding(horizontal = 7.dp, vertical = 5.dp),
+                        decorationBox = { inner ->
+                            if (noteDraft.isBlank()) {
+                                Text("备注 / 做法 / 灵感", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                            }
+                            inner()
+                        },
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                            TargetScheduleChip("今天") { onAddToSchedule(item, dateShortcuts.today) }
+                            TargetScheduleChip("明天") { onAddToSchedule(item, dateShortcuts.tomorrow) }
+                            TargetScheduleChip("周末") { onAddToSchedule(item, dateShortcuts.weekend) }
                         }
-                        inner()
-                    },
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-                        TargetScheduleChip("今天") { onAddToSchedule(item, dateShortcuts.today) }
-                        TargetScheduleChip("明天") { onAddToSchedule(item, dateShortcuts.tomorrow) }
-                        TargetScheduleChip("周末") { onAddToSchedule(item, dateShortcuts.weekend) }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-                        TargetDeadlineChip("今", active = meta.deadlineDay == dateShortcuts.today) { onUpdateTargetDeadline(item, dateShortcuts.today) }
-                        TargetDeadlineChip("明", active = meta.deadlineDay == dateShortcuts.tomorrow) { onUpdateTargetDeadline(item, dateShortcuts.tomorrow) }
-                        TargetDeadlineChip("清除", active = false) { onUpdateTargetDeadline(item, null) }
-                        if (item in customItems) {
-                            TextActionButton("删除", GoaldayDesign.Danger) { onRemoveCustomItem(item) }
+                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                            TargetDeadlineChip("今", active = meta.deadlineDay == dateShortcuts.today) { onUpdateTargetDeadline(item, dateShortcuts.today) }
+                            TargetDeadlineChip("明", active = meta.deadlineDay == dateShortcuts.tomorrow) { onUpdateTargetDeadline(item, dateShortcuts.tomorrow) }
+                            TargetDeadlineChip("清除", active = false) { onUpdateTargetDeadline(item, null) }
+                            if (item in customItems) {
+                                TextActionButton("删除", GoaldayDesign.Danger) { onRemoveCustomItem(item) }
+                            }
                         }
+                        // P1-3：详情入口移到展开区内，避免常驻按钮干扰
+                        TextActionButton("查看详情", GoaldayDesign.InkSecondary) { onOpenTargetDetail(item) }
                     }
                 }
             }

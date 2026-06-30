@@ -48,7 +48,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -163,8 +162,7 @@ internal fun HandbookReplicaPage(
     var dragPosition by remember(pageIndex) { mutableStateOf(Offset.Zero) }
     var activePoolDropDay by remember(pageIndex) { mutableStateOf<Int?>(null) }
     var activeDoneDropDay by remember(pageIndex) { mutableStateOf<Int?>(null) }
-    val context = LocalContext.current
-    var exportHint by remember(pageIndex) { mutableStateOf("") }
+    // P1-1：移除 context/exportHint（合并预览+快存为单个导出入口后，快存直接调用已删除）
     var longImagePreview by remember(pageIndex) { mutableStateOf<LongImagePreview?>(null) }
     fun clearPoolDrag() {
         draggingPoolItem = null
@@ -181,11 +179,6 @@ internal fun HandbookReplicaPage(
         if (saveHint.isBlank()) return@LaunchedEffect
         delay(1200)
         saveHint = ""
-    }
-    LaunchedEffect(exportHint) {
-        if (exportHint.isBlank()) return@LaunchedEffect
-        delay(1400)
-        exportHint = ""
     }
 
     Box(
@@ -221,11 +214,14 @@ internal fun HandbookReplicaPage(
                 draftDay = day
             },
         )
+        // P1-1 精简：右上角工具栏从 4 个 chip（手账/整月/预览/快存）收敛为 3 个
+        // "预览/快存"合并为单个"导出"（点击直接快存到本地），减少 App 浮动工具栏感
+        // 背景从 PinkTint 改为 Surface/InkMuted 素雅色，降低视觉噪音回归手账感
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 33.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ScheduleBoardMode.entries.forEach { mode ->
@@ -235,19 +231,20 @@ internal fun HandbookReplicaPage(
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(if (boardMode == mode) GoaldayDesign.Pink else GoaldayDesign.PinkTint)
+                        .background(if (boardMode == mode) GoaldayDesign.InkSecondary else GoaldayDesign.Surface)
                         .clickable { boardMode = mode }
                         .padding(horizontal = 7.dp, vertical = 3.dp),
                 )
             }
             Text(
-                "预览",
+                "导出",
                 color = GoaldayDesign.InkMuted,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(GoaldayDesign.PinkTint)
+                    .background(GoaldayDesign.Surface)
                     .clickable {
+                        // P1-1：合并预览+快存为单个"导出"入口，点击进入预览弹窗（弹窗内可保存）
                         longImagePreview = LongImagePreview(
                             title = "Goalday 日程手账",
                             subtitle = "$anchorYear 年 $anchorMonth 月 · $visibleRangeLabel",
@@ -257,22 +254,6 @@ internal fun HandbookReplicaPage(
                     }
                     .padding(horizontal = 7.dp, vertical = 3.dp),
             )
-            Text(
-                "快存",
-                color = GoaldayDesign.InkMuted,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(GoaldayDesign.PinkTint)
-                    .clickable {
-                        val uri = exportHandbookScheduleLongImage(context, anchorYear, anchorMonth, visibleDays, sorted, weeklyTheme)
-                        exportHint = if (uri != null) "已导出" else "导出失败"
-                    }
-                    .padding(horizontal = 7.dp, vertical = 3.dp),
-            )
-            if (exportHint.isNotBlank()) {
-                Text(exportHint, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
-            }
         }
         if (boardMode == ScheduleBoardMode.MONTH) {
             HandbookMonthBoard(
