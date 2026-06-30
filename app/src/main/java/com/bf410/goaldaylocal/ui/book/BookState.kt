@@ -4,6 +4,17 @@ import androidx.compose.runtime.Immutable
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.TargetItemMeta
 import com.bf410.goaldaylocal.data.TopicBook
+import java.time.LocalDate
+
+@Immutable
+data class OnThisDayDiary(
+    val date: LocalDate,
+    val yearsAgo: Int,
+    val bookTitle: String,
+    val pageTitle: String,
+    val preview: String,
+    val moodTags: String,
+)
 
 @Immutable
 data class BookUiState(

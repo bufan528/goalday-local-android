@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Typography
@@ -25,9 +27,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,7 +46,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -54,6 +57,7 @@ import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.home.HomeScreen
 import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+import com.bf410.goaldaylocal.ui.replica.LocalGoaldayDarkMode
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
 import com.bf410.goaldaylocal.START_TARGET_DIARY
 import com.tencent.mmkv.MMKV
@@ -74,10 +78,26 @@ private val goaldayColorScheme = lightColorScheme(
     outline = GoaldayDesign.InkMuted,
 )
 
-private enum class RootTab(val label: String, val iconText: String) {
-    BOOK("手账", "账"),
-    CALENDAR("日历", "历"),
-    SETTINGS("设置", "设"),
+private val goaldayDarkColorScheme = darkColorScheme(
+    primary = GoaldayDesign.Pink,
+    onPrimary = Color.White,
+    primaryContainer = GoaldayDesign.PinkSoft,
+    onPrimaryContainer = GoaldayDesign.DarkInkPrimary,
+    secondary = GoaldayDesign.RouteDiary,
+    onSecondary = Color.White,
+    surface = GoaldayDesign.DarkSurface,
+    onSurface = GoaldayDesign.DarkInkPrimary,
+    surfaceVariant = GoaldayDesign.DarkSurfaceSoft,
+    onSurfaceVariant = GoaldayDesign.DarkInkSecondary,
+    background = GoaldayDesign.DarkAppBg,
+    onBackground = GoaldayDesign.DarkInkPrimary,
+    outline = GoaldayDesign.DarkInkMuted,
+)
+
+private enum class RootTab(val label: String, val icon: ImageVector) {
+    BOOK("手账", Icons.AutoMirrored.Filled.MenuBook),
+    CALENDAR("日历", Icons.Filled.CalendarMonth),
+    SETTINGS("设置", Icons.Filled.Settings),
 }
 
 private enum class BookRootSurface {
@@ -108,6 +128,13 @@ fun GoaldayApp(startTarget: String? = null) {
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()
     val mmkv = remember { MMKV.defaultMMKV() }
+    var darkModePref by remember { mutableStateOf(mmkv.decodeString("dark_mode", "AUTO") ?: "AUTO") }
+    val systemDark = isSystemInDarkTheme()
+    val isDark = when (darkModePref) {
+        "DARK" -> true
+        "LIGHT" -> false
+        else -> systemDark
+    }
     var showGuide by remember { mutableStateOf(!mmkv.decodeBool(KEY_GUIDE_SEEN, false)) }
 
     val canGoBackInsideApp = tab != RootTab.BOOK ||
@@ -190,10 +217,25 @@ fun GoaldayApp(startTarget: String? = null) {
         }
         Typography().run {
             copy(
-                titleLarge = titleLarge.copy(fontSize = (22 * scale).sp),
-                titleMedium = titleMedium.copy(fontSize = (16 * scale).sp),
-                bodyLarge = bodyLarge.copy(fontSize = (16 * scale).sp),
-                bodyMedium = bodyMedium.copy(fontSize = (14 * scale).sp),
+                titleLarge = titleLarge.copy(
+                    fontFamily = GoaldayDesign.DisplayFontFamily,
+                    fontSize = (24 * scale).sp,
+                    fontWeight = FontWeight.SemiBold,
+                    lineHeight = (32 * scale).sp,
+                ),
+                titleMedium = titleMedium.copy(
+                    fontSize = (17 * scale).sp,
+                    fontWeight = FontWeight.SemiBold,
+                    lineHeight = (24 * scale).sp,
+                ),
+                bodyLarge = bodyLarge.copy(
+                    fontSize = (16 * scale).sp,
+                    lineHeight = (24 * scale).sp,
+                ),
+                bodyMedium = bodyMedium.copy(
+                    fontSize = (14 * scale).sp,
+                    lineHeight = (20 * scale).sp,
+                ),
                 bodySmall = bodySmall.copy(fontSize = (12 * scale).sp),
                 labelLarge = labelLarge.copy(fontSize = (14 * scale).sp),
                 labelMedium = labelMedium.copy(fontSize = (12 * scale).sp),
@@ -202,9 +244,10 @@ fun GoaldayApp(startTarget: String? = null) {
         }
     }
 
-    MaterialTheme(colorScheme = goaldayColorScheme, typography = goaldayTypography) {
+    MaterialTheme(colorScheme = if (isDark) goaldayDarkColorScheme else goaldayColorScheme, typography = goaldayTypography) {
+        CompositionLocalProvider(LocalGoaldayDarkMode provides isDark) {
         Scaffold(
-            containerColor = GoaldayDesign.AppBg,
+            containerColor = if (isDark) GoaldayDesign.DarkAppBg else GoaldayDesign.AppBg,
             bottomBar = {
                 GoaldayBottomDock(
                     selectedTab = tab,
@@ -226,7 +269,7 @@ fun GoaldayApp(startTarget: String? = null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(GoaldayDesign.AppBg)
+                    .background(if (isDark) GoaldayDesign.DarkAppBg else GoaldayDesign.AppBg)
                     .padding(padding)
                     .pointerInput(allowEdgeBackSwipe, edgeWidthPx, triggerDistancePx) {
                         if (!allowEdgeBackSwipe) return@pointerInput
@@ -323,6 +366,7 @@ fun GoaldayApp(startTarget: String? = null) {
                         RootTab.SETTINGS -> SettingsScreen(
                             onShowGuide = { showGuide = true },
                             onFontSizeChange = { fontSizeKey = it },
+                            onDarkModeChange = { darkModePref = it },
                         )
                     }
                 }
@@ -333,6 +377,7 @@ fun GoaldayApp(startTarget: String? = null) {
                     )
                 }
             }
+        }
         }
     }
 }
@@ -348,11 +393,12 @@ private fun BookRootScaffold(
     onOpenInspiration: () -> Unit,
     content: @Composable () -> Unit,
 ) {
+    val isDark = LocalGoaldayDarkMode.current
     val showRootHeader = surface != BookRootSurface.BOOK || entryMode == BookEntryMode.PLANNER
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(GoaldayDesign.AppBg),
+            .background(if (isDark) GoaldayDesign.DarkAppBg else GoaldayDesign.AppBg),
     ) {
         if (showRootHeader) {
             BookRootHeader(
@@ -381,13 +427,6 @@ private fun BookRootHeader(
     onOpenDiary: () -> Unit,
     onOpenInspiration: () -> Unit,
 ) {
-    val routeLabel = when {
-        surface == BookRootSurface.HOME -> "fragment_schedule"
-        surface == BookRootSurface.INSPIRATION -> "TopicCenter"
-        entryMode == BookEntryMode.DIARY -> "DiaryActivity"
-        entryMode == BookEntryMode.HANDBOOK -> "BookActivity"
-        else -> "BookLibrary"
-    }
     val subtitle = when {
         surface == BookRootSurface.HOME -> "今日计划、拖拽日程和桌面组件都在本地运行"
         surface == BookRootSurface.INSPIRATION -> "专题目标、导入任务和保存手账本"
@@ -395,46 +434,29 @@ private fun BookRootHeader(
         entryMode == BookEntryMode.HANDBOOK -> "翻页手账、日程页、目标页和日记页"
         else -> "书库、本子封面和本地模板"
     }
+    val isDark = LocalGoaldayDarkMode.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(GoaldayDesign.Paper)
+            .background(if (isDark) GoaldayDesign.DarkSurface else GoaldayDesign.Paper)
             .shadow(GoaldayDesign.ShadowSoft, RoundedCornerShape(bottomStart = GoaldayDesign.Radius2XL, bottomEnd = GoaldayDesign.Radius2XL))
             .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = GoaldayDesign.HairlineAlpha), RoundedCornerShape(bottomStart = GoaldayDesign.Radius2XL, bottomEnd = GoaldayDesign.Radius2XL))
             .padding(horizontal = GoaldayDesign.Space4, vertical = GoaldayDesign.Space3),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.weight(1f)) {
-                Text(
-                    "Goalday 手账",
-                    color = GoaldayDesign.InkPrimary,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                )
-                Text(
-                    subtitle,
-                    color = GoaldayDesign.InkMuted,
-                    style = MaterialTheme.typography.labelSmall,
-                    maxLines = 1,
-                )
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.fillMaxWidth()) {
             Text(
-                routeLabel,
-                color = GoaldayDesign.Pink,
-                style = MaterialTheme.typography.labelSmall,
+                "Goalday 手账",
+                color = if (isDark) GoaldayDesign.DarkInkPrimary else GoaldayDesign.InkPrimary,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .background(GoaldayDesign.PinkSoft)
-                    .border(GoaldayDesign.Hairline, GoaldayDesign.Pink.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
+            )
+            Text(
+                subtitle,
+                color = if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.InkMuted,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
             )
         }
         Row(
@@ -446,31 +468,31 @@ private fun BookRootHeader(
         ) {
             BookRootSegmentChip(
                 label = "今日",
-                code = "今",
+                icon = Icons.Filled.Today,
                 selected = surface == BookRootSurface.HOME,
                 onClick = onOpenHome,
             )
             BookRootSegmentChip(
                 label = "书库",
-                code = "书",
+                icon = Icons.Filled.LibraryBooks,
                 selected = surface == BookRootSurface.BOOK && entryMode == BookEntryMode.PLANNER,
                 onClick = onOpenLibrary,
             )
             BookRootSegmentChip(
                 label = "手账",
-                code = "账",
+                icon = Icons.AutoMirrored.Filled.MenuBook,
                 selected = surface == BookRootSurface.BOOK && entryMode == BookEntryMode.HANDBOOK,
                 onClick = onOpenHandbook,
             )
             BookRootSegmentChip(
                 label = "日记",
-                code = "记",
+                icon = Icons.Filled.EditNote,
                 selected = surface == BookRootSurface.BOOK && entryMode == BookEntryMode.DIARY,
                 onClick = onOpenDiary,
             )
             BookRootSegmentChip(
                 label = "灵感",
-                code = "灵",
+                icon = Icons.Filled.Lightbulb,
                 selected = surface == BookRootSurface.INSPIRATION,
                 onClick = onOpenInspiration,
             )
@@ -481,39 +503,35 @@ private fun BookRootHeader(
 @Composable
 private fun BookRootSegmentChip(
     label: String,
-    code: String,
+    icon: ImageVector,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    val isDark = LocalGoaldayDarkMode.current
     Row(
         modifier = Modifier
             .height(34.dp)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .background(if (selected) GoaldayDesign.Pink else Color.White.copy(alpha = 0.78f))
+            .background(if (selected) GoaldayDesign.Pink else if (isDark) GoaldayDesign.DarkSurfaceSoft else Color.White.copy(alpha = 0.78f))
             .border(
                 width = GoaldayDesign.Hairline,
                 color = if (selected) GoaldayDesign.Pink.copy(alpha = 0.38f) else GoaldayDesign.BorderColor.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(GoaldayDesign.RadiusPill),
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space1),
         horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            code,
-            color = if (selected) Color.White else GoaldayDesign.Pink,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .background(if (selected) Color.White.copy(alpha = 0.20f) else GoaldayDesign.PinkSoft)
-                .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (selected) Color.White else GoaldayDesign.Pink,
+            modifier = Modifier.size(16.dp),
         )
         Text(
             label,
-            color = if (selected) Color.White else GoaldayDesign.InkSecondary,
+            color = if (selected) Color.White else if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.InkSecondary,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             maxLines = 1,
@@ -526,6 +544,7 @@ private fun GoaldayBottomDock(
     selectedTab: RootTab,
     onSelect: (RootTab) -> Unit,
 ) {
+    val isDark = LocalGoaldayDarkMode.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -534,7 +553,7 @@ private fun GoaldayBottomDock(
                 shape = RoundedCornerShape(topStart = GoaldayDesign.Radius2XL, topEnd = GoaldayDesign.Radius2XL)
             )
             .clip(RoundedCornerShape(topStart = GoaldayDesign.Radius2XL, topEnd = GoaldayDesign.Radius2XL))
-            .background(GoaldayDesign.Paper)
+            .background(if (isDark) GoaldayDesign.DarkSurface else GoaldayDesign.Paper)
             .border(
                 width = GoaldayDesign.Hairline,
                 color = GoaldayDesign.BorderColor.copy(alpha = 0.08f),
@@ -562,6 +581,7 @@ private fun GoaldayBottomDockItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isDark = LocalGoaldayDarkMode.current
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
@@ -579,24 +599,15 @@ private fun GoaldayBottomDockItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(
-            text = tab.iconText,
-            color = if (selected) Color.White else GoaldayDesign.InkMuted,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            modifier = Modifier
-                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .background(
-                    if (selected) GoaldayDesign.Pink
-                    else GoaldayDesign.BorderColor.copy(alpha = 0.06f)
-                )
-                .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
+        Icon(
+            imageVector = tab.icon,
+            contentDescription = tab.label,
+            tint = if (selected) GoaldayDesign.Pink else if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.InkMuted,
+            modifier = Modifier.size(22.dp),
         )
         Text(
             text = tab.label,
-            color = if (selected) GoaldayDesign.InkPrimary else GoaldayDesign.InkMuted,
+            color = if (selected) (if (isDark) GoaldayDesign.DarkInkPrimary else GoaldayDesign.InkPrimary) else if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.InkMuted,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             maxLines = 1,

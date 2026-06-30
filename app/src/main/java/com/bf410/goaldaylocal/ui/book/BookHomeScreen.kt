@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -776,6 +777,22 @@ private fun ShelfBookCover(
                 ),
             )
             .border(0.8.dp, Color(0x38FFFFFF), shape)
+            .drawBehind {
+                // 书页厚度堆叠线：右侧 3 条递减细线，模拟内页层叠纹理
+                val w = size.width
+                val h = size.height
+                val lineColor = Color(0xFF5D4B3D)
+                val top = 6.dp.toPx()
+                repeat(3) { i ->
+                    val x = w - 4.dp.toPx() - i * 3.dp.toPx()
+                    drawLine(
+                        color = lineColor.copy(alpha = 0.20f - i * 0.05f),
+                        start = Offset(x, top),
+                        end = Offset(x, h - top),
+                        strokeWidth = 0.6.dp.toPx(),
+                    )
+                }
+            }
             .clickable(onClick = onClick)
             .padding(10.dp),
     ) {

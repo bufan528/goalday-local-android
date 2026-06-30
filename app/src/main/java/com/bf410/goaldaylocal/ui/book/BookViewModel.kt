@@ -780,6 +780,37 @@ class BookViewModel(
         }
     }
 
+    // 那年今日闪回：枚举所有历史日记，筛选与给定日期同月同日且往年的记录
+    fun loadOnThisDayFor(date: LocalDate): List<OnThisDayDiary> {
+        val results = mutableListOf<OnThisDayDiary>()
+        for (book in allBooks()) {
+            for (page in book.pages) {
+                if (page !is DiaryPage) continue
+                val raw = store.diaryText(book.id, page.title)
+                if (raw.isBlank()) continue
+                val parsed = StructuredDiary.fromRaw(raw)
+                val d = parsed.date
+                if (d.month == date.month && d.dayOfMonth == date.dayOfMonth && d.year < date.year) {
+                    val previewText = plainTextFromHtml(parsed.richHtml).ifBlank {
+                        listOf(parsed.todayDone, parsed.smallJoy, parsed.workTasks, parsed.canImprove)
+                            .firstOrNull { it.isNotBlank() } ?: ""
+                    }
+                    results.add(
+                        OnThisDayDiary(
+                            date = d,
+                            yearsAgo = date.year - d.year,
+                            bookTitle = book.title,
+                            pageTitle = page.title,
+                            preview = previewText.take(80),
+                            moodTags = parsed.moodTags,
+                        ),
+                    )
+                }
+            }
+        }
+        return results.sortedByDescending { it.date }
+    }
+
     private fun diaryScheduleSourceNote(book: TopicBook, page: DiaryPage): String =
         "日记同步 · ${book.title} · ${page.title}"
 

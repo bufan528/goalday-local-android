@@ -15,6 +15,7 @@ import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.TargetItemMeta
+import com.tencent.mmkv.MMKV
 
 @Composable
 fun BookReader(
@@ -70,6 +71,63 @@ fun BookReader(
     val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 8.dp else 28.dp
     val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 8.dp else 26.dp
 
+    val turnStyle = remember {
+        val raw = MMKV.defaultMMKV().decodeString("page_turn_style", "SIMULATION")
+        runCatching { PageTurnStyle.valueOf(raw.uppercase()) }.getOrDefault(PageTurnStyle.SIMULATION)
+    }
+
+    @Composable
+    fun renderActivePage(modifier: Modifier, progress: Float, direction: TurnDirection?) {
+        ActivePageLayer(
+            modifier = modifier,
+            page = page,
+            pageIndex = pageIndex,
+            pageCount = pageCount,
+            bookTitle = bookTitle,
+            subtitle = subtitle,
+            tint = tint,
+            isSaved = isSaved,
+            diaryDraft = diaryDraft,
+            customPageItems = customPageItems,
+            weeklyTheme = weeklyTheme,
+            todayPlanItems = todayPlanItems,
+            todayCompletedItems = todayCompletedItems,
+            schedulePreviewEntries = schedulePreviewEntries,
+            targetItemMeta = targetItemMeta,
+            onToggleSaved = onToggleSaved,
+            isChecked = isChecked,
+            onToggleChecked = onToggleChecked,
+            onDiaryChange = onDiaryChange,
+            onAddCustomItem = onAddCustomItem,
+            onAddCustomItemWithDeadline = onAddCustomItemWithDeadline,
+            onRemoveCustomItem = onRemoveCustomItem,
+            onRenameCustomItem = onRenameCustomItem,
+            onAddToSchedule = onAddToSchedule,
+            onAddHandbookPoolItem = onAddHandbookPoolItem,
+            onRemoveHandbookPoolItem = onRemoveHandbookPoolItem,
+            onAddScheduleFromHandbook = onAddScheduleFromHandbook,
+            onWeeklyThemeChange = onWeeklyThemeChange,
+            onMoveItemToToday = onMoveItemToToday,
+            onMoveItemToCompleted = onMoveItemToCompleted,
+            onRestoreItemFromToday = onRestoreItemFromToday,
+            onRestoreItemFromCompleted = onRestoreItemFromCompleted,
+            onUpdateScheduleTitle = onUpdateScheduleTitle,
+            onMoveScheduleDay = onMoveScheduleDay,
+            onToggleScheduleCompleted = onToggleScheduleCompleted,
+            onUpdateTargetNote = onUpdateTargetNote,
+            onUpdateTargetDeadline = onUpdateTargetDeadline,
+            onOpenTargetDetail = onOpenTargetDetail,
+            pendingCommand = diaryCommand,
+            onCommand = { diaryCommand = it },
+            contentMode = contentMode,
+            onContentModeChange = { contentMode = it },
+            handbookMode = handbookMode,
+            turnProgress = progress,
+            turnDirection = direction,
+        )
+    }
+
+    if (turnStyle == PageTurnStyle.SIMULATION) {
     PageTurnEngine(
         canTurnPrevious = previousPage != null,
         canTurnNext = nextPage != null,
@@ -178,59 +236,38 @@ fun BookReader(
             )
         },
         activePage = { progress, direction, anchorY ->
-            ActivePageLayer(
+            renderActivePage(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = pagePaddingH, vertical = pagePaddingV)
                     .turningPageTransform(direction, progress, anchorY, turnProfile),
-                page = page,
-                pageIndex = pageIndex,
-                pageCount = pageCount,
-                bookTitle = bookTitle,
-                subtitle = subtitle,
-                tint = tint,
-                isSaved = isSaved,
-                diaryDraft = diaryDraft,
-                customPageItems = customPageItems,
-                weeklyTheme = weeklyTheme,
-                todayPlanItems = todayPlanItems,
-                todayCompletedItems = todayCompletedItems,
-                schedulePreviewEntries = schedulePreviewEntries,
-                targetItemMeta = targetItemMeta,
-                onToggleSaved = onToggleSaved,
-                isChecked = isChecked,
-                onToggleChecked = onToggleChecked,
-                onDiaryChange = onDiaryChange,
-                onAddCustomItem = onAddCustomItem,
-                onAddCustomItemWithDeadline = onAddCustomItemWithDeadline,
-                onRemoveCustomItem = onRemoveCustomItem,
-                onRenameCustomItem = onRenameCustomItem,
-                onAddToSchedule = onAddToSchedule,
-                onAddHandbookPoolItem = onAddHandbookPoolItem,
-                onRemoveHandbookPoolItem = onRemoveHandbookPoolItem,
-                onAddScheduleFromHandbook = onAddScheduleFromHandbook,
-                onWeeklyThemeChange = onWeeklyThemeChange,
-                onMoveItemToToday = onMoveItemToToday,
-                onMoveItemToCompleted = onMoveItemToCompleted,
-                onRestoreItemFromToday = onRestoreItemFromToday,
-                onRestoreItemFromCompleted = onRestoreItemFromCompleted,
-                onUpdateScheduleTitle = onUpdateScheduleTitle,
-                onMoveScheduleDay = onMoveScheduleDay,
-                onToggleScheduleCompleted = onToggleScheduleCompleted,
-                onUpdateTargetNote = onUpdateTargetNote,
-                onUpdateTargetDeadline = onUpdateTargetDeadline,
-                onOpenTargetDetail = onOpenTargetDetail,
-                pendingCommand = diaryCommand,
-                onCommand = { diaryCommand = it },
-                contentMode = contentMode,
-                onContentModeChange = { contentMode = it },
-                handbookMode = handbookMode,
-                turnProgress = progress,
-                turnDirection = direction,
+                progress = progress,
+                direction = direction,
             )
         },
         spine = { visualProgress, active ->
             SpineLayer(visualProgress = visualProgress, active = active, profile = turnProfile)
         },
     )
+    } else {
+        // 非仿真翻页：覆盖/滚动/无动画，复用 BookShell 外壳 + AnimatedContent 切换
+        SimplePageTurner(
+            pageKey = pageIndex,
+            canTurnPrevious = previousPage != null,
+            canTurnNext = nextPage != null,
+            turnEnabled = turnEnabled,
+            onFlipNext = onFlipNext,
+            onFlipPrevious = onFlipPrevious,
+            shellStyle = shellStyle,
+            style = turnStyle,
+        ) {
+            renderActivePage(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = pagePaddingH, vertical = pagePaddingV),
+                progress = 0f,
+                direction = null,
+            )
+        }
+    }
 }

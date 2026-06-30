@@ -26,6 +26,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +54,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -82,6 +84,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.PlanPage
@@ -959,6 +962,12 @@ private fun DiarySection(
 ) {
     val editingDiary = contentMode as? PageContentMode.EditingDiary
     var structured by remember(title, diaryDraft) { mutableStateOf(StructuredDiary.fromRaw(diaryDraft)) }
+    // 那年今日闪回：基于当前日记日期查询往年同月同日记录
+    val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
+    val onThisDayFlashbacks = remember(structured.date, diaryDraft) {
+        bookViewModel.loadOnThisDayFor(structured.date)
+    }
+    var expandedFlashback by remember(title) { mutableStateOf<OnThisDayDiary?>(null) }
     var exportHint by remember(title) { mutableStateOf("") }
     var showDatePicker by remember(title) { mutableStateOf(false) }
     var longImagePreview by remember(title) { mutableStateOf<LongImagePreview?>(null) }
@@ -1002,6 +1011,12 @@ private fun DiarySection(
             .padding(horizontal = 10.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
+        if (onThisDayFlashbacks.isNotEmpty()) {
+            OnThisDayFlashbackStrip(
+                flashbacks = onThisDayFlashbacks,
+                onClick = { expandedFlashback = it },
+            )
+        }
         DiaryWorkspaceHeader(
             title = title,
             prompt = prompt,
@@ -1133,6 +1148,152 @@ private fun DiarySection(
             preview = preview,
             onDismiss = { longImagePreview = null },
         )
+    }
+    expandedFlashback?.let { flashback ->
+        OnThisDayFlashbackDialog(
+            flashback = flashback,
+            onDismiss = { expandedFlashback = null },
+        )
+    }
+}
+
+// 那年今日闪回卡片条：横向滚动展示往年同月同日的日记
+@Composable
+private fun OnThisDayFlashbackStrip(
+    flashbacks: List<OnThisDayDiary>,
+    onClick: (OnThisDayDiary) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                "💌 那年今日",
+                style = MaterialTheme.typography.labelMedium,
+                color = GoaldayDesign.Today,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                "${flashbacks.size} 条回忆",
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.InkMuted,
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            flashbacks.forEach { flashback ->
+                OnThisDayFlashbackChip(flashback = flashback, onClick = { onClick(flashback) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun OnThisDayFlashbackChip(
+    flashback: OnThisDayDiary,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .width(180.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFFFFAF3))
+            .border(0.7.dp, GoaldayDesign.Today.copy(alpha = 0.22f), RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "${flashback.yearsAgo} 年前",
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.Today,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                diaryDateLabel(flashback.date),
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.InkMuted,
+            )
+        }
+        Text(
+            flashback.preview.ifBlank { "（这一天没有留下文字）" },
+            style = MaterialTheme.typography.bodySmall,
+            color = GoaldayDesign.InkSecondary,
+            maxLines = 2,
+        )
+    }
+}
+
+@Composable
+private fun OnThisDayFlashbackDialog(
+    flashback: OnThisDayDiary,
+    onDismiss: () -> Unit,
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = Color(0xFFFFFEFC),
+            tonalElevation = 6.dp,
+            shadowElevation = 12.dp,
+            border = BorderStroke(0.7.dp, GoaldayDesign.Today.copy(alpha = 0.22f)),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            "那年今日 · ${flashback.yearsAgo} 年前",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = GoaldayDesign.Today,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            flashback.date.toString(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GoaldayDesign.InkMuted,
+                        )
+                    }
+                    TextButton(onClick = onDismiss) {
+                        Text("关闭", color = GoaldayDesign.InkSecondary)
+                    }
+                }
+                if (flashback.moodTags.isNotBlank()) {
+                    Text(
+                        "心情：${flashback.moodTags}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = GoaldayDesign.Pink,
+                    )
+                }
+                Text(
+                    flashback.preview.ifBlank { "（这一天没有留下更多文字）" },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = GoaldayDesign.InkPrimary,
+                )
+                Text(
+                    "来自《${flashback.bookTitle}》· ${flashback.pageTitle}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GoaldayDesign.InkMuted,
+                )
+            }
+        }
     }
 }
 

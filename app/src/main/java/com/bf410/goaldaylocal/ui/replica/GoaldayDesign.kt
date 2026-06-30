@@ -1,9 +1,14 @@
 package com.bf410.goaldaylocal.ui.replica
 
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+
+// 暗色模式开关：由 GoaldayApp 顶层根据 MMKV "dark_mode" (AUTO/LIGHT/DARK) + 系统主题决定后提供
+val LocalGoaldayDarkMode = compositionLocalOf { false }
 
 object GoaldayDesign {
     val AppBg = Color(0xFFFAF8F4)
@@ -39,6 +44,14 @@ object GoaldayDesign {
     val RouteDiary = Color(0xFFB07A8F)
     val RouteTarget = Color(0xFF6F8E68)
     val RouteOverview = Color(0xFF8F684F)
+
+    // 语义强调色（仿 Things 3：颜色仅承担语义，95% 中性 + 5% 语义）
+    // today=今日暖琥珀 / deadline=截止柔和红 / evening=晚间靛 / someday=某天中性灰 / habit=习惯柔和绿
+    val Today = Color(0xFFE8A33D)
+    val Deadline = Color(0xFFC75B5B)
+    val Evening = Color(0xFF6B7AA8)
+    val Someday = Color(0xFF8A8175)
+    val Habit = Color(0xFF6B8E5A)
 
     val RadiusS = 8.dp
     val RadiusM = 12.dp
@@ -89,4 +102,19 @@ object GoaldayDesign {
 
     val CardPaperGradient: Brush
         get() = Brush.verticalGradient(listOf(Color(0xFFFFFEFA), Paper, Color(0xFFFFF2E1)))
+
+    // 暗色色板储备（夜间纸张色，非纯黑，保留手账暖意）
+    val DarkAppBg = Color(0xFF221E1A)
+    val DarkSurface = Color(0xFF2C2722)
+    val DarkSurfaceSoft = Color(0xFF332D27)
+    val DarkInkPrimary = Color(0xFFF0E9DD)
+    val DarkInkSecondary = Color(0xFFB8AE9F)
+    val DarkInkMuted = Color(0xFF8A8175)
+    val DarkPaper = Color(0xFF2A2620)
+    val DarkPaperWarm = Color(0xFF2F2A22)
+    val DarkDivider = Color(0x14FFFFFF)
+
+    // 字体族 token：封面/大标题用衬线（宋体感）建立手账氛围，UI 正文用默认无衬线保可读性
+    val DisplayFontFamily: FontFamily get() = FontFamily.Serif
+    val BodyFontFamily: FontFamily get() = FontFamily.Default
 }

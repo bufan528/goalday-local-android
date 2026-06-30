@@ -55,7 +55,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
@@ -759,13 +762,25 @@ private fun TaskLine(
     onDragCancel: () -> Unit,
 ) {
     var rowOrigin by remember(entry.id) { mutableStateOf(Offset.Zero) }
+    val haptic = LocalHapticFeedback.current
+    // 勾选多巴胺动画：完成瞬间图标从 0.6 弹到 1.0（spring 过冲），仿 Things 3 完成反馈
+    val bounce = remember(entry.id) { Animatable(1f) }
+    LaunchedEffect(entry.completed) {
+        if (entry.completed) {
+            bounce.snapTo(0.6f)
+            bounce.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium))
+        }
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(if (entry.completed) 0.dp else 2.dp, RoundedCornerShape(12.dp), clip = false)
             .background(if (entry.completed) Color(0x0D39A76D) else Color(0xFAFFFDF8), RoundedCornerShape(12.dp))
             .border(0.6.dp, if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.14f) else Color(0x18A88966), RoundedCornerShape(12.dp))
-            .combinedClickable(onClick = { onToggleDone(entry) }, onLongClick = { onGrab(entry) })
+            .combinedClickable(onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onToggleDone(entry)
+            }, onLongClick = { onGrab(entry) })
             .onGloballyPositioned { rowOrigin = it.boundsInRoot().topLeft }
             .pointerInput(entry.id) {
                 detectDragGesturesAfterLongPress(
@@ -788,6 +803,7 @@ private fun TaskLine(
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
+                .graphicsLayer { scaleX = bounce.value; scaleY = bounce.value }
                 .background(if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.Pink, RoundedCornerShape(99.dp))
                 .padding(horizontal = 6.dp, vertical = 2.dp),
         )

@@ -1,5 +1,6 @@
 package com.bf410.goaldaylocal.ui.book
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,17 +9,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 
 @Composable
@@ -48,6 +54,7 @@ internal fun StructuredDiaryEditor(
 ) {
     val dateLabel = remember(state.dateIso) { diaryDateLabel(state.date) }
     var richEditorExpanded by remember(state.dateIso) { mutableStateOf(false) }
+    var promptGridVisible by remember { mutableStateOf(false) }
     var focusedBlockIndex by remember(state.blocksRaw) { mutableStateOf(0) }
     val editorTextCount = state.blocks.count { it.type == DiaryBlockType.TEXT } +
         listOf(state.todayDone, state.workTasks, state.smallJoy, state.canImprove, state.richHtml)
@@ -71,6 +78,10 @@ internal fun StructuredDiaryEditor(
             onAddTargetChildBlock = { onStateChange(state.withTargetChildBlock()) },
             onCommand = onCommand,
             onDone = onDone,
+            onShowPrompts = {
+                promptGridVisible = true
+                richEditorExpanded = true
+            },
         )
         DiaryFocusedBlockToolbar(
             block = focusedBlock,
@@ -181,6 +192,15 @@ internal fun StructuredDiaryEditor(
                 onRemoveImage = onRemoveImage,
             )
         }
+        if (promptGridVisible) {
+            DiaryPromptGridDialog(
+                onDismiss = { promptGridVisible = false },
+                onInsert = { title, hint ->
+                    onStateChange(state.withRichHtml(state.richHtml + "<p><b>${title}</b></p><p>${hint}</p>"))
+                    promptGridVisible = false
+                },
+            )
+        }
     }
 }
 
@@ -197,6 +217,7 @@ private fun DiaryEditorToolbar(
     onAddTargetChildBlock: () -> Unit,
     onCommand: (RichEditorCommand) -> Unit,
     onDone: () -> Unit,
+    onShowPrompts: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -242,6 +263,7 @@ private fun DiaryEditorToolbar(
             DiaryEditorToolChip("H1", Color(0xFF8F684F)) { onCommand(RichEditorCommand("formatBlock", "h1")) }
             DiaryEditorToolChip("引用", Color(0xFF9EAADB)) { onCommand(RichEditorCommand("formatBlock", "blockquote")) }
             DiaryEditorToolChip("列表", GoaldayDesign.Positive) { onCommand(RichEditorCommand("insertUnorderedList")) }
+            DiaryEditorToolChip("灵感", GoaldayDesign.Today, onShowPrompts)
         }
     }
 }
@@ -573,5 +595,121 @@ private fun DiaryBlockTypeBadge(
     ) {
         Text(diaryBlockTypeIcon(type), color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
         Text("%02d".format(index), color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+    }
+}
+
+// 9 宫格灵感 prompt 模板：在富文本编辑器中插入写作提示
+private data class DiaryPromptTemplate(
+    val emoji: String,
+    val title: String,
+    val hint: String,
+)
+
+private val DiaryPromptTemplates = listOf(
+    DiaryPromptTemplate("🙏", "今日感恩", "写下今天值得感恩的三件小事..."),
+    DiaryPromptTemplate("🏆", "今日成就", "今天完成了什么让自己骄傲的事？"),
+    DiaryPromptTemplate("💭", "情绪记录", "此刻的情绪是什么，从何而来？"),
+    DiaryPromptTemplate("🤝", "与人连接", "今天与谁有过温暖的互动？"),
+    DiaryPromptTemplate("🌱", "学到的事", "今天学到的新知识或感悟..."),
+    DiaryPromptTemplate("⛰️", "今日挑战", "遇到了什么困难，如何应对？"),
+    DiaryPromptTemplate("☕", "小确幸", "今天微小但确实的幸福瞬间..."),
+    DiaryPromptTemplate("📌", "明日计划", "明天最重要的一件事是什么？"),
+    DiaryPromptTemplate("🪞", "自我对话", "对现在的自己说一句话..."),
+)
+
+@Composable
+private fun DiaryPromptGridDialog(
+    onDismiss: () -> Unit,
+    onInsert: (title: String, hint: String) -> Unit,
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = Color(0xFFFFFEFC),
+            tonalElevation = 6.dp,
+            shadowElevation = 12.dp,
+            border = BorderStroke(0.7.dp, Color(0x18B7A893)),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            "写作灵感",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = GoaldayDesign.InkPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            "选择一个提示，开启今日的记录",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GoaldayDesign.InkMuted,
+                        )
+                    }
+                    TextButton(onClick = onDismiss) {
+                        Text("关闭", color = GoaldayDesign.InkSecondary)
+                    }
+                }
+                DiaryPromptTemplates.chunked(3).forEach { rowItems ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        rowItems.forEach { template ->
+                            DiaryPromptCell(
+                                template = template,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onInsert(template.title, template.hint) },
+                            )
+                        }
+                        repeat(3 - rowItems.size) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DiaryPromptCell(
+    template: DiaryPromptTemplate,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color(0xFFFFFAF3))
+            .border(0.7.dp, GoaldayDesign.Today.copy(alpha = 0.18f), RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(template.emoji, style = MaterialTheme.typography.titleLarge)
+        Text(
+            template.title,
+            style = MaterialTheme.typography.labelMedium,
+            color = GoaldayDesign.InkPrimary,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+        Text(
+            template.hint,
+            style = MaterialTheme.typography.labelSmall,
+            color = GoaldayDesign.InkMuted,
+            maxLines = 2,
+            textAlign = TextAlign.Center,
+        )
     }
 }

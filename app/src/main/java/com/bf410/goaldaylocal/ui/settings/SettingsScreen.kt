@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.data.BackupManager
 import com.bf410.goaldaylocal.data.BackupSnapshot
+import com.bf410.goaldaylocal.ui.book.PageTurnStyle
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,8 @@ import java.util.Date
 import java.util.Locale
 
 private const val KEY_FONT_SIZE = "settings_font_size"
+private const val KEY_PAGE_TURN_STYLE = "page_turn_style"
+private const val KEY_DARK_MODE = "dark_mode"
 
 private data class FontSizeOption(
     val key: String,
@@ -64,6 +67,7 @@ private data class FontSizeOption(
 fun SettingsScreen(
     onShowGuide: () -> Unit = {},
     onFontSizeChange: (String) -> Unit = {},
+    onDarkModeChange: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     val manager = remember { BackupManager(context) }
@@ -71,6 +75,29 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     var refreshTick by remember { mutableIntStateOf(0) }
     var selectedFont by remember { mutableStateOf(mmkv.decodeString(KEY_FONT_SIZE, "standard") ?: "standard") }
+    var selectedTurnStyle by remember {
+        mutableStateOf(
+            runCatching {
+                PageTurnStyle.valueOf((mmkv.decodeString(KEY_PAGE_TURN_STYLE, "SIMULATION") ?: "SIMULATION").uppercase())
+            }.getOrDefault(PageTurnStyle.SIMULATION).name
+        )
+    }
+    val turnStyleOptions = remember {
+        listOf(
+            PageTurnStyleOption("SIMULATION", "仿真"),
+            PageTurnStyleOption("COVER", "覆盖"),
+            PageTurnStyleOption("SCROLL", "滚动"),
+            PageTurnStyleOption("NONE", "无动画"),
+        )
+    }
+    var selectedDarkMode by remember { mutableStateOf(mmkv.decodeString(KEY_DARK_MODE, "AUTO") ?: "AUTO") }
+    val darkModeOptions = remember {
+        listOf(
+            DarkModeOption("AUTO", "跟随系统"),
+            DarkModeOption("LIGHT", "浅色"),
+            DarkModeOption("DARK", "深色"),
+        )
+    }
     var pendingRestore by remember { mutableStateOf<BackupSnapshot?>(null) }
     var pendingDelete by remember { mutableStateOf<BackupSnapshot?>(null) }
 
@@ -157,6 +184,25 @@ fun SettingsScreen(
                     mmkv.encode(KEY_FONT_SIZE, option.key)
                     onFontSizeChange(option.key)
                     Toast.makeText(context, "字号已设为：${option.label}", Toast.LENGTH_SHORT).show()
+                },
+            )
+            PageTurnStyleMenu(
+                options = turnStyleOptions,
+                selected = selectedTurnStyle,
+                onSelected = { option ->
+                    selectedTurnStyle = option.key
+                    mmkv.encode(KEY_PAGE_TURN_STYLE, option.key)
+                    Toast.makeText(context, "翻页方式已设为：${option.label}", Toast.LENGTH_SHORT).show()
+                },
+            )
+            DarkModeMenu(
+                options = darkModeOptions,
+                selected = selectedDarkMode,
+                onSelected = { option ->
+                    selectedDarkMode = option.key
+                    mmkv.encode(KEY_DARK_MODE, option.key)
+                    onDarkModeChange(option.key)
+                    Toast.makeText(context, "外观已设为：${option.label}", Toast.LENGTH_SHORT).show()
                 },
             )
         }
@@ -617,6 +663,148 @@ private fun FontSizeMenu(
                         )
                         .clickable { onSelected(option) }
                         .padding(horizontal = GoaldayDesign.Space3 + 1.dp, vertical = GoaldayDesign.Space1 + 2.dp),
+                )
+            }
+        }
+    }
+}
+
+private data class PageTurnStyleOption(
+    val key: String,
+    val label: String,
+)
+
+@Composable
+private fun PageTurnStyleMenu(
+    options: List<PageTurnStyleOption>,
+    selected: String,
+    onSelected: (PageTurnStyleOption) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = GoaldayDesign.ShadowSoft / 2,
+                shape = RoundedCornerShape(GoaldayDesign.RadiusM)
+            )
+            .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(
+                width = GoaldayDesign.Hairline,
+                color = GoaldayDesign.BorderColor.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(GoaldayDesign.RadiusM)
+            )
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space3),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "翻页方式",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = GoaldayDesign.InkPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "仿真模式最贴近真实书本，覆盖/滚动更轻量。",
+                    color = GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Text(
+                options.firstOrNull { it.key == selected }?.label ?: "仿真",
+                color = GoaldayDesign.Pink,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
+            options.forEach { option ->
+                val active = option.key == selected
+                Text(
+                    option.label,
+                    color = if (active) Color.White else GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(
+                            if (active) GoaldayDesign.Pink else GoaldayDesign.SurfaceSoft,
+                            RoundedCornerShape(GoaldayDesign.RadiusPill)
+                        )
+                        .clickable { onSelected(option) }
+                        .padding(vertical = GoaldayDesign.Space1 + 2.dp),
+                )
+            }
+        }
+    }
+}
+
+private data class DarkModeOption(
+    val key: String,
+    val label: String,
+)
+
+@Composable
+private fun DarkModeMenu(
+    options: List<DarkModeOption>,
+    selected: String,
+    onSelected: (DarkModeOption) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = GoaldayDesign.ShadowSoft / 2,
+                shape = RoundedCornerShape(GoaldayDesign.RadiusM)
+            )
+            .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(
+                width = GoaldayDesign.Hairline,
+                color = GoaldayDesign.BorderColor.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(GoaldayDesign.RadiusM)
+            )
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space3),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "深色模式",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = GoaldayDesign.InkPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "跟随系统将按设备夜间模式自动切换。",
+                    color = GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Text(
+                options.firstOrNull { it.key == selected }?.label ?: "跟随系统",
+                color = GoaldayDesign.Pink,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
+            options.forEach { option ->
+                val active = option.key == selected
+                Text(
+                    option.label,
+                    color = if (active) Color.White else GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(
+                            if (active) GoaldayDesign.Pink else GoaldayDesign.SurfaceSoft,
+                            RoundedCornerShape(GoaldayDesign.RadiusPill)
+                        )
+                        .clickable { onSelected(option) }
+                        .padding(vertical = GoaldayDesign.Space1 + 2.dp),
                 )
             }
         }

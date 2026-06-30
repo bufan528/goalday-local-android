@@ -1,8 +1,17 @@
 package com.bf410.goaldaylocal.ui.book
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -447,5 +456,73 @@ fun Modifier.pageBackTransform(
         (0.70f + visualProgress * 0.28f).coerceIn(0.70f, 0.98f)
     } else {
         (0.85f + visualProgress * 0.13f).coerceIn(0.85f, 0.98f)
+    }
+}
+
+// 翻页动画模式：SIMULATION=仿真翻页(默认) / COVER=水平覆盖 / SCROLL=垂直滚动 / NONE=无动画
+enum class PageTurnStyle { SIMULATION, COVER, SCROLL, NONE }
+
+/**
+ * 简化翻页器：用于 COVER/SCROLL/NONE 三种非仿真模式。
+ * 复用 BookShell 外壳，用 AnimatedContent 做覆盖/滚动/淡入切换，不渲染仿真翻页层。
+ * 对标微信读书"覆盖/上下滚动/无动画"翻页选项。
+ */
+@Composable
+fun SimplePageTurner(
+    pageKey: Int,
+    canTurnPrevious: Boolean,
+    canTurnNext: Boolean,
+    turnEnabled: Boolean,
+    onFlipNext: () -> Unit,
+    onFlipPrevious: () -> Unit,
+    shellStyle: ShellStyle,
+    style: PageTurnStyle,
+    activePage: @Composable () -> Unit,
+) {
+    var direction by remember { mutableStateOf(TurnDirection.NEXT) }
+    BookShell(
+        shellStyle = shellStyle,
+        canTurnPrevious = canTurnPrevious,
+        canTurnNext = canTurnNext,
+        turnEnabled = turnEnabled,
+        onTapPrevious = {
+            direction = TurnDirection.PREVIOUS
+            onFlipPrevious()
+        },
+        onTapNext = {
+            direction = TurnDirection.NEXT
+            onFlipNext()
+        },
+    ) {
+        AnimatedContent(
+            targetState = pageKey,
+            transitionSpec = {
+                val enter = when (style) {
+                    PageTurnStyle.NONE -> fadeIn(animationSpec = tween(180))
+                    PageTurnStyle.SCROLL ->
+                        if (direction == TurnDirection.NEXT) slideInVertically(animationSpec = tween(260)) { it }
+                        else slideInVertically(animationSpec = tween(260)) { -it }
+                    PageTurnStyle.COVER ->
+                        if (direction == TurnDirection.NEXT) slideInHorizontally(animationSpec = tween(260)) { it }
+                        else slideInHorizontally(animationSpec = tween(260)) { -it }
+                    PageTurnStyle.SIMULATION -> fadeIn(animationSpec = tween(180))
+                }
+                val exit = when (style) {
+                    PageTurnStyle.NONE -> fadeOut(animationSpec = tween(180))
+                    PageTurnStyle.SCROLL ->
+                        if (direction == TurnDirection.NEXT) slideOutVertically(animationSpec = tween(260)) { -it }
+                        else slideOutVertically(animationSpec = tween(260)) { it }
+                    PageTurnStyle.COVER ->
+                        if (direction == TurnDirection.NEXT) slideOutHorizontally(animationSpec = tween(260)) { -it }
+                        else slideOutHorizontally(animationSpec = tween(260)) { it }
+                    PageTurnStyle.SIMULATION -> fadeOut(animationSpec = tween(180))
+                }
+                enter togetherWith exit
+            },
+            contentKey = { it },
+            label = "simple-page-turn",
+        ) {
+            activePage()
+        }
     }
 }
