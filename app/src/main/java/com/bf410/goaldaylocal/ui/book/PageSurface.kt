@@ -1961,8 +1961,28 @@ internal fun LongImagePreviewDialog(
                     .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(18.dp))
                     .verticalScroll(rememberScrollState()),
             ) {
+                // P1-3 修复：长图预览滚动卡顿
+                // 原因：超大 bitmap（高度可能超 8000px）直接 asImageBitmap() 渲染，超出 GPU 纹理上限
+                // （多数设备 4096px）触发软件渲染；且每次重组重建 ImageBitmap 包装
+                // 修复：1) remember 缓存 ImageBitmap 避免重组重建
+                //       2) 等比缩小到预览安全高度（保留长宽比，保存/导出仍用原图全分辨率）
+                val previewImageBitmap = remember(preview.bitmap) {
+                    val maxPreviewHeight = 4096
+                    val src = preview.bitmap
+                    if (src.height > maxPreviewHeight) {
+                        val scale = maxPreviewHeight.toFloat() / src.height
+                        Bitmap.createScaledBitmap(
+                            src,
+                            (src.width * scale).toInt().coerceAtLeast(1),
+                            maxPreviewHeight,
+                            true,
+                        ).asImageBitmap()
+                    } else {
+                        src.asImageBitmap()
+                    }
+                }
                 Image(
-                    bitmap = preview.bitmap.asImageBitmap(),
+                    bitmap = previewImageBitmap,
                     contentDescription = null,
                     contentScale = ContentScale.FillWidth,
                     modifier = Modifier
