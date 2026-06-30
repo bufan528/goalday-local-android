@@ -27,8 +27,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.SubdirectoryArrowRight
+import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.background
@@ -588,7 +592,7 @@ fun ActivePageLayer(
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color(0x18B59072),
+                            GoaldayDesign.BorderColor.copy(alpha = 0.09f),
                             Color.Transparent,
                         ),
                     ),
@@ -604,7 +608,7 @@ fun ActivePageLayer(
             when (page) {
                 is TargetPage -> TargetDetailReplicaPage(page.title, page.items, customPageItems, tint, schedulePreviewEntries, targetItemMeta, isChecked, onToggleChecked, onAddCustomItem, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, onUpdateTargetNote, onUpdateTargetDeadline, onOpenTargetDetail)
                 is SchedulePage -> EditableBulletPage(page.title, page.items, customPageItems, tint.copy(alpha = 0.74f), BookStrings.addSchedule, true, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
-                is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, Color(0xFFB88A58), BookStrings.addPlan, false, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
+                is PlanPage -> EditableBulletPage(page.title, page.items, customPageItems, GoaldayDesign.BorderColor, BookStrings.addPlan, false, isChecked, onToggleChecked, onAddCustomItem, onAddCustomItemWithDeadline, onRemoveCustomItem, onRenameCustomItem, onAddToSchedule, weeklyTheme, todayPlanItems, todayCompletedItems, schedulePreviewEntries, onWeeklyThemeChange, onMoveItemToToday, onMoveItemToCompleted, onRestoreItemFromToday, onRestoreItemFromCompleted, contentMode, onContentModeChange)
                 is DiaryPage -> DiarySection(page.title, page.prompt, tint, diaryDraft, todayPlanItems, todayCompletedItems, pendingCommand, onCommand, onDiaryChange, contentMode, onContentModeChange)
             }
         }
@@ -2564,13 +2568,13 @@ private fun DiaryLinkedTargetChip(
     }
 }
 
-internal fun diaryBlockTypeIcon(type: DiaryBlockType): String =
+internal fun diaryBlockTypeIcon(type: DiaryBlockType): ImageVector =
     when (type) {
-        DiaryBlockType.IMAGE -> "IMG"
-        DiaryBlockType.TEXT -> "T"
-        DiaryBlockType.TARGET -> "✓"
-        DiaryBlockType.TARGET_CHILD -> "↳"
-        DiaryBlockType.TOPIC_TARGET -> "◎"
+        DiaryBlockType.IMAGE -> Icons.Filled.Image
+        DiaryBlockType.TEXT -> Icons.Filled.TextFields
+        DiaryBlockType.TARGET -> Icons.Filled.Check
+        DiaryBlockType.TARGET_CHILD -> Icons.Filled.SubdirectoryArrowRight
+        DiaryBlockType.TOPIC_TARGET -> Icons.Filled.RadioButtonChecked
     }
 
 internal fun diaryBlockDisplayTitle(type: DiaryBlockType): String =
@@ -2603,11 +2607,11 @@ internal fun diaryBlockTypeColor(type: DiaryBlockType): Color =
 
 internal fun diaryBlockTypeBackground(type: DiaryBlockType): Color =
     when (type) {
-        DiaryBlockType.IMAGE -> Color(0x16B07A8F)
-        DiaryBlockType.TEXT -> Color(0x14EFE3D4)
-        DiaryBlockType.TARGET -> Color(0x1439A76D)
-        DiaryBlockType.TARGET_CHILD -> Color(0x116F8E68)
-        DiaryBlockType.TOPIC_TARGET -> Color(0x16E88FAE)
+        DiaryBlockType.IMAGE -> GoaldayDesign.Pink.copy(alpha = 0.09f)
+        DiaryBlockType.TEXT -> GoaldayDesign.adaptiveSurfaceSoft.copy(alpha = 0.08f)
+        DiaryBlockType.TARGET -> GoaldayDesign.Positive.copy(alpha = 0.08f)
+        DiaryBlockType.TARGET_CHILD -> GoaldayDesign.Positive.copy(alpha = 0.07f)
+        DiaryBlockType.TOPIC_TARGET -> GoaldayDesign.Pink.copy(alpha = 0.09f)
     }
 
 internal fun plainTextFromHtml(html: String): String =
@@ -2942,7 +2946,7 @@ private fun DiaryInBookTypeMarker(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(diaryBlockTypeIcon(type), color = color, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Icon(diaryBlockTypeIcon(type), contentDescription = null, modifier = Modifier.size(14.dp), tint = color)
         Text("条目 %02d".format(index), color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
@@ -3101,7 +3105,7 @@ private fun DiarySticker(text: String) {
         color = GoaldayDesign.adaptiveInkSecondary,
         modifier = Modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-            .background(Color(0x33E9D6BC))
+            .background(GoaldayDesign.adaptiveSurfaceSoft.copy(alpha = 0.20f))
             .padding(horizontal = 8.dp, vertical = 4.dp),
     )
 }
@@ -3131,9 +3135,9 @@ private fun PaperNoteCard(
             .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.5f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 10.dp, vertical = 9.dp),
     ) {
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x0F9D958C)))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(GoaldayDesign.adaptiveDivider))
         content()
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x0A9D958C)))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(GoaldayDesign.adaptiveDivider))
     }
 }
 
@@ -3164,7 +3168,7 @@ private fun PageHeaderLine(
             )
         }
         Text(subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x1A9C7C5C)))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(GoaldayDesign.adaptiveDivider))
     }
 }
 
@@ -3178,7 +3182,7 @@ private fun DiaryToolChip(
         color = GoaldayDesign.RouteOverview,
         modifier = Modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .background(Color(0x1A8F684F))
+            .background(GoaldayDesign.BorderColor.copy(alpha = 0.10f))
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp),
     )
