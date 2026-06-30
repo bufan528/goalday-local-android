@@ -137,7 +137,7 @@ private fun ScheduleWidgetConfigureScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFF8EF))
+            .background(GoaldayDesign.adaptiveSurfaceSoft)
             .verticalScroll(rememberScrollState())
             .padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -189,7 +189,7 @@ private fun ScheduleWidgetConfigureScreen(
                 modifier = Modifier
                     .clip(RoundedCornerShape(14.dp))
                     .background(Color.White.copy(alpha = 0.72f))
-                    .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(14.dp))
+                    .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(14.dp))
                     .padding(12.dp),
             )
         }
@@ -216,7 +216,7 @@ private fun WidgetKindSignalStrip(kind: WidgetConfigureKind) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(Color.White.copy(alpha = 0.66f))
-            .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
+            .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(16.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
@@ -265,22 +265,22 @@ private fun WidgetLocalUnlockCard(kind: WidgetConfigureKind) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFFF2F7EE))
-            .border(0.7.dp, Color(0x266F8E68), RoundedCornerShape(16.dp))
+            .border(0.7.dp, GoaldayDesign.Positive.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text("本地全解锁", style = MaterialTheme.typography.labelMedium, color = Color(0xFF4E7547), fontWeight = FontWeight.SemiBold)
+        Text("本地全解锁", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.Positive, fontWeight = FontWeight.SemiBold)
         Text(
             "${kind.unlockSignal} 在本地版直接可用，不展示 VIP、登录或服务器校验。",
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF667660),
+            color = GoaldayDesign.adaptiveInkMuted,
         )
     }
 }
 
 @Composable
 private fun ConfigureSectionTitle(title: String) {
-    Text(title, style = MaterialTheme.typography.labelMedium, color = Color(0xFF6F5C4C), fontWeight = FontWeight.SemiBold)
+    Text(title, style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
 }
 
 @Composable
@@ -442,7 +442,7 @@ private fun StyleSwatch(
             .background(Color(style.backgroundColor))
             .border(
                 width = if (selected) 2.dp else 0.7.dp,
-                color = if (selected) Color(style.accentColor) else Color(0x24B7A893),
+                color = if (selected) Color(style.accentColor) else GoaldayDesign.BorderColor.copy(alpha = 0.14f),
                 shape = RoundedCornerShape(16.dp),
             )
             .clickable(onClick = onClick)
@@ -472,7 +472,7 @@ private fun <T> SegmentedPicker(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(Color.White.copy(alpha = 0.72f))
-            .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
+            .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(16.dp))
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -480,7 +480,7 @@ private fun <T> SegmentedPicker(
             val active = item == selected
             Text(
                 label(item),
-                color = if (active) Color.White else Color(0xFF6F5C4C),
+                color = if (active) Color.White else GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
                 textAlign = TextAlign.Center,
