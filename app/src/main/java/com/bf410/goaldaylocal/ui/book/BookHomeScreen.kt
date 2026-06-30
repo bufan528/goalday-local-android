@@ -1152,7 +1152,7 @@ private fun BookDetailView(
                         color = if (idx == segmentPageIndex) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkSecondary,
                         modifier = Modifier
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .background(if (idx == segmentPageIndex) Color(0x4DB88A58) else Color(0x18FFFFFF))
+                            .background(if (idx == segmentPageIndex) GoaldayDesign.BorderColor.copy(alpha = 0.30f) else GoaldayDesign.adaptiveSurface.copy(alpha = 0.09f))
                             .clickable { viewModel.setPage(index) }
                             .padding(horizontal = 12.dp, vertical = 7.dp),
                     )
@@ -2029,7 +2029,7 @@ private fun InspirationCenterView(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .clip(RoundedCornerShape(4.dp))
-                                            .background(if (checkedStates.getOrNull(index) == true) Color(0xFF96C08B) else Color(0xFFF1ECE4))
+                                            .background(if (checkedStates.getOrNull(index) == true) GoaldayDesign.Positive else GoaldayDesign.adaptiveSurfaceSoft)
                                             .clickable {
                                                 checkedStates = checkedStates.toMutableList().also { list ->
                                                     list[index] = !list[index]
@@ -2288,7 +2288,7 @@ private fun CreatePageDialog(
                             color = if (type == key) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkSecondary,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                                .background(if (type == key) Color(0x33B88A58) else Color.Transparent)
+                                .background(if (type == key) GoaldayDesign.BorderColor.copy(alpha = 0.20f) else Color.Transparent)
                                 .clickable {
                                     if (title.isBlank() || title in defaultPageTitles) {
                                         title = defaultPageTitle(key)

@@ -237,7 +237,7 @@ fun SettingsScreen(
             text = {
                 Text(
                     "${snapshot.name}\n${formatBackupDate(snapshot.modifiedAtMillis)} · ${BackupManager.formatBytes(snapshot.sizeBytes)}\n\n恢复会覆盖当前本地 MMKV 数据，完成后建议重启应用查看。",
-                    color = Color(0xFF5F564E),
+                    color = GoaldayDesign.adaptiveInkSecondary,
                 )
             },
             confirmButton = {
@@ -275,7 +275,7 @@ fun SettingsScreen(
             text = {
                 Text(
                     "${snapshot.name}\n${formatBackupDate(snapshot.modifiedAtMillis)} · ${BackupManager.formatBytes(snapshot.sizeBytes)}\n\n删除后无法从这个备份恢复。",
-                    color = Color(0xFF5F564E),
+                    color = GoaldayDesign.adaptiveInkSecondary,
                 )
             },
             confirmButton = {

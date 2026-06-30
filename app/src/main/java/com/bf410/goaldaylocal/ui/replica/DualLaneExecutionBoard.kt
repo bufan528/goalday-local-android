@@ -128,7 +128,7 @@ fun DualLaneExecutionBoard(
             modifier = Modifier
                 .weight(1.08f)
                 .fillMaxHeight()
-                .border(1.dp, Color(0x12000000)),
+                .border(1.dp, GoaldayDesign.adaptiveDivider),
         ) {
             Row(
                 modifier = Modifier
@@ -183,7 +183,7 @@ private fun BoardRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (selected) Color(0x18B08963) else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(if (selected) GoaldayDesign.BorderColor.copy(alpha = 0.09f) else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
             .padding(horizontal = 6.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.Top,
