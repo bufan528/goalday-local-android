@@ -533,8 +533,8 @@ internal fun HandbookReplicaPage(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .background(Color(0x11A68B71))
-                .border(0.5.dp, Color(0x1EA68B71), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(GoaldayDesign.BorderColor.copy(alpha = 0.07f))
+                .border(0.5.dp, GoaldayDesign.BorderColor.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .padding(horizontal = 9.dp, vertical = 1.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -786,8 +786,8 @@ private fun BoxScope.HandbookMonthHeader(
                 modifier = Modifier
                     .weight(1.12f)
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .background(Color(0x08E88FAE))
-                    .border(0.35.dp, Color(0x10E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .background(GoaldayDesign.PinkTint)
+                    .border(0.35.dp, GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 4.dp, vertical = 3.dp),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
@@ -812,7 +812,7 @@ private fun BoxScope.HandbookMonthHeader(
                                         when {
                                             visible -> GoaldayDesign.Pink
                                             isToday -> GoaldayDesign.InkPrimary.copy(alpha = 0.45f)
-                                            else -> Color(0x1A000000)
+                                            else -> GoaldayDesign.adaptiveDivider
                                         },
                                     ),
                             )
@@ -830,7 +830,7 @@ private fun BoxScope.HandbookMonthHeader(
                 color = GoaldayDesign.InkMuted,
                 modifier = Modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .background(Color(0x0D000000))
+                    .background(GoaldayDesign.adaptiveDivider)
                     .padding(horizontal = 6.dp, vertical = 2.dp),
             )
         }
@@ -892,8 +892,8 @@ private fun DaySpreadSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (activeDrop) GoaldayDesign.GreenSoft else Color(0x42FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .border(if (activeDrop) 0.9.dp else 0.45.dp, if (activeDrop) GoaldayDesign.Positive else Color(0x16A88966), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(if (activeDrop) GoaldayDesign.GreenSoft else GoaldayDesign.adaptiveSurface.copy(alpha = 0.26f), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .border(if (activeDrop) 0.9.dp else 0.45.dp, if (activeDrop) GoaldayDesign.Positive else GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) }
             .padding(horizontal = 6.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -938,7 +938,7 @@ private fun HandbookDoneEntryLine(
             .fillMaxWidth()
             .height(26.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(Color(0x1739A76D))
+            .background(GoaldayDesign.Positive.copy(alpha = 0.09f))
             .border(0.55.dp, GoaldayDesign.Positive.copy(alpha = 0.26f), RoundedCornerShape(8.dp))
             .clickable(onClick = onToggleCompleted),
         verticalAlignment = Alignment.CenterVertically,
@@ -1009,8 +1009,8 @@ private fun HandbookFallbackDoneLine(
             .fillMaxWidth()
             .height(24.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(Color(0x10FFFFFF))
-            .border(0.45.dp, Color(0x1839A76D), RoundedCornerShape(8.dp)),
+            .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.06f))
+            .border(0.45.dp, GoaldayDesign.Positive.copy(alpha = 0.09f), RoundedCornerShape(8.dp)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
@@ -1064,8 +1064,8 @@ private fun HandbookQuickAddRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-            .background(Color(0x35FFEAF1))
-            .border(0.45.dp, Color(0x20E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(GoaldayDesign.PinkSoft.copy(alpha = 0.21f))
+            .border(0.45.dp, GoaldayDesign.Pink.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .padding(horizontal = 6.dp, vertical = 5.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -1088,7 +1088,7 @@ private fun HandbookQuickAddRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .background(Color(0x88FFFFFF))
+                        .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.53f))
                         .border(0.35.dp, GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = 6.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -1113,7 +1113,7 @@ private fun HandbookQuickAddRow(
                     color = if (day == selectedDay) Color.White else GoaldayDesign.InkSecondary,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
-                        .background(if (day == selectedDay) GoaldayDesign.Pink else Color(0x0F000000), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .background(if (day == selectedDay) GoaldayDesign.Pink else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable { onSelectDay(day) }
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 )
@@ -1127,8 +1127,8 @@ private fun HandbookQuickAddRow(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                            .background(Color(0x66FFFFFF))
-                            .border(0.35.dp, Color(0x10E88FAE), RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.40f))
+                            .border(0.35.dp, GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusS))
                             .onGloballyPositioned { coordinates ->
                                 rowOrigin = coordinates.boundsInRoot().topLeft
                             }
@@ -1183,8 +1183,8 @@ private fun DaySpreadEditableSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (activeDrop) GoaldayDesign.PinkSoft else Color(0x42FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .border(if (activeDrop) 0.9.dp else 0.45.dp, if (activeDrop) GoaldayDesign.Pink else Color(0x16A88966), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(if (activeDrop) GoaldayDesign.PinkSoft else GoaldayDesign.adaptiveSurface.copy(alpha = 0.26f), RoundedCornerShape(GoaldayDesign.RadiusS))
+            .border(if (activeDrop) 0.9.dp else 0.45.dp, if (activeDrop) GoaldayDesign.Pink else GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) }
             .padding(horizontal = 6.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -1231,7 +1231,7 @@ private fun DaySpreadEditableSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .background(Color(0x10E88FAE))
+                    .background(GoaldayDesign.PinkTint)
                     .clickable { showAllRows = !showAllRows }
                     .padding(horizontal = 7.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1272,7 +1272,7 @@ private fun EmptyHandbookSlot(
             modifier = Modifier
                 .weight(1f)
                 .height(if (highlight) 1.2.dp else 0.6.dp)
-                .background(if (highlight) GoaldayDesign.Pink else Color(0x16000000)),
+                .background(if (highlight) GoaldayDesign.Pink else GoaldayDesign.adaptiveDivider),
         )
     }
 }
@@ -1313,7 +1313,7 @@ private fun HandbookEntryLine(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(if (entry.completed) Color(0x1739A76D) else Color(0x18FFFFFF))
+            .background(if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.09f) else GoaldayDesign.adaptiveSurface.copy(alpha = 0.09f))
             .border(0.55.dp, statusColor.copy(alpha = if (entry.completed) 0.28f else 0.18f), RoundedCornerShape(8.dp))
             .onGloballyPositioned { coordinates ->
                 rowOrigin = coordinates.boundsInRoot().topLeft
@@ -1369,7 +1369,7 @@ private fun HandbookEntryLine(
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(rowEditorFocus)
-                    .background(Color(0x88FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.53f), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 5.dp, vertical = 3.dp),
             )
             Text("完成", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable {
