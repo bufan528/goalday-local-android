@@ -1,5 +1,6 @@
 package com.bf410.goaldaylocal.ui.book
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -198,9 +200,9 @@ internal fun HandbookReplicaPage(
             }
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        // 删除原左右双纸张 Box（色值仅相差 0x10 alpha，视觉无意义却叠了一层）
+        // P0-2 大修：删除外层 Box 级 HandbookPaperRuling() 调用
+        // 原方案横线固定在 Box 层不随内容滚动，导致视觉错位；现改为 drawBehind 画在滚动 Column 内部
         // 纸张背景由外层 PageSurface 的 PaperGradient 统一提供
-        HandbookPaperRuling()
         HandbookMonthHeader(
             year = anchorYear,
             month = anchorMonth,
@@ -289,6 +291,9 @@ internal fun HandbookReplicaPage(
                     .padding(start = 14.dp, end = 14.dp, top = 92.dp, bottom = 32.dp),
             )
         } else {
+            // P1-2 修复：左右双列共享同一个 ScrollState，滚动同步，恢复对开页整体感
+            // 原代码左右各自 rememberScrollState()，独立滚动破坏"一本书两页"的视觉一致性
+            val spreadScrollState = rememberScrollState()
             Row(
                 modifier = Modifier
                     .fillMaxSize()
@@ -298,7 +303,8 @@ internal fun HandbookReplicaPage(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .verticalScroll(rememberScrollState()),
+                        .verticalScroll(spreadScrollState)
+                        .handbookPaperRuling(spreadScrollState),
                     verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
                 Row(
@@ -337,7 +343,8 @@ internal fun HandbookReplicaPage(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(spreadScrollState)
+                    .handbookPaperRuling(spreadScrollState),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Row(
@@ -669,25 +676,54 @@ private fun HandbookMonthBoard(
     }
 }
 
-@Composable
-internal fun BoxScope.HandbookPaperRuling() {
-    // P1-3 修复：删除原 14 条信纸横线
-    // 横线用 align(TopCenter)+padding(top=...) 固定在 Box 层，但内容在 verticalScroll 内滚动
-    // 导致滚动时横线不动、内容动，视觉错位"难受"。横线在滚动场景下失去对齐意义，直接删除
-    // 保留左右 2 条垂直粉色线（fillMaxHeight 随 Box 拉伸，不滚动也不错位）
-    repeat(2) { index ->
-        Box(
-            modifier = Modifier
-                .align(if (index == 0) Alignment.CenterStart else Alignment.CenterEnd)
-                .padding(horizontal = 8.dp)
-                .width(0.6.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color.Transparent, GoaldayDesign.Pink.copy(alpha = 0.10f), Color.Transparent),
-                    ),
-                ),
+/**
+ * P0-2 大修：信纸横线装饰，改用 drawBehind 画在滚动容器内部。
+ *
+ * 原实现用 align(TopCenter)+padding(top=...) 将 14 条横线固定在外层 Box，但内容在
+ * verticalScroll 内滚动，导致"线不动内容动"的视觉错位，被错误地直接删除。
+ *
+ * 现方案：作为 Modifier 应用到滚动 Column 上，drawBehind 在 Column 的视口坐标系绘制，
+ * 通过 scrollState.value 偏移横线，使横线随内容同步滚动，恢复"信纸感"。
+ *
+ * @param scrollState 滚动状态；null 表示非滚动容器，横线静态绘制
+ * @param lineSpacingDp 横线间距，默认 24dp（信纸常见行高）
+ * @param lineColor 横线颜色，默认低饱和墨色（InkMuted 10% alpha）
+ */
+internal fun Modifier.handbookPaperRuling(
+    scrollState: ScrollState? = null,
+    lineSpacingDp: androidx.compose.ui.unit.Dp = 24.dp,
+    lineColor: Color = GoaldayDesign.InkMuted.copy(alpha = 0.10f),
+): Modifier = this.drawBehind {
+    val spacingPx = lineSpacingDp.toPx()
+    val marginPx = 6.dp.toPx()
+    val scrollOffset = scrollState?.value?.toFloat() ?: 0f
+    // 左右装订边线（垂直，淡墨）
+    drawLine(
+        color = lineColor.copy(alpha = 0.07f),
+        start = Offset(marginPx, 0f),
+        end = Offset(marginPx, size.height),
+        strokeWidth = 0.6.dp.toPx(),
+    )
+    drawLine(
+        color = lineColor.copy(alpha = 0.07f),
+        start = Offset(size.width - marginPx, 0f),
+        end = Offset(size.width - marginPx, size.height),
+        strokeWidth = 0.6.dp.toPx(),
+    )
+    // 横线：受 scrollOffset 偏移，随内容同步滚动
+    // drawBehind 绘制在视口坐标系，内容向上滚动 scrollOffset 像素，横线也向上偏移同样距离
+    var y = -scrollOffset % spacingPx
+    if (y < 0f) y += spacingPx
+    val startX = marginPx + 2.dp.toPx()
+    val endX = size.width - marginPx - 2.dp.toPx()
+    while (y < size.height) {
+        drawLine(
+            color = lineColor,
+            start = Offset(startX, y),
+            end = Offset(endX, y),
+            strokeWidth = 0.5.dp.toPx(),
         )
+        y += spacingPx
     }
 }
 

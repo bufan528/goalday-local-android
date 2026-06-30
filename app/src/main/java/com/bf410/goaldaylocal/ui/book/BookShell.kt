@@ -75,9 +75,11 @@ fun BookShell(
             .clip(outerShape)
             .background(
                 if (shellStyle == ShellStyle.BOOK) {
-                    // 真实书皮：温润的胭粉渐变（统一走 Pink token 系，原硬编码已收敛）
+                    // P0-3 大修：书皮改用深色皮革/木质 token，替代原粉色渐变
+                    // 真实手账书皮多为深棕皮革或亚麻布面，原 Pink 渐变看起来像粉色塑料壳
+                    // 用 BookSpine(深棕)→BookBoardDark(中棕)→BookSpine(深棕) 模拟皮革光感
                     Brush.linearGradient(
-                        listOf(GoaldayDesign.Pink, GoaldayDesign.PinkSoft, GoaldayDesign.Pink.copy(alpha = 0.88f)),
+                        listOf(GoaldayDesign.BookSpine, GoaldayDesign.BookBoardDark, GoaldayDesign.BookSpine),
                         start = Offset.Zero,
                         end = Offset(820f, 640f),
                     )
@@ -88,64 +90,137 @@ fun BookShell(
             )
             .then(
                 if (shellStyle == ShellStyle.BOOK) {
-                    Modifier.border(GoaldayDesign.Hairline, Color.White.copy(alpha = 0.40f), outerShape)
+                    // P0-3：书皮边框改用金色细线（模拟皮革包边烫金），原白色细线与深色书皮不搭
+                    Modifier.border(GoaldayDesign.Hairline, GoaldayDesign.BookSpineLight.copy(alpha = 0.55f), outerShape)
                 } else {
                     Modifier
                 },
             ),
     ) {
         if (shellStyle == ShellStyle.BOOK) {
-            // 书脊（左侧装订线）：粉色系阴影（原棕色与粉色书皮不搭，统一到 Pink 系）
+            // P0-3 大修：书脊加宽到 32dp（原 22dp 烫金标题几乎不可读）
+            // 书脊阴影改用 BookSpineDark 深色，模拟装订线凹陷的深色暗调（原 Pink.alpha 与深色书皮不搭）
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .width(22.dp)
+                    .width(32.dp)
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
-                            listOf(GoaldayDesign.Pink.copy(alpha = 0.40f), GoaldayDesign.Pink.copy(alpha = 0.27f), Color.Transparent),
+                            listOf(
+                                GoaldayDesign.BookSpine,
+                                GoaldayDesign.BookBoardDark.copy(alpha = 0.85f),
+                                Color.Transparent,
+                            ),
                         ),
                     ),
             )
-            // 书脊高光线
+            // 书脊装订缝线（双线模拟手账穿线装订）
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(start = 4.dp, top = 28.dp, bottom = 28.dp)
-                    .width(1.dp)
+                    .padding(start = 6.dp, top = 24.dp, bottom = 24.dp)
+                    .width(0.8.dp)
                     .fillMaxHeight()
-                    .background(Color.White.copy(alpha = 0.27f)),
+                    .background(GoaldayDesign.BookSpineLight.copy(alpha = 0.45f)),
             )
-            // 书脊烫金标题：用固定尺寸 Box 包裹避免旋转后定位漂移
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .width(22.dp)
+                    .padding(start = 10.dp, top = 24.dp, bottom = 24.dp)
+                    .width(0.8.dp)
+                    .fillMaxHeight()
+                    .background(GoaldayDesign.BookSpineLight.copy(alpha = 0.30f)),
+            )
+            // 书脊烫金标题：加宽后用 labelMedium 字号提升可读性
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .width(32.dp)
                     .fillMaxHeight()
                     .padding(top = 28.dp, bottom = 28.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     "GOALDAY",
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = GoaldayDesign.PinkSoft.copy(alpha = 0.88f),
+                    color = GoaldayDesign.BookSpineLight.copy(alpha = 0.92f),
                     modifier = Modifier.graphicsLayer { rotationZ = -90f },
                 )
             }
-            // 书页边缘（右侧）：PaperAged 系阴影暗示书页厚度（原棕色硬编码已收敛）
+            // P0-3 新增：书签丝带（手账标志性元素），从书脊顶部垂下，丝带颜色用 Pink 形成深棕底色中的点睛之笔
             Box(
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .width(8.dp)
-                    .fillMaxHeight()
+                    .align(Alignment.TopCenter)
+                    .padding(start = 28.dp, top = 0.dp)
+                    .width(10.dp)
+                    .height(120.dp)
                     .background(
-                        Brush.horizontalGradient(
-                            listOf(Color.Transparent, GoaldayDesign.PaperAged.copy(alpha = 0.25f), GoaldayDesign.PaperAged.copy(alpha = 0.40f)),
+                        Brush.verticalGradient(
+                            listOf(
+                                GoaldayDesign.Pink.copy(alpha = 0.92f),
+                                GoaldayDesign.Pink.copy(alpha = 0.78f),
+                                GoaldayDesign.Pink.copy(alpha = 0.55f),
+                            ),
                         ),
                     ),
             )
-            // 删除书顶/书底高光阴影（与 OpenBookPaperChrome 内部重复，由其统一负责）
+            // 书签丝带末端 V 形切口（用两个旋转小方块模拟，简化实现）
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(start = 28.dp, top = 116.dp)
+                    .width(10.dp)
+                    .height(8.dp)
+                    .background(GoaldayDesign.Pink.copy(alpha = 0.55f))
+                    .graphicsLayer { rotationZ = 45f },
+            )
+            // P0-3 大修：书页边缘（右侧）用多条间隔线模拟书页层叠纹理
+            // 原 8dp 单层 PaperAged 阴影无法表现多页厚度，现用 3 条间隔线 + 渐变阴影
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .width(12.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color.Transparent,
+                                GoaldayDesign.PaperAged.copy(alpha = 0.20f),
+                                GoaldayDesign.PaperAged.copy(alpha = 0.35f),
+                                GoaldayDesign.PaperAged.copy(alpha = 0.50f),
+                            ),
+                        ),
+                    ),
+            )
+            // 书页层叠细纹 1
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 3.dp)
+                    .width(0.5.dp)
+                    .fillMaxHeight()
+                    .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.18f)),
+            )
+            // 书页层叠细纹 2
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 6.dp)
+                    .width(0.5.dp)
+                    .fillMaxHeight()
+                    .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.12f)),
+            )
+            // 书页层叠细纹 3
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 9.dp)
+                    .width(0.5.dp)
+                    .fillMaxHeight()
+                    .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.08f)),
+            )
         }
 
         // 纸张层：非 BOOK 模式渲染纸张背景；BOOK 模式由 OpenBookPaperChrome 统一处理
@@ -234,17 +309,34 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                     ),
                 ),
         )
-        // 中央书脊阴影：单层柔和（黑色系中性，保留）
+        // P0-3 大修：中央书脊阴影加宽到 28dp 并加深最深处，模拟书本翻开处装订线的凹陷感
+        // 原 18dp 宽 + 0x22 alpha 最深处凹陷感不足；现 28dp 宽 + 多段渐变营造立体凹陷
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(18.dp)
+                .width(28.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
-                        listOf(Color(0x22000000), Color.Transparent, Color(0x14000000)),
+                        listOf(
+                            Color.Transparent,
+                            Color(0x18000000),
+                            Color(0x38000000),
+                            Color(0x42000000),
+                            Color(0x38000000),
+                            Color(0x18000000),
+                            Color.Transparent,
+                        ),
                     ),
                 ),
+        )
+        // 中央书脊装订缝线（细深线，强化"书被翻开"的视觉）
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(0.6.dp)
+                .fillMaxHeight()
+                .background(Color(0x44000000)),
         )
         // 顶部高光：单层（收敛到 White alpha）
         Box(
@@ -256,14 +348,14 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                     Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.27f), Color.Transparent)),
                 ),
         )
-        // 底部柔和阴影：单层（原棕色硬编码收敛到 Pink 系，与书皮统一）
+        // P0-3 大修：底部阴影改用 BookBoardDark 暖棕系，与深色书皮统一（原 Pink alpha 与深棕书皮不搭）
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .height(32.dp)
                 .background(
-                    Brush.verticalGradient(listOf(Color.Transparent, GoaldayDesign.Pink.copy(alpha = 0.10f))),
+                    Brush.verticalGradient(listOf(Color.Transparent, GoaldayDesign.BookBoardDark.copy(alpha = 0.18f))),
                 ),
         )
     }

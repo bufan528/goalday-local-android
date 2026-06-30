@@ -348,10 +348,9 @@ fun PageBackLayer(
     direction: TurnDirection?,
     anchorY: Float = 0.5f,
 ) {
+    // P1-6 大修：原 8 层装饰 Box（边缘高光、角部 radial、linear 高光等）造成"花斑纸"视觉过载
+    // 精简为 3 层核心：基底纸渐变 + 中央折痕阴影 + 单一角部柔和阴影
     val curlAlignTop = anchorY < 0.46f
-    val anchorVerticalOffset = ((anchorY - 0.5f) * 2f).coerceIn(-1f, 1f)
-    val anchorTopBias = (-anchorVerticalOffset).coerceIn(0f, 1f)
-    val anchorBottomBias = anchorVerticalOffset.coerceIn(0f, 1f)
     val easedCurl = progress * progress * (3f - 2f * progress)
     val curlStrength = (0.12f + easedCurl * 0.76f).coerceIn(0f, 0.88f)
     val stackShadow = (0.07f + progress * 0.18f).coerceAtMost(0.30f)
@@ -369,46 +368,7 @@ fun PageBackLayer(
             )
             .padding(horizontal = 28.dp, vertical = 26.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .width((4f + progress * 10f).dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            Color.Black.copy(alpha = stackShadow),
-                            Color(0x33A5876A).copy(alpha = (0.10f + progress * 0.14f).coerceAtMost(0.24f)),
-                            Color.Transparent,
-                        ),
-                    ),
-                ),
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .width((3f + progress * 8f).dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            Color.Transparent,
-                            Color.White.copy(alpha = (0.10f + progress * 0.18f).coerceAtMost(0.28f)),
-                            Color.Black.copy(alpha = (0.05f + progress * 0.12f).coerceAtMost(0.20f)),
-                        ),
-                    ),
-                ),
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color.Transparent, Color(0x12FFFFFF), Color.Transparent),
-                    ),
-                ),
-        )
-
+        // 层 1：中央折痕阴影（翻页时纸张弯折的暗带，方向跟随翻页方向）
         Box(
             modifier = Modifier
                 .align(if (direction == TurnDirection.NEXT) Alignment.CenterStart else Alignment.CenterEnd)
@@ -418,124 +378,21 @@ fun PageBackLayer(
                     Brush.horizontalGradient(
                         if (direction == TurnDirection.NEXT) {
                             listOf(
-                                Color.Black.copy(alpha = (0.10f + progress * 0.18f).coerceAtMost(0.24f)),
-                                Color.White.copy(alpha = (0.14f + progress * 0.22f).coerceAtMost(0.30f)),
+                                Color.Black.copy(alpha = stackShadow),
+                                Color.White.copy(alpha = (0.10f + progress * 0.14f).coerceAtMost(0.22f)),
                                 Color.Transparent,
                             )
                         } else {
                             listOf(
                                 Color.Transparent,
-                                Color.White.copy(alpha = (0.14f + progress * 0.22f).coerceAtMost(0.30f)),
-                                Color.Black.copy(alpha = (0.10f + progress * 0.18f).coerceAtMost(0.24f)),
+                                Color.White.copy(alpha = (0.10f + progress * 0.14f).coerceAtMost(0.22f)),
+                                Color.Black.copy(alpha = stackShadow),
                             )
                         },
                     ),
                 ),
         )
-        Box(
-            modifier = Modifier
-                .align(if (direction == TurnDirection.NEXT) Alignment.TopEnd else Alignment.TopStart)
-                .width((20f + progress * 44f).dp)
-                .height((16f + progress * 34f).dp)
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            Color.White.copy(alpha = (0.08f + curlStrength * 0.20f).coerceAtMost(0.34f)),
-                            Color(0x18C4A98E),
-                            Color.Transparent,
-                        ),
-                        start = Offset(0f, 0f),
-                        end = Offset(120f, 100f),
-                    ),
-                ),
-        )
-
-        Box(
-            modifier = Modifier
-                .align(
-                    when {
-                        direction == TurnDirection.NEXT && curlAlignTop -> Alignment.TopStart
-                        direction == TurnDirection.PREVIOUS && curlAlignTop -> Alignment.TopEnd
-                        direction == TurnDirection.NEXT -> Alignment.BottomStart
-                        else -> Alignment.BottomEnd
-                    },
-                )
-                .width((28f + progress * 66f).dp)
-                .height((30f + progress * 70f).dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(
-                                alpha = (
-                                    0.18f +
-                                        curlStrength * 0.36f +
-                                        anchorTopBias * 0.10f +
-                                        anchorBottomBias * 0.10f
-                                    ).coerceAtMost(0.66f),
-                            ),
-                            Color(0x22A48A70).copy(alpha = (0.18f + curlStrength * 0.24f).coerceAtMost(0.46f)),
-                            Color.Transparent,
-                        ),
-                        radius = 210f,
-                    ),
-                ),
-        )
-
-        Box(
-            modifier = Modifier
-                .align(
-                    when {
-                        direction == TurnDirection.NEXT && curlAlignTop -> Alignment.TopEnd
-                        direction == TurnDirection.PREVIOUS && curlAlignTop -> Alignment.TopStart
-                        direction == TurnDirection.NEXT -> Alignment.BottomEnd
-                        else -> Alignment.BottomStart
-                    },
-                )
-                .width((14f + progress * 30f).dp)
-                .height((24f + progress * 40f).dp)
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            Color.Black.copy(
-                                alpha = (
-                                    0.06f + curlStrength * 0.24f +
-                                        anchorTopBias * 0.06f +
-                                        anchorBottomBias * 0.06f
-                                    ).coerceAtMost(0.40f),
-                            ),
-                            Color.Transparent,
-                        ),
-                    ),
-                ),
-        )
-        Box(
-            modifier = Modifier
-                .align(
-                    when {
-                        direction == TurnDirection.NEXT && curlAlignTop -> Alignment.TopEnd
-                        direction == TurnDirection.PREVIOUS && curlAlignTop -> Alignment.TopStart
-                        direction == TurnDirection.NEXT -> Alignment.BottomEnd
-                        else -> Alignment.BottomStart
-                    },
-                )
-                .width((18f + progress * 42f).dp)
-                .height((8f + progress * 20f).dp)
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            Color.White.copy(
-                                alpha = (
-                                    0.08f + curlStrength * 0.24f +
-                                        anchorTopBias * 0.08f +
-                                        anchorBottomBias * 0.08f
-                                    ).coerceAtMost(0.42f),
-                            ),
-                            Color(0x229C8167),
-                            Color.Transparent,
-                        ),
-                    ),
-                ),
-        )
+        // 层 2：单一角部柔和阴影（合并原 4 层角部装饰），模拟纸张翻起的背光
         Box(
             modifier = Modifier
                 .align(
@@ -546,15 +403,15 @@ fun PageBackLayer(
                         else -> Alignment.TopStart
                     },
                 )
-                .width((10f + progress * 26f).dp)
-                .height((16f + progress * 26f).dp)
+                .width((40f + progress * 80f).dp)
+                .height((50f + progress * 100f).dp)
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            Color.Black.copy(alpha = (0.02f + curlStrength * 0.08f).coerceAtMost(0.12f)),
+                            Color.Black.copy(alpha = (curlStrength * 0.20f).coerceAtMost(0.28f)),
                             Color.Transparent,
                         ),
-                        radius = 100f,
+                        radius = 260f,
                     ),
                 ),
         )
@@ -831,11 +688,13 @@ private fun HandbookDiaryReplicaPage(
             }
             .padding(12.dp),
     ) {
-        HandbookPaperRuling()
+        // P0-2 大修：HandbookPaperRuling 改为 Modifier 扩展，画在滚动 Column 内部，随内容同步滚动
+        val diaryScrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(diaryScrollState)
+                .handbookPaperRuling(diaryScrollState),
             verticalArrangement = Arrangement.spacedBy(9.dp),
         ) {
             Row(
