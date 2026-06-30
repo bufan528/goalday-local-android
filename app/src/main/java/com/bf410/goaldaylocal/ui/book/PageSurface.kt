@@ -2864,7 +2864,7 @@ private fun DiaryInBookRow(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(code, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold, maxLines = 1)
-            Text("inbook", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+            Text("内页", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {

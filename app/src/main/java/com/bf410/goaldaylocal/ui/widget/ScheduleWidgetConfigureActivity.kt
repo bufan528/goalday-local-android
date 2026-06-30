@@ -142,7 +142,7 @@ private fun ScheduleWidgetConfigureScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text("Add widget", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFFE88FAE))
+            Text("添加小组件", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFFE88FAE))
             Text(kind.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = Color(0xFF2F2922))
             Text(kind.subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF7A7065))
         }

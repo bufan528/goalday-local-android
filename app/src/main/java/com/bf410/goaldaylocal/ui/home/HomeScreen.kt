@@ -490,7 +490,7 @@ private fun PaperPlanner(
 
         Row(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1.03f), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                Text("date", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                Text("日期", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
                 weekDays.forEach { day ->
                     val dayEntries = entries.filter { it.day == day }
                     TimelineDayRow(

@@ -1239,7 +1239,7 @@ private fun DaySpreadEditableSection(
                     color = GoaldayDesign.Pink,
                     fontWeight = FontWeight.SemiBold,
                 )
-                Text("adaptive", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                Text("自适应", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
             }
         }
     }
@@ -1368,7 +1368,7 @@ private fun HandbookEntryLine(
                     .background(Color(0x88FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 5.dp, vertical = 3.dp),
             )
-            Text("Done", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable {
+            Text("完成", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable {
                 onCommit()
                 focusManager.clearFocus(force = true)
             })

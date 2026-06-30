@@ -71,7 +71,7 @@ fun DualLaneExecutionBoard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(leftHeader, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                Text("Done", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                Text("已完成", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
             }
             dayLabels.take(7).forEachIndexed { index, day ->
                 val dayTask = leftTimelineTasks.getOrNull(index).orEmpty()

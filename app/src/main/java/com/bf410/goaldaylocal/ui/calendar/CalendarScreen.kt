@@ -315,7 +315,7 @@ fun CalendarScreen(
                         .onGloballyPositioned { doneDropBounds = it.boundsInRoot() },
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    Text("done", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                    Text("已完成", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                     if (doneEntries.isEmpty()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(if (activeDoneDrop) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked, contentDescription = null, tint = if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.InkMuted, modifier = Modifier.size(12.dp))
@@ -337,7 +337,7 @@ fun CalendarScreen(
                     }
                 }
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("todo", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+                    Text("待办", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                     if (todoEntries.isEmpty()) {
                         Icon(Icons.Filled.RadioButtonUnchecked, contentDescription = null, tint = GoaldayDesign.InkMuted, modifier = Modifier.size(12.dp))
                     } else {
