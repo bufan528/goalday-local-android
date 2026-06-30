@@ -849,7 +849,7 @@ private fun CalendarHeroHeader(
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("MONTHLY SCHEDULE", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                    Text("月度日程", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                     Text("${year}年${month}月", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                     Text("当前查看 ${selectedDay} 日 · 本地日历", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
                 }
@@ -967,7 +967,7 @@ private fun CalendarMonthGrid(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text("MONTH GRID", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text("月份网格", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                 Text("点击日期切换今日执行", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
             }
             Text("${entries.size} 条", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
