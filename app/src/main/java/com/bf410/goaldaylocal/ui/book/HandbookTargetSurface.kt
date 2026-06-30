@@ -263,7 +263,7 @@ internal fun TargetDetailReplicaPage(
                                     .padding(horizontal = 7.dp, vertical = 5.dp),
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                TextActionButton("保存", GoaldayDesign.Pink) {
+                                TextActionButton("保存", GoaldayDesign.InkSecondary) {
                                     if (item in customItems) onRenameCustomItem(item, editingText)
                                     editingItem = null
                                 }
@@ -357,7 +357,7 @@ internal fun TargetDetailReplicaPage(
                     inner()
                 },
             )
-            Text("添加", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelMedium, modifier = Modifier.clickable {
+            Text("添加", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelMedium, modifier = Modifier.clickable {
                 val text = draft.trim()
                 if (text.isNotBlank()) {
                     onAddCustomItem(text)

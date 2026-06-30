@@ -608,9 +608,11 @@ private fun HandbookMonthBoard(
                         val dayEntries = entries.filter { it.day == day }
                         val todoCount = dayEntries.count { !it.completed }
                         val doneCount = dayEntries.count { it.completed }
+                        // P2-6 修复：空日期不再显示"空白"文字（每个空格都写"空白"造成视觉噪音）
+                        // 改为空字符串，空日期只显示日期数字，保持月历干净
                         val title = dayEntries.firstOrNull { !it.completed }?.title
                             ?: dayEntries.firstOrNull { it.completed }?.title
-                            ?: "空白"
+                            ?: ""
                         val isVisible = day in selectedDays
                         val isToday = today.year == year && today.monthValue == month && today.dayOfMonth == day
                         Column(
@@ -644,7 +646,10 @@ private fun HandbookMonthBoard(
                                     Text("$doneCount/$todoCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                                 }
                             }
-                            Text(title, style = MaterialTheme.typography.labelSmall, color = if (title == "空白") GoaldayDesign.InkMuted else GoaldayDesign.InkSecondary, maxLines = 2)
+                            // P2-6：空日期不显示标题文字，避免"空白"噪音
+                            if (title.isNotBlank()) {
+                                Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, maxLines = 2)
+                            }
                         }
                     }
                 }
