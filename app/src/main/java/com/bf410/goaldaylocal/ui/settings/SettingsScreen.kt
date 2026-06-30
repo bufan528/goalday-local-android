@@ -165,7 +165,7 @@ fun SettingsScreen(
             SettingRow(
                 title = "离线功能",
                 subtitle = "主题中心、任务池、手账翻页、日程、日记、组件、备份均本地运行。",
-                meta = "LOCAL",
+                meta = "本地",
                 onClick = {
                     Toast.makeText(context, "当前版本已按本地离线模式运行", Toast.LENGTH_SHORT).show()
                 },

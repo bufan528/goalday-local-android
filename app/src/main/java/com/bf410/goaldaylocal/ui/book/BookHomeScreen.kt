@@ -459,7 +459,7 @@ private fun BookUnavailableState(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color(0xFFFFFCF7),
+                        GoaldayDesign.adaptiveSurface,
                         Color(0xFFF8EFE5),
                         Color(0xFFF0DDCA),
                     ),
@@ -1421,7 +1421,7 @@ private fun TargetDetailRouteOverlay(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    listOf(Color(0xFFFFFCF7), Color(0xFFFFF2E7), Color(0xFFF1D9C4)),
+                    listOf(GoaldayDesign.adaptiveSurface, Color(0xFFFFF2E7), Color(0xFFF1D9C4)),
                 ),
             ),
     ) {
@@ -1475,7 +1475,7 @@ private fun TargetDetailRouteOverlay(
                     .clip(RoundedCornerShape(GoaldayDesign.Radius2XL))
                     .background(
                         Brush.linearGradient(
-                            listOf(Color(0xFFFFFEFC), Color(0xFFFFEAF1), Color(0xFFFFF3D7)),
+                            listOf(GoaldayDesign.adaptiveSurface, GoaldayDesign.PinkTint, Color(0xFFFFF3D7)),
                             start = Offset.Zero,
                             end = Offset(900f, 420f),
                         ),
@@ -1528,7 +1528,7 @@ private fun TargetDetailRouteOverlay(
             TargetDetailPanel(title = "目标选项", trailing = "本地保存") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     TargetOptionRow(
-                        code = "OWN",
+                        code = "我的",
                         title = "保存为我的目标",
                         subtitle = "加入当前目标页，后续可继续备注、排期和完成",
                         accent = GoaldayDesign.Positive,
@@ -1654,7 +1654,7 @@ private fun TargetDetailSummaryStrip(
     ) {
         TargetDetailMetric(
             label = "状态",
-            value = if (checked) "DONE" else "TODO",
+            value = if (checked) "已完成" else "待办",
             active = checked,
             modifier = Modifier.weight(1f),
         )
