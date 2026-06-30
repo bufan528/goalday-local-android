@@ -817,11 +817,19 @@ private fun TaskLine(
             .combinedClickable(onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onToggleDone(entry)
-            }, onLongClick = { onGrab(entry) })
+            })
             .onGloballyPositioned { rowOrigin = it.boundsInRoot().topLeft }
             .pointerInput(entry.id) {
                 detectDragGesturesAfterLongPress(
-                    onDragStart = { onDragStart(entry, rowOrigin + it) },
+                    onDragStart = {
+                        // P1-1 修复：手势冲突
+                        // 原 combinedClickable.onLongClick 和 detectDragGesturesAfterLongPress
+                        // 都响应长按，导致 onGrab 与 onDragStart 同时触发
+                        // 现统一由 detectDragGesturesAfterLongPress 处理长按，onGrab 移入此处
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onGrab(entry)
+                        onDragStart(entry, rowOrigin + it)
+                    },
                     onDrag = { change, amount ->
                         change.consume()
                         onDrag(amount)

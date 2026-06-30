@@ -505,15 +505,16 @@ fun CalendarScreen(
                                 grabbedPoolEntry = entry
                                 toast = "已抓取任务，可点上午/下午/晚上投放"
                             },
-                            onLongClick = {
-                                grabbedPoolEntry = entry
-                                toast = "已抓取任务"
-                            },
                         )
                         .onGloballyPositioned { coords -> rowOrigin = coords.boundsInRoot().topLeft }
                         .pointerInput(entry.id) {
                             detectDragGesturesAfterLongPress(
                                 onDragStart = { start ->
+                                    // P1-2 修复：手势冲突
+                                    // 原 combinedClickable.onLongClick 和 detectDragGesturesAfterLongPress
+                                    // 都响应长按，导致 grabbedPoolEntry 被设置两次且 toast 冲突
+                                    // 现统一由 detectDragGesturesAfterLongPress 处理长按
+                                    grabbedPoolEntry = entry
                                     draggingPoolEntry = entry
                                     dragPosition = rowOrigin + start
                                     activeDropSlot = dropSlotBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
