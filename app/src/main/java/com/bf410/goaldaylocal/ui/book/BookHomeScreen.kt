@@ -471,9 +471,9 @@ private fun BookUnavailableState(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.Radius2XL))
                 .background(Color(0xEFFFFDF8))
-                .border(0.8.dp, Color(0x24A88966), RoundedCornerShape(24.dp))
+                .border(0.8.dp, Color(0x24A88966), RoundedCornerShape(GoaldayDesign.Radius2XL))
                 .padding(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -497,7 +497,7 @@ private fun BookUnavailableState(
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.PrimaryAction)
                     .clickable(onClick = onAction)
                     .padding(horizontal = 15.dp, vertical = 9.dp),
@@ -553,7 +553,7 @@ private fun LibraryView(
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.adaptiveInkPrimary)
                     .clickable(onClick = onCreateBook)
                     .padding(horizontal = 13.dp, vertical = 8.dp),
@@ -687,7 +687,7 @@ private fun FeaturedHandbookCover(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(99.dp))
+                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                                 .background(Color.White.copy(alpha = 0.52f))
                                 .padding(horizontal = 7.dp, vertical = 2.dp),
                         )
@@ -699,7 +699,7 @@ private fun FeaturedHandbookCover(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(GoaldayDesign.adaptiveInkPrimary)
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 )
@@ -724,9 +724,9 @@ private fun BookShelfRow(
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(Color(0x66FFFDF8))
-                    .border(0.6.dp, Color(0x20A88966), RoundedCornerShape(99.dp))
+                    .border(0.6.dp, Color(0x20A88966), RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .padding(horizontal = 9.dp, vertical = 4.dp),
             )
         }
@@ -754,7 +754,7 @@ private fun BookShelfRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(14.dp)
-                        .clip(RoundedCornerShape(99.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(
                             Brush.verticalGradient(
                                 listOf(GoaldayDesign.ShelfWood, GoaldayDesign.ShelfWoodDark),
@@ -810,7 +810,7 @@ private fun ShelfBookCover(
                 .align(Alignment.CenterStart)
                 .width(16.dp)
                 .fillMaxHeight()
-                .background(Color(0x332F261D), RoundedCornerShape(99.dp)),
+                .background(Color(0x332F261D), RoundedCornerShape(GoaldayDesign.RadiusPill)),
         )
         Column(
             modifier = Modifier
@@ -826,7 +826,7 @@ private fun ShelfBookCover(
                             modifier = Modifier
                                 .width(10.dp)
                                 .height(4.dp)
-                                .clip(RoundedCornerShape(99.dp))
+                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                                 .background(routeColor(resolveHandbookSection(page)).copy(alpha = 0.76f)),
                         )
                     }
@@ -907,7 +907,7 @@ private fun HandbookReadingDeskHeader(
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(routeColor(route))
                     .padding(horizontal = 9.dp, vertical = 4.dp),
             )
@@ -934,9 +934,9 @@ private fun HandbookReadingDeskHeader(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(if (selected) routeColor(route) else Color.White.copy(alpha = 0.54f))
-                        .border(0.6.dp, if (selected) Color.White.copy(alpha = 0.72f) else Color(0x20A68B71), RoundedCornerShape(99.dp))
+                        .border(0.6.dp, if (selected) Color.White.copy(alpha = 0.72f) else Color(0x20A68B71), RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable { onOpenPage(item) }
                         .padding(horizontal = 11.dp, vertical = 5.dp),
                 )
@@ -1050,7 +1050,7 @@ private fun BookDetailView(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(2.dp),
                         modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .clickable(onClick = onShowInspiration)
                             .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
@@ -1063,7 +1063,7 @@ private fun BookDetailView(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(2.dp),
                         modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .clickable(onClick = onToggleManagePanel)
                             .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
@@ -1151,7 +1151,7 @@ private fun BookDetailView(
                         text = item.title,
                         color = if (idx == segmentPageIndex) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkSecondary,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .background(if (idx == segmentPageIndex) Color(0x4DB88A58) else Color(0x18FFFFFF))
                             .clickable { viewModel.setPage(index) }
                             .padding(horizontal = 12.dp, vertical = 7.dp),
@@ -1438,7 +1438,7 @@ private fun TargetDetailRouteOverlay(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(Color(0x10A88966))
                     .clickable(onClick = onClose)
                     .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -1472,7 +1472,7 @@ private fun TargetDetailRouteOverlay(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.Radius2XL))
                     .background(
                         Brush.linearGradient(
                             listOf(Color(0xFFFFFEFC), Color(0xFFFFEAF1), Color(0xFFFFF3D7)),
@@ -1480,7 +1480,7 @@ private fun TargetDetailRouteOverlay(
                             end = Offset(900f, 420f),
                         ),
                     )
-                    .border(1.dp, Color(0x24A88966), RoundedCornerShape(24.dp))
+                    .border(1.dp, Color(0x24A88966), RoundedCornerShape(GoaldayDesign.Radius2XL))
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(11.dp),
             ) {
@@ -1766,7 +1766,7 @@ private fun DetailPill(
         color = if (active) Color.White else Color(0xFF6F5B4B),
         style = MaterialTheme.typography.labelMedium,
         modifier = Modifier
-            .clip(RoundedCornerShape(99.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(if (active) GoaldayDesign.RouteTarget else Color(0x14000000))
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -1882,7 +1882,7 @@ private fun InspirationCenterView(
                     "完成",
                     color = Color.White,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(GoaldayDesign.PrimaryAction)
                         .clickable {
                             val picked = editableItems.filterIndexed { index, _ ->
@@ -1926,7 +1926,7 @@ private fun InspirationCenterView(
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .clip(RoundedCornerShape(99.dp))
+                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                                 .background(Color(0x22FFFFFF))
                                 .padding(horizontal = 7.dp, vertical = 2.dp),
                         )
@@ -1945,7 +1945,7 @@ private fun InspirationCenterView(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.Radius2XL))
                 .background(Color(0xF9FFFFFF))
                 .padding(14.dp),
         ) {
@@ -1971,7 +1971,7 @@ private fun InspirationCenterView(
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .clip(RoundedCornerShape(99.dp))
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .background(Color(0x22FFFFFF))
                             .padding(horizontal = 8.dp, vertical = 3.dp),
                     )
@@ -2128,7 +2128,7 @@ private fun EmbeddedInspirationUnavailable(onBack: () -> Unit) {
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.PrimaryAction)
                     .clickable(onClick = onBack)
                     .padding(horizontal = 15.dp, vertical = 9.dp),
@@ -2170,10 +2170,10 @@ private fun CreateBookDialog(
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
-                                .clip(RoundedCornerShape(99.dp))
+                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                                 .background(color)
                                 .clickable { colorIndex = index }
-                                .shadow(if (colorIndex == index) 8.dp else 0.dp, RoundedCornerShape(99.dp)),
+                                .shadow(if (colorIndex == index) 8.dp else 0.dp, RoundedCornerShape(GoaldayDesign.RadiusPill)),
                         )
                     }
                 }
@@ -2198,9 +2198,9 @@ private fun ActionChip(
         fontWeight = FontWeight.SemiBold,
         maxLines = 1,
         modifier = Modifier
-            .clip(RoundedCornerShape(99.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(bgColor)
-            .border(0.6.dp, color.copy(alpha = 0.18f), RoundedCornerShape(99.dp))
+            .border(0.6.dp, color.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusPill))
             .clickable(onClick = onClick)
             .padding(horizontal = 11.dp, vertical = 6.dp),
     )
@@ -2240,10 +2240,10 @@ private fun EditBookDialog(
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
-                                .clip(RoundedCornerShape(99.dp))
+                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                                 .background(color)
                                 .clickable { colorIndex = index }
-                                .shadow(if (colorIndex == index) 8.dp else 0.dp, RoundedCornerShape(99.dp)),
+                                .shadow(if (colorIndex == index) 8.dp else 0.dp, RoundedCornerShape(GoaldayDesign.RadiusPill)),
                         )
                     }
                 }
@@ -2287,7 +2287,7 @@ private fun CreatePageDialog(
                             text = label,
                             color = if (type == key) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkSecondary,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(99.dp))
+                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                                 .background(if (type == key) Color(0x33B88A58) else Color.Transparent)
                                 .clickable {
                                     if (title.isBlank() || title in defaultPageTitles) {

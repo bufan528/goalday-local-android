@@ -117,8 +117,8 @@ fun InspirationScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0x80FFFDF8), RoundedCornerShape(16.dp))
-                .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(16.dp))
+                .background(Color(0x80FFFDF8), RoundedCornerShape(GoaldayDesign.RadiusL))
+                .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusL))
                 .padding(horizontal = 7.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
@@ -128,7 +128,7 @@ fun InspirationScreen(
                     label,
                     modifier = Modifier
                         .weight(1f)
-                        .background(if (mode == target) Color.White else Color.Transparent, RoundedCornerShape(99.dp))
+                        .background(if (mode == target) Color.White else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable { mode = target }
                         .padding(vertical = 6.dp),
                     color = if (mode == target) GoaldayDesign.Pink else Color(0xFF8C7F73),
@@ -316,7 +316,7 @@ private fun InspirationHeroCover(
                     color = Color.White,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
-                        .background(Color(0x33FFFFFF), RoundedCornerShape(99.dp))
+                        .background(Color(0x33FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .padding(horizontal = 8.dp, vertical = 3.dp),
                 )
             }
@@ -336,7 +336,7 @@ private fun InspirationHeroCover(
 private fun InspirationHeroMetric(label: String, value: String) {
     Row(
         modifier = Modifier
-            .background(Color(0x30FFFFFF), RoundedCornerShape(99.dp))
+            .background(Color(0x30FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusPill))
             .padding(horizontal = 8.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -367,8 +367,8 @@ private fun InspirationCategoryRail(
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 modifier = Modifier
-                    .background(if (selected) GoaldayDesign.Pink else Color(0x88FFFDF8), RoundedCornerShape(99.dp))
-                    .border(0.6.dp, if (selected) Color.White.copy(alpha = 0.45f) else GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(99.dp))
+                    .background(if (selected) GoaldayDesign.Pink else Color(0x88FFFDF8), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .border(0.6.dp, if (selected) Color.White.copy(alpha = 0.45f) else GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .clickable { onSelect(category) }
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             )
@@ -421,8 +421,8 @@ private fun InspirationCoverCard(
     Column(
         modifier = modifier
             .height(176.dp)
-            .background(Color(0xFFFFFDF8), RoundedCornerShape(16.dp))
-            .border(if (selected) 1.6.dp else 0.7.dp, if (selected) GoaldayDesign.Pink else Color(0x22A88966), RoundedCornerShape(16.dp))
+            .background(Color(0xFFFFFDF8), RoundedCornerShape(GoaldayDesign.RadiusL))
+            .border(if (selected) 1.6.dp else 0.7.dp, if (selected) GoaldayDesign.Pink else Color(0x22A88966), RoundedCornerShape(GoaldayDesign.RadiusL))
             .clickable(onClick = onClick)
             .padding(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -431,14 +431,14 @@ private fun InspirationCoverCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(88.dp)
-                .background(topicCoverBrush(template, index), RoundedCornerShape(12.dp)),
+                .background(topicCoverBrush(template, index), RoundedCornerShape(GoaldayDesign.RadiusM)),
         ) {
             TopicCoverArt(template = template, index = index, compact = true)
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                    .background(Color(0x66FFFFFF), RoundedCornerShape(99.dp))
+                    .background(Color(0x66FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .padding(horizontal = 6.dp, vertical = 2.dp),
             ) {
                 Text(template.category, color = Color(0xFF5F4939), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
@@ -492,7 +492,7 @@ private fun InspirationDraftPanel(
                 style = MaterialTheme.typography.labelSmall,
                 color = GoaldayDesign.Pink,
                 modifier = Modifier
-                    .background(Color(0x12E88FAE), RoundedCornerShape(99.dp))
+                    .background(Color(0x12E88FAE), RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             )
         }
@@ -524,7 +524,7 @@ private fun InspirationDraftPanel(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFF6F0EA), RoundedCornerShape(12.dp))
+                    .background(Color(0xFFF6F0EA), RoundedCornerShape(GoaldayDesign.RadiusM))
                     .padding(horizontal = 9.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,

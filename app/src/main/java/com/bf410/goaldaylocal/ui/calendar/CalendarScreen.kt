@@ -535,7 +535,7 @@ fun CalendarScreen(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
-                            .background(if (grabbed) GoaldayDesign.Pink else Color(0x12E88FAE), RoundedCornerShape(99.dp))
+                            .background(if (grabbed) GoaldayDesign.Pink else Color(0x12E88FAE), RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .padding(horizontal = 7.dp, vertical = 3.dp),
                     )
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
@@ -1072,7 +1072,7 @@ private fun CalendarDayDot(
         fontWeight = FontWeight.SemiBold,
         maxLines = 1,
         modifier = Modifier
-            .background(if (selected) Color.White.copy(alpha = 0.92f) else color, RoundedCornerShape(99.dp))
+            .background(if (selected) Color.White.copy(alpha = 0.92f) else color, RoundedCornerShape(GoaldayDesign.RadiusPill))
             .padding(horizontal = 5.dp, vertical = 1.dp),
     )
 }
@@ -1099,7 +1099,7 @@ private fun BoardCard(
                 color = GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
-                    .background(Color(0x0FA88966), RoundedCornerShape(99.dp))
+                    .background(Color(0x0FA88966), RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             )
         }
@@ -1137,7 +1137,7 @@ private fun TimeSlotRow(
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
-                .background(if (assigned != null) GoaldayDesign.PrimaryAction else GoaldayDesign.RouteDiary, RoundedCornerShape(99.dp))
+                .background(if (assigned != null) GoaldayDesign.PrimaryAction else GoaldayDesign.RouteDiary, RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .padding(horizontal = 8.dp, vertical = 4.dp),
         )
         if (assigned != null) {

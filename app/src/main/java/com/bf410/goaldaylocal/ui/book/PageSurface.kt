@@ -1274,13 +1274,13 @@ private fun DiaryWorkspaceHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(
                 Brush.verticalGradient(
                     listOf(Color(0xFFFFF9F4), Color(0xFFFFF0F6), Color(0xFFFFFCF7)),
                 ),
             )
-            .border(0.8.dp, Color(0x28E88FAE), RoundedCornerShape(16.dp))
+            .border(0.8.dp, Color(0x28E88FAE), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 11.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
@@ -1455,9 +1455,9 @@ private fun DiaryStartPanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(Brush.verticalGradient(listOf(Color(0xFFFFF7FB), Color(0xFFFFFCF7))))
-            .border(0.8.dp, Color(0x26E88FAE), RoundedCornerShape(16.dp))
+            .border(0.8.dp, Color(0x26E88FAE), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 12.dp, vertical = 11.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -1943,9 +1943,9 @@ internal fun LongImagePreviewDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                         .background(Color.White.copy(alpha = 0.72f))
-                        .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
+                        .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(GoaldayDesign.RadiusL))
                         .padding(9.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
@@ -2024,9 +2024,9 @@ private fun LongImagePrintPanel(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(Color.White.copy(alpha = 0.72f))
-            .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
+            .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 10.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -2048,9 +2048,9 @@ private fun LongImageShortcutPanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(Color.White.copy(alpha = 0.72f))
-            .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(16.dp))
+            .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
@@ -2774,9 +2774,9 @@ private fun DiaryPhotoNoteGrid(notes: List<String>) {
                 modifier = Modifier
                     .weight(1f)
                     .height(58.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                     .background(Color(0xFFF2EFE9))
-                    .border(1.dp, Color(0xFFE6DED2), RoundedCornerShape(8.dp))
+                    .border(1.dp, Color(0xFFE6DED2), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(6.dp),
             ) {
                 Text(note, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6258), maxLines = 3)
@@ -2809,7 +2809,7 @@ private fun DiaryInBookRow(
         Column(
             modifier = Modifier
                 .width(48.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .background(color.copy(alpha = 0.13f))
                 .padding(horizontal = 4.dp, vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -2919,7 +2919,7 @@ private fun DiaryChildPreviewRow(
         modifier = Modifier
             .padding(start = 57.dp)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(Color.White.copy(alpha = 0.54f))
             .padding(horizontal = 7.dp, vertical = 4.dp),
     ) {
@@ -3049,7 +3049,7 @@ internal fun DiaryEditField(
         modifier = Modifier.fillMaxWidth(),
         minLines = 1,
         maxLines = 3,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(GoaldayDesign.RadiusS),
     )
 }
 
@@ -3060,7 +3060,7 @@ private fun DiarySticker(text: String) {
         style = MaterialTheme.typography.labelMedium,
         color = Color(0xFF5B4A3C),
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(Color(0x33E9D6BC))
             .padding(horizontal = 8.dp, vertical = 4.dp),
     )

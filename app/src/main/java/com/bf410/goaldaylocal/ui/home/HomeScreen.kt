@@ -646,7 +646,7 @@ private fun TimelineDayRow(
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .background(if (selected) GoaldayDesign.Pink else Color(0x12E88FAE), RoundedCornerShape(99.dp))
+                    .background(if (selected) GoaldayDesign.Pink else Color(0x12E88FAE), RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             )
             Text(week, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
@@ -755,7 +755,7 @@ private fun PlannerMetric(
 ) {
     Column(
         modifier = Modifier
-            .background(color.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+            .background(color.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 8.dp, vertical = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(1.dp),
@@ -789,9 +789,9 @@ private fun TaskLine(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(if (entry.completed) 0.dp else 2.dp, RoundedCornerShape(12.dp), clip = false)
-            .background(if (entry.completed) Color(0x0D39A76D) else Color(0xFAFFFDF8), RoundedCornerShape(12.dp))
-            .border(0.6.dp, if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.14f) else Color(0x18A88966), RoundedCornerShape(12.dp))
+            .shadow(if (entry.completed) 0.dp else 2.dp, RoundedCornerShape(GoaldayDesign.RadiusM), clip = false)
+            .background(if (entry.completed) Color(0x0D39A76D) else Color(0xFAFFFDF8), RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(0.6.dp, if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.14f) else Color(0x18A88966), RoundedCornerShape(GoaldayDesign.RadiusM))
             .combinedClickable(onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onToggleDone(entry)
@@ -815,7 +815,7 @@ private fun TaskLine(
         Box(
             modifier = Modifier
                 .graphicsLayer { scaleX = bounce.value; scaleY = bounce.value }
-                .background(if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.Pink, RoundedCornerShape(99.dp))
+                .background(if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.Pink, RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .padding(horizontal = 6.dp, vertical = 2.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -866,7 +866,7 @@ private fun EmptyHint(text: String) {
         Box(
             modifier = Modifier
                 .size(7.dp)
-                .clip(RoundedCornerShape(99.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(GoaldayDesign.Pink.copy(alpha = 0.72f)),
         )
         Text(text, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
