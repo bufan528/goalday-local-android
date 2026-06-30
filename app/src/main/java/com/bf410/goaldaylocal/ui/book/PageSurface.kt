@@ -1401,7 +1401,7 @@ private fun DiaryWorkspaceHeader(
             )
             Text(
                 if (editing) "继续写" else "进入编辑",
-                color = GoaldayDesign.Pink,
+                color = GoaldayDesign.InkSecondary,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier

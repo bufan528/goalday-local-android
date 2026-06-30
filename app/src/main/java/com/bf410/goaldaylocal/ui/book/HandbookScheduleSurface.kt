@@ -588,7 +588,7 @@ private fun HandbookMonthBoard(
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("MONTHLY", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+            Text("MONTHLY", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
             Text("${year}年${month}月 · 点击日期展开到手账页", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
         }
         // 星期表头行
@@ -838,7 +838,7 @@ private fun BoxScope.HandbookMonthHeader(
             textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
             decorationBox = { inner ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Text("本月重点", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold)
+                    Text("本月重点", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
                     Box(Modifier.weight(1f)) {
                         if (weeklyTheme.isBlank()) {
                             Text("写下最重要的目标", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
@@ -1085,7 +1085,7 @@ private fun HandbookQuickAddRow(
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("＋", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink)
+                    Text("＋", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
                     Box(Modifier.weight(1f)) {
                         if (value.isBlank()) {
                             Text("写入计划", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
@@ -1093,7 +1093,7 @@ private fun HandbookQuickAddRow(
                         inner()
                     }
                     Text("入池", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable(onClick = ::addToPoolAndKeepFocus))
-                    Text("排入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable(onClick = ::submitAndKeepFocus))
+                    Text("排入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable(onClick = ::submitAndKeepFocus))
                 }
             },
         )
@@ -1363,7 +1363,7 @@ private fun HandbookEntryLine(
                     .background(Color(0x88FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 5.dp, vertical = 3.dp),
             )
-            Text("Done", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, modifier = Modifier.clickable {
+            Text("Done", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable {
                 onCommit()
                 focusManager.clearFocus(force = true)
             })
