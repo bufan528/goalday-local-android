@@ -773,6 +773,7 @@ private fun ShelfBookCover(
     onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(16.dp, 16.dp, 9.dp, 9.dp)
+    val lineColor = GoaldayDesign.adaptiveInkSecondary
     Box(
         modifier = modifier
             .fillMaxHeight()
@@ -790,7 +791,6 @@ private fun ShelfBookCover(
                 // 书页厚度堆叠线：右侧 3 条递减细线，模拟内页层叠纹理
                 val w = size.width
                 val h = size.height
-                val lineColor = GoaldayDesign.adaptiveInkSecondary
                 val top = 6.dp.toPx()
                 repeat(3) { i ->
                     val x = w - 4.dp.toPx() - i * 3.dp.toPx()
@@ -1538,7 +1538,7 @@ private fun TargetDetailRouteOverlay(
                         actionHint = "已保存为我的目标"
                     }
                     TargetOptionRow(
-                        code = "DIARY",
+                        code = "日记",
                         title = "写入日记目标块",
                         subtitle = "生成 item_diary_target 风格记录，并同步到本地日程",
                         accent = GoaldayDesign.RouteDiary,
@@ -1548,7 +1548,7 @@ private fun TargetDetailRouteOverlay(
                         actionHint = "已写入日记"
                     }
                     TargetOptionRow(
-                        code = "REVIEW",
+                        code = "复盘",
                         title = "加入复盘",
                         subtitle = "排入本周末，并写入复盘备注",
                         accent = GoaldayDesign.RouteDiary,
@@ -1558,7 +1558,7 @@ private fun TargetDetailRouteOverlay(
                         actionHint = "已排入周末复盘"
                     }
                     TargetOptionRow(
-                        code = "COPY",
+                        code = "执行",
                         title = "生成执行句",
                         subtitle = "把今天要推进的行动写进备注",
                         accent = GoaldayDesign.Pink,

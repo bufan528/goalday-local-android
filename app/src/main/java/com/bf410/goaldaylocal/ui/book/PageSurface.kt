@@ -2552,6 +2552,7 @@ internal fun diaryBlockDisplaySubtitle(type: DiaryBlockType): String =
         DiaryBlockType.TOPIC_TARGET -> "来自灵感主题"
     }
 
+@Composable
 internal fun diaryBlockTypeColor(type: DiaryBlockType): Color =
     when (type) {
         DiaryBlockType.IMAGE -> GoaldayDesign.RouteDiary
