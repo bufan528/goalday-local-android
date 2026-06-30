@@ -120,7 +120,7 @@ internal fun GuideOverlay(
                 "聚焦：长图预览",
                 "lottie/img_8.png",
                 "lottie/star_yellow.png",
-                Color(0xFFB88A58),
+                GoaldayDesign.BorderColor,
                 GuideTarget.HOME,
                 listOf("回到今日总览", "检查日程和日记", "预览长图后保存或分享"),
             ),
@@ -144,7 +144,7 @@ internal fun GuideOverlay(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color(0xFFFFFCF7),
+                        GoaldayDesign.adaptiveSurface,
                         GoaldayDesign.PaperWarm,
                         page.tone.copy(alpha = 0.22f),
                     ),
@@ -296,7 +296,7 @@ private fun GuideStepTimeline(
                 .fillMaxWidth()
                 .height(6.dp)
                 .clip(RoundedCornerShape(99.dp))
-                .background(Color(0xFFE5DCD1)),
+                .background(GoaldayDesign.adaptiveSurfaceSoft),
         ) {
             Box(
                 modifier = Modifier
@@ -316,7 +316,7 @@ private fun GuideStepTimeline(
                         .background(if (selected) step.tone.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.52f))
                         .border(
                             0.7.dp,
-                            if (selected) step.tone.copy(alpha = 0.28f) else Color(0x18A88966),
+                            if (selected) step.tone.copy(alpha = 0.28f) else GoaldayDesign.BorderColor.copy(alpha = 0.09f),
                             RoundedCornerShape(14.dp),
                         )
                         .padding(horizontal = 7.dp, vertical = 6.dp),
@@ -330,7 +330,7 @@ private fun GuideStepTimeline(
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
                             .clip(RoundedCornerShape(99.dp))
-                            .background(if (selected) step.tone else Color(0x12A88966))
+                            .background(if (selected) step.tone else GoaldayDesign.BorderColor.copy(alpha = 0.07f))
                             .padding(horizontal = 7.dp, vertical = 2.dp),
                     )
                     Text(
@@ -351,7 +351,7 @@ private fun GuideActionPreview(page: GuidePage) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xCCFFFDF8))
+            .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.80f))
             .border(0.7.dp, page.tone.copy(alpha = 0.18f), RoundedCornerShape(16.dp))
             .padding(horizontal = 11.dp, vertical = 9.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
@@ -498,7 +498,7 @@ private fun GuideIllustration(
                     listOf(
                         Color.White.copy(alpha = 0.95f),
                         page.tone.copy(alpha = 0.24f),
-                        Color(0xFFFFF5EA),
+                        GoaldayDesign.adaptiveSurfaceSoft,
                     ),
                 ),
             )
@@ -529,7 +529,7 @@ private fun GuideIllustration(
                         .fillMaxSize()
                         .clip(RoundedCornerShape(24.dp))
                         .background(Color.White.copy(alpha = 0.72f))
-                        .border(1.dp, Color(0x22B7A893), RoundedCornerShape(24.dp)),
+                        .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(24.dp)),
                 )
             }
         }

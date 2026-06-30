@@ -172,7 +172,7 @@ internal fun TargetDetailReplicaPage(
                         end = Offset(760f, 460f),
                     ),
                 )
-                .border(0.8.dp, Color(0x33FFFFFF), RoundedCornerShape(GoaldayDesign.RadiusM))
+                .border(0.8.dp, GoaldayDesign.adaptiveSurface.copy(alpha = 0.20f), RoundedCornerShape(GoaldayDesign.RadiusM))
                 .padding(14.dp),
         ) {
             Column(
@@ -206,7 +206,7 @@ internal fun TargetDetailReplicaPage(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
                     .background(if (checked) GoaldayDesign.GreenSoft else GoaldayDesign.Surface)
-                    .border(0.8.dp, if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else Color(0x14000000), RoundedCornerShape(GoaldayDesign.RadiusM))
+                    .border(0.8.dp, if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusM))
                     .padding(10.dp),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
@@ -259,7 +259,7 @@ internal fun TargetDetailReplicaPage(
                                 }),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color(0x08000000), RoundedCornerShape(6.dp))
+                                    .background(GoaldayDesign.adaptiveDivider, RoundedCornerShape(6.dp))
                                     .padding(horizontal = 7.dp, vertical = 5.dp),
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -305,8 +305,8 @@ internal fun TargetDetailReplicaPage(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                            .background(Color(0x40FFFFFF))
-                            .border(0.45.dp, Color(0x12A88966), RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.25f))
+                            .border(0.45.dp, GoaldayDesign.BorderColor.copy(alpha = 0.07f), RoundedCornerShape(GoaldayDesign.RadiusS))
                             .padding(horizontal = 7.dp, vertical = 5.dp),
                         decorationBox = { inner ->
                             if (noteDraft.isBlank()) {
@@ -341,7 +341,7 @@ internal fun TargetDetailReplicaPage(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .background(GoaldayDesign.Surface)
-                .border(0.6.dp, Color(0x12000000), RoundedCornerShape(GoaldayDesign.RadiusS))
+                .border(0.6.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -416,7 +416,7 @@ private fun TargetProgressBar(
             .fillMaxWidth()
             .height(7.dp)
             .clip(RoundedCornerShape(99.dp))
-            .background(Color(0x44FFFFFF)),
+            .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.27f)),
     ) {
         Box(
             modifier = Modifier
@@ -477,7 +477,7 @@ private fun TargetDeadlineChip(
         maxLines = 1,
         modifier = Modifier
             .clip(RoundedCornerShape(99.dp))
-            .background(if (active) GoaldayDesign.Positive else Color(0x14000000))
+            .background(if (active) GoaldayDesign.Positive else GoaldayDesign.adaptiveDivider)
             .clickable(onClick = onClick)
             .padding(horizontal = 6.dp, vertical = 3.dp),
     )

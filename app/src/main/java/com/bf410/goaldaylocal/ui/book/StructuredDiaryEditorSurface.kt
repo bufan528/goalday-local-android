@@ -106,8 +106,8 @@ internal fun StructuredDiaryEditor(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFFFFEFC))
-                .border(0.7.dp, Color(0x18B7A893), RoundedCornerShape(12.dp))
+                .background(GoaldayDesign.adaptiveSurface)
+                .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(12.dp))
                 .padding(horizontal = 9.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
@@ -119,7 +119,7 @@ internal fun StructuredDiaryEditor(
                     color = GoaldayDesign.Pink,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(Color(0x12E88FAE))
+                        .background(GoaldayDesign.PinkTint)
                         .clickable { richEditorExpanded = !richEditorExpanded }
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 )
@@ -134,7 +134,7 @@ internal fun StructuredDiaryEditor(
                         .fillMaxWidth()
                         .height(138.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFFFFAF3)),
+                        .background(GoaldayDesign.adaptiveSurfaceSoft),
                 )
             } else {
                 Text(
@@ -145,7 +145,7 @@ internal fun StructuredDiaryEditor(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFFFFAF3))
+                        .background(GoaldayDesign.adaptiveSurfaceSoft)
                         .clickable { richEditorExpanded = true }
                         .padding(horizontal = 9.dp, vertical = 8.dp),
                 )
@@ -168,7 +168,7 @@ internal fun StructuredDiaryEditor(
                 modifier = Modifier
                     .width(1.dp)
                     .fillMaxHeight()
-                    .background(Color(0x18B7A893)),
+                    .background(GoaldayDesign.BorderColor.copy(alpha = 0.09f)),
             )
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 DiaryEditField("🍀 小幸福", state.smallJoy) { onStateChange(state.copy(smallJoy = it)) }
@@ -223,15 +223,15 @@ private fun DiaryEditorToolbar(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0x18F1A5B6))
-            .border(0.7.dp, Color(0x28E88FAE), RoundedCornerShape(12.dp))
+            .background(GoaldayDesign.Pink.copy(alpha = 0.09f))
+            .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
             .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.clickable { onPickDate() }) {
                 Text("日记编辑", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
-                Text(dateLabel, style = MaterialTheme.typography.labelLarge, color = Color(0xFF3A342E), fontWeight = FontWeight.SemiBold)
+                Text(dateLabel, style = MaterialTheme.typography.labelLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
             }
             Text(
                 "完成",
@@ -302,7 +302,7 @@ private fun DiaryFocusedBlockToolbar(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFFFFFEFC))
+            .background(GoaldayDesign.adaptiveSurface)
             .border(0.7.dp, color.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
             .padding(horizontal = 8.dp, vertical = 7.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -625,10 +625,10 @@ private fun DiaryPromptGridDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(20.dp),
-            color = Color(0xFFFFFEFC),
+            color = GoaldayDesign.adaptiveSurface,
             tonalElevation = 6.dp,
             shadowElevation = 12.dp,
-            border = BorderStroke(0.7.dp, Color(0x18B7A893)),
+            border = BorderStroke(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f)),
         ) {
             Column(
                 modifier = Modifier
@@ -689,7 +689,7 @@ private fun DiaryPromptCell(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFFFFFAF3))
+            .background(GoaldayDesign.adaptiveSurfaceSoft)
             .border(0.7.dp, GoaldayDesign.Today.copy(alpha = 0.18f), RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 12.dp),
