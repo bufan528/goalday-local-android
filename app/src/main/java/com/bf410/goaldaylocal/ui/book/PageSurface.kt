@@ -104,6 +104,7 @@ import com.bf410.goaldaylocal.ui.replica.BoardTask
 import com.bf410.goaldaylocal.ui.replica.DualLaneExecutionBoard
 import com.bf410.goaldaylocal.ui.replica.ExecutionBoardHeader
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+import com.bf410.goaldaylocal.ui.replica.TimelineTask
 import com.tencent.mmkv.MMKV
 import org.json.JSONArray
 import org.json.JSONObject
@@ -856,11 +857,7 @@ private fun ReferencePlannerBoard(
     }
     val leftItems = weekDates.map { date ->
         val entries = scheduleByDay[date].orEmpty()
-        when {
-            entries.isEmpty() -> ""
-            entries.first().completed -> "✓ ${entries.first().title}"
-            else -> "· ${entries.first().title}"
-        }
+        if (entries.isEmpty()) TimelineTask("", false) else TimelineTask(entries.first().title, entries.first().completed)
     }
     val todayPool = todayItems.distinct().take(6).map { BoardTask(id = "today_$it", title = it) }
     val poolSource = sourceItems.filterNot { it in todayItems }.distinct().take(8).map { BoardTask(id = "pool_$it", title = it) }
