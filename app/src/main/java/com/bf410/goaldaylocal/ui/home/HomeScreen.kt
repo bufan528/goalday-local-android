@@ -453,12 +453,12 @@ private fun PaperPlanner(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text("SCHEDULE ACTIVITY", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text("日程动态", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                 Text("${month}月周视图", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-                PlannerMetric("TODO", todoEntries.size.toString(), GoaldayDesign.Pink)
-                PlannerMetric("DONE", doneEntries.size.toString(), GoaldayDesign.Positive)
+                PlannerMetric("待办", todoEntries.size.toString(), GoaldayDesign.Pink)
+                PlannerMetric("已完成", doneEntries.size.toString(), GoaldayDesign.Positive)
             }
         }
 
@@ -524,7 +524,7 @@ private fun PaperPlanner(
                     .padding(start = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
-                Text("todo", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text("待办", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                 QuickInput(
                     value = draftTask,
                     onValueChange = onDraftTaskChange,

@@ -261,19 +261,19 @@ fun PageSurface(
                     ),
                 ),
         )
-        // 右边距 4 个彩色书签色标
+        // 右边距 4 个彩色书签色标：P2-1 增大尺寸与对比度，原 3dp×16dp alpha 0x33 过小过淡
         Column(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = 2.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
             horizontalAlignment = Alignment.End,
         ) {
-            listOf(Color(0x33E693B1), Color(0x33F0C187), Color(0x3394C8E8), Color(0x339FD39B)).forEach { c ->
+            listOf(Color(0x66E693B1), Color(0x66F0C187), Color(0x6694C8E8), Color(0x669FD39B)).forEach { c ->
                 Box(
                     modifier = Modifier
-                        .width(3.dp)
-                        .height(16.dp)
+                        .width(4.dp)
+                        .height(22.dp)
                         .clip(RoundedCornerShape(99.dp))
                         .background(c),
                 )
@@ -1923,7 +1923,7 @@ internal fun LongImagePreviewDialog(
                     Text(preview.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
                 }
                 Text(
-                    "PrintPage",
+                    "打印预设",
                     style = MaterialTheme.typography.labelSmall,
                     color = GoaldayDesign.InkMuted,
                     fontWeight = FontWeight.SemiBold,
