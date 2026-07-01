@@ -220,7 +220,7 @@ fun PageSurface(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = GoaldayDesign.Space1 / 2),
-            verticalArrangement = Arrangement.spacedBy(5.dp),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp),
             horizontalAlignment = Alignment.End,
         ) {
             listOf(
@@ -251,9 +251,9 @@ fun PageSurface(
                 savedText = pageNumber,
                 onSavedClick = onSavedClick,
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(GoaldayDesign.Space1 + 2.dp))
             Text(text = title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.adaptiveInkPrimary)
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(GoaldayDesign.Space2))
             body()
         }
 
@@ -636,7 +636,7 @@ fun ActivePageLayer(
                 is DiaryPage -> DiarySection(page.title, page.prompt, tint, diaryDraft, todayPlanItems, todayCompletedItems, pendingCommand, onCommand, onDiaryChange, contentMode, onContentModeChange)
             }
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(GoaldayDesign.Space6))
         Text(text = "${pageIndex + 1} / $pageCount", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.adaptiveInkSecondary)
     }
     }
@@ -688,7 +688,7 @@ private fun HandbookDiaryReplicaPage(
                 .fillMaxSize()
                 .verticalScroll(diaryScrollState)
                 .handbookPaperRuling(diaryScrollState),
-            verticalArrangement = Arrangement.spacedBy(9.dp),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 1.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -820,7 +820,7 @@ private fun PlannerLedgerSummary(
     tint: Color,
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 - 1.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         PlannerLedgerCell("任务池", sourceCount, tint, Modifier.weight(1f))
@@ -1022,7 +1022,7 @@ private fun DiarySection(
             .background(GoaldayDesign.CardPaperGradient)
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .padding(horizontal = 10.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(9.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 1.dp),
     ) {
         if (onThisDayFlashbacks.isNotEmpty()) {
             OnThisDayFlashbackStrip(
@@ -1176,10 +1176,10 @@ private fun OnThisDayFlashbackStrip(
     flashbacks: List<OnThisDayDiary>,
     onClick: (OnThisDayDiary) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp),
         ) {
             Text(
                 "💌 那年今日",
@@ -1338,7 +1338,7 @@ private fun DiaryWorkspaceHeader(
             )
             .border(0.8.dp, GoaldayDesign.Pink.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 11.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(9.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 1.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1365,7 +1365,7 @@ private fun DiaryWorkspaceHeader(
             }
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(5.dp),
+                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp),
             ) {
                 Text(
                     if (editing) "编辑中" else "书内预览",
@@ -1390,7 +1390,7 @@ private fun DiaryWorkspaceHeader(
                 )
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp), modifier = Modifier.fillMaxWidth()) {
             DiaryWorkspaceMetric("文字", textCount, GoaldayDesign.adaptiveInkSecondary, Modifier.weight(1f))
             DiaryWorkspaceMetric("图片", imageCount, GoaldayDesign.RouteDiary, Modifier.weight(1f))
             DiaryWorkspaceMetric("目标", targetCount, GoaldayDesign.Positive, Modifier.weight(1f))
@@ -1460,7 +1460,7 @@ private fun DiaryExportDock(
             .background(GoaldayDesign.Paper)
             .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 9.dp, vertical = 7.dp),
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 - 1.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -1534,7 +1534,7 @@ private fun DiaryStartPanel(
                     .padding(horizontal = GoaldayDesign.Space3, vertical = 7.dp),
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 - 1.dp), modifier = Modifier.fillMaxWidth()) {
             DiaryStartAction("图片", GoaldayDesign.RouteDiary, Modifier.weight(1f), onAddImage)
             DiaryStartAction("目标块", GoaldayDesign.Positive, Modifier.weight(1f), onAddTarget)
         }
@@ -1578,7 +1578,7 @@ private fun DiaryQuickActionRow(
             .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 7.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DiaryQuickActionChip("编辑", GoaldayDesign.Pink, onEdit)
@@ -1635,7 +1635,7 @@ private fun DiaryBlockRail(
             .background(GoaldayDesign.PinkTint)
             .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 7.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DiaryBlockPill("TEXT", "$textBlocks", GoaldayDesign.adaptiveInkPrimary, Modifier.weight(1f))
@@ -1901,15 +1901,15 @@ internal fun LongImagePreviewDialog(
                         listOf(GoaldayDesign.adaptiveSurface, GoaldayDesign.adaptivePaperWarm, GoaldayDesign.ExportPaperWarm),
                     ),
                 )
-                .padding(horizontal = GoaldayDesign.Space3, vertical = 14.dp),
+                .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space3 + 2.dp),
             verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 2.dp),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.87f))
-                    .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp))
-                    .padding(horizontal = 14.dp, vertical = 11.dp),
+                    .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(bottomStart = GoaldayDesign.Radius2XL, bottomEnd = GoaldayDesign.Radius2XL))
+                    .padding(horizontal = GoaldayDesign.Space3 + 2.dp, vertical = GoaldayDesign.Space3 - 1.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -2022,15 +2022,15 @@ internal fun LongImagePreviewDialog(
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                         .background(Color.White.copy(alpha = 0.72f))
                         .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
-                        .padding(9.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                        .padding(GoaldayDesign.Space2 + 1.dp),
+                    verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp),
                 ) {
                     Text("最近导出", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, fontWeight = FontWeight.SemiBold)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         exportHistory.take(6).forEach { item ->
@@ -2047,7 +2047,7 @@ internal fun LongImagePreviewDialog(
                     .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.Radius2XL))
                     .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 10.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 - 1.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LongImageActionChip("保存", GoaldayDesign.Positive, Modifier.width(86.dp)) {
@@ -2128,7 +2128,7 @@ private fun LongImageShortcutPanel(
             .background(Color.White.copy(alpha = 0.72f))
             .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space2),
-        verticalArrangement = Arrangement.spacedBy(7.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 - 1.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
@@ -2141,7 +2141,7 @@ private fun LongImageShortcutPanel(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             LongImageShortcutMode.entries.forEach { item ->
@@ -2229,7 +2229,7 @@ private fun LongImageInfoPill(
             .background(Color.White.copy(alpha = 0.78f))
             .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusPill))
             .padding(horizontal = 10.dp, vertical = 5.dp),
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
@@ -2561,18 +2561,18 @@ private fun DiaryLinkedTargetStrip(
             .background(GoaldayDesign.PinkTint)
             .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(5.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp),
     ) {
         Text("关联目标", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.Medium)
         if (done.isNotEmpty()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp), modifier = Modifier.fillMaxWidth()) {
                 done.forEach { item ->
                     DiaryLinkedTargetChip(Icons.Filled.Check, item, GoaldayDesign.Positive, Modifier.weight(1f)) { onPickDone(item) }
                 }
             }
         }
         if (todo.isNotEmpty()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp), modifier = Modifier.fillMaxWidth()) {
                 todo.forEach { item ->
                     DiaryLinkedTargetChip(Icons.Filled.RadioButtonUnchecked, item, GoaldayDesign.RouteDiary, Modifier.weight(1f)) { onPickTodo(item) }
                 }
@@ -2714,7 +2714,7 @@ private fun StructuredDiaryPreview(
         state.blocks.isNotEmpty() ||
         summaryRows.any { it.content.isNotBlank() }
 
-    Column(verticalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
+    Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 - 1.dp), modifier = Modifier.fillMaxWidth()) {
         DiaryInBookHeader(
             title = "日记活动",
             subtitle = dateLabel,
@@ -2753,7 +2753,7 @@ private fun StructuredDiaryPreview(
             DiaryBlock("富文本记录", plainTextFromHtml(state.richHtml))
         }
         DiaryTypedBlockPreview(blocks = state.blocks)
-        Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp), modifier = Modifier.fillMaxWidth()) {
             summaryRows
                 .filter { it.content.isNotBlank() }
                 .forEach { row ->
@@ -2784,7 +2784,7 @@ private fun DiaryInBookHeader(
             .background(Brush.verticalGradient(listOf(GoaldayDesign.adaptiveSurface, GoaldayDesign.adaptivePaperWarm)))
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space2),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
@@ -2816,7 +2816,7 @@ private fun DiaryEmptyInBookPage(onAddImage: () -> Unit) {
             .clickable { onAddImage() }
             .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space4),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(7.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 - 1.dp),
     ) {
         Text("今日还没有日记", style = MaterialTheme.typography.labelLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
         Text("点击添加图片，或进入编辑补充文字、目标和专题条目。", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, textAlign = TextAlign.Center)
@@ -2825,7 +2825,7 @@ private fun DiaryEmptyInBookPage(onAddImage: () -> Unit) {
 
 @Composable
 private fun DiaryMoodRibbon(items: List<String>) {
-    Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+    Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp), modifier = Modifier.fillMaxWidth()) {
         items.take(4).forEach { item ->
             Text(
                 "#$item",
@@ -2848,7 +2848,7 @@ private fun DiaryMediaMosaic(
     imageUris: List<String>,
     notes: List<String>,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+    Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp), modifier = Modifier.fillMaxWidth()) {
         DiaryImageStrip(imageUris = imageUris, onRemoveImage = null)
         if (notes.isNotEmpty()) {
             DiaryPhotoNoteGrid(notes = notes)
@@ -2858,7 +2858,7 @@ private fun DiaryMediaMosaic(
 
 @Composable
 private fun DiaryPhotoNoteGrid(notes: List<String>) {
-    Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+    Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp), modifier = Modifier.fillMaxWidth()) {
         notes.take(3).forEach { note ->
             Box(
                 modifier = Modifier
@@ -2867,7 +2867,7 @@ private fun DiaryPhotoNoteGrid(notes: List<String>) {
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                     .background(GoaldayDesign.adaptiveSurfaceSoft)
                     .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.5f), RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .padding(6.dp),
+                    .padding(GoaldayDesign.Space1 + 2.dp),
             ) {
                 Text(note, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 3)
             }
@@ -2893,7 +2893,7 @@ private fun DiaryInBookRow(
             .background(diaryBlockTypeBackground(type))
             .border(0.7.dp, color.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .padding(horizontal = 7.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 - 1.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Column(
@@ -2927,7 +2927,7 @@ private fun DiaryTypedBlockPreview(
     blocks: List<DiaryEntryBlock>,
 ) {
     if (blocks.isEmpty()) return
-    Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+    Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp), modifier = Modifier.fillMaxWidth()) {
         blocks.take(6).forEachIndexed { index, block ->
             val color = diaryBlockTypeColor(block.type)
             Column(
@@ -2937,9 +2937,9 @@ private fun DiaryTypedBlockPreview(
                     .background(diaryBlockTypeBackground(block.type))
                     .border(0.8.dp, color.copy(alpha = 0.24f), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
-                verticalArrangement = Arrangement.spacedBy(5.dp),
+                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp),
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.Top) {
+                Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 - 1.dp), verticalAlignment = Alignment.Top) {
                     DiaryInBookTypeMarker(type = block.type, index = index + 1)
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 - 1.dp)) {
                         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -3004,7 +3004,7 @@ private fun DiaryChildPreviewRow(
     color: Color,
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp),
         verticalAlignment = Alignment.Top,
         modifier = Modifier
             .padding(start = 57.dp)
@@ -3032,7 +3032,7 @@ internal fun DiaryImageStrip(
     imageUris: List<String>,
     onRemoveImage: ((String) -> Unit)?,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+    Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp), modifier = Modifier.fillMaxWidth()) {
         imageUris.take(3).forEach { uri ->
             DiaryImageTile(
                 uri = uri,
@@ -3203,7 +3203,7 @@ private fun PageHeaderLine(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(GoaldayDesign.RadiusPill)).background(tint))
-                Spacer(Modifier.width(6.dp))
+                Spacer(Modifier.width(GoaldayDesign.Space1 + 2.dp))
                 Text(bookTitle, style = MaterialTheme.typography.titleSmall, color = GoaldayDesign.adaptiveInkPrimary)
             }
             Text(
