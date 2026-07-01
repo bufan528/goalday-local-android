@@ -82,6 +82,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -2625,6 +2626,7 @@ internal fun diaryBlockTypeColor(type: DiaryBlockType): Color =
         DiaryBlockType.TOPIC_TARGET -> GoaldayDesign.RouteDiary
     }
 
+@Composable
 internal fun diaryBlockTypeBackground(type: DiaryBlockType): Color =
     when (type) {
         DiaryBlockType.IMAGE -> GoaldayDesign.Pink.copy(alpha = 0.09f)

@@ -128,6 +128,35 @@ object GoaldayDesign {
     val CalendarHeroMid = Color(0xFFFFEAF1)
     val CalendarHeroEnd = Color(0xFFEBD0BA)
     val EmptyBookCover = Color(0xFFB88A58)
+    // 书库/封面通用叠层色（BookHomeScreen 中大量硬编码半透明色收敛）
+    val CoverWhiteOverlayHigh = Color(0xCCFFFFFF)
+    val CoverWhiteOverlayMedium = Color(0xAAFFFFFF)
+    val CoverWhiteOverlayLow = Color(0x66FFFFFF)
+    val CoverWhiteOverlaySubtle = Color(0x33FFFFFF)
+    val CoverWhiteOverlayBorder = Color(0x38FFFFFF)
+    val CoverWhiteOverlayHairline = Color(0x22FFFFFF)
+    val CoverDarkSpine = Color(0x332F261D)
+    val CoverDarkSpineStrong = Color(0x662F261D)
+    val CoverPageEdgeWarm = Color(0xCCFFF9F0)
+
+    // 目标详情页背景渐变
+    val TargetDetailGradientEnd = Color(0xFFF1D9C4)
+    val TargetDetailCardEnd = Color(0xFFFFF3D7)
+
+    // 书库桌面渐变
+    val LibraryDeskTop = Color(0xFFF8EFE5)
+    val LibraryDeskGradient: Brush
+        get() = Brush.verticalGradient(listOf(LibraryDeskTop, DeskMid, DeskBottom))
+
+    // 书籍封面调色板（统一 CreateBookDialog/EditBookDialog/封面渐变）
+    val BookCoverPalette = listOf(
+        Color(0xFFF2C0A5),
+        Color(0xFFF1A5B6),
+        Color(0xFFFFAA5F),
+        Color(0xFFBBD1AD),
+        Color(0xFF9EAADB),
+    )
+
     // PageSurface 页面翻转/导出/AI洞察卡片
     val PageTurnEdgeStart = Color(0xFFDCCAB4)
     val PageTurnEdgeMid = Color(0xFFF4E9DD)

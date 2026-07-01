@@ -76,16 +76,16 @@ private val goaldayColorScheme = lightColorScheme(
     primary = GoaldayDesign.Pink,
     onPrimary = Color.White,
     primaryContainer = GoaldayDesign.PinkSoft,
-    onPrimaryContainer = GoaldayDesign.adaptiveInkPrimary,
+    onPrimaryContainer = GoaldayDesign.InkPrimary,
     secondary = GoaldayDesign.RouteDiary,
     onSecondary = Color.White,
-    surface = GoaldayDesign.adaptiveSurface,
-    onSurface = GoaldayDesign.adaptiveInkPrimary,
-    surfaceVariant = GoaldayDesign.adaptiveSurfaceSoft,
-    onSurfaceVariant = GoaldayDesign.adaptiveInkSecondary,
+    surface = GoaldayDesign.Surface,
+    onSurface = GoaldayDesign.InkPrimary,
+    surfaceVariant = GoaldayDesign.SurfaceSoft,
+    onSurfaceVariant = GoaldayDesign.InkSecondary,
     background = GoaldayDesign.AppBg,
-    onBackground = GoaldayDesign.adaptiveInkPrimary,
-    outline = GoaldayDesign.adaptiveInkMuted,
+    onBackground = GoaldayDesign.InkPrimary,
+    outline = GoaldayDesign.InkMuted,
 )
 
 private val goaldayDarkColorScheme = darkColorScheme(

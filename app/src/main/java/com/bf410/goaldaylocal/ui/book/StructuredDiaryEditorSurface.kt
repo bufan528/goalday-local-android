@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -406,24 +407,27 @@ private fun DiaryEmptyBlockRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.White.copy(alpha = 0.52f))
+            .background(GoaldayDesign.CoverWhiteOverlayMedium)
             .border(0.7.dp, color.copy(alpha = 0.16f), RoundedCornerShape(10.dp))
             .padding(horizontal = 8.dp, vertical = 7.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            diaryBlockTypeIcon(type),
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
-            fontWeight = FontWeight.SemiBold,
+        Box(
             modifier = Modifier
                 .width(42.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(color.copy(alpha = 0.12f))
                 .padding(horizontal = 6.dp, vertical = 4.dp),
-            textAlign = TextAlign.Center,
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = diaryBlockTypeIcon(type),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(16.dp),
+            )
+        }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
             Text(diaryBlockDisplaySubtitle(type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
@@ -593,7 +597,12 @@ private fun DiaryBlockTypeBadge(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(diaryBlockTypeIcon(type), color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Icon(
+            imageVector = diaryBlockTypeIcon(type),
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(18.dp),
+        )
         Text("%02d".format(index), color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }

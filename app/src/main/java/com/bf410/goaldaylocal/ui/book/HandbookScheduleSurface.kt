@@ -685,7 +685,7 @@ private fun HandbookMonthBoard(
 internal fun Modifier.handbookPaperRuling(
     scrollState: ScrollState? = null,
     lineSpacingDp: androidx.compose.ui.unit.Dp = 24.dp,
-    lineColor: Color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.10f),
+    lineColor: Color = GoaldayDesign.InkMuted.copy(alpha = 0.10f),
 ): Modifier = this.drawBehind {
     val spacingPx = lineSpacingDp.toPx()
     val marginPx = 6.dp.toPx()

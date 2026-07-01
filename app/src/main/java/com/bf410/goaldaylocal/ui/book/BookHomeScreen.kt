@@ -70,13 +70,7 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 
-private val bookPalette = listOf(
-    Color(0xFFF2C0A5),
-    Color(0xFFF1A5B6),
-    Color(0xFFFFAA5F),
-    Color(0xFFBBD1AD),
-    Color(0xFF9EAADB),
-)
+private val bookPalette = GoaldayDesign.BookCoverPalette
 
 private enum class BookSegment(val label: String) {
     WEEK("日程"),
@@ -461,12 +455,12 @@ private fun BookUnavailableState(
                 Brush.verticalGradient(
                     listOf(
                         GoaldayDesign.adaptiveSurface,
-                        Color(0xFFF8EFE5),
-                        Color(0xFFF0DDCA),
+                        GoaldayDesign.PaperWarm,
+                        GoaldayDesign.PaperAged,
                     ),
                 ),
             )
-            .padding(22.dp),
+            .padding(GoaldayDesign.Space6),
         contentAlignment = Alignment.Center,
     ) {
         Column(
@@ -494,14 +488,14 @@ private fun BookUnavailableState(
             )
             Text(
                 action,
-                color = Color.White,
+                color = GoaldayDesign.adaptiveSurface,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.PrimaryAction)
                     .clickable(onClick = onAction)
-                    .padding(horizontal = 15.dp, vertical = 9.dp),
+                    .padding(horizontal = GoaldayDesign.Space4, vertical = GoaldayDesign.Space2 + 1.dp),
             )
         }
     }
@@ -519,16 +513,8 @@ private fun LibraryView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFFF8EFE5),
-                        Color(0xFFF6E8DA),
-                        Color(0xFFF1DDCC),
-                    ),
-                ),
-            )
-            .padding(top = 12.dp),
+            .background(GoaldayDesign.LibraryDeskGradient)
+            .padding(top = GoaldayDesign.Space3),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -550,14 +536,14 @@ private fun LibraryView(
             }
             Text(
                 text = BookStrings.createBook,
-                color = Color.White,
+                color = GoaldayDesign.adaptiveSurface,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.adaptiveInkPrimary)
                     .clickable(onClick = onCreateBook)
-                    .padding(horizontal = 13.dp, vertical = 8.dp),
+                    .padding(horizontal = GoaldayDesign.Space3 + 1.dp, vertical = GoaldayDesign.Space2),
             )
         }
         Spacer(Modifier.height(12.dp))
@@ -570,7 +556,7 @@ private fun LibraryView(
                 .clip(RoundedCornerShape(14.dp))
                 .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.4f))
                 .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(14.dp))
-                .padding(horizontal = 12.dp, vertical = 9.dp),
+                .padding(horizontal = GoaldayDesign.Space3, vertical = 9.dp),
         )
         Spacer(Modifier.height(14.dp))
         Column(
@@ -600,7 +586,7 @@ private fun FeaturedHandbookCover(
     book: TopicBook,
     onClick: () -> Unit,
 ) {
-    val coverShape = RoundedCornerShape(30.dp)
+    val coverShape = RoundedCornerShape(GoaldayDesign.Radius3XL)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -612,13 +598,13 @@ private fun FeaturedHandbookCover(
                     listOf(
                         book.color.copy(alpha = 0.94f),
                         book.color.copy(alpha = 0.74f),
-                        Color.White.copy(alpha = 0.28f),
+                        GoaldayDesign.CoverWhiteOverlayLow,
                     ),
                     start = Offset.Zero,
                     end = Offset(920f, 620f),
                 ),
             )
-            .border(1.dp, Color(0x33FFFFFF), coverShape)
+            .border(1.dp, GoaldayDesign.CoverWhiteOverlaySubtle, coverShape)
             .clickable(onClick = onClick),
     ) {
         Box(
@@ -626,7 +612,7 @@ private fun FeaturedHandbookCover(
                 .matchParentSize()
                 .background(
                     Brush.radialGradient(
-                        listOf(Color(0x55FFFFFF), Color.Transparent),
+                        listOf(GoaldayDesign.CoverWhiteOverlayMedium, Color.Transparent),
                         center = Offset(700f, 80f),
                         radius = 620f,
                     ),
@@ -639,19 +625,19 @@ private fun FeaturedHandbookCover(
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
-                        listOf(Color(0x662F261D), Color(0x22FFFFFF), Color.Transparent),
+                        listOf(GoaldayDesign.CoverDarkSpineStrong, GoaldayDesign.CoverWhiteOverlayHairline, Color.Transparent),
                     ),
                 ),
         )
         Text(
             "GOALDAY",
-            color = Color(0xCCFFFFFF),
+            color = GoaldayDesign.CoverWhiteOverlayHigh,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .graphicsLayer { rotationZ = -90f }
-                    .padding(bottom = 7.dp),
+                    .padding(bottom = GoaldayDesign.Space2),
         )
         repeat(4) { layer ->
             Box(
@@ -662,7 +648,7 @@ private fun FeaturedHandbookCover(
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color(0x33FFFFFF), Color(0xCCFFF9F0)),
+                            listOf(GoaldayDesign.CoverWhiteOverlaySubtle, GoaldayDesign.CoverPageEdgeWarm),
                         ),
                     ),
             )
@@ -673,8 +659,8 @@ private fun FeaturedHandbookCover(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("本地手账", style = MaterialTheme.typography.labelSmall, color = Color(0xAA2F261D), fontWeight = FontWeight.SemiBold)
+            Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
+                Text("本地手账", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.CoverDarkSpineStrong, fontWeight = FontWeight.SemiBold)
                 Text(book.title, style = MaterialTheme.typography.headlineSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
                 Text(book.subtitle, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.adaptiveInkSecondary)
             }
@@ -689,20 +675,20 @@ private fun FeaturedHandbookCover(
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                                .background(Color.White.copy(alpha = 0.52f))
-                                .padding(horizontal = 7.dp, vertical = 2.dp),
+                                .background(GoaldayDesign.CoverWhiteOverlayMedium)
+                                .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
                         )
                     }
                 }
                 Text(
                     "打开这本",
-                    color = Color.White,
+                    color = GoaldayDesign.adaptiveSurface,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(GoaldayDesign.adaptiveInkPrimary)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
                 )
             }
         }
@@ -728,7 +714,7 @@ private fun BookShelfRow(
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.4f))
                     .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .padding(horizontal = 9.dp, vertical = 4.dp),
+                    .padding(horizontal = 9.dp, vertical = GoaldayDesign.Space1),
             )
         }
         books.chunked(3).forEachIndexed { rowIndex, row ->
@@ -773,7 +759,7 @@ private fun ShelfBookCover(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val shape = RoundedCornerShape(16.dp, 16.dp, 9.dp, 9.dp)
+    val shape = RoundedCornerShape(GoaldayDesign.RadiusL, GoaldayDesign.RadiusL, 9.dp, 9.dp)
     val lineColor = GoaldayDesign.adaptiveInkSecondary
     Box(
         modifier = modifier
@@ -782,12 +768,12 @@ private fun ShelfBookCover(
             .clip(shape)
             .background(
                 Brush.linearGradient(
-                    listOf(book.color.copy(alpha = 0.96f), book.color.copy(alpha = 0.76f), Color(0xFFFFFAF2)),
+                    listOf(book.color.copy(alpha = 0.96f), book.color.copy(alpha = 0.76f), GoaldayDesign.Paper),
                     start = Offset.Zero,
                     end = Offset(280f, 520f),
                 ),
             )
-            .border(0.8.dp, Color(0x38FFFFFF), shape)
+            .border(0.8.dp, GoaldayDesign.CoverWhiteOverlayBorder, shape)
             .drawBehind {
                 // 书页厚度堆叠线：右侧 3 条递减细线，模拟内页层叠纹理
                 val w = size.width
@@ -811,7 +797,7 @@ private fun ShelfBookCover(
                 .align(Alignment.CenterStart)
                 .width(16.dp)
                 .fillMaxHeight()
-                .background(Color(0x332F261D), RoundedCornerShape(GoaldayDesign.RadiusPill)),
+                .background(GoaldayDesign.CoverDarkSpine, RoundedCornerShape(GoaldayDesign.RadiusPill)),
         )
         Column(
             modifier = Modifier
@@ -820,7 +806,7 @@ private fun ShelfBookCover(
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(book.title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 3)
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
                     book.pages.take(3).forEach { page ->
                         Box(
@@ -844,15 +830,15 @@ private fun AddBookShelfCard(onCreateBook: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(68.dp)
-            .shadow(6.dp, RoundedCornerShape(18.dp), clip = false)
-            .clip(RoundedCornerShape(18.dp))
+            .shadow(6.dp, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.48f))
-            .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.19f), RoundedCornerShape(18.dp))
+            .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.19f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .clickable(onClick = onCreateBook)
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = GoaldayDesign.Space4),
         contentAlignment = Alignment.Center,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
             Icon(Icons.Filled.Add, contentDescription = null, tint = GoaldayDesign.adaptiveInkSecondary, modifier = Modifier.size(16.dp))
             Text("新建一本手账", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         }
@@ -880,11 +866,11 @@ private fun HandbookReadingDeskHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
             .background(GoaldayDesign.CardPaperGradient)
-            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.16f), RoundedCornerShape(20.dp))
-            // P1-4 精简：padding 11dp→10dp，spacedBy 9dp→7dp，压缩整体高度
-            .padding(10.dp),
+            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusXL))
+            // P1-4 精简：padding 11dp→Space2+2，spacedBy 9dp→7dp，压缩整体高度
+            .padding(GoaldayDesign.Space2 + 2.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Row(
@@ -904,13 +890,13 @@ private fun HandbookReadingDeskHeader(
             )
             Text(
                 text = "离线",
-                color = Color.White,
+                color = GoaldayDesign.adaptiveSurface,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(routeColor(route))
-                    .padding(horizontal = 9.dp, vertical = 4.dp),
+                    .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space1),
             )
         }
         Row(
@@ -931,15 +917,15 @@ private fun HandbookReadingDeskHeader(
                 val selected = book.pages.indexOf(item) == selectedRealPageIndex
                 Text(
                     text = monthLabelForPage(item.title, fallback = item.title),
-                    color = if (selected) Color.White else GoaldayDesign.adaptiveInkSecondary,
+                    color = if (selected) GoaldayDesign.adaptiveSurface else GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                        .background(if (selected) routeColor(route) else Color.White.copy(alpha = 0.54f))
-                        .border(0.6.dp, if (selected) Color.White.copy(alpha = 0.72f) else GoaldayDesign.BorderColor.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .background(if (selected) routeColor(route) else GoaldayDesign.CoverWhiteOverlayMedium)
+                        .border(0.6.dp, if (selected) GoaldayDesign.CoverWhiteOverlayHigh else GoaldayDesign.BorderColor.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable { onOpenPage(item) }
-                        .padding(horizontal = 11.dp, vertical = 5.dp),
+                        .padding(horizontal = GoaldayDesign.Space3 - 1.dp, vertical = GoaldayDesign.Space2 - 3.dp),
                 )
             }
         }
@@ -955,10 +941,10 @@ private fun HandbookDeskMetric(
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color.White.copy(alpha = 0.58f))
-            .border(0.6.dp, color.copy(alpha = 0.16f), RoundedCornerShape(14.dp))
-            .padding(horizontal = 8.dp, vertical = 7.dp),
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
+            .background(GoaldayDesign.CoverWhiteOverlayMedium.copy(alpha = 0.58f))
+            .border(0.6.dp, color.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusXL))
+            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space2 - 1.dp),
         verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         Text(value, color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
@@ -1088,7 +1074,7 @@ private fun BookDetailView(
                     .clip(RoundedCornerShape(16.dp))
                     .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.96f))
                     .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(16.dp))
-                    .padding(horizontal = 9.dp, vertical = 8.dp),
+                    .padding(horizontal = 9.dp, vertical = GoaldayDesign.Space2),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
                 Row(
@@ -1100,7 +1086,7 @@ private fun BookDetailView(
                     Text("${uiState.selectedPageIndex + 1}/${book.pages.size}", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                 }
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
@@ -1112,7 +1098,7 @@ private fun BookDetailView(
                     ActionChip(label = BookStrings.moveRight, color = GoaldayDesign.RouteOverview, onClick = viewModel::moveCurrentPageRight)
                 }
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
@@ -1155,7 +1141,7 @@ private fun BookDetailView(
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .background(if (idx == segmentPageIndex) GoaldayDesign.BorderColor.copy(alpha = 0.30f) else GoaldayDesign.adaptiveSurface.copy(alpha = 0.09f))
                             .clickable { viewModel.setPage(index) }
-                            .padding(horizontal = 12.dp, vertical = 7.dp),
+                            .padding(horizontal = GoaldayDesign.Space3, vertical = 7.dp),
                     )
                 }
             }
@@ -1182,7 +1168,7 @@ private fun BookDetailView(
                     .fillMaxWidth()
                     .weight(1f)
                     .background(GoaldayDesign.AppBg)
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = GoaldayDesign.Space1),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
@@ -1422,7 +1408,7 @@ private fun TargetDetailRouteOverlay(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    listOf(GoaldayDesign.adaptiveSurface, Color(0xFFFFF2E7), Color(0xFFF1D9C4)),
+                    listOf(GoaldayDesign.adaptiveSurface, GoaldayDesign.PaperWarm, GoaldayDesign.TargetDetailGradientEnd),
                 ),
             ),
     ) {
@@ -1431,7 +1417,7 @@ private fun TargetDetailRouteOverlay(
                 .fillMaxWidth()
                 .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.8f))
                 .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp))
-                .padding(horizontal = 14.dp, vertical = 11.dp),
+                .padding(horizontal = GoaldayDesign.Space4 - 2.dp, vertical = 11.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -1442,7 +1428,7 @@ private fun TargetDetailRouteOverlay(
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.BorderColor.copy(alpha = 0.06f))
                     .clickable(onClick = onClose)
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 6.dp),
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回", tint = GoaldayDesign.adaptiveInkSecondary, modifier = Modifier.size(14.dp))
                 Text(
@@ -1467,8 +1453,8 @@ private fun TargetDetailRouteOverlay(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = GoaldayDesign.Space4 - 2.dp, vertical = GoaldayDesign.Space3),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
         ) {
             Column(
                 modifier = Modifier
@@ -1476,7 +1462,7 @@ private fun TargetDetailRouteOverlay(
                     .clip(RoundedCornerShape(GoaldayDesign.Radius2XL))
                     .background(
                         Brush.linearGradient(
-                            listOf(GoaldayDesign.adaptiveSurface, GoaldayDesign.PinkTint, Color(0xFFFFF3D7)),
+                            listOf(GoaldayDesign.adaptiveSurface, GoaldayDesign.PinkTint, GoaldayDesign.TargetDetailCardEnd),
                             start = Offset.Zero,
                             end = Offset(900f, 420f),
                         ),
@@ -1494,7 +1480,7 @@ private fun TargetDetailRouteOverlay(
                     Box(
                         modifier = Modifier
                             .size(58.dp)
-                            .clip(RoundedCornerShape(18.dp))
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
                             .background(if (checked) GoaldayDesign.RouteTarget else GoaldayDesign.Pink),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -1502,11 +1488,11 @@ private fun TargetDetailRouteOverlay(
                             Icon(
                                 imageVector = Icons.Filled.Check,
                                 contentDescription = "已完成",
-                                tint = Color.White,
+                                tint = GoaldayDesign.adaptiveSurface,
                                 modifier = Modifier.size(28.dp),
                             )
                         } else {
-                            Text("%02d".format(itemIndex + 1), color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text("%02d".format(itemIndex + 1), color = GoaldayDesign.adaptiveSurface, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -1522,7 +1508,7 @@ private fun TargetDetailRouteOverlay(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 DetailPill(if (checked) "切换完成" else "标记完成", active = checked, onClick = onToggleChecked)
@@ -1536,7 +1522,7 @@ private fun TargetDetailRouteOverlay(
             }
 
             TargetDetailPanel(title = "目标选项", trailing = "本地保存") {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
                     TargetOptionRow(
                         code = "我的",
                         title = "保存为我的目标",
@@ -1599,7 +1585,7 @@ private fun TargetDetailRouteOverlay(
                 Text(meta.deadlineDay?.let { "当前截止：${it}日" } ?: "当前未设置截止日", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.bodySmall)
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     DetailPill("今天", active = meta.deadlineDay == dateShortcuts.today) { onUpdateDeadline(dateShortcuts.today) }
@@ -1635,7 +1621,7 @@ private fun TargetDetailPanel(
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.87f))
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(18.dp))
             .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Text(title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -1658,8 +1644,8 @@ private fun TargetDetailSummaryStrip(
             .clip(RoundedCornerShape(18.dp))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.8f))
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.12f), RoundedCornerShape(18.dp))
-            .padding(horizontal = 10.dp, vertical = 9.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 9.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         TargetDetailMetric(
@@ -1700,7 +1686,7 @@ private fun TargetDetailMetric(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(if (active) GoaldayDesign.Positive.copy(alpha = 0.08f) else GoaldayDesign.PinkTint)
-            .padding(horizontal = 8.dp, vertical = 7.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = 7.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -1718,19 +1704,19 @@ private fun TargetScheduledEntryRow(entry: ScheduleEntry) {
             .clip(RoundedCornerShape(12.dp))
             .background(if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.06f) else GoaldayDesign.PinkTint)
             .border(0.7.dp, color.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = GoaldayDesign.Space2),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             "${entry.month}/${entry.day}",
-            color = Color.White,
+            color = GoaldayDesign.adaptiveSurface,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .background(color)
-                .padding(horizontal = 7.dp, vertical = 4.dp),
+                .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
         )
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(entry.title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall, maxLines = 1)
@@ -1745,7 +1731,7 @@ private fun TargetScheduledEntryRow(entry: ScheduleEntry) {
             )
         }
         Text(
-            entry.timeText.ifBlank { if (entry.completed) "done" else "todo" },
+            entry.timeText.ifBlank { if (entry.completed) "已完成" else "待办" },
             color = color,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
@@ -1773,13 +1759,13 @@ private fun DetailPill(
 ) {
     Text(
         label,
-        color = if (active) Color.White else GoaldayDesign.adaptiveInkSecondary,
+        color = if (active) GoaldayDesign.adaptiveSurface else GoaldayDesign.adaptiveInkSecondary,
         style = MaterialTheme.typography.labelMedium,
         modifier = Modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(if (active) GoaldayDesign.RouteTarget else GoaldayDesign.adaptiveDivider)
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = GoaldayDesign.Space2 - 2.dp),
     )
 }
 
@@ -1798,7 +1784,7 @@ private fun TargetOptionRow(
             .background(accent.copy(alpha = 0.10f))
             .border(0.7.dp, accent.copy(alpha = 0.22f), RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 9.dp),
+            .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 9.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1810,7 +1796,7 @@ private fun TargetOptionRow(
                 .background(accent),
             contentAlignment = Alignment.Center,
         ) {
-            Text(code, color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(code, color = GoaldayDesign.adaptiveSurface, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
@@ -1878,7 +1864,7 @@ private fun InspirationCenterView(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1890,7 +1876,7 @@ private fun InspirationCenterView(
                 Text("返回", color = GoaldayDesign.RouteOverview, modifier = Modifier.clickable(onClick = onBack))
                 Text(
                     "完成",
-                    color = Color.White,
+                    color = GoaldayDesign.adaptiveSurface,
                     modifier = Modifier
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(GoaldayDesign.PrimaryAction)
@@ -1900,7 +1886,7 @@ private fun InspirationCenterView(
                             }
                             onApply(picked, pushToToday, clearSourceAfterApply)
                         }
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                        .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = GoaldayDesign.Space1),
                 )
             }
         }
@@ -1923,8 +1909,8 @@ private fun InspirationCenterView(
                             .background(topicCoverBrush(item, index))
                             .border(
                                 width = if (index == selectedIndex) 2.dp else 1.dp,
-                                color = if (index == selectedIndex) Color.White else Color.White.copy(alpha = 0.35f),
-                                shape = RoundedCornerShape(14.dp),
+                                color = if (index == selectedIndex) GoaldayDesign.CoverWhiteOverlayHigh else GoaldayDesign.CoverWhiteOverlayLow,
+                                shape = RoundedCornerShape(GoaldayDesign.RadiusXL),
                             )
                             .clickable { onSelect(index) }
                             .padding(12.dp),
@@ -1932,20 +1918,20 @@ private fun InspirationCenterView(
                         TopicCoverArt(template = item, index = index, compact = true)
                         Text(
                             "${previewCount}项",
-                            color = Color(0xEFFFFFFF),
+                            color = GoaldayDesign.CoverWhiteOverlayHigh,
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                                .background(Color(0x22FFFFFF))
-                                .padding(horizontal = 7.dp, vertical = 2.dp),
+                                .background(GoaldayDesign.CoverWhiteOverlayHairline)
+                                .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
                         )
                         Column(
                             modifier = Modifier.align(Alignment.BottomStart),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
                         ) {
-                            Text(item.title, color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            Text("${item.category} · ${item.subtitle}", color = Color.White.copy(alpha = 0.84f), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                            Text(item.title, color = GoaldayDesign.CoverWhiteOverlayHigh, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text("${item.category} · ${item.subtitle}", color = GoaldayDesign.CoverWhiteOverlayMedium, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                         }
                     }
                 }
@@ -1963,35 +1949,35 @@ private fun InspirationCenterView(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(140.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
                         .background(topicCoverBrush(selected, selectedIndex))
-                        .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(20.dp))
-                        .padding(16.dp),
+                        .border(1.dp, GoaldayDesign.CoverWhiteOverlaySubtle, RoundedCornerShape(GoaldayDesign.RadiusXL))
+                        .padding(GoaldayDesign.Space4),
                 ) {
                     TopicCoverArt(template = selected, index = selectedIndex)
                     Text(
                         "${selected.category} · ${loadedTargetItems.size} 个目标",
-                        color = Color(0xEFFFFFFF),
+                        color = GoaldayDesign.CoverWhiteOverlayHigh,
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .background(Color(0x22FFFFFF))
-                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                            .background(GoaldayDesign.CoverWhiteOverlayHairline)
+                            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
                     )
                     Column(
                         modifier = Modifier.align(Alignment.BottomStart),
                         verticalArrangement = Arrangement.spacedBy(5.dp),
                     ) {
-                        Text(selected.title, style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.SemiBold)
-                        Text(selected.subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xEFFFFFFF))
-                        Text(if (selected.linkToSchedule) "可导入任务池 · 可保存成手账本" else "适合复盘记录 · 可保存成手账本", style = MaterialTheme.typography.labelSmall, color = Color(0xDFFFFFFF))
+                        Text(selected.title, style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.CoverWhiteOverlayHigh, fontWeight = FontWeight.SemiBold)
+                        Text(selected.subtitle, style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.CoverWhiteOverlayHigh)
+                        Text(if (selected.linkToSchedule) "可导入任务池 · 可保存成手账本" else "适合复盘记录 · 可保存成手账本", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.CoverWhiteOverlayMedium)
                     }
                 }
                 Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -2006,7 +1992,7 @@ private fun InspirationCenterView(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
                         .background(GoaldayDesign.BorderColor.copy(alpha = 0.06f))
-                        .padding(horizontal = 10.dp, vertical = 7.dp),
+                        .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 7.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -2022,7 +2008,7 @@ private fun InspirationCenterView(
                     }
                 }
                 editableItems.chunked(2).forEachIndexed { rowIndex, rowItems ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), modifier = Modifier.fillMaxWidth()) {
                         rowItems.forEachIndexed { columnIndex, item ->
                             val index = rowIndex * 2 + columnIndex
                             Column(
@@ -2072,13 +2058,13 @@ private fun InspirationCenterView(
                                 editableItems = editableItems + "新目标"
                                 checkedStates = checkedStates + true
                             }
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = GoaldayDesign.Space1),
                     ) {
                         Icon(Icons.Filled.Add, contentDescription = null, tint = GoaldayDesign.Pink, modifier = Modifier.size(14.dp))
                         Text("添加目标", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                     }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), verticalAlignment = Alignment.CenterVertically) {
                     ActionChip(
                         label = if (pushToToday) "导入任务池:开" else "导入任务池:关",
                         color = GoaldayDesign.RouteOverview,
@@ -2093,7 +2079,7 @@ private fun InspirationCenterView(
                 val picked = editableItems.filterIndexed { index, value ->
                     checkedStates.getOrNull(index) == true && value.isNotBlank()
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), modifier = Modifier.fillMaxWidth()) {
                     Button(
                         onClick = { onApply(picked, pushToToday, clearSourceAfterApply) },
                         modifier = Modifier.weight(1f),
@@ -2134,14 +2120,14 @@ private fun EmbeddedInspirationUnavailable(onBack: () -> Unit) {
             Text("本地模板资源为空，返回手账继续编辑已有页面。", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkMuted, textAlign = TextAlign.Center)
             Text(
                 "返回手账",
-                color = Color.White,
+                color = GoaldayDesign.adaptiveSurface,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.PrimaryAction)
                     .clickable(onClick = onBack)
-                    .padding(horizontal = 15.dp, vertical = 9.dp),
+                    .padding(horizontal = GoaldayDesign.Space4, vertical = GoaldayDesign.Space2 + 1.dp),
             )
         }
     }
@@ -2172,7 +2158,7 @@ private fun CreateBookDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text(BookStrings.cancel) } },
         title = { Text(BookStrings.createBookTitle) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3)) {
                 OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.bookName) }, singleLine = true)
                 OutlinedTextField(value = subtitle, onValueChange = { subtitle = it }, label = { Text(BookStrings.subtitle) }, singleLine = true)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -2242,7 +2228,7 @@ private fun EditBookDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text(BookStrings.cancel) } },
         title = { Text(BookStrings.editBookTitle) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3)) {
                 OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.bookName) }, singleLine = true)
                 OutlinedTextField(value = subtitle, onValueChange = { subtitle = it }, label = { Text(BookStrings.subtitle) }, singleLine = true)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -2284,7 +2270,7 @@ private fun CreatePageDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text(BookStrings.cancel) } },
         title = { Text(BookStrings.addPageTitle) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3)) {
                 OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.pageTitle) }, singleLine = true)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     listOf(
@@ -2305,7 +2291,7 @@ private fun CreatePageDialog(
                                     }
                                     type = key
                                 }
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                                .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 6.dp),
                         )
                     }
                 }

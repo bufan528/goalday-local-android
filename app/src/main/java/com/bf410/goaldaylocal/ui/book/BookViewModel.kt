@@ -2,6 +2,7 @@ package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
+import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
