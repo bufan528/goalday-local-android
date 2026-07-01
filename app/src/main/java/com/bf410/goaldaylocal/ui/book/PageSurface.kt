@@ -195,7 +195,7 @@ fun PageSurface(
             .clip(RoundedCornerShape(GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL))
             // 基底统一到 PaperGradient，与 handbook 路径一致，消除翻页交接瞬间的背景跳变
             .background(GoaldayDesign.adaptivePaperGradient)
-            .padding(horizontal = 18.dp, vertical = GoaldayDesign.Space4),
+            .padding(horizontal = GoaldayDesign.Space4 + 2.dp, vertical = GoaldayDesign.Space4),
     ) {
         // 中央折痕：书脊感，单层 10dp 渐变（P0 精简：删除左右阴影/顶部细线/斑驳层/角部高光 4 层冗余装饰）
         Box(
@@ -219,7 +219,7 @@ fun PageSurface(
         Column(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = 2.dp),
+                .padding(end = GoaldayDesign.Space1 / 2),
             verticalArrangement = Arrangement.spacedBy(5.dp),
             horizontalAlignment = Alignment.End,
         ) {
@@ -335,7 +335,7 @@ fun PageBackLayer(
                     },
                 ),
             )
-            .padding(horizontal = 28.dp, vertical = 26.dp),
+            .padding(horizontal = GoaldayDesign.Space6 + 4.dp, vertical = GoaldayDesign.Space6 + 2.dp),
     ) {
         // 层 1：中央折痕阴影（翻页时纸张弯折的暗带，方向跟随翻页方向）
         Box(
@@ -466,17 +466,48 @@ fun ActivePageLayer(
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
             )
-            is PlanPage -> Box(
+            is PlanPage -> {
+                val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
+                val planContentShift = when (turnDirection) {
+                    TurnDirection.NEXT -> -(eased * 8f)
+                    TurnDirection.PREVIOUS -> eased * 8f
+                    null -> 0f
+                }
+                val planAlpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
+                Box(
                 modifier = modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
-                    // 基底统一到 PaperGradient，与 Diary/Target/Schedule 页对齐
                     .background(GoaldayDesign.adaptivePaperGradient)
                     .border(
                         GoaldayDesign.Hairline,
                         GoaldayDesign.BorderColor.copy(alpha = 0.18f),
                         RoundedCornerShape(GoaldayDesign.RadiusL)
                     )
+                    .graphicsLayer {
+                        translationX = planContentShift
+                        this.alpha = planAlpha
+                    }
+                    .padding(GoaldayDesign.Space3),
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        page.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                    )
+                    Text(
+                        "${pageIndex + 1} / $pageCount",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = GoaldayDesign.adaptiveInkMuted,
+                    )
+                }
+                Spacer(Modifier.height(GoaldayDesign.Space2))
                 EditableBulletPage(
                     pageTitle = page.title,
                     baseItems = page.items,
@@ -502,14 +533,6 @@ fun ActivePageLayer(
                     onRestoreItemFromCompleted = onRestoreItemFromCompleted,
                     contentMode = contentMode,
                     onContentModeChange = onContentModeChange,
-                )
-                Text(
-                    "${pageIndex + 1}/$pageCount",
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 6.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = GoaldayDesign.adaptiveInkSecondary,
                 )
             }
             is DiaryPage -> HandbookDiaryReplicaPage(
@@ -761,7 +784,7 @@ private fun EditableBulletPage(
         }.ifEmpty { sourceItems }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 2.dp)) {
         ExecutionBoardHeader(
             title = if (isSchedulePage) "日程执行板" else "任务执行板",
         )
@@ -820,7 +843,7 @@ private fun PlannerLedgerCell(
             .background(color.copy(alpha = 0.11f))
             .border(0.7.dp, color.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .padding(horizontal = 7.dp, vertical = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 / 2),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(value.toString(), color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
@@ -1195,7 +1218,7 @@ private fun OnThisDayFlashbackChip(
             .border(0.7.dp, GoaldayDesign.Today.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space2),
-        verticalArrangement = Arrangement.spacedBy(3.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 - 1.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1247,7 +1270,7 @@ private fun OnThisDayFlashbackDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 / 2)) {
                         Text(
                             "那年今日 · ${flashback.yearsAgo} 年前",
                             style = MaterialTheme.typography.titleMedium,
@@ -1323,7 +1346,7 @@ private fun DiaryWorkspaceHeader(
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp),
+                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 - 1.dp),
             ) {
                 Text(
                     title.ifBlank { "日记页" },
@@ -1494,7 +1517,7 @@ private fun DiaryStartPanel(
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
+            Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 / 2), modifier = Modifier.weight(1f)) {
                 Text("开始今天的日记", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Text("会自动关联今日待办 $todoCount 条、已完成 $doneCount 条", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
             }
@@ -1878,7 +1901,7 @@ internal fun LongImagePreviewDialog(
                     ),
                 )
                 .padding(horizontal = GoaldayDesign.Space3, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 2.dp),
         ) {
             Row(
                 modifier = Modifier
@@ -1900,7 +1923,7 @@ internal fun LongImagePreviewDialog(
                         .clickable { onDismiss() }
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                 )
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 / 2), modifier = Modifier.weight(1f)) {
                     Text("长图预览", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
                     Text(preview.title, style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
                     Text(preview.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
@@ -2083,7 +2106,7 @@ private fun LongImagePrintPanel(
         horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 / 2)) {
             Text("导出预设", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
             Text(preset.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 1)
         }
@@ -2161,7 +2184,7 @@ private fun LongImageHistoryChip(item: LongImageExportHistoryItem) {
             .background(GoaldayDesign.adaptiveSurface)
             .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 9.dp, vertical = 7.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 / 2),
     ) {
         Text("${item.action} · ${item.preset}", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold, maxLines = 1)
         Text(item.displayTime(), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
@@ -2187,7 +2210,7 @@ private fun LongImagePresetChip(
             )
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space2),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 / 2),
     ) {
         Text(preset.label, style = MaterialTheme.typography.labelMedium, color = if (selected) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
         Text(preset.description, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 2)
@@ -2883,7 +2906,7 @@ private fun DiaryInBookRow(
             Text(code, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold, maxLines = 1)
             Text("内页", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
         }
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 / 2)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(title, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
                 Text(diaryBlockDisplayTitle(type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
@@ -2917,7 +2940,7 @@ private fun DiaryTypedBlockPreview(
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.Top) {
                     DiaryInBookTypeMarker(type = block.type, index = index + 1)
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 - 1.dp)) {
                         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                                 Text(diaryBlockDisplayTitle(block.type), style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
@@ -2966,7 +2989,7 @@ private fun DiaryInBookTypeMarker(
             .border(0.7.dp, color.copy(alpha = 0.28f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .padding(horizontal = 5.dp, vertical = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 / 2),
     ) {
         Icon(diaryBlockTypeIcon(type), contentDescription = null, modifier = Modifier.size(14.dp), tint = color)
         Text("条目 %02d".format(index), color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)

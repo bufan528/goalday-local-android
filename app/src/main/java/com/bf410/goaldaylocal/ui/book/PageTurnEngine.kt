@@ -41,13 +41,11 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
-private const val EDGE_GESTURE_RATIO = 0.13f
-// P0-1 修复：HANDBOOK 热区从 0.28f 收窄到 0.10f，避免覆盖日程项/池子项的拖放手势区域
-// 原值 0.28f 意味着左右各 28% 宽度都算翻页热区，几乎覆盖整页，导致长按拖放被翻页抢占
-private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.10f
-// P0-1 修复：原值 0.28f 作为 px 阈值（极小，任何微动都触发），改为基于页面宽度的比例
-// 0.04f 表示拖动距离需达到页面宽度 4%（约 30px）才判定翻页方向，给长按拖放留出识别空间
-private const val HANDBOOK_DRAG_START_RATIO = 0.04f
+private const val EDGE_GESTURE_RATIO = 0.15f
+// HANDBOOK 热区：0.14f 平衡翻页触发与内容拖放
+private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.14f
+// 拖动阈值：0.02f 约 15px，轻微滑动即可触发翻页
+private const val HANDBOOK_DRAG_START_RATIO = 0.02f
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase

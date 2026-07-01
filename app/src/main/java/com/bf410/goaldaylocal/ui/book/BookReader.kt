@@ -68,8 +68,9 @@ fun BookReader(
     var contentMode by remember(pageIndex, bookId) { mutableStateOf<PageContentMode>(PageContentMode.Browsing) }
     val turnEnabled = canTurnPage(contentMode)
     val turnProfile = if (handbookMode || page is DiaryPage || shellStyle == ShellStyle.BOOK) TurnProfile.HANDBOOK else TurnProfile.DEFAULT
-    val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 8.dp else 28.dp
-    val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 8.dp else 26.dp
+    // 书页内边距：HANDBOOK 模式给足留白，让内容像真正的书页
+    val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 16.dp else 28.dp
+    val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 12.dp else 26.dp
 
     val turnStyle = remember {
         val raw = MMKV.defaultMMKV().decodeString("page_turn_style", "SIMULATION")
