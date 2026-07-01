@@ -1167,8 +1167,8 @@ private fun BookDetailView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .background(GoaldayDesign.AppBg)
-                    .padding(vertical = GoaldayDesign.Space1),
+                    .background(GoaldayDesign.DeskGradient)
+                    .padding(vertical = GoaldayDesign.Space2),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
