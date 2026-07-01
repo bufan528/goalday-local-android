@@ -128,6 +128,19 @@ object GoaldayDesign {
     val CalendarHeroMid = Color(0xFFFFEAF1)
     val CalendarHeroEnd = Color(0xFFEBD0BA)
     val EmptyBookCover = Color(0xFFB88A58)
+    // PageSurface 页面翻转/导出/AI洞察卡片
+    val PageTurnEdgeStart = Color(0xFFDCCAB4)
+    val PageTurnEdgeMid = Color(0xFFF4E9DD)
+    val DiaryPromptGradientStart = Color(0xFFFFF9F4)
+    val ExportPaperWarm = Color(0xFFF4DDC6)
+    val ExportCanvasPaper = Color(0xFFFFFBF6)
+    val ExportInkPrimary = Color(0xFF2F2922)
+    val TagMauve = Color(0xFF8B5E6D)
+    val ImageRemoveScrim = Color(0xAA1F1B17)
+    val AiInsightStart = Color(0x1AF4DABB)
+    val AiInsightMid = Color(0x0EF4DABB)
+    val AiInsightEnd = Color(0x14F6E8D3)
+    val AiInsightBorder = Color(0x22C8AF91)
 
     val DeskGradient: Brush
         get() = Brush.verticalGradient(listOf(DeskTop, DeskMid, DeskBottom))

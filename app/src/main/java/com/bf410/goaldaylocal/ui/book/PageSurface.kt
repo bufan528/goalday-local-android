@@ -328,9 +328,9 @@ fun PageBackLayer(
             .background(
                 Brush.horizontalGradient(
                     if (direction == TurnDirection.NEXT) {
-                        listOf(Color(0xFFDCCAB4), Color(0xFFF4E9DD), GoaldayDesign.adaptiveSurface)
+                        listOf(GoaldayDesign.PageTurnEdgeStart, GoaldayDesign.PageTurnEdgeMid, GoaldayDesign.adaptiveSurface)
                     } else {
-                        listOf(GoaldayDesign.adaptiveSurface, Color(0xFFF4E9DD), Color(0xFFDCCAB4))
+                        listOf(GoaldayDesign.adaptiveSurface, GoaldayDesign.PageTurnEdgeMid, GoaldayDesign.PageTurnEdgeStart)
                     },
                 ),
             )
@@ -1308,7 +1308,7 @@ private fun DiaryWorkspaceHeader(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(
                 Brush.verticalGradient(
-                    listOf(Color(0xFFFFF9F4), GoaldayDesign.PinkTint, GoaldayDesign.adaptiveSurface),
+                    listOf(GoaldayDesign.DiaryPromptGradientStart, GoaldayDesign.PinkTint, GoaldayDesign.adaptiveSurface),
                 ),
             )
             .border(0.8.dp, GoaldayDesign.Pink.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusL))
@@ -1873,7 +1873,7 @@ internal fun LongImagePreviewDialog(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(GoaldayDesign.adaptiveSurface, GoaldayDesign.adaptivePaperWarm, Color(0xFFF4DDC6)),
+                        listOf(GoaldayDesign.adaptiveSurface, GoaldayDesign.adaptivePaperWarm, GoaldayDesign.ExportPaperWarm),
                     ),
                 )
                 .padding(horizontal = 12.dp, vertical = 14.dp),
@@ -2247,9 +2247,9 @@ internal fun renderHandbookScheduleLongImage(
     val estimatedHeight = 820 + days.size * 420
     val bitmap = Bitmap.createBitmap(width, estimatedHeight, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
-    canvas.drawColor(0xFFFFFBF6.toInt())
+    canvas.drawColor(GoaldayDesign.ExportCanvasPaper.toArgb())
     val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFF2F2922.toInt()
+        color = GoaldayDesign.ExportInkPrimary.toArgb()
         textSize = 48f
         isFakeBoldText = true
     }
@@ -2349,9 +2349,9 @@ private fun renderDiaryLongImage(
     val estimatedHeight = 1600 + exportImageUris.take(6).size * 360 + state.toRaw().length.coerceAtMost(2200)
     val scratch = Bitmap.createBitmap(width, estimatedHeight.coerceAtLeast(2200), Bitmap.Config.ARGB_8888)
     val canvas = Canvas(scratch)
-    canvas.drawColor(0xFFFFFBF6.toInt())
+    canvas.drawColor(GoaldayDesign.ExportCanvasPaper.toArgb())
     val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFF2F2922.toInt()
+        color = GoaldayDesign.ExportInkPrimary.toArgb()
         textSize = 48f
         isFakeBoldText = true
     }
@@ -2774,7 +2774,7 @@ private fun DiaryInBookHeader(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Brush.horizontalGradient(listOf(Color(0x00B7A893), GoaldayDesign.BorderColor.copy(alpha = 0.27f), Color(0x00B7A893)))),
+                .background(Brush.horizontalGradient(listOf(GoaldayDesign.BorderColor.copy(alpha = 0f), GoaldayDesign.BorderColor.copy(alpha = 0.27f), GoaldayDesign.BorderColor.copy(alpha = 0f)))),
         )
     }
 }
@@ -2804,7 +2804,7 @@ private fun DiaryMoodRibbon(items: List<String>) {
             Text(
                 "#$item",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF8B5E6D),
+                color = GoaldayDesign.TagMauve,
                 maxLines = 1,
                 modifier = Modifier
                     .weight(1f)
@@ -3063,7 +3063,7 @@ internal fun DiaryImageTile(
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .background(Color(0xAA1F1B17), RoundedCornerShape(bottomStart = 8.dp))
+                    .background(GoaldayDesign.ImageRemoveScrim, RoundedCornerShape(bottomStart = GoaldayDesign.RadiusS))
                     .clickable { remove() }
                     .padding(horizontal = 6.dp, vertical = 2.dp),
             )
@@ -3081,10 +3081,10 @@ private fun DiaryBlock(title: String, content: String) {
             .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
             .background(
                 Brush.verticalGradient(
-                    listOf(Color(0x1AF4DABB), Color(0x0EF4DABB), Color(0x14F6E8D3)),
+                    listOf(GoaldayDesign.AiInsightStart, GoaldayDesign.AiInsightMid, GoaldayDesign.AiInsightEnd),
                 ),
             )
-            .border(1.dp, Color(0x22C8AF91), RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(1.dp, GoaldayDesign.AiInsightBorder, RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 9.dp, vertical = 7.dp),
     ) {
         Text(content, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.adaptiveInkPrimary)
