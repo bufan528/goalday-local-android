@@ -38,6 +38,7 @@ object GoaldayDesign {
     val PaperAged = Color(0xFFF3E1CD)
     val PaperLine = Color(0x33B99A7D)
     val BookBoard = Color(0xFFE0B895)
+    val BookBoardLight = Color(0xFFEBD0AC)
     val BookBoardDark = Color(0xFF6C4A39)
     val BookSpine = Color(0xFF5A3B2E)
     val BookSpineLight = Color(0xFFB47C62)
