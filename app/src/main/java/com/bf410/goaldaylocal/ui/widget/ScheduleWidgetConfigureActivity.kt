@@ -188,7 +188,7 @@ private fun ScheduleWidgetConfigureScreen(
                 color = GoaldayDesign.adaptiveInkSecondary,
                 modifier = Modifier
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color.White.copy(alpha = 0.72f))
+                    .background(GoaldayDesign.CoverWhiteOverlay72)
                     .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(14.dp))
                     .padding(12.dp),
             )
@@ -215,7 +215,7 @@ private fun WidgetKindSignalStrip(kind: WidgetConfigureKind) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color.White.copy(alpha = 0.66f))
+            .background(GoaldayDesign.CoverWhiteOverlayMedium)
             .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(16.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
@@ -328,7 +328,7 @@ private fun WidgetPreviewCard(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(Color.White.copy(alpha = 0.6f))
+                    .background(GoaldayDesign.CoverWhiteOverlay60)
                     .padding(horizontal = 9.dp, vertical = 5.dp),
             )
         }
@@ -340,7 +340,7 @@ private fun WidgetPreviewCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(13.dp))
-                    .background(Color.White.copy(alpha = 0.55f))
+                    .background(GoaldayDesign.CoverWhiteOverlay55)
                     .padding(10.dp),
             )
         } else {
@@ -352,7 +352,7 @@ private fun WidgetPreviewCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(13.dp))
-                        .background(Color.White.copy(alpha = 0.50f))
+                        .background(GoaldayDesign.CoverWhiteOverlay50)
                         .padding(10.dp),
                 )
             } else {
@@ -418,7 +418,7 @@ private fun PreviewScheduleRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(11.dp))
-            .background(Color.White.copy(alpha = 0.38f))
+            .background(GoaldayDesign.CoverWhiteOverlay38)
             .padding(horizontal = 9.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -471,7 +471,7 @@ private fun <T> SegmentedPicker(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color.White.copy(alpha = 0.72f))
+            .background(GoaldayDesign.CoverWhiteOverlay72)
             .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(16.dp))
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),

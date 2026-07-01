@@ -320,7 +320,7 @@ private fun InspirationHeroCover(
                     color = Color.White,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
-                        .background(GoaldayDesign.WhiteOverlaySubtle, RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .background(GoaldayDesign.CoverWhiteOverlaySubtle, RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
                 )
             }
