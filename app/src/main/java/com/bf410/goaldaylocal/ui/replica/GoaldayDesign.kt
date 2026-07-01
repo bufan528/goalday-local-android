@@ -88,6 +88,19 @@ object GoaldayDesign {
     val HairlineAlpha = 0.10f
     val BorderColor = Color(0xFFA88966)
 
+    // 灵感页/封面叠层色：统一 InspirationScreen 中散落的硬编码半透明色
+    val PaperGlass = Color(0x80FFFDF8)
+    val PaperGlassMedium = Color(0x88FFFDF8)
+    val PaperGlassStrong = Color(0xEFFFFDF8)
+    val WhiteOverlayBorder = Color(0x44FFFFFF)
+    val WhiteOverlayHigh = Color(0xDEFFFFFF)
+    val WhiteOverlayMedium = Color(0x66FFFFFF)
+    val WhiteOverlayLow = Color(0x30FFFFFF)
+    val WhiteOverlaySubtle = Color(0x33FFFFFF)
+    val DarkOverlay = Color(0xAA1F1712)
+    val DarkOverlaySoft = Color(0x991F1712)
+    val BlackOverlaySoft = Color(0x26000000)
+
     val DeskGradient: Brush
         get() = Brush.verticalGradient(listOf(DeskTop, DeskMid, DeskBottom))
 

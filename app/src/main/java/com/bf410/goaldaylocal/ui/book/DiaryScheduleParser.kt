@@ -60,8 +60,9 @@ private fun parseDiaryBlockForSchedule(line: String): Pair<String, Boolean>? {
     val parts = splitEscapedDiaryBlock(line)
     val type = parts.getOrNull(0).orEmpty()
     if (type !in setOf("target", "target_child", "topic_target")) return null
+    val style = parts.getOrNull(1).orEmpty()
     val text = unescapeDiaryScheduleBlockText(parts.getOrNull(2).orEmpty().ifBlank { parts.getOrNull(1).orEmpty() })
-    val completed = text.trimStart().startsWith("✓")
+    val completed = style == "check" || text.trimStart().startsWith("✓")
     val title = normalizeDiaryScheduleTitle(text)
     return title.takeIf(String::isNotBlank)?.let { it to completed }
 }

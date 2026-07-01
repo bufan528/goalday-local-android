@@ -240,11 +240,10 @@ class BookViewModel(
         val book = currentBook()
         val diaryPage = book.pages.firstOrNull { it is DiaryPage } as? DiaryPage ?: return
         val raw = store.diaryText(book.id, diaryPage.title)
-        val prefix = if (completed) "✓" else "○"
         val blockLine = listOf(
             "target",
             if (completed) "check" else "body",
-            escapeDiaryScheduleBlockText("$prefix $normalized"),
+            escapeDiaryScheduleBlockText(normalized),
         ).joinToString("|")
         val updated = appendToDiarySection(
             raw = raw,

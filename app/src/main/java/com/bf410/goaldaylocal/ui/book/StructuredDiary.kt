@@ -87,10 +87,8 @@ internal data class StructuredDiary(
     fun withTextBlock(text: String = "写下这一刻"): StructuredDiary =
         withBlocks(blocks + DiaryEntryBlock(DiaryBlockType.TEXT, text))
 
-    fun withTargetBlock(item: String, completed: Boolean): StructuredDiary {
-        val prefix = if (completed) "✓" else "○"
-        return withBlocks(blocks + DiaryEntryBlock(DiaryBlockType.TARGET, "$prefix $item"))
-    }
+    fun withTargetBlock(item: String, completed: Boolean): StructuredDiary =
+        withBlocks(blocks + DiaryEntryBlock(DiaryBlockType.TARGET, item, if (completed) DiaryBlockStyle.CHECK else DiaryBlockStyle.BODY))
 
     fun withTopicTargetBlock(text: String = "专题目标 · 今天推进一步"): StructuredDiary =
         withBlocks(blocks + DiaryEntryBlock(DiaryBlockType.TOPIC_TARGET, text))
@@ -270,7 +268,7 @@ internal fun defaultDiaryBlock(type: DiaryBlockType): DiaryEntryBlock =
     when (type) {
         DiaryBlockType.IMAGE -> DiaryEntryBlock(DiaryBlockType.IMAGE, "")
         DiaryBlockType.TEXT -> DiaryEntryBlock(DiaryBlockType.TEXT, "写下这一刻")
-        DiaryBlockType.TARGET -> DiaryEntryBlock(DiaryBlockType.TARGET, "○ 关联一个目标")
+        DiaryBlockType.TARGET -> DiaryEntryBlock(DiaryBlockType.TARGET, "关联一个目标")
         DiaryBlockType.TARGET_CHILD -> DiaryEntryBlock(DiaryBlockType.TARGET_CHILD, "下一步行动", DiaryBlockStyle.CHECK)
         DiaryBlockType.TOPIC_TARGET -> DiaryEntryBlock(DiaryBlockType.TOPIC_TARGET, "专题目标 · 今天推进一步")
     }
