@@ -27,7 +27,7 @@ fun GoaldaySegmentBar(
             .fillMaxWidth()
             .background(GoaldayDesign.adaptiveSurfaceSoft, RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 10.dp, vertical = 9.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         items.forEachIndexed { index, label ->

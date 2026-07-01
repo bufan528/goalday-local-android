@@ -40,7 +40,7 @@ fun GoaldayTopBar(
             Text("|", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.DividerMuted, maxLines = 1)
             Text("Goalday", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.adaptiveInkPrimary, maxLines = 1)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), verticalAlignment = Alignment.CenterVertically) {
             rightSecondary?.invoke(this)
             Text(
                 rightPrimaryText,
@@ -50,7 +50,7 @@ fun GoaldayTopBar(
                 modifier = Modifier
                     .background(GoaldayDesign.PrimaryAction, RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .clickable(onClick = onRightPrimaryClick)
-                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                    .padding(horizontal = GoaldayDesign.Space3, vertical = 7.dp),
             )
         }
     }

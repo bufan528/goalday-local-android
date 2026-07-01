@@ -193,7 +193,7 @@ private fun ScheduleWidgetConfigureScreen(
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                     .background(GoaldayDesign.CoverWhiteOverlay72)
                     .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
-                    .padding(12.dp),
+                    .padding(GoaldayDesign.Space3),
             )
         }
         Text(
@@ -220,11 +220,11 @@ private fun WidgetKindSignalStrip(kind: WidgetConfigureKind) {
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.CoverWhiteOverlayMedium)
             .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space2),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -232,7 +232,7 @@ private fun WidgetKindSignalStrip(kind: WidgetConfigureKind) {
             WidgetSignalPill(kind.colorSignal, GoaldayDesign.Pink, Modifier.weight(1f))
         }
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -269,8 +269,8 @@ private fun WidgetLocalUnlockCard(kind: WidgetConfigureKind) {
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.AccentMintSurface)
             .border(0.7.dp, GoaldayDesign.Positive.copy(alpha = 0.15f), RoundedCornerShape(GoaldayDesign.RadiusL))
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(GoaldayDesign.Space3),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
     ) {
         Text("本地全解锁", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.Positive, fontWeight = FontWeight.SemiBold)
         Text(
@@ -481,8 +481,8 @@ private fun <T> SegmentedPicker(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.CoverWhiteOverlay72)
             .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(GoaldayDesign.Space1),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
     ) {
         items.forEach { item ->
             val active = item == selected

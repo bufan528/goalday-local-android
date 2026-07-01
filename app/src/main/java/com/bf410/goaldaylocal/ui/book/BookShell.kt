@@ -1,4 +1,4 @@
-package com.bf410.goaldaylocal.ui.book
+﻿package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -119,7 +119,7 @@ fun BookShell(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(start = 6.dp, top = 24.dp, bottom = 24.dp)
+                    .padding(start = 6.dp, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
                     .width(0.8.dp)
                     .fillMaxHeight()
                     .background(GoaldayDesign.BookSpineLight.copy(alpha = 0.45f)),
@@ -127,7 +127,7 @@ fun BookShell(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(start = 10.dp, top = 24.dp, bottom = 24.dp)
+                    .padding(start = 10.dp, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
                     .width(0.8.dp)
                     .fillMaxHeight()
                     .background(GoaldayDesign.BookSpineLight.copy(alpha = 0.30f)),
