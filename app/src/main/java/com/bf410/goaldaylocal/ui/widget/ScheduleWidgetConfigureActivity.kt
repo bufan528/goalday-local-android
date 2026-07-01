@@ -187,9 +187,9 @@ private fun ScheduleWidgetConfigureScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = GoaldayDesign.adaptiveInkSecondary,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                     .background(GoaldayDesign.CoverWhiteOverlay72)
-                    .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(14.dp))
+                    .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
                     .padding(12.dp),
             )
         }
@@ -201,7 +201,7 @@ private fun ScheduleWidgetConfigureScreen(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
                 .background(Color(selectedStyle.accentColor))
                 .clickable { onConfirm(config) }
                 .padding(vertical = 13.dp),
@@ -214,9 +214,9 @@ private fun WidgetKindSignalStrip(kind: WidgetConfigureKind) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.CoverWhiteOverlayMedium)
-            .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(16.dp))
+            .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
@@ -252,7 +252,7 @@ private fun WidgetSignalPill(
         maxLines = 1,
         textAlign = TextAlign.Center,
         modifier = modifier
-            .clip(RoundedCornerShape(99.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(color.copy(alpha = 0.10f))
             .padding(horizontal = 7.dp, vertical = 5.dp),
     )
@@ -263,9 +263,9 @@ private fun WidgetLocalUnlockCard(kind: WidgetConfigureKind) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.AccentMintSurface)
-            .border(0.7.dp, GoaldayDesign.Positive.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+            .border(0.7.dp, GoaldayDesign.Positive.copy(alpha = 0.15f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -301,9 +301,9 @@ private fun WidgetPreviewCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.Radius2XL))
             .background(Color(style.backgroundColor))
-            .border(1.dp, Color(style.accentColor).copy(alpha = 0.22f), RoundedCornerShape(22.dp))
+            .border(1.dp, Color(style.accentColor).copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.Radius2XL))
             .padding(15.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
@@ -327,7 +327,7 @@ private fun WidgetPreviewCard(
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.CoverWhiteOverlay60)
                     .padding(horizontal = 9.dp, vertical = 5.dp),
             )
@@ -339,7 +339,7 @@ private fun WidgetPreviewCard(
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(13.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
                     .background(GoaldayDesign.CoverWhiteOverlay55)
                     .padding(10.dp),
             )
@@ -351,7 +351,7 @@ private fun WidgetPreviewCard(
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(13.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
                         .background(GoaldayDesign.CoverWhiteOverlay50)
                         .padding(10.dp),
                 )
@@ -417,7 +417,7 @@ private fun PreviewScheduleRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(11.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.CoverWhiteOverlay38)
             .padding(horizontal = 9.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -438,20 +438,20 @@ private fun StyleSwatch(
         modifier = Modifier
             .width(126.dp)
             .height(92.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(Color(style.backgroundColor))
             .border(
                 width = if (selected) 2.dp else 0.7.dp,
                 color = if (selected) Color(style.accentColor) else GoaldayDesign.BorderColor.copy(alpha = 0.14f),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(GoaldayDesign.RadiusL),
             )
             .clickable(onClick = onClick)
             .padding(10.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-            Box(Modifier.width(18.dp).height(18.dp).clip(RoundedCornerShape(99.dp)).background(Color(style.accentColor)))
-            Box(Modifier.width(18.dp).height(18.dp).clip(RoundedCornerShape(99.dp)).background(Color(style.doneColor)))
+            Box(Modifier.width(18.dp).height(18.dp).clip(RoundedCornerShape(GoaldayDesign.RadiusPill)).background(Color(style.accentColor)))
+            Box(Modifier.width(18.dp).height(18.dp).clip(RoundedCornerShape(GoaldayDesign.RadiusPill)).background(Color(style.doneColor)))
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(style.label, color = Color(style.titleColor), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
@@ -470,9 +470,9 @@ private fun <T> SegmentedPicker(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.CoverWhiteOverlay72)
-            .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(16.dp))
+            .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -486,7 +486,7 @@ private fun <T> SegmentedPicker(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
                     .background(if (active) GoaldayDesign.Pink else Color.Transparent)
                     .clickable { onSelect(item) }
                     .padding(vertical = 9.dp),

@@ -958,7 +958,7 @@ private fun HomeActionCard(
         Box(
             modifier = Modifier
                 .size(34.dp)
-                .background(color, RoundedCornerShape(10.dp)),
+                .background(color, RoundedCornerShape(GoaldayDesign.RadiusS)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(icon, contentDescription = title, tint = Color.White, modifier = Modifier.size(18.dp))

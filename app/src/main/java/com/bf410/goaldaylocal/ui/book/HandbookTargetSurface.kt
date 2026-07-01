@@ -265,7 +265,7 @@ internal fun TargetDetailReplicaPage(
                                 }),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(GoaldayDesign.adaptiveDivider, RoundedCornerShape(6.dp))
+                                    .background(GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                                     .padding(horizontal = 7.dp, vertical = 5.dp),
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {

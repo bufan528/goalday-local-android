@@ -241,8 +241,8 @@ private fun InspirationUnavailableState() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(GoaldayDesign.PaperGlassStrong, RoundedCornerShape(22.dp))
-                .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(22.dp))
+                .background(GoaldayDesign.PaperGlassStrong, RoundedCornerShape(GoaldayDesign.Radius2XL))
+                .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.Radius2XL))
                 .padding(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
@@ -263,8 +263,8 @@ private fun InspirationCatalogStrip(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(GoaldayDesign.PaperGlassMedium, RoundedCornerShape(14.dp))
-            .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(14.dp))
+            .background(GoaldayDesign.PaperGlassMedium, RoundedCornerShape(GoaldayDesign.RadiusL))
+            .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space2),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -291,8 +291,8 @@ private fun InspirationHeroCover(
         modifier = Modifier
             .fillMaxWidth()
             .height(184.dp)
-            .background(topicCoverBrush(template, index), RoundedCornerShape(18.dp))
-            .border(1.dp, GoaldayDesign.WhiteOverlayBorder, RoundedCornerShape(18.dp)),
+            .background(topicCoverBrush(template, index), RoundedCornerShape(GoaldayDesign.RadiusXL))
+            .border(1.dp, GoaldayDesign.WhiteOverlayBorder, RoundedCornerShape(GoaldayDesign.RadiusXL)),
     ) {
         TopicCoverArt(template = template, index = index)
         Box(
@@ -304,7 +304,7 @@ private fun InspirationHeroCover(
                         start = Offset.Zero,
                         end = Offset(760f, 420f),
                     ),
-                    RoundedCornerShape(18.dp),
+                    RoundedCornerShape(GoaldayDesign.RadiusXL),
                 ),
         )
         Column(
@@ -472,8 +472,8 @@ private fun InspirationDraftPanel(
     Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(18.dp))
-                .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(18.dp))
+                .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusXL))
+                .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusXL))
                 .padding(horizontal = 10.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
@@ -505,7 +505,7 @@ private fun InspirationDraftPanel(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(if (index == focusedIndex) GoaldayDesign.PinkSoft else Color.Transparent, RoundedCornerShape(10.dp))
+                    .background(if (index == focusedIndex) GoaldayDesign.PinkSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
                     .clickable { onFocusedIndexChange(index) }
                     .padding(horizontal = 6.dp, vertical = 5.dp),
             ) {
@@ -547,7 +547,7 @@ private fun InspirationDraftPanel(
                 textStyle = TextStyle(color = GoaldayDesign.adaptiveInkPrimary),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(GoaldayDesign.adaptiveDivider, RoundedCornerShape(10.dp))
+                    .background(GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 9.dp, vertical = 7.dp),
                 decorationBox = { inner ->
                     if (inputText.isBlank()) Text("输入灵感内容，点 + 插入", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)

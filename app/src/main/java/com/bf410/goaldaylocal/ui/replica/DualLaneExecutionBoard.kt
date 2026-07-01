@@ -140,7 +140,7 @@ fun DualLaneExecutionBoard(
                 Text(
                     rightHeader,
                     modifier = Modifier
-                        .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = 7.dp, vertical = 3.dp),
                     style = MaterialTheme.typography.labelMedium,
                 )

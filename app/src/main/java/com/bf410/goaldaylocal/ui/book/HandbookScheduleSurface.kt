@@ -237,7 +237,7 @@ internal fun HandbookReplicaPage(
                     color = if (boardMode == mode) Color.White else GoaldayDesign.adaptiveInkMuted,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(if (boardMode == mode) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveSurface)
                         .clickable { boardMode = mode }
                         .padding(horizontal = 7.dp, vertical = 3.dp),
@@ -248,7 +248,7 @@ internal fun HandbookReplicaPage(
                 color = GoaldayDesign.adaptiveInkMuted,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.adaptiveSurface)
                     .clickable {
                         // P1-1：合并预览+快存为单个"导出"入口，点击进入预览弹窗（弹窗内可保存）
@@ -810,7 +810,7 @@ private fun BoxScope.HandbookMonthHeader(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(if (visible) 9.dp else 5.dp)
-                                    .clip(RoundedCornerShape(99.dp))
+                                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                                     .background(
                                         when {
                                             visible -> GoaldayDesign.Pink
@@ -874,7 +874,7 @@ internal fun SectionStamp(
         color = Color.White,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(color)
             .padding(horizontal = 6.dp, vertical = 2.dp),
     )
@@ -940,9 +940,9 @@ private fun HandbookDoneEntryLine(
         modifier = Modifier
             .fillMaxWidth()
             .height(26.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.Positive.copy(alpha = 0.09f))
-            .border(0.55.dp, GoaldayDesign.Positive.copy(alpha = 0.26f), RoundedCornerShape(8.dp))
+            .border(0.55.dp, GoaldayDesign.Positive.copy(alpha = 0.26f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .clickable(onClick = onToggleCompleted),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -971,7 +971,7 @@ private fun HandbookDoneEntryLine(
                 color = GoaldayDesign.adaptiveInkMuted,
                 maxLines = 1,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.64f))
                     .padding(horizontal = 4.dp, vertical = 1.dp),
             )
@@ -984,7 +984,7 @@ private fun HandbookDoneEntryLine(
                 color = GoaldayDesign.Positive,
                 maxLines = 1,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.64f))
                     .padding(horizontal = 4.dp, vertical = 1.dp),
             )
@@ -1016,9 +1016,9 @@ private fun HandbookFallbackDoneLine(
         modifier = Modifier
             .fillMaxWidth()
             .height(24.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.06f))
-            .border(0.45.dp, GoaldayDesign.Positive.copy(alpha = 0.09f), RoundedCornerShape(8.dp)),
+            .border(0.45.dp, GoaldayDesign.Positive.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusS)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
@@ -1337,9 +1337,9 @@ private fun HandbookEntryLine(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.09f) else GoaldayDesign.adaptiveSurface.copy(alpha = 0.09f))
-            .border(0.55.dp, statusColor.copy(alpha = if (entry.completed) 0.28f else 0.18f), RoundedCornerShape(8.dp))
+            .border(0.55.dp, statusColor.copy(alpha = if (entry.completed) 0.28f else 0.18f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .onGloballyPositioned { coordinates ->
                 rowOrigin = coordinates.boundsInRoot().topLeft
             }
@@ -1376,7 +1376,7 @@ private fun HandbookEntryLine(
             contentDescription = if (entry.completed) "已完成" else "未完成",
             modifier = Modifier
                 .size(18.dp)
-                .clip(RoundedCornerShape(99.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.72f))
                 .clickable { onToggleCompleted() }
                 .padding(2.dp),
@@ -1418,7 +1418,7 @@ private fun HandbookEntryLine(
                         color = GoaldayDesign.adaptiveInkMuted,
                         maxLines = 1,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .background(Color.White.copy(alpha = 0.64f))
                             .padding(horizontal = 4.dp, vertical = 1.dp),
                     )
@@ -1430,7 +1430,7 @@ private fun HandbookEntryLine(
                         color = statusColor,
                         maxLines = 1,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .background(Color.White.copy(alpha = 0.64f))
                             .padding(horizontal = 4.dp, vertical = 1.dp),
                     )
@@ -1531,7 +1531,7 @@ private fun HandbookMoveTargetButton(
         color = if (enabled) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.38f),
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
-            .clip(RoundedCornerShape(99.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(if (enabled) GoaldayDesign.adaptiveSurface.copy(alpha = 0.66f) else Color.Transparent)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 4.dp, vertical = 1.dp),

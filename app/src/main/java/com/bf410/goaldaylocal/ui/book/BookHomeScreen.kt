@@ -553,9 +553,9 @@ private fun LibraryView(
             color = GoaldayDesign.adaptiveInkSecondary,
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                 .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.4f))
-                .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(14.dp))
+                .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
                 .padding(horizontal = GoaldayDesign.Space3, vertical = 9.dp),
         )
         Spacer(Modifier.height(14.dp))
@@ -1071,9 +1071,9 @@ private fun BookDetailView(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                     .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.96f))
-                    .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(16.dp))
+                    .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusL))
                     .padding(horizontal = 9.dp, vertical = GoaldayDesign.Space2),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
@@ -1617,9 +1617,9 @@ private fun TargetDetailPanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.87f))
-            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(18.dp))
+            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
@@ -1641,9 +1641,9 @@ private fun TargetDetailSummaryStrip(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.8f))
-            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.12f), RoundedCornerShape(18.dp))
+            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 9.dp),
         horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
@@ -1684,7 +1684,7 @@ private fun TargetDetailMetric(
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
             .background(if (active) GoaldayDesign.Positive.copy(alpha = 0.08f) else GoaldayDesign.PinkTint)
             .padding(horizontal = GoaldayDesign.Space2, vertical = 7.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -1701,9 +1701,9 @@ private fun TargetScheduledEntryRow(entry: ScheduleEntry) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
             .background(if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.06f) else GoaldayDesign.PinkTint)
-            .border(0.7.dp, color.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+            .border(0.7.dp, color.copy(alpha = 0.2f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = GoaldayDesign.Space2),
         horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
@@ -1780,9 +1780,9 @@ private fun TargetOptionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(accent.copy(alpha = 0.10f))
-            .border(0.7.dp, accent.copy(alpha = 0.22f), RoundedCornerShape(14.dp))
+            .border(0.7.dp, accent.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .clickable(onClick = onClick)
             .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 9.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -1792,7 +1792,7 @@ private fun TargetOptionRow(
             modifier = Modifier
                 .width(58.dp)
                 .height(34.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .background(accent),
             contentAlignment = Alignment.Center,
         ) {
@@ -1990,7 +1990,7 @@ private fun InspirationCenterView(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                         .background(GoaldayDesign.BorderColor.copy(alpha = 0.06f))
                         .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 7.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -2014,9 +2014,9 @@ private fun InspirationCenterView(
                             Column(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(12.dp))
+                                    .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
                                     .background(if (checkedStates.getOrNull(index) == true) GoaldayDesign.PinkTint else GoaldayDesign.BorderColor.copy(alpha = 0.03f))
-                                    .border(0.6.dp, if (checkedStates.getOrNull(index) == true) GoaldayDesign.Pink.copy(alpha = 0.21f) else GoaldayDesign.adaptiveDivider, RoundedCornerShape(12.dp))
+                                    .border(0.6.dp, if (checkedStates.getOrNull(index) == true) GoaldayDesign.Pink.copy(alpha = 0.21f) else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusM))
                                     .padding(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(5.dp),
                             ) {
@@ -2024,7 +2024,7 @@ private fun InspirationCenterView(
                                     Box(
                                         modifier = Modifier
                                             .size(16.dp)
-                                            .clip(RoundedCornerShape(4.dp))
+                                            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                                             .background(if (checkedStates.getOrNull(index) == true) GoaldayDesign.Positive else GoaldayDesign.adaptiveSurfaceSoft)
                                             .clickable {
                                                 checkedStates = checkedStates.toMutableList().also { list ->
@@ -2109,9 +2109,9 @@ private fun EmbeddedInspirationUnavailable(onBack: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(22.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.Radius2XL))
                 .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.94f))
-                .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(22.dp))
+                .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.Radius2XL))
                 .padding(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(9.dp),
