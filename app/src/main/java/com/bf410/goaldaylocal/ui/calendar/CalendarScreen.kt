@@ -857,16 +857,16 @@ private fun CalendarHeroHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(12.dp, RoundedCornerShape(22.dp), clip = false)
+            .shadow(GoaldayDesign.ShadowLarge, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
             .background(
                 Brush.linearGradient(
-                    listOf(Color(0xFFFFF8F1), Color(0xFFFFEAF1), Color(0xFFEBD0BA)),
+                    listOf(GoaldayDesign.CalendarHeroStart, GoaldayDesign.CalendarHeroMid, GoaldayDesign.CalendarHeroEnd),
                     start = Offset.Zero,
                     end = Offset(780f, 440f),
                 ),
-                RoundedCornerShape(22.dp),
+                RoundedCornerShape(GoaldayDesign.RadiusXL),
             )
-            .border(0.8.dp, GoaldayDesign.adaptiveSurface.copy(alpha = 0.21f), RoundedCornerShape(22.dp))
+            .border(0.8.dp, GoaldayDesign.adaptiveSurface.copy(alpha = 0.21f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .padding(horizontal = 14.dp, vertical = 13.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -634,7 +634,7 @@ class BookViewModel(
                 id = "empty_local_book",
                 title = "本地手账",
                 subtitle = "暂无页面",
-                color = Color(0xFFB88A58),
+                color = GoaldayDesign.EmptyBookCover,
                 pages = emptyList(),
             )
     }

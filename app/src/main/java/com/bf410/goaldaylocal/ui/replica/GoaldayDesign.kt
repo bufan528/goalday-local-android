@@ -118,6 +118,17 @@ object GoaldayDesign {
     val AccentPeriwinkle = Color(0xFF9EAADB)
     val AccentMintSurface = Color(0xFFF2F7EE)
 
+    // Hero 渐变（Home/Calendar 头部卡片）
+    val HomeHeroStart = Color(0xFFFFF4EA)
+    val HomeHeroMid = Color(0xFFFFE4EC)
+    val HomeHeroEnd = Color(0xFFF2CFB3)
+    val HomeHeroOverlayStart = Color(0xEFFFF4EA)
+    val HomeHeroOverlayEnd = Color(0x88FFF4EA)
+    val CalendarHeroStart = Color(0xFFFFF8F1)
+    val CalendarHeroMid = Color(0xFFFFEAF1)
+    val CalendarHeroEnd = Color(0xFFEBD0BA)
+    val EmptyBookCover = Color(0xFFB88A58)
+
     val DeskGradient: Brush
         get() = Brush.verticalGradient(listOf(DeskTop, DeskMid, DeskBottom))
 

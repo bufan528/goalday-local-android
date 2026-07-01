@@ -327,7 +327,7 @@ private fun PromoHeader(
             .shadow(GoaldayDesign.ShadowMedium, RoundedCornerShape(GoaldayDesign.Radius2XL), clip = false)
             .background(
                 Brush.linearGradient(
-                    listOf(Color(0xFFFFF4EA), Color(0xFFFFE4EC), Color(0xFFF2CFB3)),
+                    listOf(GoaldayDesign.HomeHeroStart, GoaldayDesign.HomeHeroMid, GoaldayDesign.HomeHeroEnd),
                     start = Offset.Zero,
                     end = Offset(760f, 420f),
                 ),
@@ -351,9 +351,9 @@ private fun PromoHeader(
                 .matchParentSize()
                 .background(
                     Brush.horizontalGradient(
-                        listOf(Color(0xEFFFF4EA), Color(0x88FFF4EA), Color.Transparent),
+                        listOf(GoaldayDesign.HomeHeroOverlayStart, GoaldayDesign.HomeHeroOverlayEnd, Color.Transparent),
                     ),
-                    RoundedCornerShape(22.dp),
+                    RoundedCornerShape(GoaldayDesign.RadiusXL),
                 ),
         )
         Column(

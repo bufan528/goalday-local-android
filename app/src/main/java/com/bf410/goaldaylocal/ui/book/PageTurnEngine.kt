@@ -321,7 +321,7 @@ fun PageTurnEngine(
                                 Brush.horizontalGradient(
                                     listOf(
                                         Color.Black.copy(alpha = (0.04f + latePhase * 0.24f).coerceAtMost(0.30f)),
-                                        Color(0x22000000),
+                                        GoaldayDesign.BlackOverlaySoft,
                                         Color.Transparent,
                                     ),
                                 )
@@ -329,7 +329,7 @@ fun PageTurnEngine(
                                 Brush.horizontalGradient(
                                     listOf(
                                         Color.Transparent,
-                                        Color(0x22000000),
+                                        GoaldayDesign.BlackOverlaySoft,
                                         Color.Black.copy(alpha = (0.04f + latePhase * 0.24f).coerceAtMost(0.30f)),
                                     ),
                                 )
