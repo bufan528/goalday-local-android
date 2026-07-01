@@ -576,7 +576,7 @@ fun ActivePageLayer(
             )
         }
         return
-    }
+    } else {
     // 翻页内层视差：统一 smoothstep 缓动，删除原线性项（消除起步瞬时速度导致的跳变）
     // 量级从 27f 降到 14f，与 handbook 路径 8f 接近，避免 handbook/非 handbook 切换时位移差距过大
     val easedShift = turnProgress * turnProgress * (3f - 2f * turnProgress)
@@ -638,6 +638,7 @@ fun ActivePageLayer(
         }
         Spacer(Modifier.height(24.dp))
         Text(text = "${pageIndex + 1} / $pageCount", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.adaptiveInkSecondary)
+    }
     }
 }
 

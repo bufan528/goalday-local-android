@@ -919,7 +919,7 @@ private fun BackupHistoryRow(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clickable(onClick = onDelete)
-                    .padding(horizontal = GoaldayDesign.Space3, vertical = 3.dp),
+                    .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space1 - 1.dp),
             )
         }
     }
