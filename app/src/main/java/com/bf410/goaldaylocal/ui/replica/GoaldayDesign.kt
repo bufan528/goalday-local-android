@@ -27,6 +27,11 @@ object GoaldayDesign {
     val GreenSoft = Color(0xFFEAF4E4)
     val Positive = Color(0xFF769B69)
     val Danger = Color(0xFFA15E58)
+    // DangerInk：危险操作文字色（深红），用于删除/重置等警示标签
+    val DangerInk = Color(0xFF7A2F2F)
+    // DangerTint：危险操作浅底色（alpha 0.10），用于警示 chip 背景
+    val DangerTint: Color
+        get() = Color(0xFFD17878).copy(alpha = 0.10f)
     val PrimaryAction = Color(0xFF221F1B)
     val Paper = Color(0xFFFFFCF6)
     val PaperWarm = Color(0xFFFFF6E8)

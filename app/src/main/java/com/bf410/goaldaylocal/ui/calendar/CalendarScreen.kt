@@ -866,7 +866,7 @@ private fun CalendarHeroHeader(
                 ),
                 RoundedCornerShape(22.dp),
             )
-            .border(0.8.dp, Color(0x35FFFFFF), RoundedCornerShape(22.dp))
+            .border(0.8.dp, GoaldayDesign.adaptiveSurface.copy(alpha = 0.21f), RoundedCornerShape(22.dp))
             .padding(horizontal = 14.dp, vertical = 13.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -2189,8 +2189,8 @@ private fun ActionChip(
     onClick: () -> Unit,
 ) {
     val isDanger = color == GoaldayDesign.Danger
-    val textColor = if (isDanger) Color(0xFF7A2F2F) else GoaldayDesign.adaptiveInkPrimary
-    val bgColor = if (isDanger) Color(0x1AD17878) else color.copy(alpha = 0.10f)
+    val textColor = if (isDanger) GoaldayDesign.DangerInk else GoaldayDesign.adaptiveInkPrimary
+    val bgColor = if (isDanger) GoaldayDesign.DangerTint else color.copy(alpha = 0.10f)
     Text(
         text = label,
         color = textColor,
