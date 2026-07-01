@@ -100,6 +100,23 @@ object GoaldayDesign {
     val DarkOverlay = Color(0xAA1F1712)
     val DarkOverlaySoft = Color(0x991F1712)
     val BlackOverlaySoft = Color(0x26000000)
+    // BookShell 书脊/纸张阴影叠层
+    val BlackOverlayLight = Color(0x18000000)
+    val BlackOverlayMedium = Color(0x38000000)
+    val BlackOverlayStrong = Color(0x42000000)
+    val BlackOverlayLine = Color(0x44000000)
+    val BlackOverlayHairline = Color(0x14000000)
+    val WhiteHighlight = Color.White.copy(alpha = 0.27f)
+
+    // 通用柔和色与编辑器/Widget 强调色
+    val DividerMuted = Color(0xFFD2CBC1)
+    val Clay = Color(0xFFE0D7CD)
+    val Sand = Color(0xFFD8CFC5)
+    val AccentMauve = Color(0xFFB07A8F)
+    val AccentSage = Color(0xFF6F8E68)
+    val AccentTerracotta = Color(0xFF8F684F)
+    val AccentPeriwinkle = Color(0xFF9EAADB)
+    val AccentMintSurface = Color(0xFFF2F7EE)
 
     val DeskGradient: Brush
         get() = Brush.verticalGradient(listOf(DeskTop, DeskMid, DeskBottom))

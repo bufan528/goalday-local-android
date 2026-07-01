@@ -225,7 +225,7 @@ private fun WidgetKindSignalStrip(kind: WidgetConfigureKind) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            WidgetSignalPill(kind.referenceSignal, Color(0xFFB07A8F), Modifier.weight(1f))
+            WidgetSignalPill(kind.referenceSignal, GoaldayDesign.AccentMauve, Modifier.weight(1f))
             WidgetSignalPill(kind.colorSignal, GoaldayDesign.Pink, Modifier.weight(1f))
         }
         Row(
@@ -233,8 +233,8 @@ private fun WidgetKindSignalStrip(kind: WidgetConfigureKind) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            WidgetSignalPill(kind.unlockSignal, Color(0xFF6F8E68), Modifier.weight(1f))
-            WidgetSignalPill("无 VIP 锁 · 纯本地", Color(0xFF6F8E68), Modifier.weight(1f))
+            WidgetSignalPill(kind.unlockSignal, GoaldayDesign.AccentSage, Modifier.weight(1f))
+            WidgetSignalPill("无 VIP 锁 · 纯本地", GoaldayDesign.AccentSage, Modifier.weight(1f))
         }
     }
 }
@@ -264,7 +264,7 @@ private fun WidgetLocalUnlockCard(kind: WidgetConfigureKind) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFFF2F7EE))
+            .background(GoaldayDesign.AccentMintSurface)
             .border(0.7.dp, GoaldayDesign.Positive.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),

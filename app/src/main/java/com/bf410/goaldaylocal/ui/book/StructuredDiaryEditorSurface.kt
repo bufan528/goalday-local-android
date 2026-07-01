@@ -247,7 +247,7 @@ private fun DiaryEditorToolbar(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             DiaryEditorCountPill("文本", textCount, GoaldayDesign.adaptiveInkSecondary, Modifier.weight(1f))
-            DiaryEditorCountPill("图片", imageCount, Color(0xFFB07A8F), Modifier.weight(1f))
+            DiaryEditorCountPill("图片", imageCount, GoaldayDesign.AccentMauve, Modifier.weight(1f))
             DiaryEditorCountPill("目标", targetCount, GoaldayDesign.Positive, Modifier.weight(1f))
         }
         Row(
@@ -256,12 +256,12 @@ private fun DiaryEditorToolbar(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
         ) {
             DiaryEditorToolChip("文字", GoaldayDesign.adaptiveInkSecondary, onAddTextBlock)
-            DiaryEditorToolChip("图片", Color(0xFFB07A8F), onAddImage)
+            DiaryEditorToolChip("图片", GoaldayDesign.AccentMauve, onAddImage)
             DiaryEditorToolChip("目标", GoaldayDesign.Positive, onAddTopicTargetBlock)
-            DiaryEditorToolChip("子目标", Color(0xFF6F8E68), onAddTargetChildBlock)
+            DiaryEditorToolChip("子目标", GoaldayDesign.AccentSage, onAddTargetChildBlock)
             DiaryEditorToolChip("B", GoaldayDesign.adaptiveInkPrimary) { onCommand(RichEditorCommand("bold")) }
-            DiaryEditorToolChip("H1", Color(0xFF8F684F)) { onCommand(RichEditorCommand("formatBlock", "h1")) }
-            DiaryEditorToolChip("引用", Color(0xFF9EAADB)) { onCommand(RichEditorCommand("formatBlock", "blockquote")) }
+            DiaryEditorToolChip("H1", GoaldayDesign.AccentTerracotta) { onCommand(RichEditorCommand("formatBlock", "h1")) }
+            DiaryEditorToolChip("引用", GoaldayDesign.AccentPeriwinkle) { onCommand(RichEditorCommand("formatBlock", "blockquote")) }
             DiaryEditorToolChip("列表", GoaldayDesign.Positive) { onCommand(RichEditorCommand("insertUnorderedList")) }
             DiaryEditorToolChip("灵感", GoaldayDesign.Today, onShowPrompts)
         }
@@ -348,8 +348,8 @@ private fun DiaryFocusedBlockToolbar(
             Text("后插入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
             DiaryEditorToolChip("文字", GoaldayDesign.adaptiveInkSecondary) { onInsertAfter(DiaryBlockType.TEXT) }
             DiaryEditorToolChip("目标", GoaldayDesign.Positive) { onInsertAfter(DiaryBlockType.TARGET) }
-            DiaryEditorToolChip("子目标", Color(0xFF6F8E68)) { onInsertAfter(DiaryBlockType.TARGET_CHILD) }
-            DiaryEditorToolChip("专题目标", Color(0xFFB07A8F)) { onInsertAfter(DiaryBlockType.TOPIC_TARGET) }
+            DiaryEditorToolChip("子目标", GoaldayDesign.AccentSage) { onInsertAfter(DiaryBlockType.TARGET_CHILD) }
+            DiaryEditorToolChip("专题目标", GoaldayDesign.AccentMauve) { onInsertAfter(DiaryBlockType.TOPIC_TARGET) }
         }
     }
 }

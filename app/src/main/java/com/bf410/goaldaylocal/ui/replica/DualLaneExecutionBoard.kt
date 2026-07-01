@@ -108,7 +108,7 @@ fun DualLaneExecutionBoard(
                             contentDescription = null,
                             modifier = Modifier.size(14.dp),
                             tint = when {
-                                dayTask == null -> Color(0xFFE0D7CD)
+                                dayTask == null -> GoaldayDesign.Clay
                                 dayTask.completed -> GoaldayDesign.Positive
                                 else -> GoaldayDesign.adaptiveInkSecondary
                             },
@@ -192,7 +192,7 @@ private fun BoardRow(
             if (selected) Icons.Filled.RadioButtonChecked else if (completed) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
             contentDescription = null,
             modifier = Modifier.size(12.dp),
-            tint = if (completed) GoaldayDesign.Positive else if (selected) GoaldayDesign.adaptiveInkSecondary else Color(0xFFD8CFC5),
+            tint = if (completed) GoaldayDesign.Positive else if (selected) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.Sand,
         )
         Column(
             modifier = Modifier

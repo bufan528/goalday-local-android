@@ -252,7 +252,7 @@ fun BookShell(
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
-                            listOf(Color.Transparent, Color(0x14000000), Color.Transparent),
+                            listOf(Color.Transparent, GoaldayDesign.BlackOverlayHairline, Color.Transparent),
                         ),
                     ),
             )
@@ -281,7 +281,7 @@ fun BookShell(
 
 @Composable
 private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
-    val pageShape = RoundedCornerShape(20.dp)
+    val pageShape = RoundedCornerShape(GoaldayDesign.RadiusXL)
     Box(
         modifier = modifier
             .clip(pageShape)
@@ -320,11 +320,11 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                     Brush.horizontalGradient(
                         listOf(
                             Color.Transparent,
-                            Color(0x18000000),
-                            Color(0x38000000),
-                            Color(0x42000000),
-                            Color(0x38000000),
-                            Color(0x18000000),
+                            GoaldayDesign.BlackOverlayLight,
+                            GoaldayDesign.BlackOverlayMedium,
+                            GoaldayDesign.BlackOverlayStrong,
+                            GoaldayDesign.BlackOverlayMedium,
+                            GoaldayDesign.BlackOverlayLight,
                             Color.Transparent,
                         ),
                     ),
@@ -336,7 +336,7 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 .align(Alignment.Center)
                 .width(0.6.dp)
                 .fillMaxHeight()
-                .background(Color(0x44000000)),
+                .background(GoaldayDesign.BlackOverlayLine),
         )
         // 顶部高光：单层（收敛到 White alpha）
         Box(
@@ -345,7 +345,7 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .height(28.dp)
                 .background(
-                    Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.27f), Color.Transparent)),
+                    Brush.verticalGradient(listOf(GoaldayDesign.WhiteHighlight, Color.Transparent)),
                 ),
         )
         // P0-3 大修：底部阴影改用 BookBoardDark 暖棕系，与深色书皮统一（原 Pink alpha 与深棕书皮不搭）
