@@ -87,14 +87,14 @@ internal fun HandbookTargetReplicaPage(
                 translationX = contentShift
                 this.alpha = alpha
             }
-            .padding(12.dp),
+            .padding(GoaldayDesign.Space3),
     ) {
         // P0-2 大修：HandbookPaperRuling 改为 Modifier 扩展，画在 Column 内部
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .handbookPaperRuling(scrollState = null),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -216,7 +216,7 @@ internal fun TargetDetailReplicaPage(
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(9.dp), verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                         Text(
                             "%02d".format(index + 1),
                             color = if (checked) Color.White else GoaldayDesign.Pink,
@@ -225,7 +225,7 @@ internal fun TargetDetailReplicaPage(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                                 .background(if (checked) GoaldayDesign.Positive else tint.copy(alpha = 0.18f))
-                                .padding(horizontal = 7.dp, vertical = 4.dp),
+                                .padding(horizontal = 7.dp, vertical = GoaldayDesign.Space1),
                         )
                         Icon(
                             imageVector = if (checked) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
@@ -268,7 +268,7 @@ internal fun TargetDetailReplicaPage(
                                     .background(GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                                     .padding(horizontal = 7.dp, vertical = 5.dp),
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                                 TextActionButton("保存", GoaldayDesign.adaptiveInkSecondary) {
                                     if (item in customItems) onRenameCustomItem(item, editingText)
                                     editingItem = null
@@ -348,8 +348,8 @@ internal fun TargetDetailReplicaPage(
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .background(GoaldayDesign.adaptiveSurface)
                 .border(0.6.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BasicTextField(
@@ -507,6 +507,6 @@ private fun TextActionButton(
         modifier = Modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 5.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = 5.dp),
     )
 }

@@ -109,7 +109,7 @@ internal fun StructuredDiaryEditor(
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
                 .background(GoaldayDesign.adaptiveSurface)
                 .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusM))
-                .padding(horizontal = 9.dp, vertical = 8.dp),
+                .padding(horizontal = 9.dp, vertical = GoaldayDesign.Space2),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -122,7 +122,7 @@ internal fun StructuredDiaryEditor(
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(GoaldayDesign.PinkTint)
                         .clickable { richEditorExpanded = !richEditorExpanded }
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                        .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
                 )
             }
             if (richEditorExpanded) {
@@ -148,7 +148,7 @@ internal fun StructuredDiaryEditor(
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                         .background(GoaldayDesign.adaptiveSurfaceSoft)
                         .clickable { richEditorExpanded = true }
-                        .padding(horizontal = 9.dp, vertical = 8.dp),
+                        .padding(horizontal = 9.dp, vertical = GoaldayDesign.Space2),
                 )
             }
         }
@@ -226,7 +226,7 @@ private fun DiaryEditorToolbar(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
             .background(GoaldayDesign.Pink.copy(alpha = 0.09f))
             .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusM))
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -243,7 +243,7 @@ private fun DiaryEditorToolbar(
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.PrimaryAction)
                     .clickable { onDone() }
-                    .padding(horizontal = 9.dp, vertical = 4.dp),
+                    .padding(horizontal = 9.dp, vertical = GoaldayDesign.Space1),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -281,7 +281,7 @@ private fun DiaryEditorCountPill(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(Color.White.copy(alpha = 0.66f))
             .border(0.5.dp, color.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .padding(horizontal = 7.dp, vertical = 4.dp),
+            .padding(horizontal = 7.dp, vertical = GoaldayDesign.Space1),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -305,7 +305,7 @@ private fun DiaryFocusedBlockToolbar(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
             .background(GoaldayDesign.adaptiveSurface)
             .border(0.7.dp, color.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusM))
-            .padding(horizontal = 8.dp, vertical = 7.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = 7.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -409,8 +409,8 @@ private fun DiaryEmptyBlockRow(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.CoverWhiteOverlayMedium)
             .border(0.7.dp, color.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = 8.dp, vertical = 7.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = 7.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -418,7 +418,7 @@ private fun DiaryEmptyBlockRow(
                 .width(42.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .background(color.copy(alpha = 0.12f))
-                .padding(horizontal = 6.dp, vertical = 4.dp),
+                .padding(horizontal = 6.dp, vertical = GoaldayDesign.Space1),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -470,7 +470,7 @@ private fun DiaryTypedBlockEditRow(
                     Text(diaryBlockDisplaySubtitle(block.type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1), verticalAlignment = Alignment.CenterVertically) {
                 DiaryBlockActionChip("上移", color, enabled = canMoveUp, onClick = onMoveUp)
                 DiaryBlockActionChip("下移", color, enabled = canMoveDown, onClick = onMoveDown)
                 if (block.type != DiaryBlockType.IMAGE && block.type != DiaryBlockType.TARGET_CHILD) {
@@ -505,7 +505,7 @@ private fun DiaryTypedBlockEditRow(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                     .background(Color.White.copy(alpha = 0.58f))
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
             )
         } else {
             BasicTextField(
@@ -516,7 +516,7 @@ private fun DiaryTypedBlockEditRow(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                     .background(Color.White.copy(alpha = 0.68f))
-                    .padding(horizontal = 8.dp, vertical = 7.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = 7.dp),
             )
         }
     }
@@ -577,7 +577,7 @@ private fun DiaryEditorToolChip(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(Color.White.copy(alpha = 0.72f))
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
     )
 }
 
@@ -642,7 +642,7 @@ private fun DiaryPromptGridDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(GoaldayDesign.Space5),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Row(
@@ -701,9 +701,9 @@ private fun DiaryPromptCell(
             .background(GoaldayDesign.adaptiveSurfaceSoft)
             .border(0.7.dp, GoaldayDesign.Today.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 12.dp),
+            .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space3),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
     ) {
         Text(template.emoji, style = MaterialTheme.typography.titleLarge)
         Text(

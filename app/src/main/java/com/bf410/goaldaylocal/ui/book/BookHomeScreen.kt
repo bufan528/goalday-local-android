@@ -802,7 +802,7 @@ private fun ShelfBookCover(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 20.dp),
+                .padding(start = GoaldayDesign.Space5),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(book.title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 3)
@@ -1024,7 +1024,7 @@ private fun BookDetailView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 8.dp),
+            .padding(top = GoaldayDesign.Space2),
     ) {
         Column(Modifier.fillMaxSize()) {
             GoaldayTopBar(
@@ -1468,7 +1468,7 @@ private fun TargetDetailRouteOverlay(
                         ),
                     )
                     .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.Radius2XL))
-                    .padding(16.dp),
+                    .padding(GoaldayDesign.Space4),
                 verticalArrangement = Arrangement.spacedBy(11.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
@@ -1620,7 +1620,7 @@ private fun TargetDetailPanel(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.87f))
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusXL))
-            .padding(12.dp),
+            .padding(GoaldayDesign.Space3),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -1863,7 +1863,7 @@ private fun InspirationCenterView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 4.dp),
+            .padding(top = GoaldayDesign.Space1),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
     ) {
         Row(
@@ -1913,7 +1913,7 @@ private fun InspirationCenterView(
                                 shape = RoundedCornerShape(GoaldayDesign.RadiusXL),
                             )
                             .clickable { onSelect(index) }
-                            .padding(12.dp),
+                            .padding(GoaldayDesign.Space3),
                     ) {
                         TopicCoverArt(template = item, index = index, compact = true)
                         Text(
@@ -2017,7 +2017,7 @@ private fun InspirationCenterView(
                                     .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
                                     .background(if (checkedStates.getOrNull(index) == true) GoaldayDesign.PinkTint else GoaldayDesign.BorderColor.copy(alpha = 0.03f))
                                     .border(0.6.dp, if (checkedStates.getOrNull(index) == true) GoaldayDesign.Pink.copy(alpha = 0.21f) else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusM))
-                                    .padding(8.dp),
+                                    .padding(GoaldayDesign.Space2),
                                 verticalArrangement = Arrangement.spacedBy(5.dp),
                             ) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -2103,7 +2103,7 @@ private fun EmbeddedInspirationUnavailable(onBack: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 4.dp),
+            .padding(top = GoaldayDesign.Space1),
         contentAlignment = Alignment.Center,
     ) {
         Column(
