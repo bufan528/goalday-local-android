@@ -172,7 +172,7 @@ internal fun GuideOverlay(
                     style = MaterialTheme.typography.labelSmall,
                     color = GoaldayDesign.adaptiveInkMuted,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable(onClick = onClose)
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 )
@@ -182,9 +182,9 @@ internal fun GuideOverlay(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color.White.copy(alpha = 0.78f))
-                    .border(1.dp, Color.White.copy(alpha = 0.72f), RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.Radius2XL))
+                    .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.78f))
+                    .border(1.dp, GoaldayDesign.adaptiveDivider.copy(alpha = 0.72f), RoundedCornerShape(GoaldayDesign.Radius2XL))
                     .padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(13.dp),
             ) {
@@ -201,7 +201,7 @@ internal fun GuideOverlay(
                         color = if (index == 0) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkSecondary,
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .clickable {
                                 if (index > 0) index -= 1
                             }
@@ -213,7 +213,7 @@ internal fun GuideOverlay(
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .background(page.tone)
                             .clickable {
                                 if (index == pages.lastIndex) {
@@ -232,9 +232,9 @@ internal fun GuideOverlay(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                         .background(page.tone.copy(alpha = 0.12f))
-                        .border(0.7.dp, page.tone.copy(alpha = 0.22f), RoundedCornerShape(16.dp))
+                        .border(0.7.dp, page.tone.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusL))
                         .clickable {
                             onClose()
                             onOpenTarget(page.target)
@@ -267,9 +267,9 @@ private fun GuideStepTimeline(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color.White.copy(alpha = 0.62f))
-            .border(0.8.dp, Color.White.copy(alpha = 0.72f), RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
+            .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.62f))
+            .border(0.8.dp, GoaldayDesign.adaptiveDivider.copy(alpha = 0.72f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
@@ -295,14 +295,14 @@ private fun GuideStepTimeline(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(6.dp)
-                .clip(RoundedCornerShape(99.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(GoaldayDesign.adaptiveSurfaceSoft),
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(((selectedIndex + 1).toFloat() / pages.size).coerceIn(0.1f, 1f))
                     .height(6.dp)
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(pages[selectedIndex].tone),
             )
         }
@@ -312,12 +312,12 @@ private fun GuideStepTimeline(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(if (selected) step.tone.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.52f))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
+                        .background(if (selected) step.tone.copy(alpha = 0.14f) else GoaldayDesign.adaptiveSurface.copy(alpha = 0.52f))
                         .border(
                             0.7.dp,
                             if (selected) step.tone.copy(alpha = 0.28f) else GoaldayDesign.BorderColor.copy(alpha = 0.09f),
-                            RoundedCornerShape(14.dp),
+                            RoundedCornerShape(GoaldayDesign.RadiusM),
                         )
                         .padding(horizontal = 7.dp, vertical = 6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -329,7 +329,7 @@ private fun GuideStepTimeline(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(99.dp))
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .background(if (selected) step.tone else GoaldayDesign.BorderColor.copy(alpha = 0.07f))
                             .padding(horizontal = 7.dp, vertical = 2.dp),
                     )
@@ -350,9 +350,9 @@ private fun GuideActionPreview(page: GuidePage) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.80f))
-            .border(0.7.dp, page.tone.copy(alpha = 0.18f), RoundedCornerShape(16.dp))
+            .border(0.7.dp, page.tone.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 11.dp, vertical = 9.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
@@ -367,9 +367,9 @@ private fun GuideTaskRail(page: GuidePage) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
             .background(GoaldayDesign.CardPaperGradient)
-            .border(0.8.dp, page.tone.copy(alpha = 0.18f), RoundedCornerShape(18.dp))
+            .border(0.8.dp, page.tone.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
@@ -390,7 +390,7 @@ private fun GuideTaskRail(page: GuidePage) {
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(page.tone.copy(alpha = 0.12f))
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             )
@@ -404,7 +404,7 @@ private fun GuideTaskRail(page: GuidePage) {
                 Box(
                     modifier = Modifier
                         .size(22.dp)
-                        .clip(RoundedCornerShape(99.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(if (taskIndex == 0) page.tone else page.tone.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -443,7 +443,7 @@ private fun GuidePreviewRow(
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
-                .clip(RoundedCornerShape(99.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(tone.copy(alpha = 0.12f))
                 .padding(horizontal = 8.dp, vertical = 3.dp),
         )
@@ -492,17 +492,17 @@ private fun GuideIllustration(
         modifier = Modifier
             .fillMaxWidth()
             .height(236.dp)
-            .clip(RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.Radius3XL))
             .background(
                 Brush.radialGradient(
                     listOf(
-                        Color.White.copy(alpha = 0.95f),
+                        GoaldayDesign.adaptiveSurface.copy(alpha = 0.95f),
                         page.tone.copy(alpha = 0.24f),
                         GoaldayDesign.adaptiveSurfaceSoft,
                     ),
                 ),
             )
-            .border(1.dp, Color.White.copy(alpha = 0.72f), RoundedCornerShape(28.dp))
+            .border(1.dp, GoaldayDesign.adaptiveDivider.copy(alpha = 0.72f), RoundedCornerShape(GoaldayDesign.Radius3XL))
             .padding(18.dp),
     ) {
         Box(
@@ -527,9 +527,9 @@ private fun GuideIllustration(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(Color.White.copy(alpha = 0.72f))
-                        .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(24.dp)),
+                        .clip(RoundedCornerShape(GoaldayDesign.Radius2XL))
+                        .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.72f))
+                        .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.Radius2XL)),
                 )
             }
         }
@@ -561,7 +561,7 @@ private fun GuideIllustration(
                         .align(alignment)
                         .padding(pad)
                         .size(size)
-                        .clip(RoundedCornerShape(99.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(page.tone.copy(alpha = 0.25f)),
                 )
             }
@@ -572,9 +572,9 @@ private fun GuideIllustration(
                 .offset(x = (-96 + glide * 18).dp, y = 92.dp)
                 .width(148.dp)
                 .height(24.dp)
-                .clip(RoundedCornerShape(99.dp))
-                .background(Color.White.copy(alpha = 0.52f))
-                .border(1.dp, page.tone.copy(alpha = 0.22f), RoundedCornerShape(99.dp)),
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.52f))
+                .border(1.dp, page.tone.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusPill)),
         )
         repeat(3) { row ->
             Box(
@@ -583,8 +583,8 @@ private fun GuideIllustration(
                     .offset(x = (-16).dp, y = (row * -20 - 24).dp)
                     .width((68 + row * 12).dp)
                     .height(6.dp)
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(if (row <= index) page.tone.copy(alpha = 0.42f) else Color.White.copy(alpha = 0.62f)),
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .background(if (row <= index) page.tone.copy(alpha = 0.42f) else GoaldayDesign.adaptiveSurface.copy(alpha = 0.62f)),
             )
         }
         Box(
@@ -593,9 +593,9 @@ private fun GuideIllustration(
                 .offset(x = (-24 + glide * 24).dp, y = (-104 + index * 5).dp)
                 .width(92.dp)
                 .height(22.dp)
-                .clip(RoundedCornerShape(99.dp))
-                .background(Color.White.copy(alpha = 0.64f))
-                .border(1.dp, page.tone.copy(alpha = 0.28f), RoundedCornerShape(99.dp)),
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.64f))
+                .border(1.dp, page.tone.copy(alpha = 0.28f), RoundedCornerShape(GoaldayDesign.RadiusPill)),
         )
         Box(
             modifier = Modifier
@@ -607,7 +607,7 @@ private fun GuideIllustration(
                     scaleY = pulse
                     alpha = 0.24f + (pulse - 0.88f) * 0.9f
                 }
-                .clip(RoundedCornerShape(99.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(page.tone.copy(alpha = 0.28f)),
         )
         Box(
@@ -615,7 +615,7 @@ private fun GuideIllustration(
                 .align(Alignment.TopEnd)
                 .padding(top = 82.dp, end = 30.dp)
                 .size(46.dp)
-                .clip(RoundedCornerShape(99.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(page.tone.copy(alpha = 0.88f)),
         ) {
             Text("${index + 1}", color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Center))
@@ -627,7 +627,7 @@ private fun GuideIllustration(
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .clip(RoundedCornerShape(99.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(page.tone.copy(alpha = 0.78f))
                 .padding(horizontal = 10.dp, vertical = 5.dp),
         )
@@ -646,8 +646,8 @@ private fun GuideIllustration(
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .clip(RoundedCornerShape(99.dp))
-                .background(Color.White.copy(alpha = 0.70f))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.70f))
                 .padding(horizontal = 12.dp, vertical = 7.dp),
         )
     }
@@ -663,14 +663,14 @@ private fun GuideLottieStatusPill(
     val currentFrame = meta?.let { (it.startFrame + it.frameCount * progress).toInt().coerceIn(it.startFrame, it.endFrame) }
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White.copy(alpha = 0.72f))
-            .border(0.8.dp, tone.copy(alpha = 0.24f), RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
+            .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.72f))
+            .border(0.8.dp, tone.copy(alpha = 0.24f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 10.dp, vertical = 7.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Text(
-            meta?.name ?: "GuideActivity assets",
+            meta?.name ?: "手账动画资源",
             color = tone,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
@@ -681,26 +681,26 @@ private fun GuideLottieStatusPill(
                 modifier = Modifier
                     .width(82.dp)
                     .height(5.dp)
-                    .clip(RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(tone.copy(alpha = 0.16f)),
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(progress.coerceIn(0.05f, 1f))
                         .height(5.dp)
-                        .clip(RoundedCornerShape(99.dp))
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(tone),
                 )
             }
             Text(
-                currentFrame?.let { "F$it" } ?: "本地",
+                currentFrame?.let { "第 $it 帧" } ?: "本地",
                 color = GoaldayDesign.adaptiveInkMuted,
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
             )
         }
         Text(
-            meta?.label ?: "lottie/book.png · card.png",
+            meta?.label ?: "动画资源已就绪",
             color = GoaldayDesign.adaptiveInkMuted,
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,

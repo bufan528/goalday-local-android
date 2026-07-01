@@ -490,15 +490,15 @@ fun CalendarScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(if (grabbed) 5.dp else 0.dp, RoundedCornerShape(13.dp), clip = false)
+                        .shadow(if (grabbed) 5.dp else 0.dp, RoundedCornerShape(GoaldayDesign.RadiusM), clip = false)
                         .background(
                             if (grabbed) GoaldayDesign.PinkSoft else GoaldayDesign.adaptiveSurface,
-                            RoundedCornerShape(13.dp),
+                            RoundedCornerShape(GoaldayDesign.RadiusM),
                         )
                         .border(
                             0.7.dp,
                             if (grabbed) GoaldayDesign.Pink.copy(alpha = 0.26f) else GoaldayDesign.BorderColor.copy(alpha = 0.09f),
-                            RoundedCornerShape(13.dp),
+                            RoundedCornerShape(GoaldayDesign.RadiusM),
                         )
                         .combinedClickable(
                             onClick = {
@@ -637,7 +637,7 @@ fun CalendarScreen(
                 modifier = Modifier
                     .offset { IntOffset(dragPosition.x.toInt(), dragPosition.y.toInt()) }
                     .background(if (activeDropSlot != null || activeDoneDrop) GoaldayDesign.Pink else GoaldayDesign.Pink.copy(alpha = 0.87f), RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .border(if (activeDropSlot != null || activeDoneDrop) 1.2.dp else 0.8.dp, Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .border(if (activeDropSlot != null || activeDoneDrop) 1.2.dp else 0.8.dp, GoaldayDesign.WhiteOverlayHigh, RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
@@ -808,8 +808,8 @@ private fun CalendarHintPill(text: String) {
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .fillMaxWidth()
-            .background(GoaldayDesign.PinkSoft, RoundedCornerShape(14.dp))
-            .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.16f), RoundedCornerShape(14.dp))
+            .background(GoaldayDesign.PinkSoft, RoundedCornerShape(GoaldayDesign.RadiusL))
+            .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(horizontal = 11.dp, vertical = 8.dp),
     )
 }
@@ -905,8 +905,8 @@ private fun CalendarHeroMetric(
 ) {
     Column(
         modifier = modifier
-            .background(Color.White.copy(alpha = 0.66f), RoundedCornerShape(14.dp))
-            .border(0.6.dp, color.copy(alpha = 0.18f), RoundedCornerShape(14.dp))
+            .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.66f), RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(0.6.dp, color.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 9.dp, vertical = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -927,9 +927,9 @@ private fun CalendarMonthControl(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(5.dp, RoundedCornerShape(18.dp), clip = false)
-            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(18.dp))
-            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(18.dp))
+            .shadow(5.dp, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
+            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusXL))
+            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .padding(horizontal = 9.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -982,9 +982,9 @@ private fun CalendarMonthGrid(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(18.dp), clip = false)
-            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(18.dp))
-            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(18.dp))
+            .shadow(8.dp, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
+            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusXL))
+            .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .padding(horizontal = 9.dp, vertical = 9.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
@@ -1045,7 +1045,7 @@ private fun CalendarMonthDayCell(
             .height(48.dp)
             .shadow(
                 if (selected) 7.dp else if (todoCount + doneCount > 0) 3.dp else 0.dp,
-                RoundedCornerShape(12.dp),
+                RoundedCornerShape(GoaldayDesign.RadiusM),
                 clip = false,
             )
             .background(
@@ -1056,12 +1056,12 @@ private fun CalendarMonthDayCell(
                 } else {
                     GoaldayDesign.adaptiveSurfaceSoft
                 },
-                RoundedCornerShape(12.dp),
+                RoundedCornerShape(GoaldayDesign.RadiusM),
             )
             .border(
                 0.7.dp,
                 if (selected) GoaldayDesign.PrimaryAction else if (todoCount + doneCount > 0) GoaldayDesign.Pink.copy(alpha = 0.22f) else Color.Transparent,
-                RoundedCornerShape(12.dp),
+                RoundedCornerShape(GoaldayDesign.RadiusM),
             )
             .clickable(onClick = onClick)
             .padding(horizontal = 4.dp, vertical = 5.dp),
