@@ -446,7 +446,7 @@ private fun PaperPlanner(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(GoaldayDesign.ShadowSoft, RoundedCornerShape(GoaldayDesign.Radius2XL), clip = false)
-            .background(GoaldayDesign.Surface, RoundedCornerShape(GoaldayDesign.Radius2XL))
+            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.Radius2XL))
             .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = GoaldayDesign.HairlineAlpha), RoundedCornerShape(GoaldayDesign.Radius2XL))
             .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space3),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),

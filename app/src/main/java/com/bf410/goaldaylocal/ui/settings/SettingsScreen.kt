@@ -340,7 +340,7 @@ private fun SettingsHeroCard(
                     Text(
                         "Goalday Local",
                         style = MaterialTheme.typography.titleLarge,
-                        color = GoaldayDesign.InkPrimary,
+                        color = GoaldayDesign.adaptiveInkPrimary,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -356,7 +356,7 @@ private fun SettingsHeroCard(
             }
             Text(
                 "无服务器依赖，不设置付费锁。所有日程、手账、日记和组件数据保存在本机。",
-                color = GoaldayDesign.InkSecondary,
+                color = GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.bodySmall
             )
             Row(
@@ -366,7 +366,7 @@ private fun SettingsHeroCard(
                 StatusPill(backupSummary, GoaldayDesign.Pink)
                 StatusPill(
                     latestBackup?.let { "最近 ${formatBackupDate(it.modifiedAtMillis)}" } ?: "暂无备份",
-                    GoaldayDesign.InkSecondary
+                    GoaldayDesign.adaptiveInkSecondary
                 )
             }
             Row(
@@ -390,7 +390,7 @@ private fun SettingsHeroCard(
                 horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                HeroActionButton("立即备份", GoaldayDesign.InkPrimary, Modifier.weight(1f), onCreateBackup)
+                HeroActionButton("立即备份", GoaldayDesign.adaptiveInkPrimary, Modifier.weight(1f), onCreateBackup)
                 HeroActionButton("恢复最近", GoaldayDesign.Pink, Modifier.weight(1f), onRestoreLatest)
             }
         }
@@ -405,7 +405,7 @@ private fun LocalDataMetric(
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
         Text(label, color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
-        Text(value, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+        Text(value, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -475,12 +475,12 @@ private fun BackupActionPanel(
                 Text(
                     "备份操作",
                     style = MaterialTheme.typography.titleSmall,
-                    color = GoaldayDesign.InkPrimary,
+                    color = GoaldayDesign.adaptiveInkPrimary,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     latestBackup?.let { "最近 ${formatBackupDate(it.modifiedAtMillis)}" } ?: "暂无可恢复备份",
-                    color = GoaldayDesign.InkSecondary,
+                    color = GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -532,7 +532,7 @@ private fun SettingsSection(
         Text(
             title,
             style = MaterialTheme.typography.labelMedium,
-            color = GoaldayDesign.InkSecondary,
+            color = GoaldayDesign.adaptiveInkSecondary,
             fontWeight = FontWeight.SemiBold
         )
         Column(
@@ -587,12 +587,12 @@ private fun SettingRow(
             Text(
                 title,
                 style = MaterialTheme.typography.titleSmall,
-                color = GoaldayDesign.InkPrimary,
+                color = GoaldayDesign.adaptiveInkPrimary,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
                 subtitle,
-                color = GoaldayDesign.InkSecondary,
+                color = GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -632,12 +632,12 @@ private fun FontSizeMenu(
                 Text(
                     "字号",
                     style = MaterialTheme.typography.titleSmall,
-                    color = GoaldayDesign.InkPrimary,
+                    color = GoaldayDesign.adaptiveInkPrimary,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     "设置会保存在本机偏好中。",
-                    color = GoaldayDesign.InkSecondary,
+                    color = GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -653,12 +653,12 @@ private fun FontSizeMenu(
                 val active = option.key == selected
                 Text(
                     option.label,
-                    color = if (active) Color.White else GoaldayDesign.InkSecondary,
+                    color = if (active) Color.White else GoaldayDesign.adaptiveInkSecondary,
                     fontSize = option.previewSp.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .background(
-                            if (active) GoaldayDesign.Pink else GoaldayDesign.SurfaceSoft,
+                            if (active) GoaldayDesign.Pink else GoaldayDesign.adaptiveSurfaceSoft,
                             RoundedCornerShape(GoaldayDesign.RadiusPill)
                         )
                         .clickable { onSelected(option) }
@@ -701,12 +701,12 @@ private fun PageTurnStyleMenu(
                 Text(
                     "翻页方式",
                     style = MaterialTheme.typography.titleSmall,
-                    color = GoaldayDesign.InkPrimary,
+                    color = GoaldayDesign.adaptiveInkPrimary,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     "仿真模式最贴近真实书本，覆盖/滚动更轻量。",
-                    color = GoaldayDesign.InkSecondary,
+                    color = GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -722,14 +722,14 @@ private fun PageTurnStyleMenu(
                 val active = option.key == selected
                 Text(
                     option.label,
-                    color = if (active) Color.White else GoaldayDesign.InkSecondary,
+                    color = if (active) Color.White else GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .weight(1f)
                         .background(
-                            if (active) GoaldayDesign.Pink else GoaldayDesign.SurfaceSoft,
+                            if (active) GoaldayDesign.Pink else GoaldayDesign.adaptiveSurfaceSoft,
                             RoundedCornerShape(GoaldayDesign.RadiusPill)
                         )
                         .clickable { onSelected(option) }
@@ -772,12 +772,12 @@ private fun DarkModeMenu(
                 Text(
                     "深色模式",
                     style = MaterialTheme.typography.titleSmall,
-                    color = GoaldayDesign.InkPrimary,
+                    color = GoaldayDesign.adaptiveInkPrimary,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     "跟随系统将按设备夜间模式自动切换。",
-                    color = GoaldayDesign.InkSecondary,
+                    color = GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -793,14 +793,14 @@ private fun DarkModeMenu(
                 val active = option.key == selected
                 Text(
                     option.label,
-                    color = if (active) Color.White else GoaldayDesign.InkSecondary,
+                    color = if (active) Color.White else GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .weight(1f)
                         .background(
-                            if (active) GoaldayDesign.Pink else GoaldayDesign.SurfaceSoft,
+                            if (active) GoaldayDesign.Pink else GoaldayDesign.adaptiveSurfaceSoft,
                             RoundedCornerShape(GoaldayDesign.RadiusPill)
                         )
                         .clickable { onSelected(option) }
@@ -822,20 +822,20 @@ private fun BackupHistoryList(
             Text(
                 "备份历史",
                 style = MaterialTheme.typography.titleSmall,
-                color = GoaldayDesign.InkPrimary,
+                color = GoaldayDesign.adaptiveInkPrimary,
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(Modifier.width(GoaldayDesign.Space2))
             Text(
                 "${snapshots.size} 个",
                 style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.InkSecondary
+                color = GoaldayDesign.adaptiveInkSecondary
             )
         }
         if (snapshots.isEmpty()) {
             Text(
                 "暂无备份。创建备份后，这里会显示可恢复的历史记录。",
-                color = GoaldayDesign.InkSecondary,
+                color = GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -889,12 +889,12 @@ private fun BackupHistoryRow(
             Text(
                 snapshot.name,
                 style = MaterialTheme.typography.bodySmall,
-                color = GoaldayDesign.InkPrimary,
+                color = GoaldayDesign.adaptiveInkPrimary,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
                 "${formatBackupDate(snapshot.modifiedAtMillis)} · ${snapshot.fileCount} 文件 · ${BackupManager.formatBytes(snapshot.sizeBytes)}",
-                color = GoaldayDesign.InkSecondary,
+                color = GoaldayDesign.adaptiveInkSecondary,
                 style = MaterialTheme.typography.labelSmall,
             )
         }

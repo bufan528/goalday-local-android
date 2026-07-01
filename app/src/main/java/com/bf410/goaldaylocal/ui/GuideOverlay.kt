@@ -160,17 +160,17 @@ internal fun GuideOverlay(
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("Goalday", style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                    Text("Goalday", style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
                     Text(
                         if (hasLocalGuideAssets) "本地手账指南" else "使用指南",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (hasLocalGuideAssets) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
+                        color = if (hasLocalGuideAssets) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkMuted,
                     )
                 }
                 Text(
                     "跳过",
                     style = MaterialTheme.typography.labelSmall,
-                    color = GoaldayDesign.InkMuted,
+                    color = GoaldayDesign.adaptiveInkMuted,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
                         .clickable(onClick = onClose)
@@ -190,15 +190,15 @@ internal fun GuideOverlay(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(page.label, style = MaterialTheme.typography.labelMedium, color = page.tone, fontWeight = FontWeight.SemiBold)
-                    Text(page.title, style = MaterialTheme.typography.headlineSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-                    Text(page.body, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.InkSecondary)
+                    Text(page.title, style = MaterialTheme.typography.headlineSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
+                    Text(page.body, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.adaptiveInkSecondary)
                 }
                 GuideActionPreview(page)
                 GuideTaskRail(page = page)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         if (index == 0) "从头开始" else "上一步",
-                        color = if (index == 0) GoaldayDesign.InkMuted else GoaldayDesign.InkSecondary,
+                        color = if (index == 0) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkSecondary,
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier
                             .clip(RoundedCornerShape(99.dp))
@@ -280,7 +280,7 @@ private fun GuideStepTimeline(
         ) {
             Text(
                 "步骤 ${selectedIndex + 1}/${pages.size}",
-                color = GoaldayDesign.InkPrimary,
+                color = GoaldayDesign.adaptiveInkPrimary,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -325,7 +325,7 @@ private fun GuideStepTimeline(
                 ) {
                     Text(
                         "${stepIndex + 1}",
-                        color = if (selected) Color.White else GoaldayDesign.InkMuted,
+                        color = if (selected) Color.White else GoaldayDesign.adaptiveInkMuted,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
@@ -335,7 +335,7 @@ private fun GuideStepTimeline(
                     )
                     Text(
                         step.label,
-                        color = if (selected) GoaldayDesign.InkPrimary else GoaldayDesign.InkMuted,
+                        color = if (selected) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     )
@@ -380,7 +380,7 @@ private fun GuideTaskRail(page: GuidePage) {
         ) {
             Text(
                 "本地操作流",
-                color = GoaldayDesign.InkPrimary,
+                color = GoaldayDesign.adaptiveInkPrimary,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -417,7 +417,7 @@ private fun GuideTaskRail(page: GuidePage) {
                 }
                 Text(
                     task,
-                    color = GoaldayDesign.InkSecondary,
+                    color = GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.weight(1f),
                 )
@@ -447,7 +447,7 @@ private fun GuidePreviewRow(
                 .background(tone.copy(alpha = 0.12f))
                 .padding(horizontal = 8.dp, vertical = 3.dp),
         )
-        Text(value, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall)
+        Text(value, color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -641,7 +641,7 @@ private fun GuideIllustration(
         )
         Text(
             page.action,
-            color = GoaldayDesign.InkPrimary,
+            color = GoaldayDesign.adaptiveInkPrimary,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
@@ -694,14 +694,14 @@ private fun GuideLottieStatusPill(
             }
             Text(
                 currentFrame?.let { "F$it" } ?: "本地",
-                color = GoaldayDesign.InkMuted,
+                color = GoaldayDesign.adaptiveInkMuted,
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
             )
         }
         Text(
             meta?.label ?: "lottie/book.png · card.png",
-            color = GoaldayDesign.InkMuted,
+            color = GoaldayDesign.adaptiveInkMuted,
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
         )

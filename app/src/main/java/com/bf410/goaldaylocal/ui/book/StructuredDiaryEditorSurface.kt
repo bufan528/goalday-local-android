@@ -112,7 +112,7 @@ internal fun StructuredDiaryEditor(
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("富文本记录", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
+                Text("富文本记录", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
                 Text(
                     if (richEditorExpanded) "收起" else "打开富文本编辑器",
                     style = MaterialTheme.typography.labelSmall,
@@ -140,7 +140,7 @@ internal fun StructuredDiaryEditor(
                 Text(
                     plainTextFromHtml(state.richHtml).ifBlank { "点击后加载富文本编辑器，普通日记块不受影响。" },
                     style = MaterialTheme.typography.bodySmall,
-                    color = GoaldayDesign.InkMuted,
+                    color = GoaldayDesign.adaptiveInkMuted,
                     maxLines = 3,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -230,7 +230,7 @@ private fun DiaryEditorToolbar(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.clickable { onPickDate() }) {
-                Text("日记编辑", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
+                Text("日记编辑", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
                 Text(dateLabel, style = MaterialTheme.typography.labelLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
             }
             Text(
@@ -246,7 +246,7 @@ private fun DiaryEditorToolbar(
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            DiaryEditorCountPill("文本", textCount, GoaldayDesign.InkSecondary, Modifier.weight(1f))
+            DiaryEditorCountPill("文本", textCount, GoaldayDesign.adaptiveInkSecondary, Modifier.weight(1f))
             DiaryEditorCountPill("图片", imageCount, Color(0xFFB07A8F), Modifier.weight(1f))
             DiaryEditorCountPill("目标", targetCount, GoaldayDesign.Positive, Modifier.weight(1f))
         }
@@ -255,11 +255,11 @@ private fun DiaryEditorToolbar(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.horizontalScroll(rememberScrollState()),
         ) {
-            DiaryEditorToolChip("文字", GoaldayDesign.InkSecondary, onAddTextBlock)
+            DiaryEditorToolChip("文字", GoaldayDesign.adaptiveInkSecondary, onAddTextBlock)
             DiaryEditorToolChip("图片", Color(0xFFB07A8F), onAddImage)
             DiaryEditorToolChip("目标", GoaldayDesign.Positive, onAddTopicTargetBlock)
             DiaryEditorToolChip("子目标", Color(0xFF6F8E68), onAddTargetChildBlock)
-            DiaryEditorToolChip("B", GoaldayDesign.InkPrimary) { onCommand(RichEditorCommand("bold")) }
+            DiaryEditorToolChip("B", GoaldayDesign.adaptiveInkPrimary) { onCommand(RichEditorCommand("bold")) }
             DiaryEditorToolChip("H1", Color(0xFF8F684F)) { onCommand(RichEditorCommand("formatBlock", "h1")) }
             DiaryEditorToolChip("引用", Color(0xFF9EAADB)) { onCommand(RichEditorCommand("formatBlock", "blockquote")) }
             DiaryEditorToolChip("列表", GoaldayDesign.Positive) { onCommand(RichEditorCommand("insertUnorderedList")) }
@@ -285,7 +285,7 @@ private fun DiaryEditorCountPill(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(count.toString(), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+        Text(count.toString(), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
     }
 }
 
@@ -297,7 +297,7 @@ private fun DiaryFocusedBlockToolbar(
     onAddChild: () -> Unit,
     onInsertAfter: (DiaryBlockType) -> Unit,
 ) {
-    val color = block?.let { diaryBlockTypeColor(it.type) } ?: GoaldayDesign.InkMuted
+    val color = block?.let { diaryBlockTypeColor(it.type) } ?: GoaldayDesign.adaptiveInkMuted
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -309,7 +309,7 @@ private fun DiaryFocusedBlockToolbar(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text("块编辑器", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+                Text("块编辑器", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
                 Text(
                     block?.let { "%02d · ${diaryBlockDisplayTitle(it.type)}".format(index + 1) } ?: "未选择块",
                     style = MaterialTheme.typography.labelMedium,
@@ -337,7 +337,7 @@ private fun DiaryFocusedBlockToolbar(
                     )
                 }
             } else {
-                Text("点选下方日记块后可快速改格式", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                Text("点选下方日记块后可快速改格式", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
             }
         }
         Row(
@@ -345,8 +345,8 @@ private fun DiaryFocusedBlockToolbar(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.horizontalScroll(rememberScrollState()),
         ) {
-            Text("后插入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
-            DiaryEditorToolChip("文字", GoaldayDesign.InkSecondary) { onInsertAfter(DiaryBlockType.TEXT) }
+            Text("后插入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
+            DiaryEditorToolChip("文字", GoaldayDesign.adaptiveInkSecondary) { onInsertAfter(DiaryBlockType.TEXT) }
             DiaryEditorToolChip("目标", GoaldayDesign.Positive) { onInsertAfter(DiaryBlockType.TARGET) }
             DiaryEditorToolChip("子目标", Color(0xFF6F8E68)) { onInsertAfter(DiaryBlockType.TARGET_CHILD) }
             DiaryEditorToolChip("专题目标", Color(0xFFB07A8F)) { onInsertAfter(DiaryBlockType.TOPIC_TARGET) }
@@ -425,8 +425,8 @@ private fun DiaryEmptyBlockRow(
             textAlign = TextAlign.Center,
         )
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
-            Text(diaryBlockDisplaySubtitle(type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
+            Text(diaryBlockDisplaySubtitle(type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
         }
         Text("待添加", style = MaterialTheme.typography.labelSmall, color = color, maxLines = 1)
     }
@@ -463,7 +463,7 @@ private fun DiaryTypedBlockEditRow(
                 DiaryBlockTypeBadge(type = block.type, index = index + 1)
                 Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(diaryBlockDisplayTitle(block.type), style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
-                    Text(diaryBlockDisplaySubtitle(block.type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, maxLines = 1)
+                    Text(diaryBlockDisplaySubtitle(block.type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -472,7 +472,7 @@ private fun DiaryTypedBlockEditRow(
                 if (block.type != DiaryBlockType.IMAGE && block.type != DiaryBlockType.TARGET_CHILD) {
                     DiaryBlockActionChip("子项", color, enabled = true, onClick = onAddChild)
                 }
-                DiaryBlockActionChip("删除", GoaldayDesign.InkMuted, enabled = true, onClick = onRemove)
+                DiaryBlockActionChip("删除", GoaldayDesign.adaptiveInkMuted, enabled = true, onClick = onRemove)
             }
         }
         if (block.type != DiaryBlockType.IMAGE) {
@@ -496,7 +496,7 @@ private fun DiaryTypedBlockEditRow(
             BasicTextField(
                 value = block.text,
                 onValueChange = onTextChange,
-                textStyle = MaterialTheme.typography.labelSmall.copy(color = GoaldayDesign.InkMuted),
+                textStyle = MaterialTheme.typography.labelSmall.copy(color = GoaldayDesign.adaptiveInkMuted),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
@@ -528,7 +528,7 @@ private fun DiaryBlockActionChip(
     Text(
         label,
         style = MaterialTheme.typography.labelSmall,
-        color = if (enabled) color else GoaldayDesign.InkMuted.copy(alpha = 0.42f),
+        color = if (enabled) color else GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.42f),
         maxLines = 1,
         modifier = Modifier
             .clip(RoundedCornerShape(99.dp))
@@ -594,7 +594,7 @@ private fun DiaryBlockTypeBadge(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(diaryBlockTypeIcon(type), color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text("%02d".format(index), color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text("%02d".format(index), color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
@@ -645,17 +645,17 @@ private fun DiaryPromptGridDialog(
                         Text(
                             "写作灵感",
                             style = MaterialTheme.typography.titleMedium,
-                            color = GoaldayDesign.InkPrimary,
+                            color = GoaldayDesign.adaptiveInkPrimary,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
                             "选择一个提示，开启今日的记录",
                             style = MaterialTheme.typography.labelSmall,
-                            color = GoaldayDesign.InkMuted,
+                            color = GoaldayDesign.adaptiveInkMuted,
                         )
                     }
                     TextButton(onClick = onDismiss) {
-                        Text("关闭", color = GoaldayDesign.InkSecondary)
+                        Text("关闭", color = GoaldayDesign.adaptiveInkSecondary)
                     }
                 }
                 DiaryPromptTemplates.chunked(3).forEach { rowItems ->
@@ -700,14 +700,14 @@ private fun DiaryPromptCell(
         Text(
             template.title,
             style = MaterialTheme.typography.labelMedium,
-            color = GoaldayDesign.InkPrimary,
+            color = GoaldayDesign.adaptiveInkPrimary,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
         )
         Text(
             template.hint,
             style = MaterialTheme.typography.labelSmall,
-            color = GoaldayDesign.InkMuted,
+            color = GoaldayDesign.adaptiveInkMuted,
             maxLines = 2,
             textAlign = TextAlign.Center,
         )

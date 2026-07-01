@@ -144,8 +144,8 @@ private fun ScheduleWidgetConfigureScreen(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text("添加小组件", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.Pink)
-            Text(kind.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.InkPrimary)
-            Text(kind.subtitle, style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary)
+            Text(kind.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.adaptiveInkPrimary)
+            Text(kind.subtitle, style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkSecondary)
         }
         WidgetKindSignalStrip(kind = kind)
         WidgetLocalUnlockCard(kind = kind)
@@ -185,7 +185,7 @@ private fun ScheduleWidgetConfigureScreen(
             Text(
                 "日记组件使用同一套颜色配置，点击桌面组件会直接进入本地日记页。",
                 style = MaterialTheme.typography.bodySmall,
-                color = GoaldayDesign.InkSecondary,
+                color = GoaldayDesign.adaptiveInkSecondary,
                 modifier = Modifier
                     .clip(RoundedCornerShape(14.dp))
                     .background(Color.White.copy(alpha = 0.72f))

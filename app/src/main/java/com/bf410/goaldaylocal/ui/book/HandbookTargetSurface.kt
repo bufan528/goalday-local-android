@@ -97,7 +97,7 @@ internal fun HandbookTargetReplicaPage(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 SectionStamp("目标", tint)
-                Text("${pageIndex + 1}/$pageCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                Text("${pageIndex + 1}/$pageCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
             }
             TargetDetailReplicaPage(
                 pageTitle = page.title,
@@ -179,9 +179,9 @@ internal fun TargetDetailReplicaPage(
                 modifier = Modifier.align(Alignment.BottomStart),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                Text(pageTitle, style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                Text(pageTitle, style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
                 // Header 只显示总数，细分统计（已完成/已排期/待整理/自定义）由下方 TargetLedgerSummary 承担，避免信息重复
-                Text("目标档案 · 共 ${items.size} 项", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkSecondary)
+                Text("目标档案 · 共 ${items.size} 项", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkSecondary)
                 TargetProgressBar(
                     completed = completedCount,
                     total = items.size,
@@ -205,7 +205,7 @@ internal fun TargetDetailReplicaPage(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
-                    .background(if (checked) GoaldayDesign.GreenSoft else GoaldayDesign.Surface)
+                    .background(if (checked) GoaldayDesign.GreenSoft else GoaldayDesign.adaptiveSurface)
                     .border(0.8.dp, if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusM))
                     .padding(10.dp),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
@@ -224,7 +224,7 @@ internal fun TargetDetailReplicaPage(
                         )
                         Text(
                             if (checked) "✓" else "□",
-                            color = if (checked) GoaldayDesign.Positive else GoaldayDesign.InkMuted,
+                            color = if (checked) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkMuted,
                             style = MaterialTheme.typography.titleSmall,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
@@ -240,7 +240,7 @@ internal fun TargetDetailReplicaPage(
                                 // P1-3：合并"详情/排入"为单个"展开"切换，点击切换备注+chip 行的显隐
                                 TextActionButton(
                                     if (expandedItem == item) "收起" else "展开",
-                                    GoaldayDesign.InkSecondary,
+                                    GoaldayDesign.adaptiveInkSecondary,
                                 ) {
                                     expandedItem = if (expandedItem == item) null else item
                                 }
@@ -251,7 +251,7 @@ internal fun TargetDetailReplicaPage(
                                 value = editingText,
                                 onValueChange = { editingText = it },
                                 singleLine = true,
-                                textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+                                textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary),
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                 keyboardActions = KeyboardActions(onDone = {
                                     if (item in customItems) onRenameCustomItem(item, editingText)
@@ -263,17 +263,17 @@ internal fun TargetDetailReplicaPage(
                                     .padding(horizontal = 7.dp, vertical = 5.dp),
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                TextActionButton("保存", GoaldayDesign.InkSecondary) {
+                                TextActionButton("保存", GoaldayDesign.adaptiveInkSecondary) {
                                     if (item in customItems) onRenameCustomItem(item, editingText)
                                     editingItem = null
                                 }
-                                TextActionButton("取消", GoaldayDesign.InkMuted) { editingItem = null }
+                                TextActionButton("取消", GoaldayDesign.adaptiveInkMuted) { editingItem = null }
                             }
                         } else {
                             Text(
                                 item,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (checked) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
+                                color = if (checked) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveInkPrimary,
                                 fontWeight = FontWeight.Medium,
                                 textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                                 maxLines = 2,
@@ -301,7 +301,7 @@ internal fun TargetDetailReplicaPage(
                             noteDraft = it
                             onUpdateTargetNote(item, it)
                         },
-                        textStyle = MaterialTheme.typography.labelSmall.copy(color = GoaldayDesign.InkSecondary),
+                        textStyle = MaterialTheme.typography.labelSmall.copy(color = GoaldayDesign.adaptiveInkSecondary),
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
@@ -310,7 +310,7 @@ internal fun TargetDetailReplicaPage(
                             .padding(horizontal = 7.dp, vertical = 5.dp),
                         decorationBox = { inner ->
                             if (noteDraft.isBlank()) {
-                                Text("备注 / 做法 / 灵感", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.labelSmall)
+                                Text("备注 / 做法 / 灵感", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                             }
                             inner()
                         },
@@ -330,7 +330,7 @@ internal fun TargetDetailReplicaPage(
                             }
                         }
                         // P1-3：详情入口移到展开区内，避免常驻按钮干扰
-                        TextActionButton("查看详情", GoaldayDesign.InkSecondary) { onOpenTargetDetail(item) }
+                        TextActionButton("查看详情", GoaldayDesign.adaptiveInkSecondary) { onOpenTargetDetail(item) }
                     }
                 }
             }
@@ -340,7 +340,7 @@ internal fun TargetDetailReplicaPage(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                .background(GoaldayDesign.Surface)
+                .background(GoaldayDesign.adaptiveSurface)
                 .border(0.6.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -350,14 +350,14 @@ internal fun TargetDetailReplicaPage(
                 value = draft,
                 onValueChange = { draft = it },
                 singleLine = true,
-                textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+                textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary),
                 modifier = Modifier.weight(1f),
                 decorationBox = { inner ->
-                    if (draft.isBlank()) Text("新增一个目标", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodySmall)
+                    if (draft.isBlank()) Text("新增一个目标", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)
                     inner()
                 },
             )
-            Text("添加", color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelMedium, modifier = Modifier.clickable {
+            Text("添加", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelMedium, modifier = Modifier.clickable {
                 val text = draft.trim()
                 if (text.isNotBlank()) {
                     onAddCustomItem(text)
@@ -400,7 +400,7 @@ private fun TargetLedgerCell(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(value, color = color, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(label, color = GoaldayDesign.InkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(label, color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
@@ -440,7 +440,7 @@ private fun TargetScheduleMeta(entries: List<ScheduleEntry>) {
     }
     Text(
         text,
-        color = if (entries.isEmpty()) GoaldayDesign.InkMuted else GoaldayDesign.Positive,
+        color = if (entries.isEmpty()) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.Positive,
         style = MaterialTheme.typography.labelSmall,
         maxLines = 1,
     )
@@ -472,7 +472,7 @@ private fun TargetDeadlineChip(
 ) {
     Text(
         label,
-        color = if (active) Color.White else GoaldayDesign.InkSecondary,
+        color = if (active) Color.White else GoaldayDesign.adaptiveInkSecondary,
         style = MaterialTheme.typography.labelSmall,
         maxLines = 1,
         modifier = Modifier

@@ -76,16 +76,16 @@ private val goaldayColorScheme = lightColorScheme(
     primary = GoaldayDesign.Pink,
     onPrimary = Color.White,
     primaryContainer = GoaldayDesign.PinkSoft,
-    onPrimaryContainer = GoaldayDesign.InkPrimary,
+    onPrimaryContainer = GoaldayDesign.adaptiveInkPrimary,
     secondary = GoaldayDesign.RouteDiary,
     onSecondary = Color.White,
-    surface = GoaldayDesign.Surface,
-    onSurface = GoaldayDesign.InkPrimary,
-    surfaceVariant = GoaldayDesign.SurfaceSoft,
-    onSurfaceVariant = GoaldayDesign.InkSecondary,
+    surface = GoaldayDesign.adaptiveSurface,
+    onSurface = GoaldayDesign.adaptiveInkPrimary,
+    surfaceVariant = GoaldayDesign.adaptiveSurfaceSoft,
+    onSurfaceVariant = GoaldayDesign.adaptiveInkSecondary,
     background = GoaldayDesign.AppBg,
-    onBackground = GoaldayDesign.InkPrimary,
-    outline = GoaldayDesign.InkMuted,
+    onBackground = GoaldayDesign.adaptiveInkPrimary,
+    outline = GoaldayDesign.adaptiveInkMuted,
 )
 
 private val goaldayDarkColorScheme = darkColorScheme(
@@ -457,14 +457,14 @@ private fun BookRootHeader(
         Column(verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.fillMaxWidth()) {
             Text(
                 "Goalday 手账",
-                color = if (isDark) GoaldayDesign.DarkInkPrimary else GoaldayDesign.InkPrimary,
+                color = if (isDark) GoaldayDesign.DarkInkPrimary else GoaldayDesign.adaptiveInkPrimary,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
             )
             Text(
                 subtitle,
-                color = if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.InkMuted,
+                color = if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.adaptiveInkMuted,
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
             )
@@ -541,7 +541,7 @@ private fun BookRootSegmentChip(
         )
         Text(
             label,
-            color = if (selected) Color.White else if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.InkSecondary,
+            color = if (selected) Color.White else if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.adaptiveInkSecondary,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             maxLines = 1,
@@ -612,12 +612,12 @@ private fun GoaldayBottomDockItem(
         Icon(
             imageVector = tab.icon,
             contentDescription = tab.label,
-            tint = if (selected) GoaldayDesign.Pink else if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.InkMuted,
+            tint = if (selected) GoaldayDesign.Pink else if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.adaptiveInkMuted,
             modifier = Modifier.size(22.dp),
         )
         Text(
             text = tab.label,
-            color = if (selected) (if (isDark) GoaldayDesign.DarkInkPrimary else GoaldayDesign.InkPrimary) else if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.InkMuted,
+            color = if (selected) (if (isDark) GoaldayDesign.DarkInkPrimary else GoaldayDesign.adaptiveInkPrimary) else if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.adaptiveInkMuted,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             maxLines = 1,

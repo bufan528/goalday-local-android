@@ -36,9 +36,9 @@ fun GoaldayTopBar(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f),
         ) {
-            Text(leftTitle, style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkSecondary, maxLines = 1)
+            Text(leftTitle, style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 1)
             Text("|", style = MaterialTheme.typography.labelMedium, color = Color(0xFFD2CBC1), maxLines = 1)
-            Text("Goalday", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.InkPrimary, maxLines = 1)
+            Text("Goalday", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.adaptiveInkPrimary, maxLines = 1)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             rightSecondary?.invoke(this)

@@ -237,7 +237,7 @@ fun CalendarScreen(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .background(if (day == selectedDay) GoaldayDesign.PrimaryAction else GoaldayDesign.SurfaceSoft, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .background(if (day == selectedDay) GoaldayDesign.PrimaryAction else GoaldayDesign.adaptiveSurfaceSoft, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .clickable { selectedDay = day }
                         .padding(vertical = 7.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -719,7 +719,7 @@ fun CalendarScreen(
                                     style = MaterialTheme.typography.labelSmall,
                                     modifier = Modifier
                                         .background(
-                                            if (deleteSeries == value) GoaldayDesign.PrimaryAction else GoaldayDesign.SurfaceSoft,
+                                            if (deleteSeries == value) GoaldayDesign.PrimaryAction else GoaldayDesign.adaptiveSurfaceSoft,
                                             RoundedCornerShape(GoaldayDesign.RadiusPill),
                                         )
                                         .clickable { deleteSeries = value }
@@ -928,7 +928,7 @@ private fun CalendarMonthControl(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(5.dp, RoundedCornerShape(18.dp), clip = false)
-            .background(GoaldayDesign.Surface, RoundedCornerShape(18.dp))
+            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(18.dp))
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(18.dp))
             .padding(horizontal = 9.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1110,7 +1110,7 @@ private fun BoardCard(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(7.dp, RoundedCornerShape(GoaldayDesign.RadiusM), clip = false)
-            .background(GoaldayDesign.Surface, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusM))
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
@@ -1255,7 +1255,7 @@ private fun CalendarImportRangeDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                if (draftMonths == months) GoaldayDesign.PrimaryAction else GoaldayDesign.SurfaceSoft,
+                                if (draftMonths == months) GoaldayDesign.PrimaryAction else GoaldayDesign.adaptiveSurfaceSoft,
                                 RoundedCornerShape(GoaldayDesign.RadiusS),
                             )
                             .clickable { draftMonths = months }
@@ -1304,7 +1304,7 @@ private fun CalendarImportSourceDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                if (selected) GoaldayDesign.PinkSoft else GoaldayDesign.SurfaceSoft,
+                                if (selected) GoaldayDesign.PinkSoft else GoaldayDesign.adaptiveSurfaceSoft,
                                 RoundedCornerShape(GoaldayDesign.RadiusS),
                             )
                             .border(
@@ -1358,7 +1358,7 @@ private fun CalendarImportPreviewDialog(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(GoaldayDesign.SurfaceSoft, RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .background(GoaldayDesign.adaptiveSurfaceSoft, RoundedCornerShape(GoaldayDesign.RadiusS))
                             .padding(horizontal = 8.dp, vertical = 6.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
@@ -1511,7 +1511,7 @@ private fun ScheduleDialog(
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier
                                 .background(
-                                    if (draftRepeatRule == rule) GoaldayDesign.PrimaryAction else GoaldayDesign.SurfaceSoft,
+                                    if (draftRepeatRule == rule) GoaldayDesign.PrimaryAction else GoaldayDesign.adaptiveSurfaceSoft,
                                     RoundedCornerShape(GoaldayDesign.RadiusPill),
                                 )
                                 .clickable { draftRepeatRule = rule }
@@ -1551,7 +1551,7 @@ private fun ScheduleDialog(
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier
                                     .background(
-                                        if (applySeries == value) GoaldayDesign.PrimaryAction else GoaldayDesign.SurfaceSoft,
+                                        if (applySeries == value) GoaldayDesign.PrimaryAction else GoaldayDesign.adaptiveSurfaceSoft,
                                         RoundedCornerShape(GoaldayDesign.RadiusPill),
                                     )
                                     .clickable { applySeries = value }

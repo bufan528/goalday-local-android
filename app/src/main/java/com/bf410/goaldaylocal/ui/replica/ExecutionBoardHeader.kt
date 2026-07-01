@@ -30,13 +30,13 @@ fun ExecutionBoardHeader(
     ) {
         Text(
             text = title,
-            color = GoaldayDesign.InkPrimary,
+            color = GoaldayDesign.adaptiveInkPrimary,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
         )
         Text(
             text = subtitle,
-            color = GoaldayDesign.InkSecondary,
+            color = GoaldayDesign.adaptiveInkSecondary,
             style = MaterialTheme.typography.labelSmall,
         )
     }
