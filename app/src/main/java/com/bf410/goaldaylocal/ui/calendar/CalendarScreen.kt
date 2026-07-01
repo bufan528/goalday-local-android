@@ -649,7 +649,7 @@ fun CalendarScreen(
                         activeDropSlot != null -> "释放投放到$activeDropSlot"
                         else -> "拖到上/下/晚槽位"
                     },
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = Color.White.copy(alpha = 0.92f),
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
@@ -1095,8 +1095,8 @@ private fun CalendarDayDot(
         fontWeight = FontWeight.SemiBold,
         maxLines = 1,
         modifier = Modifier
-            .background(if (selected) Color.White.copy(alpha = 0.92f) else color, RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .padding(horizontal = 5.dp, vertical = 1.dp),
+            .background(if (selected) GoaldayDesign.adaptiveWhiteOverlay else color, RoundedCornerShape(GoaldayDesign.RadiusPill))
+            .padding(horizontal = GoaldayDesign.Space1 + 1.dp, vertical = 1.dp),
     )
 }
 

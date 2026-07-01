@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -265,7 +266,7 @@ fun HomeScreen(
         FloatingAddButton(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(18.dp),
+                .padding(GoaldayDesign.Space4 + 2.dp),
             onClick = { addDraftTask() },
         )
 
@@ -274,8 +275,8 @@ fun HomeScreen(
                 modifier = Modifier
                     .offset { IntOffset(dragPosition.x.toInt(), dragPosition.y.toInt()) }
                     .background(GoaldayDesign.Pink, RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .border(1.dp, Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .padding(horizontal = 9.dp, vertical = 6.dp),
+            .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveWhiteOverlayMedium, RoundedCornerShape(GoaldayDesign.RadiusS))
+            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space2),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(entry.title, color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
@@ -333,7 +334,7 @@ private fun PromoHeader(
                 ),
                 RoundedCornerShape(GoaldayDesign.Radius2XL),
             )
-            .border(GoaldayDesign.Hairline, Color.White.copy(alpha = 0.20f), RoundedCornerShape(GoaldayDesign.Radius2XL)),
+            .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveWhiteOverlayLow, RoundedCornerShape(GoaldayDesign.Radius2XL)),
     ) {
         heroBitmap?.let { bitmap ->
             Image(
@@ -369,8 +370,8 @@ private fun PromoHeader(
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
-                        .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(GoaldayDesign.RadiusPill))
-                        .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space1),
+                        .background(GoaldayDesign.adaptiveWhiteOverlayMedium, RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space1),
                 )
                 Text(
                     "今天",
@@ -379,7 +380,7 @@ private fun PromoHeader(
                     modifier = Modifier
                         .background(GoaldayDesign.adaptiveInkPrimary, RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable(onClick = onToday)
-                        .padding(horizontal = 13.dp, vertical = 7.dp),
+                        .padding(horizontal = GoaldayDesign.Space3 + 1.dp, vertical = GoaldayDesign.Space2 - 1.dp),
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -403,7 +404,7 @@ private fun HomeHeroPill(label: String, color: Color) {
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
-            .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(GoaldayDesign.RadiusPill))
+            .background(GoaldayDesign.adaptiveWhiteOverlayMedium, RoundedCornerShape(GoaldayDesign.RadiusPill))
             .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
     )
 }
@@ -513,8 +514,8 @@ private fun PaperPlanner(
 
             Spacer(
                 modifier = Modifier
-                    .width(1.dp)
-                    .height(430.dp)
+                    .width(GoaldayDesign.Hairline)
+                    .fillMaxHeight()
                     .background(GoaldayDesign.adaptiveDivider),
             )
 
@@ -915,20 +916,18 @@ private fun HomeActionDock(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(GoaldayDesign.ShadowSoft, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
-            .background(Color.White.copy(alpha = 0.80f), RoundedCornerShape(GoaldayDesign.RadiusXL))
+            .background(GoaldayDesign.adaptiveWhiteOverlay, RoundedCornerShape(GoaldayDesign.RadiusXL))
             .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .padding(GoaldayDesign.Space2),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), modifier = Modifier.fillMaxWidth()) {
             HomeActionCard("日历", "月视图", Icons.Filled.CalendarMonth, GoaldayDesign.Pink, Modifier.weight(1f), onOpenCalendar)
+            HomeActionCard("书库", "本子", Icons.Filled.Book, GoaldayDesign.RouteOverview, Modifier.weight(1f), onOpenBook)
             HomeActionCard("灵感", "专题库", Icons.Filled.Lightbulb, GoaldayDesign.Today, Modifier.weight(1f), onOpenInspiration)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), modifier = Modifier.fillMaxWidth()) {
-            HomeActionCard("书库", "本子", Icons.Filled.Book, GoaldayDesign.RouteOverview, Modifier.weight(1f), onOpenBook)
             HomeActionCard("手账", "书内页", Icons.AutoMirrored.Filled.Article, GoaldayDesign.RouteTarget, Modifier.weight(1f), onOpenHandbook)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), modifier = Modifier.fillMaxWidth()) {
             HomeActionCard("日记", "记录块", Icons.Filled.EditNote, GoaldayDesign.RouteDiary, Modifier.weight(1f), onOpenDiary)
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -946,8 +945,8 @@ private fun HomeActionCard(
 ) {
     Row(
         modifier = modifier
-            .height(62.dp)
-            .shadow(4.dp, RoundedCornerShape(GoaldayDesign.RadiusM), clip = false)
+            .height(GoaldayDesign.Space12 + 14.dp)
+            .shadow(GoaldayDesign.Space1, RoundedCornerShape(GoaldayDesign.RadiusM), clip = false)
             .background(color.copy(alpha = 0.10f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .border(GoaldayDesign.Hairline, color.copy(alpha = 0.20f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .clickable(onClick = onClick)
@@ -957,11 +956,11 @@ private fun HomeActionCard(
     ) {
         Box(
             modifier = Modifier
-                .size(34.dp)
+                .size(GoaldayDesign.Space5 + 14.dp)
                 .background(color, RoundedCornerShape(GoaldayDesign.RadiusS)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, contentDescription = title, tint = Color.White, modifier = Modifier.size(18.dp))
+            Icon(icon, contentDescription = title, tint = Color.White, modifier = Modifier.size(GoaldayDesign.Space4 + 2.dp))
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
@@ -974,12 +973,12 @@ private fun HomeActionCard(
 private fun FloatingAddButton(modifier: Modifier, onClick: () -> Unit) {
     Box(
         modifier = modifier
-            .size(48.dp)
+            .size(GoaldayDesign.Space6 + GoaldayDesign.Space2)
             .shadow(GoaldayDesign.ShadowMedium, CircleShape)
             .background(GoaldayDesign.Pink, CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.Filled.Add, contentDescription = "新增", tint = Color.White, modifier = Modifier.size(24.dp))
+        Icon(Icons.Filled.Add, contentDescription = "新增", tint = Color.White, modifier = Modifier.size(GoaldayDesign.Space6))
     }
 }

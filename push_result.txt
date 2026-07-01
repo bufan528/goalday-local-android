@@ -1,0 +1,9 @@
+﻿git : fatal: unable to access 'https://github.com/bufan528/goalday-local-androi
+d.git/': Recv failure: Connection was reset
+所在位置 行:1 字符: 1
++ git push origin main 2>&1 | Out-File -FilePath push_result.txt -Encod ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fatal: unable t...ction was reset 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

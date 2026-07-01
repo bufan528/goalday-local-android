@@ -284,6 +284,12 @@ object GoaldayDesign {
     val adaptivePaperWarm: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkPaperWarm else PaperWarm
     val adaptiveDivider: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkDivider else Color(0x14000000)
 
+    // 自适应白色叠层（夜间模式反转为深色叠层）
+    val adaptiveWhiteOverlay: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0x22FFFFFF) else Color(0xDEFFFFFF)
+    val adaptiveWhiteOverlayMedium: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0x18FFFFFF) else Color(0xB8FFFFFF)
+    val adaptiveWhiteOverlayLow: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0x10FFFFFF) else Color(0x72FFFFFF)
+    val adaptiveScrim: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xAA000000) else Color(0x26000000)
+
     // 暗色自适应纸张渐变（书页背景）
     val adaptivePaperGradient: Brush @Composable get() =
         if (LocalGoaldayDarkMode.current) Brush.linearGradient(

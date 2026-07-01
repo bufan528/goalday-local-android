@@ -54,14 +54,14 @@ fun BookShell(
     } else {
         RoundedCornerShape(GoaldayDesign.RadiusXL)
     }
-    val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 6.dp else 10.dp
-    val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 4.dp else 8.dp
+    val outerPaddingH = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space1 + 2.dp else GoaldayDesign.Space2 + 2.dp
+    val outerPaddingV = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space1 else GoaldayDesign.Space2
     // P0-2 修复：BOOK 模式翻页热区从 6dp 提升到 24dp
     // 原 6dp 宽度过窄，用户难以精确点击翻页，尤其与内容区边缘重合时容易误触
     // 24dp 宽 + 撑满高度的触控面积满足无障碍标准，且不侵占内容区
-    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) 24.dp else 20.dp
-    val pageInsetH = if (shellStyle == ShellStyle.BOOK) 12.dp else 8.dp
-    val pageInsetV = if (shellStyle == ShellStyle.BOOK) 12.dp else 10.dp
+    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space6 else GoaldayDesign.Space5
+    val pageInsetH = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space3 else GoaldayDesign.Space2
+    val pageInsetV = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space3 else GoaldayDesign.Space2 + 2.dp
 
     Box(
         modifier = modifier
@@ -98,12 +98,11 @@ fun BookShell(
             ),
     ) {
         if (shellStyle == ShellStyle.BOOK) {
-            // P0-3 大修：书脊加宽到 32dp（原 22dp 烫金标题几乎不可读）
-            // 书脊阴影改用 BookSpineDark 深色，模拟装订线凹陷的深色暗调（原 Pink.alpha 与深色书皮不搭）
+            // 书脊渐变：简洁单层，模拟装订凹陷
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .width(32.dp)
+                    .width(GoaldayDesign.Space8 + 4.dp)
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
@@ -115,30 +114,22 @@ fun BookShell(
                         ),
                     ),
             )
-            // 书脊装订缝线（双线模拟手账穿线装订）
+            // 书脊装订缝线（单线，精简）
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(start = 6.dp, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
-                    .width(0.8.dp)
+                    .padding(start = GoaldayDesign.Space1 + 2.dp, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
+                    .width(GoaldayDesign.Hairline)
                     .fillMaxHeight()
-                    .background(GoaldayDesign.BookSpineLight.copy(alpha = 0.45f)),
+                    .background(GoaldayDesign.BookSpineLight.copy(alpha = 0.40f)),
             )
+            // 书脊烫金标题
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(start = 10.dp, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
-                    .width(0.8.dp)
+                    .width(GoaldayDesign.Space8 + 4.dp)
                     .fillMaxHeight()
-                    .background(GoaldayDesign.BookSpineLight.copy(alpha = 0.30f)),
-            )
-            // 书脊烫金标题：加宽后用 labelMedium 字号提升可读性
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .width(32.dp)
-                    .fillMaxHeight()
-                    .padding(top = 28.dp, bottom = 28.dp),
+                    .padding(top = GoaldayDesign.Space8 + 4.dp, bottom = GoaldayDesign.Space8 + 4.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -149,77 +140,64 @@ fun BookShell(
                     modifier = Modifier.graphicsLayer { rotationZ = -90f },
                 )
             }
-            // P0-3 新增：书签丝带（手账标志性元素），从书脊顶部垂下，丝带颜色用 Pink 形成深棕底色中的点睛之笔
+            // 书签丝带：精简为单层渐变
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(start = 28.dp, top = 0.dp)
-                    .width(10.dp)
-                    .height(120.dp)
+                    .padding(start = GoaldayDesign.Space6 + 4.dp, top = 0.dp)
+                    .width(GoaldayDesign.Space2 + 2.dp)
+                    .height(GoaldayDesign.Space12 + 24.dp)
                     .background(
                         Brush.verticalGradient(
                             listOf(
                                 GoaldayDesign.Pink.copy(alpha = 0.92f),
-                                GoaldayDesign.Pink.copy(alpha = 0.78f),
-                                GoaldayDesign.Pink.copy(alpha = 0.55f),
+                                GoaldayDesign.Pink.copy(alpha = 0.68f),
                             ),
                         ),
                     ),
             )
-            // 书签丝带末端 V 形切口（用两个旋转小方块模拟，简化实现）
+            // 书签丝带末端 V 形切口
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(start = 28.dp, top = 116.dp)
-                    .width(10.dp)
-                    .height(8.dp)
+                    .padding(start = GoaldayDesign.Space6 + 4.dp, top = GoaldayDesign.Space12 + 20.dp)
+                    .width(GoaldayDesign.Space2 + 2.dp)
+                    .height(GoaldayDesign.Space2)
                     .background(GoaldayDesign.Pink.copy(alpha = 0.55f))
                     .graphicsLayer { rotationZ = 45f },
             )
-            // P0-3 大修：书页边缘（右侧）用多条间隔线模拟书页层叠纹理
-            // 原 8dp 单层 PaperAged 阴影无法表现多页厚度，现用 3 条间隔线 + 渐变阴影
+            // 书页边缘层叠纹理：单层渐变替代原 4 层
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .width(12.dp)
+                    .width(GoaldayDesign.Space3)
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(
                             listOf(
                                 Color.Transparent,
-                                GoaldayDesign.PaperAged.copy(alpha = 0.20f),
-                                GoaldayDesign.PaperAged.copy(alpha = 0.35f),
+                                GoaldayDesign.PaperAged.copy(alpha = 0.25f),
                                 GoaldayDesign.PaperAged.copy(alpha = 0.50f),
                             ),
                         ),
                     ),
             )
-            // 书页层叠细纹 1
+            // 书页层叠细纹：精简为 2 条
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 3.dp)
+                    .padding(end = GoaldayDesign.Space1 - 1.dp)
                     .width(0.5.dp)
                     .fillMaxHeight()
-                    .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.18f)),
+                    .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.16f)),
             )
-            // 书页层叠细纹 2
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 6.dp)
+                    .padding(end = GoaldayDesign.Space1 + 2.dp)
                     .width(0.5.dp)
                     .fillMaxHeight()
-                    .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.12f)),
-            )
-            // 书页层叠细纹 3
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 9.dp)
-                    .width(0.5.dp)
-                    .fillMaxHeight()
-                    .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.08f)),
+                    .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.10f)),
             )
         }
 

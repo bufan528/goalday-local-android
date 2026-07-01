@@ -471,7 +471,7 @@ private fun BookUnavailableState(
                 .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.Radius2XL))
                 .padding(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 2.dp),
         ) {
             Text(
                 title,
@@ -546,7 +546,7 @@ private fun LibraryView(
                     .padding(horizontal = GoaldayDesign.Space3 + 1.dp, vertical = GoaldayDesign.Space2),
             )
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(GoaldayDesign.Space3))
         Text(
             text = BookStrings.librarySubtitle,
             style = MaterialTheme.typography.bodySmall,
@@ -558,9 +558,9 @@ private fun LibraryView(
                 .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
                 .padding(horizontal = GoaldayDesign.Space3, vertical = 9.dp),
         )
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(GoaldayDesign.Space3 + 2.dp))
         Column(
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space4 + 2.dp),
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
@@ -590,8 +590,8 @@ private fun FeaturedHandbookCover(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(230.dp)
-            .shadow(24.dp, coverShape, clip = false)
+            .height(GoaldayDesign.Space12 + GoaldayDesign.Space12 + GoaldayDesign.Space3 + 2.dp)
+            .shadow(GoaldayDesign.ShadowLarge + GoaldayDesign.Space2, coverShape, clip = false)
             .clip(coverShape)
             .background(
                 Brush.linearGradient(
@@ -655,7 +655,7 @@ private fun FeaturedHandbookCover(
         }
         Column(
             modifier = Modifier
-                .padding(start = 70.dp, top = 26.dp, end = 28.dp, bottom = 22.dp)
+                .padding(start = GoaldayDesign.Space12 + GoaldayDesign.Space2 + 2.dp, top = GoaldayDesign.Space5 + GoaldayDesign.Space1, end = GoaldayDesign.Space6 + GoaldayDesign.Space2, bottom = GoaldayDesign.Space5 + 2.dp)
                 .fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -714,17 +714,17 @@ private fun BookShelfRow(
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.4f))
                     .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .padding(horizontal = 9.dp, vertical = GoaldayDesign.Space1),
+                    .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space1),
             )
         }
         books.chunked(3).forEachIndexed { rowIndex, row ->
             Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(9.dp),
+                    horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 1.dp),
                     verticalAlignment = Alignment.Bottom,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(154.dp),
+                        .height(GoaldayDesign.Space12 + GoaldayDesign.Space12 + GoaldayDesign.Space3 - 2.dp),
                 ) {
                     row.forEachIndexed { columnIndex, book ->
                         ShelfBookCover(
@@ -740,7 +740,7 @@ private fun BookShelfRow(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(14.dp)
+                        .height(GoaldayDesign.Space3 + 2.dp)
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .background(
                             Brush.verticalGradient(
@@ -764,7 +764,7 @@ private fun ShelfBookCover(
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .shadow(8.dp, shape, clip = false)
+            .shadow(GoaldayDesign.Space2, shape, clip = false)
             .clip(shape)
             .background(
                 Brush.linearGradient(
@@ -773,7 +773,7 @@ private fun ShelfBookCover(
                     end = Offset(280f, 520f),
                 ),
             )
-            .border(0.8.dp, GoaldayDesign.CoverWhiteOverlayBorder, shape)
+            .border(GoaldayDesign.Hairline + 0.1.dp, GoaldayDesign.CoverWhiteOverlayBorder, shape)
             .drawBehind {
                 // 书页厚度堆叠线：右侧 3 条递减细线，模拟内页层叠纹理
                 val w = size.width
@@ -790,12 +790,12 @@ private fun ShelfBookCover(
                 }
             }
             .clickable(onClick = onClick)
-            .padding(10.dp),
+            .padding(GoaldayDesign.Space2 + 2.dp),
     ) {
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .width(16.dp)
+                .width(GoaldayDesign.Space4)
                 .fillMaxHeight()
                 .background(GoaldayDesign.CoverDarkSpine, RoundedCornerShape(GoaldayDesign.RadiusPill)),
         )
@@ -829,8 +829,8 @@ private fun AddBookShelfCard(onCreateBook: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(68.dp)
-            .shadow(6.dp, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
+            .height(GoaldayDesign.Space12 + GoaldayDesign.Space4 + 4.dp)
+            .shadow(GoaldayDesign.Space1 + 2.dp, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.48f))
             .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.19f), RoundedCornerShape(GoaldayDesign.RadiusXL))
@@ -1109,9 +1109,9 @@ private fun BookDetailView(
             }
         }
         if (forcedSegment == null && !handbookMode) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(GoaldayDesign.Space3))
             Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 2.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
@@ -1145,9 +1145,9 @@ private fun BookDetailView(
                     )
                 }
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(GoaldayDesign.Space4))
         } else {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(GoaldayDesign.Space2))
         }
         if (handbookMode) {
             HandbookReadingDeskHeader(
@@ -1160,7 +1160,7 @@ private fun BookDetailView(
                     if (realIndex in book.pages.indices) viewModel.setPage(realIndex)
                 },
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(GoaldayDesign.Space2))
         }
         if (handbookMode) {
             Box(
@@ -1894,7 +1894,7 @@ private fun InspirationCenterView(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 2.dp),
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 templates.forEachIndexed { index, item ->
