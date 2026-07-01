@@ -750,7 +750,7 @@ private fun EditableBulletPage(
     val sourceBaseItems = remember(baseItems, stagedItems) { baseItems.filterNot { it in stagedItems } }
     val sourceCustomItems = remember(customItems, stagedItems) { customItems.filterNot { it in stagedItems } }
     val sourceItems = sourceBaseItems + sourceCustomItems
-    val listNames = remember { listOf("Todo", "未来的自己", "奖励清单", "电影清单") }
+    val listNames = remember { listOf("待办", "未来的自己", "奖励清单", "电影清单") }
     var selectedListIndex by remember(pageTitle) { mutableStateOf(0) }
     val shownSourceItems = remember(sourceItems, selectedListIndex) {
         when (selectedListIndex) {
@@ -2297,7 +2297,7 @@ internal fun renderHandbookScheduleLongImage(
                 }
             }
             appendLine()
-            appendLine("done")
+            appendLine("已完成")
             if (done.isEmpty()) {
                 appendLine("✓ 暂无完成")
             } else {

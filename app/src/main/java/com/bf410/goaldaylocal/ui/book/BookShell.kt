@@ -309,22 +309,19 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                     ),
                 ),
         )
-        // P0-3 大修：中央书脊阴影加宽到 28dp 并加深最深处，模拟书本翻开处装订线的凹陷感
-        // 原 18dp 宽 + 0x22 alpha 最深处凹陷感不足；现 28dp 宽 + 多段渐变营造立体凹陷
+        // P1 修复：中央书脊阴影精简为 3 段渐变，宽度从 28dp 收窄到 18dp
+        // 原 7 段渐变 + 28dp 宽 + BlackOverlayStrong 最深处像一道黑色横条横贯页面
+        // 现 3 段渐变（Transparent→Medium→Transparent）+ 18dp 宽，凹陷感柔和自然
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width(28.dp)
+                .width(18.dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
                         listOf(
                             Color.Transparent,
-                            GoaldayDesign.BlackOverlayLight,
                             GoaldayDesign.BlackOverlayMedium,
-                            GoaldayDesign.BlackOverlayStrong,
-                            GoaldayDesign.BlackOverlayMedium,
-                            GoaldayDesign.BlackOverlayLight,
                             Color.Transparent,
                         ),
                     ),

@@ -20,7 +20,7 @@ object SampleLibrary {
                         items = listOf(
                             "列出本月要做的所有事",
                             "标出每周最重要的目标",
-                            "把当天计划拖入 todo/done",
+                            "把当天计划拖入待办/已完成",
                         ),
                     ),
                     DiaryPage(

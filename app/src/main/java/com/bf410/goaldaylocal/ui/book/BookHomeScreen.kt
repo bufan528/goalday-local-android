@@ -1905,7 +1905,7 @@ private fun InspirationCenterView(
                         modifier = Modifier
                             .width(190.dp)
                             .height(118.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
                             .background(topicCoverBrush(item, index))
                             .border(
                                 width = if (index == selectedIndex) 2.dp else 1.dp,

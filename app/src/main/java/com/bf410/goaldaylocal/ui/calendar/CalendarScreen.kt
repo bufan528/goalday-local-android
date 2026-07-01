@@ -242,7 +242,7 @@ fun CalendarScreen(
                         .padding(vertical = 7.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(weekday, color = if (day == selectedDay) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
+                    Text(weekday, color = if (day == selectedDay) Color.White else GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                     Text(day.toString(), color = if (day == selectedDay) Color.White else GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                 }
             }
@@ -321,7 +321,7 @@ fun CalendarScreen(
                             Icon(if (activeDoneDrop) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked, contentDescription = null, tint = if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(12.dp))
                             if (activeDoneDrop) {
                                 Spacer(Modifier.width(4.dp))
-                                Text("释放放入 done", color = GoaldayDesign.Positive, style = MaterialTheme.typography.bodySmall)
+                                Text("释放放入已完成", color = GoaldayDesign.Positive, style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     } else {
@@ -402,9 +402,9 @@ fun CalendarScreen(
                                     val target = draggingDayEntry
                                     if (target != null && activeDoneDrop) {
                                         viewModel.toggleScheduleCompleted(target.id)
-                                        toast = "已放入 done"
+                                        toast = "已放入已完成"
                                     } else if (target != null) {
-                                        toast = "未命中 done 区"
+                                        toast = "未命中已完成区"
                                     }
                                     draggingDayEntry = null
                                     activeDoneDrop = false
@@ -644,8 +644,8 @@ fun CalendarScreen(
                 Text(entry.title, color = Color.White, style = MaterialTheme.typography.labelSmall)
                 Text(
                     when {
-                        draggingDayEntry != null && activeDoneDrop -> "释放放入 done"
-                        draggingDayEntry != null -> "拖到 done 区"
+                        draggingDayEntry != null && activeDoneDrop -> "释放放入已完成"
+                        draggingDayEntry != null -> "拖到已完成区"
                         activeDropSlot != null -> "释放投放到$activeDropSlot"
                         else -> "拖到上/下/晚槽位"
                     },

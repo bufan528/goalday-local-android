@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ExecutionBoardHeader(
     title: String,
-    subtitle: String = "左 Done 右 Todo",
+    subtitle: String = "左已完成 右待办",
 ) {
     Row(
         modifier = Modifier

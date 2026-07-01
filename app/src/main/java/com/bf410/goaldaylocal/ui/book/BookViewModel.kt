@@ -520,7 +520,7 @@ class BookViewModel(
         val pages = listOf(
             TargetPage("目标详情", normalized.take(18)),
             PlanPage("行动拆解", normalized.take(8)),
-            SchedulePage("日程池", listOf("从右侧任务池拖入日期", "完成后拖入 done", "周末复盘完成情况")),
+            SchedulePage("日程池", listOf("从右侧任务池拖入日期", "完成后拖入已完成", "周末复盘完成情况")),
             DiaryPage("记录页", "记录这个主题今天推进了什么。"),
         )
         store.updateCustomBook(newBook.copy(pages = pages))

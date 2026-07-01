@@ -454,7 +454,7 @@ private fun GuidePreviewRow(
 private fun routeCopyFor(target: GuideTarget): String =
     when (target) {
         GuideTarget.INSPIRATION -> "选主题、导入任务、保存成手账"
-        GuideTarget.HANDBOOK -> "翻页查看日程，把任务排进 TODO/DONE"
+        GuideTarget.HANDBOOK -> "翻页查看日程，把任务排进 待办/已完成"
         GuideTarget.DIARY -> "用文字、图片和目标块写当天记录"
         GuideTarget.HOME -> "回到今日，预览长图后保存或分享"
     }

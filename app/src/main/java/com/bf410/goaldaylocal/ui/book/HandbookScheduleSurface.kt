@@ -473,7 +473,7 @@ internal fun HandbookReplicaPage(
                             when {
                                 entry != null && doneTargetDay == entry.day -> {
                                     onToggleScheduleCompleted(entry.id)
-                                    saveHint = "已放入${doneTargetDay}日 done"
+                                    saveHint = "已放入${doneTargetDay}日已完成"
                                 }
                                 entry != null && todoTargetDay != null && todoTargetDay != entry.day -> {
                                     onMoveScheduleDay(entry.id, anchorMonth, todoTargetDay)
@@ -482,8 +482,8 @@ internal fun HandbookReplicaPage(
                                 }
                                 // 修复：拖回自己原位时给明确反馈，原代码静默无反馈
                                 entry != null && todoTargetDay == entry.day -> saveHint = "未移动"
-                                entry != null && doneTargetDay != null -> saveHint = "请拖到同日期 done"
-                                entry != null -> saveHint = "未命中日期或 done"
+                                entry != null && doneTargetDay != null -> saveHint = "请拖到同日期已完成"
+                                entry != null -> saveHint = "未命中日期或已完成"
                             }
                             clearTodoDrag()
                         },
@@ -790,7 +790,7 @@ private fun BoxScope.HandbookMonthHeader(
                     .weight(1.12f)
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                     .background(GoaldayDesign.PinkTint)
-                    .border(0.35.dp, GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .border(GoaldayDesign.Hairline, GoaldayDesign.Pink.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 4.dp, vertical = 3.dp),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
@@ -845,7 +845,7 @@ private fun BoxScope.HandbookMonthHeader(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .background(GoaldayDesign.PinkSoft)
-                .border(0.35.dp, GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusS))
+                .border(GoaldayDesign.Hairline, GoaldayDesign.Pink.copy(alpha = 0.20f), RoundedCornerShape(GoaldayDesign.RadiusS))
                 .padding(horizontal = 7.dp, vertical = 4.dp),
             textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary),
             decorationBox = { inner ->
@@ -920,7 +920,7 @@ private fun DaySpreadSection(
         repeat((2 - visibleDoneRows).coerceAtLeast(0)) { index ->
             EmptyHandbookSlot(
                 label = when {
-                    activeDrop && index == 0 -> "释放放入 done"
+                    activeDrop && index == 0 -> "释放放入已完成"
                     doneCount == 0 && index == 0 -> "○"
                     else -> ""
                 },
@@ -972,7 +972,7 @@ private fun HandbookDoneEntryLine(
                 maxLines = 1,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(Color.White.copy(alpha = 0.64f))
+                    .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.64f))
                     .padding(horizontal = 4.dp, vertical = 1.dp),
             )
         }
@@ -985,7 +985,7 @@ private fun HandbookDoneEntryLine(
                 maxLines = 1,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(Color.White.copy(alpha = 0.64f))
+                    .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.64f))
                     .padding(horizontal = 4.dp, vertical = 1.dp),
             )
         }
@@ -998,7 +998,7 @@ private fun HandbookDoneEntryLine(
             modifier = Modifier.weight(1f),
         )
         Text(
-            "done",
+            "已完成",
             style = MaterialTheme.typography.labelSmall,
             color = GoaldayDesign.Positive,
             maxLines = 1,
@@ -1102,7 +1102,7 @@ private fun HandbookQuickAddRow(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                         .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.53f))
-                        .border(0.35.dp, GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = 6.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1141,7 +1141,7 @@ private fun HandbookQuickAddRow(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.40f))
-                            .border(0.35.dp, GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                             .onGloballyPositioned { coordinates ->
                                 rowOrigin = coordinates.boundsInRoot().topLeft
                             }
@@ -1377,7 +1377,7 @@ private fun HandbookEntryLine(
             modifier = Modifier
                 .size(18.dp)
                 .clip(RoundedCornerShape(99.dp))
-                .background(Color.White.copy(alpha = 0.72f))
+                .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.72f))
                 .clickable { onToggleCompleted() }
                 .padding(2.dp),
             tint = statusColor,
@@ -1496,7 +1496,7 @@ private fun HandbookEntryDetailChip(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-            .background(Color.White.copy(alpha = 0.58f))
+            .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.58f))
             .border(0.35.dp, color.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusS))
             .padding(horizontal = 6.dp, vertical = 3.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -1532,7 +1532,7 @@ private fun HandbookMoveTargetButton(
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .clip(RoundedCornerShape(99.dp))
-            .background(if (enabled) Color.White.copy(alpha = 0.66f) else Color.Transparent)
+            .background(if (enabled) GoaldayDesign.adaptiveSurface.copy(alpha = 0.66f) else Color.Transparent)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 4.dp, vertical = 1.dp),
     )

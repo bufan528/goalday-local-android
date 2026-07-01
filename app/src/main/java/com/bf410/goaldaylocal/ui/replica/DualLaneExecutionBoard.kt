@@ -153,7 +153,7 @@ fun DualLaneExecutionBoard(
                     .padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text("今日 Todo", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
+                Text("今日待办", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
                 todayTasks.forEach { task ->
                     BoardRow(task = task, selected = selectedTaskId == task.id, actionIcon = Icons.Filled.Check, onSelect = { onSelectTask(task.id) }, onAction = { onActionDone(task) })
                 }

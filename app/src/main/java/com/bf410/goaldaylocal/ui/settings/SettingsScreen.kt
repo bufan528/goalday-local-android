@@ -452,7 +452,7 @@ private fun BackupActionPanel(
             .fillMaxWidth()
             .shadow(
                 elevation = GoaldayDesign.ShadowSoft,
-                shape = RoundedCornerShape(GoaldayDesign.RadiusXL)
+                shape = RoundedCornerShape(GoaldayDesign.RadiusL)
             )
             .background(GoaldayDesign.Paper, RoundedCornerShape(GoaldayDesign.RadiusL))
             .border(
@@ -542,7 +542,7 @@ private fun SettingsSection(
                     elevation = GoaldayDesign.ShadowSoft,
                     shape = RoundedCornerShape(GoaldayDesign.RadiusXL)
                 )
-                .background(Color.White.copy(alpha = 0.93f), RoundedCornerShape(GoaldayDesign.RadiusXL))
+                .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusXL))
                 .border(
                     width = GoaldayDesign.Hairline,
                     color = GoaldayDesign.BorderColor.copy(alpha = 0.14f),
@@ -569,7 +569,7 @@ private fun SettingRow(
                 elevation = GoaldayDesign.ShadowSoft / 2,
                 shape = RoundedCornerShape(GoaldayDesign.RadiusM)
             )
-            .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusM))
             .border(
                 width = GoaldayDesign.Hairline,
                 color = GoaldayDesign.BorderColor.copy(alpha = 0.08f),
@@ -618,7 +618,7 @@ private fun FontSizeMenu(
                 elevation = GoaldayDesign.ShadowSoft / 2,
                 shape = RoundedCornerShape(GoaldayDesign.RadiusM)
             )
-            .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusM))
             .border(
                 width = GoaldayDesign.Hairline,
                 color = GoaldayDesign.BorderColor.copy(alpha = 0.08f),
@@ -687,7 +687,7 @@ private fun PageTurnStyleMenu(
                 elevation = GoaldayDesign.ShadowSoft / 2,
                 shape = RoundedCornerShape(GoaldayDesign.RadiusM)
             )
-            .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusM))
             .border(
                 width = GoaldayDesign.Hairline,
                 color = GoaldayDesign.BorderColor.copy(alpha = 0.08f),
@@ -758,7 +758,7 @@ private fun DarkModeMenu(
                 elevation = GoaldayDesign.ShadowSoft / 2,
                 shape = RoundedCornerShape(GoaldayDesign.RadiusM)
             )
-            .background(Color.White, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusM))
             .border(
                 width = GoaldayDesign.Hairline,
                 color = GoaldayDesign.BorderColor.copy(alpha = 0.08f),

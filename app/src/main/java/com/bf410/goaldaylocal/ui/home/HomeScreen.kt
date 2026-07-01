@@ -157,7 +157,7 @@ fun HomeScreen(
             calendarViewModel.toggleScheduleCompleted(entry.id)
         }
         grabbedEntry = null
-        hint = "已放入 done"
+        hint = "已放入已完成"
     }
 
     val weekStart = ((selectedDay - 1) / 7) * 7 + 1
@@ -236,7 +236,7 @@ fun HomeScreen(
                     when {
                         target != null && activeDoneDrop -> markDone(target)
                         target != null && targetDay != null -> moveEntryToDay(target, targetDay)
-                        target != null -> hint = "未命中日期或 done"
+                        target != null -> hint = "未命中日期或已完成"
                     }
                     draggingEntry = null
                     activeDropDay = null
@@ -281,9 +281,9 @@ fun HomeScreen(
                 Text(entry.title, color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 Text(
                     when {
-                        activeDoneDrop -> "释放放入 done"
+                        activeDoneDrop -> "释放放入已完成"
                         activeDropDay != null -> "释放拖入 ${activeDropDay} 日"
-                        else -> "拖到日期或 done"
+                        else -> "拖到日期或已完成"
                     },
                     color = Color.White.copy(alpha = 0.88f),
                     style = MaterialTheme.typography.labelSmall,
@@ -566,7 +566,7 @@ private fun PaperPlanner(
                     }
                 }
                 MiniSection(
-                    title = "done",
+                    title = "已完成",
                     modifier = Modifier
                         .fillMaxWidth()
                         .onGloballyPositioned { onDoneBounds(it.boundsInRoot()) }
@@ -600,7 +600,7 @@ private fun PaperPlanner(
                     }
                     grabbedEntry?.let {
                         Text(
-                            "点此放入 done",
+                            "点此放入已完成",
                             color = GoaldayDesign.Positive,
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.clickable { onMarkDone(it) },
@@ -975,6 +975,7 @@ private fun FloatingAddButton(modifier: Modifier, onClick: () -> Unit) {
     Box(
         modifier = modifier
             .size(48.dp)
+            .shadow(GoaldayDesign.ShadowMedium, CircleShape)
             .background(GoaldayDesign.Pink, CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
