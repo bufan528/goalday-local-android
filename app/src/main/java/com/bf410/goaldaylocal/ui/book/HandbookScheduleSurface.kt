@@ -1419,7 +1419,7 @@ private fun HandbookEntryLine(
                         maxLines = 1,
                         modifier = Modifier
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .background(Color.White.copy(alpha = 0.64f))
+                            .background(GoaldayDesign.adaptiveWhiteOverlayMedium)
                             .padding(horizontal = GoaldayDesign.Space1, vertical = 1.dp),
                     )
                 }
@@ -1431,7 +1431,7 @@ private fun HandbookEntryLine(
                         maxLines = 1,
                         modifier = Modifier
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .background(Color.White.copy(alpha = 0.64f))
+                            .background(GoaldayDesign.adaptiveWhiteOverlayMedium)
                             .padding(horizontal = GoaldayDesign.Space1, vertical = 1.dp),
                     )
                 }

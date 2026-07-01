@@ -372,7 +372,7 @@ private fun SettingsHeroCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White.copy(alpha = 0.42f), RoundedCornerShape(GoaldayDesign.RadiusL))
+                    .background(GoaldayDesign.adaptiveWhiteOverlayLow, RoundedCornerShape(GoaldayDesign.RadiusL))
                     .border(
                         width = GoaldayDesign.Hairline,
                         color = Color.White.copy(alpha = 0.46f),
@@ -936,7 +936,7 @@ private fun StatusPill(
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
-            .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(GoaldayDesign.RadiusPill))
+            .background(GoaldayDesign.adaptiveWhiteOverlayMedium, RoundedCornerShape(GoaldayDesign.RadiusPill))
             .border(
                 width = GoaldayDesign.Hairline,
                 color = Color.White.copy(alpha = 0.58f),
