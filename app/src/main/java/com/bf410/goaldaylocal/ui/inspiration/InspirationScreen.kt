@@ -20,6 +20,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -506,10 +510,10 @@ private fun InspirationDraftPanel(
                     .padding(horizontal = 6.dp, vertical = 5.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        if (item.selected) "✓" else "□",
-                        color = if (item.selected) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkMuted,
-                        fontWeight = FontWeight.SemiBold,
+                    Icon(
+                        imageVector = if (item.selected) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
+                        contentDescription = if (item.selected) "已选" else "未选",
+                        tint = if (item.selected) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkMuted,
                         modifier = Modifier
                             .size(22.dp)
                             .clickable {
