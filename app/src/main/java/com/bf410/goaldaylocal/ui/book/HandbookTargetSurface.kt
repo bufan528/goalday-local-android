@@ -223,7 +223,7 @@ internal fun TargetDetailReplicaPage(
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(99.dp))
+                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                                 .background(if (checked) GoaldayDesign.Positive else tint.copy(alpha = 0.18f))
                                 .padding(horizontal = 7.dp, vertical = 4.dp),
                         )
@@ -421,14 +421,14 @@ private fun TargetProgressBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(7.dp)
-            .clip(RoundedCornerShape(99.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.27f)),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(progress.coerceIn(0f, 1f))
-                .clip(RoundedCornerShape(99.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(tint.copy(alpha = 0.72f)),
         )
     }
@@ -463,7 +463,7 @@ private fun TargetScheduleChip(
         style = MaterialTheme.typography.labelSmall,
         maxLines = 1,
         modifier = Modifier
-            .clip(RoundedCornerShape(99.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(GoaldayDesign.PinkTint)
             .clickable(onClick = onClick)
             .padding(horizontal = 6.dp, vertical = 3.dp),
@@ -482,7 +482,7 @@ private fun TargetDeadlineChip(
         style = MaterialTheme.typography.labelSmall,
         maxLines = 1,
         modifier = Modifier
-            .clip(RoundedCornerShape(99.dp))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(if (active) GoaldayDesign.Positive else GoaldayDesign.adaptiveDivider)
             .clickable(onClick = onClick)
             .padding(horizontal = 6.dp, vertical = 3.dp),

@@ -22,6 +22,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -423,7 +426,12 @@ private fun PreviewScheduleRow(
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("●", color = Color(if (completed) style.doneColor else style.accentColor), style = MaterialTheme.typography.labelSmall)
+        Icon(
+            imageVector = Icons.Filled.Circle,
+            contentDescription = null,
+            modifier = Modifier.size(8.dp),
+            tint = Color(if (completed) style.doneColor else style.accentColor),
+        )
         Text(text, color = Color(if (completed) style.doneTextColor else style.titleColor), style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }

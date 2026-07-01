@@ -121,7 +121,7 @@ internal fun TopicCoverArt(
                 .padding(start = if (compact) 30.dp else 40.dp, top = if (compact) 12.dp else 16.dp)
                 .width(if (compact) 42.dp else 62.dp)
                 .height(if (compact) 5.dp else 7.dp)
-                .clip(RoundedCornerShape(99.dp))
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(palette.ink.copy(alpha = 0.62f)),
         )
         Box(
