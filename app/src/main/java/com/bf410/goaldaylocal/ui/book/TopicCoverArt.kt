@@ -28,6 +28,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 
 internal data class TopicCoverPalette(
     val base: Color,
@@ -39,19 +40,19 @@ internal data class TopicCoverPalette(
 
 internal fun topicCoverPalette(template: InspirationTemplate, index: Int): TopicCoverPalette {
     val categoryPalette = when (template.category) {
-        "年度" -> TopicCoverPalette(Color(0xFFF2C0A5), Color(0xFFD88F74), Color(0xFF6E4638), Color(0xFFFFF4E8), "26")
-        "月份" -> TopicCoverPalette(template.color, Color(0xFFE7B28E), Color(0xFF785740), Color(0xFFFFF7EC), template.coverKey.take(3).uppercase())
-        "体验" -> TopicCoverPalette(Color(0xFFFFAA5F), Color(0xFFD4814E), Color(0xFF5F4939), Color(0xFFFFF7EA), "体验")
-        "周计划" -> TopicCoverPalette(Color(0xFFC9D6C1), Color(0xFF8FA77D), Color(0xFF3E594A), Color(0xFFF7FFF1), "周计划")
-        "日记" -> TopicCoverPalette(Color(0xFFF1A5B6), Color(0xFFC97991), Color(0xFF704559), Color(0xFFFFEEF4), "日记")
-        "疗愈" -> TopicCoverPalette(Color(0xFF9EAADB), Color(0xFF7C8BC8), Color(0xFF3F496B), Color(0xFFF4F6FF), "疗愈")
-        "复盘" -> TopicCoverPalette(Color(0xFFF1A5B6), Color(0xFFC98C9B), Color(0xFF5D4A58), Color(0xFFFFF2F5), "复盘")
-        "整理" -> TopicCoverPalette(Color(0xFFF8D58A), Color(0xFFD0A45A), Color(0xFF665335), Color(0xFFFFF8E6), "整理")
-        "阅读" -> TopicCoverPalette(Color(0xFF6D8B7E), Color(0xFF4E6B60), Color(0xFF263D36), Color(0xFFF1FFF8), "阅读")
-        "旅行" -> TopicCoverPalette(Color(0xFFF8D58A), Color(0xFFDFB460), Color(0xFF6A5637), Color(0xFFFFF8E1), "旅行")
-        "观影" -> TopicCoverPalette(Color(0xFF51675F), Color(0xFF334F46), Color(0xFF1E2F2A), Color(0xFFEFFFF8), "观影")
-        "关系" -> TopicCoverPalette(Color(0xFFF1A5B6), Color(0xFFD7859E), Color(0xFF6D4053), Color(0xFFFFEFF4), "关系")
-        "手作" -> TopicCoverPalette(Color(0xFFF1A5B6), Color(0xFFE1A15F), Color(0xFF6B4E3A), Color(0xFFFFF2EB), "手作")
+        "年度" -> TopicCoverPalette(GoaldayDesign.TopicPeach, GoaldayDesign.TopicPeachMid, GoaldayDesign.TopicPeachDeep, GoaldayDesign.TopicPeachInk, "26")
+        "月份" -> TopicCoverPalette(template.color, GoaldayDesign.TopicMonthMid, GoaldayDesign.TopicMonthDeep, GoaldayDesign.TopicMonthInk, template.coverKey.take(3).uppercase())
+        "体验" -> TopicCoverPalette(GoaldayDesign.TopicAmber, GoaldayDesign.TopicAmberMid, GoaldayDesign.TopicAmberDeep, GoaldayDesign.TopicAmberInk, "体验")
+        "周计划" -> TopicCoverPalette(GoaldayDesign.TopicSage, GoaldayDesign.TopicSageMid, GoaldayDesign.TopicSageDeep, GoaldayDesign.TopicSageInk, "周计划")
+        "日记" -> TopicCoverPalette(GoaldayDesign.TopicRose, GoaldayDesign.TopicRoseMid, GoaldayDesign.TopicRoseDeep, GoaldayDesign.TopicRoseInk, "日记")
+        "疗愈" -> TopicCoverPalette(GoaldayDesign.TopicPeriwinkle, GoaldayDesign.TopicPeriwinkleMid, GoaldayDesign.TopicPeriwinkleDeep, GoaldayDesign.TopicPeriwinkleInk, "疗愈")
+        "复盘" -> TopicCoverPalette(GoaldayDesign.TopicRose, GoaldayDesign.TopicReviewMid, GoaldayDesign.TopicReviewDeep, GoaldayDesign.TopicReviewInk, "复盘")
+        "整理" -> TopicCoverPalette(GoaldayDesign.TopicDaffodil, GoaldayDesign.TopicDaffodilMid, GoaldayDesign.TopicDaffodilDeep, GoaldayDesign.TopicDaffodilInk, "整理")
+        "阅读" -> TopicCoverPalette(GoaldayDesign.TopicPine, GoaldayDesign.TopicPineMid, GoaldayDesign.TopicPineDeep, GoaldayDesign.TopicPineInk, "阅读")
+        "旅行" -> TopicCoverPalette(GoaldayDesign.TopicDaffodil, GoaldayDesign.TopicTravelMid, GoaldayDesign.TopicTravelDeep, GoaldayDesign.TopicTravelInk, "旅行")
+        "观影" -> TopicCoverPalette(GoaldayDesign.TopicSpruce, GoaldayDesign.TopicSpruceMid, GoaldayDesign.TopicSpruceDeep, GoaldayDesign.TopicSpruceInk, "观影")
+        "关系" -> TopicCoverPalette(GoaldayDesign.TopicRose, GoaldayDesign.TopicBondMid, GoaldayDesign.TopicBondDeep, GoaldayDesign.TopicBondInk, "关系")
+        "手作" -> TopicCoverPalette(GoaldayDesign.TopicRose, GoaldayDesign.TopicCraftMid, GoaldayDesign.TopicCraftDeep, GoaldayDesign.TopicCraftInk, "手作")
         else -> TopicCoverPalette(template.color, template.color.copy(alpha = 0.82f), fallbackDeep(index), Color.White, template.coverKey.take(2).uppercase())
     }
     return categoryPalette.copy(base = blendWithTemplate(categoryPalette.base, template.color))
@@ -97,7 +98,7 @@ internal fun TopicCoverArt(
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            listOf(Color.Transparent, Color(0x33000000)),
+                            listOf(Color.Transparent, GoaldayDesign.BlackOverlayMedium),
                         ),
                     ),
             )
@@ -110,7 +111,7 @@ internal fun TopicCoverArt(
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
-                        listOf(Color(0x4A2F261D), Color.White.copy(alpha = 0.18f), Color.Transparent),
+                        listOf(GoaldayDesign.CoverDarkSpineStrong, GoaldayDesign.CoverWhiteOverlaySubtle, Color.Transparent),
                     ),
                 ),
         )
@@ -128,9 +129,9 @@ internal fun TopicCoverArt(
                 .align(Alignment.TopEnd)
                 .padding(top = if (compact) 10.dp else 14.dp, end = if (compact) 10.dp else 16.dp)
                 .size(if (compact) 36.dp else 52.dp)
-                .clip(RoundedCornerShape(99.dp))
-                .background(Color.White.copy(alpha = 0.18f))
-                .border(1.dp, Color.White.copy(alpha = 0.28f), RoundedCornerShape(99.dp)),
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(GoaldayDesign.CoverWhiteOverlaySubtle)
+                .border(1.dp, GoaldayDesign.CoverWhiteOverlayLow, RoundedCornerShape(GoaldayDesign.RadiusPill)),
         ) {
             Text(
                 palette.symbol.take(4),
@@ -156,9 +157,9 @@ internal fun TopicCoverArt(
                 .padding(start = if (compact) 36.dp else 48.dp, bottom = if (compact) 13.dp else 17.dp)
                 .width(if (compact) 46.dp else 62.dp)
                 .height(if (compact) 46.dp else 62.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.White.copy(alpha = 0.12f))
-                .border(1.dp, Color.White.copy(alpha = 0.20f), RoundedCornerShape(8.dp)),
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                .background(GoaldayDesign.CoverWhiteOverlayHairline)
+                .border(1.dp, GoaldayDesign.CoverWhiteOverlaySubtle, RoundedCornerShape(GoaldayDesign.RadiusS)),
         )
         Text(
             template.coverKey.uppercase().take(if (compact) 10 else 14),
@@ -175,12 +176,12 @@ internal fun TopicCoverArt(
 
 private fun fallbackDeep(index: Int): Color =
     when (index % 6) {
-        0 -> Color(0xFF5F6F3D)
-        1 -> Color(0xFF754E5E)
-        2 -> Color(0xFF6F523D)
-        3 -> Color(0xFF445A72)
-        4 -> Color(0xFF566B5B)
-        else -> Color(0xFF574B6B)
+        0 -> GoaldayDesign.TopicDeepOlive
+        1 -> GoaldayDesign.TopicDeepPlum
+        2 -> GoaldayDesign.TopicDeepBrown
+        3 -> GoaldayDesign.TopicDeepSteel
+        4 -> GoaldayDesign.TopicDeepMoss
+        else -> GoaldayDesign.TopicDeepPurple
     }
 
 private fun blendWithTemplate(base: Color, templateColor: Color): Color =

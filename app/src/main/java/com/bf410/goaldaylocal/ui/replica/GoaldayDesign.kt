@@ -143,6 +143,71 @@ object GoaldayDesign {
     val TargetDetailGradientEnd = Color(0xFFF1D9C4)
     val TargetDetailCardEnd = Color(0xFFFFF3D7)
 
+    // 专题/灵感封面 fallback 深色（TopicCoverArt fallbackDeep）
+    val TopicDeepOlive = Color(0xFF5F6F3D)
+    val TopicDeepPlum = Color(0xFF754E5E)
+    val TopicDeepBrown = Color(0xFF6F523D)
+    val TopicDeepSteel = Color(0xFF445A72)
+    val TopicDeepMoss = Color(0xFF566B5B)
+    val TopicDeepPurple = Color(0xFF574B6B)
+
+    // 灵感专题模板主色（InspirationTemplates 封面主色）
+    val TopicPeach = Color(0xFFF2C0A5)
+    val TopicRose = Color(0xFFF1A5B6)
+    val TopicAmber = Color(0xFFFFAA5F)
+    val TopicSage = Color(0xFFC9D6C1)
+    val TopicPeriwinkle = Color(0xFF9EAADB)
+    val TopicDaffodil = Color(0xFFF8D58A)
+    val TopicMoss = Color(0xFFBBD1AD)
+    val TopicForest = Color(0xFF334F46)
+    val TopicTerracotta = Color(0xFFD6A06B)
+    val TopicOlive = Color(0xFFA1B774)
+    val TopicStone = Color(0xFFC6B4A0)
+    val TopicSlate = Color(0xFFA9B6C8)
+    val TopicPine = Color(0xFF6D8B7E)
+    val TopicSpruce = Color(0xFF51675F)
+
+    // 专题分类封面色板 mid/deep/ink（TopicCoverArt 按分类固定渐变与文字色）
+    val TopicPeachMid = Color(0xFFD88F74)
+    val TopicPeachDeep = Color(0xFF6E4638)
+    val TopicPeachInk = Color(0xFFFFF4E8)
+    val TopicMonthMid = Color(0xFFE7B28E)
+    val TopicMonthDeep = Color(0xFF785740)
+    val TopicMonthInk = Color(0xFFFFF7EC)
+    val TopicAmberMid = Color(0xFFD4814E)
+    val TopicAmberDeep = Color(0xFF5F4939)
+    val TopicAmberInk = Color(0xFFFFF7EA)
+    val TopicSageMid = Color(0xFF8FA77D)
+    val TopicSageDeep = Color(0xFF3E594A)
+    val TopicSageInk = Color(0xFFF7FFF1)
+    val TopicRoseMid = Color(0xFFC97991)
+    val TopicRoseDeep = Color(0xFF704559)
+    val TopicRoseInk = Color(0xFFFFEEF4)
+    val TopicPeriwinkleMid = Color(0xFF7C8BC8)
+    val TopicPeriwinkleDeep = Color(0xFF3F496B)
+    val TopicPeriwinkleInk = Color(0xFFF4F6FF)
+    val TopicReviewMid = Color(0xFFC98C9B)
+    val TopicReviewDeep = Color(0xFF5D4A58)
+    val TopicReviewInk = Color(0xFFFFF2F5)
+    val TopicDaffodilMid = Color(0xFFD0A45A)
+    val TopicDaffodilDeep = Color(0xFF665335)
+    val TopicDaffodilInk = Color(0xFFFFF8E6)
+    val TopicPineMid = Color(0xFF4E6B60)
+    val TopicPineDeep = Color(0xFF263D36)
+    val TopicPineInk = Color(0xFFF1FFF8)
+    val TopicTravelMid = Color(0xFFDFB460)
+    val TopicTravelDeep = Color(0xFF6A5637)
+    val TopicTravelInk = Color(0xFFFFF8E1)
+    val TopicSpruceMid = Color(0xFF334F46)
+    val TopicSpruceDeep = Color(0xFF1E2F2A)
+    val TopicSpruceInk = Color(0xFFEFFFF8)
+    val TopicBondMid = Color(0xFFD7859E)
+    val TopicBondDeep = Color(0xFF6D4053)
+    val TopicBondInk = Color(0xFFFFEFF4)
+    val TopicCraftMid = Color(0xFFE1A15F)
+    val TopicCraftDeep = Color(0xFF6B4E3A)
+    val TopicCraftInk = Color(0xFFFFF2EB)
+
     // 书库桌面渐变
     val LibraryDeskTop = Color(0xFFF8EFE5)
     val LibraryDeskGradient: Brush
@@ -150,11 +215,11 @@ object GoaldayDesign {
 
     // 书籍封面调色板（统一 CreateBookDialog/EditBookDialog/封面渐变）
     val BookCoverPalette = listOf(
-        Color(0xFFF2C0A5),
-        Color(0xFFF1A5B6),
-        Color(0xFFFFAA5F),
-        Color(0xFFBBD1AD),
-        Color(0xFF9EAADB),
+        TopicPeach,
+        TopicRose,
+        TopicAmber,
+        TopicMoss,
+        TopicPeriwinkle,
     )
 
     // PageSurface 页面翻转/导出/AI洞察卡片

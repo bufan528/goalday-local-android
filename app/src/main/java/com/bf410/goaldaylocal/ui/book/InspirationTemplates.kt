@@ -2,6 +2,7 @@ package com.bf410.goaldaylocal.ui.book
 
 import android.content.Context
 import androidx.compose.ui.graphics.Color
+import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import org.json.JSONObject
 
 data class InspirationTemplate(
@@ -28,7 +29,7 @@ internal object InspirationTemplates {
                 id = "wish_2026",
                 title = "2026年愿望清单",
                 subtitle = "年度愿望池，可直接排入月计划",
-                color = Color(0xFFF2C0A5),
+                color = GoaldayDesign.TopicPeach,
                 coverKey = "2026",
                 category = "年度",
                 items = annualWishItems(),
@@ -37,7 +38,7 @@ internal object InspirationTemplates {
                 id = "year_next_half",
                 title = "下半年目标",
                 subtitle = "从现在开始重排优先级",
-                color = Color(0xFF9EAADB),
+                color = GoaldayDesign.TopicPeriwinkle,
                 coverKey = "2025goalfornexthalfyear",
                 category = "年度",
                 items = listOf(
@@ -59,7 +60,7 @@ internal object InspirationTemplates {
                 id = "life_list",
                 title = "人生体验清单",
                 subtitle = "慢慢完成的体验型目标",
-                color = Color(0xFFFFAA5F),
+                color = GoaldayDesign.TopicAmber,
                 coverKey = "life",
                 category = "体验",
                 items = experienceItems(),
@@ -68,7 +69,7 @@ internal object InspirationTemplates {
                 id = "topic_week",
                 title = "主题周计划",
                 subtitle = "一周只围绕一个主题推进",
-                color = Color(0xFFC9D6C1),
+                color = GoaldayDesign.TopicSage,
                 coverKey = "topicweek",
                 category = "周计划",
                 items = themedWeekItems(),
@@ -77,7 +78,7 @@ internal object InspirationTemplates {
                 id = "five_year_diary",
                 title = "五年日记",
                 subtitle = "一日一问，适合长期记录",
-                color = Color(0xFFF1A5B6),
+                color = GoaldayDesign.TopicRose,
                 coverKey = "five_year_diary",
                 category = "日记",
                 linkToSchedule = false,
@@ -87,7 +88,7 @@ internal object InspirationTemplates {
                 id = "anxiety_relief",
                 title = "缓解焦虑",
                 subtitle = "把状态拉回来的小行动",
-                color = Color(0xFF9EAADB),
+                color = GoaldayDesign.TopicPeriwinkle,
                 coverKey = "anxiety_relief",
                 category = "疗愈",
                 items = listOf(
@@ -109,7 +110,7 @@ internal object InspirationTemplates {
                 id = "weekly_review",
                 title = "周复盘三步",
                 subtitle = "回顾、总结、安排下周",
-                color = Color(0xFFF1A5B6),
+                color = GoaldayDesign.TopicRose,
                 coverKey = "weekly_review",
                 category = "复盘",
                 linkToSchedule = false,
@@ -130,7 +131,7 @@ internal object InspirationTemplates {
                 id = "daily_review",
                 title = "日复盘问题",
                 subtitle = "用问题收束一天",
-                color = Color(0xFFF1A5B6),
+                color = GoaldayDesign.TopicRose,
                 coverKey = "daily_review",
                 category = "复盘",
                 linkToSchedule = false,
@@ -151,7 +152,7 @@ internal object InspirationTemplates {
                 id = "weekly_cleanup",
                 title = "每周断舍离",
                 subtitle = "每周清一个小区域",
-                color = Color(0xFFF8D58A),
+                color = GoaldayDesign.TopicDaffodil,
                 coverKey = "weekly_cleanup",
                 category = "整理",
                 linkToSchedule = false,
@@ -161,7 +162,7 @@ internal object InspirationTemplates {
                 id = "solo_activities",
                 title = "独处可做的事",
                 subtitle = "一个人也能过得丰富",
-                color = Color(0xFFBBD1AD),
+                color = GoaldayDesign.TopicMoss,
                 coverKey = "solo_activities",
                 category = "体验",
                 items = soloItems(),
@@ -170,7 +171,7 @@ internal object InspirationTemplates {
                 id = "quality_books",
                 title = "高质量书单",
                 subtitle = "阅读目标模板",
-                color = Color(0xFF334F46),
+                color = GoaldayDesign.TopicForest,
                 coverKey = "quality_books",
                 category = "阅读",
                 items = listOf(
@@ -190,7 +191,7 @@ internal object InspirationTemplates {
                 id = "travel_checklist",
                 title = "出行行李清单",
                 subtitle = "旅行前检查项",
-                color = Color(0xFFF8D58A),
+                color = GoaldayDesign.TopicDaffodil,
                 coverKey = "travel_checklist",
                 category = "旅行",
                 items = travelItems(),
@@ -199,7 +200,7 @@ internal object InspirationTemplates {
                 id = "douban_movies",
                 title = "电影清单",
                 subtitle = "把想看的片子变成计划",
-                color = Color(0xFF334F46),
+                color = GoaldayDesign.TopicForest,
                 coverKey = "douban_movies",
                 category = "观影",
                 items = listOf(
@@ -219,7 +220,7 @@ internal object InspirationTemplates {
                 id = "fifty_films",
                 title = "50部电影计划",
                 subtitle = "用片单填满观影手账",
-                color = Color(0xFF334F46),
+                color = GoaldayDesign.TopicForest,
                 coverKey = "50films",
                 category = "观影",
                 items = listOf(
@@ -235,7 +236,7 @@ internal object InspirationTemplates {
                 id = "couple_activities",
                 title = "情侣浪漫小事",
                 subtitle = "关系经营的小计划",
-                color = Color(0xFFF1A5B6),
+                color = GoaldayDesign.TopicRose,
                 coverKey = "couple_activities",
                 category = "关系",
                 items = listOf(
@@ -255,7 +256,7 @@ internal object InspirationTemplates {
                 id = "healing_crafts",
                 title = "解压治愈小手工",
                 subtitle = "低压力恢复能量",
-                color = Color(0xFFF1A5B6),
+                color = GoaldayDesign.TopicRose,
                 coverKey = "healing_crafts",
                 category = "手作",
                 items = listOf(
@@ -275,7 +276,7 @@ internal object InspirationTemplates {
                 id = "autumn",
                 title = "秋日体验清单",
                 subtitle = "把秋天写进手账",
-                color = Color(0xFFD6A06B),
+                color = GoaldayDesign.TopicTerracotta,
                 coverKey = "autumn",
                 category = "季节",
                 items = listOf(
@@ -291,7 +292,7 @@ internal object InspirationTemplates {
                 id = "january_happiness",
                 title = "1月幸福小事",
                 subtitle = "新年开始记录开心瞬间",
-                color = Color(0xFFF2C0A5),
+                color = GoaldayDesign.TopicPeach,
                 coverKey = "january_happiness",
                 category = "月份",
                 items = listOf(
@@ -307,7 +308,7 @@ internal object InspirationTemplates {
                 id = "stage_review",
                 title = "阶段复盘",
                 subtitle = "把最近一段时间重新整理",
-                color = Color(0xFFF1A5B6),
+                color = GoaldayDesign.TopicRose,
                 coverKey = "review",
                 category = "复盘",
                 linkToSchedule = false,
@@ -324,7 +325,7 @@ internal object InspirationTemplates {
                 id = "summer_vacation",
                 title = "暑假计划",
                 subtitle = "把假期变成可执行清单",
-                color = Color(0xFFFFAA5F),
+                color = GoaldayDesign.TopicAmber,
                 coverKey = "summer_vacation",
                 category = "季节",
                 items = listOf(
@@ -340,7 +341,7 @@ internal object InspirationTemplates {
                 id = "wish_list_2025",
                 title = "2025愿望清单",
                 subtitle = "补齐还没完成的年度愿望",
-                color = Color(0xFFF2C0A5),
+                color = GoaldayDesign.TopicPeach,
                 coverKey = "wish_list_2025",
                 category = "年度",
                 items = listOf(
@@ -381,18 +382,18 @@ internal object InspirationTemplates {
 
     private fun monthlyTopics(): List<InspirationTemplate> {
         val monthData = listOf(
-            Triple("jan", "1月｜新年启动", Color(0xFFF2C0A5)),
-            Triple("feb", "2月｜关系与陪伴", Color(0xFFF1A5B6)),
-            Triple("march", "3月｜春日整理", Color(0xFFC9D6C1)),
-            Triple("april", "4月｜学习输入", Color(0xFF9EAADB)),
-            Triple("may", "5月｜每天一件幸福小事", Color(0xFFA1B774)),
-            Triple("june", "6月｜年中校准", Color(0xFFF8D58A)),
-            Triple("july", "7月｜夏日清单", Color(0xFFFFAA5F)),
-            Triple("august", "8月｜能量恢复", Color(0xFFBBD1AD)),
-            Triple("september", "9月｜重新开学", Color(0xFF9EAADB)),
-            Triple("october", "10月｜秋日体验", Color(0xFFD6A06B)),
-            Triple("november", "11月｜收尾准备", Color(0xFFC6B4A0)),
-            Triple("december", "12月｜年终复盘", Color(0xFFA9B6C8)),
+            Triple("jan", "1月｜新年启动", GoaldayDesign.TopicPeach),
+            Triple("feb", "2月｜关系与陪伴", GoaldayDesign.TopicRose),
+            Triple("march", "3月｜春日整理", GoaldayDesign.TopicSage),
+            Triple("april", "4月｜学习输入", GoaldayDesign.TopicPeriwinkle),
+            Triple("may", "5月｜每天一件幸福小事", GoaldayDesign.TopicOlive),
+            Triple("june", "6月｜年中校准", GoaldayDesign.TopicDaffodil),
+            Triple("july", "7月｜夏日清单", GoaldayDesign.TopicAmber),
+            Triple("august", "8月｜能量恢复", GoaldayDesign.TopicMoss),
+            Triple("september", "9月｜重新开学", GoaldayDesign.TopicPeriwinkle),
+            Triple("october", "10月｜秋日体验", GoaldayDesign.TopicTerracotta),
+            Triple("november", "11月｜收尾准备", GoaldayDesign.TopicStone),
+            Triple("december", "12月｜年终复盘", GoaldayDesign.TopicSlate),
         )
         return monthData.mapIndexed { index, (key, title, color) ->
             topic(
