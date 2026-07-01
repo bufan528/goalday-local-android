@@ -231,22 +231,22 @@ internal fun HandbookReplicaPage(
             ScheduleBoardMode.entries.forEach { mode ->
                 Text(
                     mode.label,
-                    color = if (boardMode == mode) Color.White else GoaldayDesign.InkMuted,
+                    color = if (boardMode == mode) Color.White else GoaldayDesign.adaptiveInkMuted,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
                         .clip(RoundedCornerShape(99.dp))
-                        .background(if (boardMode == mode) GoaldayDesign.InkSecondary else GoaldayDesign.Surface)
+                        .background(if (boardMode == mode) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveSurface)
                         .clickable { boardMode = mode }
                         .padding(horizontal = 7.dp, vertical = 3.dp),
                 )
             }
             Text(
                 "导出",
-                color = GoaldayDesign.InkMuted,
+                color = GoaldayDesign.adaptiveInkMuted,
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
-                    .background(GoaldayDesign.Surface)
+                    .background(GoaldayDesign.adaptiveSurface)
                     .clickable {
                         // P1-1：合并预览+快存为单个"导出"入口，点击进入预览弹窗（弹窗内可保存）
                         longImagePreview = LongImagePreview(
@@ -305,7 +305,7 @@ internal fun HandbookReplicaPage(
                     Text(
                         "已执行",
                         style = MaterialTheme.typography.labelMedium,
-                        color = GoaldayDesign.InkMuted,
+                        color = GoaldayDesign.adaptiveInkMuted,
                     )
                 }
                 leftBlocks.forEachIndexed { idx, block ->
@@ -345,7 +345,7 @@ internal fun HandbookReplicaPage(
                     Text(
                         "待计划",
                         style = MaterialTheme.typography.labelMedium,
-                        color = GoaldayDesign.InkMuted,
+                        color = GoaldayDesign.adaptiveInkMuted,
                     )
                 }
                 HandbookQuickAddRow(
@@ -542,7 +542,7 @@ internal fun HandbookReplicaPage(
             Text(
                 text = page.title.ifBlank { "手账" },
                 style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.InkSecondary,
+                color = GoaldayDesign.adaptiveInkSecondary,
                 modifier = Modifier.alpha(0.86f),
                 textAlign = TextAlign.Center,
             )
@@ -551,7 +551,7 @@ internal fun HandbookReplicaPage(
             Text(
                 saveHint,
                 style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.InkSecondary,
+                color = GoaldayDesign.adaptiveInkSecondary,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = 4.dp, bottom = 2.dp),
@@ -586,20 +586,20 @@ private fun HandbookMonthBoard(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
-            .background(GoaldayDesign.Surface.copy(alpha = 0.72f))
+            .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.72f))
             .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .padding(GoaldayDesign.Space2),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("整月视图", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
-            Text("${year}年${month}月 · 点击日期展开到手账页", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+            Text("整月视图", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
+            Text("${year}年${month}月 · 点击日期展开到手账页", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
         }
         // 星期表头行
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             weekdayLabels.forEach { label ->
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    Text(label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, fontWeight = FontWeight.SemiBold)
+                    Text(label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -628,7 +628,7 @@ private fun HandbookMonthBoard(
                                     when {
                                         isVisible -> GoaldayDesign.PinkTint
                                         isToday -> GoaldayDesign.PaperAged.copy(alpha = 0.30f)
-                                        else -> GoaldayDesign.Surface
+                                        else -> GoaldayDesign.adaptiveSurface
                                     },
                                 )
                                 .border(
@@ -645,14 +645,14 @@ private fun HandbookMonthBoard(
                             verticalArrangement = Arrangement.spacedBy(3.dp),
                         ) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text("$day", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+                                Text("$day", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
                                 if (todoCount + doneCount > 0) {
-                                    Text("$doneCount/$todoCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                                    Text("$doneCount/$todoCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
                                 }
                             }
                             // P2-6：空日期不显示标题文字，避免"空白"噪音
                             if (title.isNotBlank()) {
-                                Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, maxLines = 2)
+                                Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 2)
                             }
                         }
                     }
@@ -682,7 +682,7 @@ private fun HandbookMonthBoard(
 internal fun Modifier.handbookPaperRuling(
     scrollState: ScrollState? = null,
     lineSpacingDp: androidx.compose.ui.unit.Dp = 24.dp,
-    lineColor: Color = GoaldayDesign.InkMuted.copy(alpha = 0.10f),
+    lineColor: Color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.10f),
 ): Modifier = this.drawBehind {
     val spacingPx = lineSpacingDp.toPx()
     val marginPx = 6.dp.toPx()
@@ -751,14 +751,14 @@ private fun BoxScope.HandbookMonthHeader(
                 Text(
                     "$year GOALDAY",
                     style = MaterialTheme.typography.labelSmall,
-                    color = GoaldayDesign.InkMuted,
+                    color = GoaldayDesign.adaptiveInkMuted,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.alpha(0.86f),
                 )
                 Text(
                     "${month}月计划",
                     style = MaterialTheme.typography.titleSmall,
-                    color = GoaldayDesign.InkPrimary,
+                    color = GoaldayDesign.adaptiveInkPrimary,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                 )
@@ -766,16 +766,16 @@ private fun BoxScope.HandbookMonthHeader(
                     Text(
                         "‹",
                         style = MaterialTheme.typography.labelMedium,
-                        color = if (canShiftPrevious) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
+                        color = if (canShiftPrevious) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkMuted,
                         modifier = Modifier
                             .alpha(if (canShiftPrevious) 1f else 0.35f)
                             .clickable(enabled = canShiftPrevious, onClick = onPreviousRange),
                     )
-                    Text(rangeLabel, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary)
+                    Text(rangeLabel, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary)
                     Text(
                         "›",
                         style = MaterialTheme.typography.labelMedium,
-                        color = if (canShiftNext) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
+                        color = if (canShiftNext) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkMuted,
                         modifier = Modifier
                             .alpha(if (canShiftNext) 1f else 0.35f)
                             .clickable(enabled = canShiftNext, onClick = onNextRange),
@@ -811,7 +811,7 @@ private fun BoxScope.HandbookMonthHeader(
                                     .background(
                                         when {
                                             visible -> GoaldayDesign.Pink
-                                            isToday -> GoaldayDesign.InkPrimary.copy(alpha = 0.45f)
+                                            isToday -> GoaldayDesign.adaptiveInkPrimary.copy(alpha = 0.45f)
                                             else -> GoaldayDesign.adaptiveDivider
                                         },
                                     ),
@@ -820,14 +820,14 @@ private fun BoxScope.HandbookMonthHeader(
                     }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("1", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
-                    Text(monthModel.lengthOfMonth().toString(), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                    Text("1", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
+                    Text(monthModel.lengthOfMonth().toString(), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
                 }
             }
             Text(
                 "${pageIndex + 1}/$pageCount",
                 style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.InkMuted,
+                color = GoaldayDesign.adaptiveInkMuted,
                 modifier = Modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.adaptiveDivider)
@@ -844,13 +844,13 @@ private fun BoxScope.HandbookMonthHeader(
                 .background(GoaldayDesign.PinkSoft)
                 .border(0.35.dp, GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusS))
                 .padding(horizontal = 7.dp, vertical = 4.dp),
-            textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+            textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary),
             decorationBox = { inner ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Text("本月重点", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold)
+                    Text("本月重点", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
                     Box(Modifier.weight(1f)) {
                         if (weeklyTheme.isBlank()) {
-                            Text("写下最重要的目标", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
+                            Text("写下最重要的目标", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkMuted)
                         }
                         inner()
                     }
@@ -899,7 +899,7 @@ private fun DaySpreadSection(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+            Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
             Text("完成 $doneCount · 待办 $todoCount", style = MaterialTheme.typography.labelSmall, color = accent.copy(alpha = 0.88f))
         }
         doneEntries.take(2).forEach { entry ->
@@ -960,7 +960,7 @@ private fun HandbookDoneEntryLine(
             Text(
                 entry.timeText,
                 style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.InkMuted,
+                color = GoaldayDesign.adaptiveInkMuted,
                 maxLines = 1,
                 modifier = Modifier
                     .clip(RoundedCornerShape(99.dp))
@@ -984,7 +984,7 @@ private fun HandbookDoneEntryLine(
         Text(
             entry.title,
             style = MaterialTheme.typography.bodySmall,
-            color = GoaldayDesign.InkMuted,
+            color = GoaldayDesign.adaptiveInkMuted,
             textDecoration = TextDecoration.LineThrough,
             maxLines = 1,
             modifier = Modifier.weight(1f),
@@ -1025,7 +1025,7 @@ private fun HandbookFallbackDoneLine(
         Text(
             title,
             style = MaterialTheme.typography.bodySmall,
-            color = GoaldayDesign.InkMuted,
+            color = GoaldayDesign.adaptiveInkMuted,
             textDecoration = TextDecoration.LineThrough,
             maxLines = 1,
             modifier = Modifier.weight(1f),
@@ -1070,8 +1070,8 @@ private fun HandbookQuickAddRow(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("待安排池", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
-            Text("点选或长按拖入日期", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+            Text("待安排池", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
+            Text("点选或长按拖入日期", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
         }
         BasicTextField(
             value = value,
@@ -1080,7 +1080,7 @@ private fun HandbookQuickAddRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester),
-            textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.InkPrimary),
+            textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submitAndKeepFocus() }),
             decorationBox = { inner ->
@@ -1094,15 +1094,15 @@ private fun HandbookQuickAddRow(
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(12.dp), tint = GoaldayDesign.InkSecondary)
+                    Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(12.dp), tint = GoaldayDesign.adaptiveInkSecondary)
                     Box(Modifier.weight(1f)) {
                         if (value.isBlank()) {
-                            Text("写入计划", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkMuted)
+                            Text("写入计划", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkMuted)
                         }
                         inner()
                     }
-                    Text("入池", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable(onClick = ::addToPoolAndKeepFocus))
-                    Text("排入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable(onClick = ::submitAndKeepFocus))
+                    Text("入池", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, modifier = Modifier.clickable(onClick = ::addToPoolAndKeepFocus))
+                    Text("排入", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable(onClick = ::submitAndKeepFocus))
                 }
             },
         )
@@ -1110,7 +1110,7 @@ private fun HandbookQuickAddRow(
             days.forEach { day ->
                 Text(
                     "${day}日",
-                    color = if (day == selectedDay) Color.White else GoaldayDesign.InkSecondary,
+                    color = if (day == selectedDay) Color.White else GoaldayDesign.adaptiveInkSecondary,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
                         .background(if (day == selectedDay) GoaldayDesign.Pink else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusPill))
@@ -1145,9 +1145,9 @@ private fun HandbookQuickAddRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("□", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
-                        Text(item, style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.InkPrimary, maxLines = 1, modifier = Modifier.weight(1f))
-                        Text("×", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted, modifier = Modifier.clickable { onRemovePoolItem(item) })
+                        Text("□", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
+                        Text(item, style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkPrimary, maxLines = 1, modifier = Modifier.weight(1f))
+                        Text("×", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.clickable { onRemovePoolItem(item) })
                     }
                 }
             }
@@ -1190,7 +1190,7 @@ private fun DaySpreadEditableSection(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.SemiBold)
+            Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
             Text("待办 $todoCount · 完成 $doneCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.RouteDiary)
         }
         repeat(visibleLimit.coerceAtLeast(3)) { idx ->
@@ -1243,7 +1243,7 @@ private fun DaySpreadEditableSection(
                     color = GoaldayDesign.Pink,
                     fontWeight = FontWeight.SemiBold,
                 )
-                Text("自适应", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkMuted)
+                Text("自适应", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
             }
         }
     }
@@ -1264,7 +1264,7 @@ private fun EmptyHandbookSlot(
         Text(
             label.ifBlank { " " },
             style = MaterialTheme.typography.labelSmall,
-            color = if (highlight) GoaldayDesign.Pink else GoaldayDesign.InkMuted,
+            color = if (highlight) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkMuted,
             maxLines = 1,
             modifier = Modifier.width(54.dp),
         )
@@ -1360,7 +1360,7 @@ private fun HandbookEntryLine(
             BasicTextField(
                 value = editingText,
                 onValueChange = onTextChange,
-                textStyle = TextStyle(color = GoaldayDesign.InkPrimary),
+                textStyle = TextStyle(color = GoaldayDesign.adaptiveInkPrimary),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = {
                     onCommit()
@@ -1372,7 +1372,7 @@ private fun HandbookEntryLine(
                     .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.53f), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(horizontal = 5.dp, vertical = 3.dp),
             )
-            Text("完成", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.InkSecondary, modifier = Modifier.clickable {
+            Text("完成", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, modifier = Modifier.clickable {
                 onCommit()
                 focusManager.clearFocus(force = true)
             })
@@ -1389,7 +1389,7 @@ private fun HandbookEntryLine(
                     Text(
                         entry.timeText,
                         style = MaterialTheme.typography.labelSmall,
-                        color = GoaldayDesign.InkMuted,
+                        color = GoaldayDesign.adaptiveInkMuted,
                         maxLines = 1,
                         modifier = Modifier
                             .clip(RoundedCornerShape(99.dp))
@@ -1412,7 +1412,7 @@ private fun HandbookEntryLine(
                 Text(
                     entry.title,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (entry.completed) GoaldayDesign.InkSecondary else GoaldayDesign.InkPrimary,
+                    color = if (entry.completed) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveInkPrimary,
                     textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                     maxLines = 1,
                     modifier = Modifier.weight(1f),
@@ -1450,10 +1450,10 @@ private fun HandbookEntryLine(
                     HandbookEntryDetailChip("repeat", repeatLabel, statusColor)
                 }
                 if (entry.timeText.isNotBlank()) {
-                    HandbookEntryDetailChip("time", entry.timeText, GoaldayDesign.InkSecondary)
+                    HandbookEntryDetailChip("time", entry.timeText, GoaldayDesign.adaptiveInkSecondary)
                 }
                 if (entry.note.isNotBlank()) {
-                    HandbookEntryDetailChip("note", entry.note, GoaldayDesign.InkMuted)
+                    HandbookEntryDetailChip("note", entry.note, GoaldayDesign.adaptiveInkMuted)
                 }
             }
         }
@@ -1486,7 +1486,7 @@ private fun HandbookEntryDetailChip(
         Text(
             value,
             style = MaterialTheme.typography.labelSmall,
-            color = GoaldayDesign.InkSecondary,
+            color = GoaldayDesign.adaptiveInkSecondary,
             maxLines = 2,
             modifier = Modifier.weight(1f),
         )
@@ -1502,7 +1502,7 @@ private fun HandbookMoveTargetButton(
     Text(
         label,
         style = MaterialTheme.typography.labelSmall,
-        color = if (enabled) GoaldayDesign.Pink else GoaldayDesign.InkMuted.copy(alpha = 0.38f),
+        color = if (enabled) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.38f),
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .clip(RoundedCornerShape(99.dp))
