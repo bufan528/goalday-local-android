@@ -303,7 +303,7 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 .fillMaxWidth(0.5f)
                 .background(
                     Brush.linearGradient(
-                        listOf(GoaldayDesign.PaperAged, GoaldayDesign.PaperWarm, GoaldayDesign.Surface),
+                        listOf(GoaldayDesign.PaperAged, GoaldayDesign.PaperWarm, GoaldayDesign.adaptiveSurface),
                         start = Offset.Zero,
                         end = Offset(680f, 420f),
                     ),
