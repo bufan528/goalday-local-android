@@ -27,6 +27,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -955,7 +958,12 @@ private fun HandbookDoneEntryLine(
                 .padding(top = 5.dp),
             textAlign = TextAlign.Center,
         )
-        Text("✓", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Positive)
+        Icon(
+            imageVector = Icons.Filled.Check,
+            contentDescription = "已完成",
+            modifier = Modifier.size(14.dp),
+            tint = GoaldayDesign.Positive,
+        )
         if (entry.timeText.isNotBlank()) {
             Text(
                 entry.timeText,
@@ -1021,7 +1029,12 @@ private fun HandbookFallbackDoneLine(
             modifier = Modifier.width(30.dp),
             textAlign = TextAlign.Center,
         )
-        Text("✓", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Positive.copy(alpha = 0.74f))
+        Icon(
+            imageVector = Icons.Filled.Check,
+            contentDescription = "已完成",
+            modifier = Modifier.size(14.dp),
+            tint = GoaldayDesign.Positive.copy(alpha = 0.74f),
+        )
         Text(
             title,
             style = MaterialTheme.typography.bodySmall,
@@ -1145,9 +1158,21 @@ private fun HandbookQuickAddRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("□", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
+                        Icon(
+                            imageVector = Icons.Filled.RadioButtonUnchecked,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = GoaldayDesign.adaptiveInkMuted,
+                        )
                         Text(item, style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkPrimary, maxLines = 1, modifier = Modifier.weight(1f))
-                        Text("×", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.clickable { onRemovePoolItem(item) })
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "移除",
+                            modifier = Modifier
+                                .size(14.dp)
+                                .clickable { onRemovePoolItem(item) },
+                            tint = GoaldayDesign.adaptiveInkMuted,
+                        )
                     }
                 }
             }
@@ -1346,15 +1371,16 @@ private fun HandbookEntryLine(
                 .padding(top = 6.dp),
             textAlign = TextAlign.Center,
         )
-        Text(
-            if (entry.completed) "✓" else "○",
-            style = MaterialTheme.typography.labelSmall,
-            color = statusColor,
+        Icon(
+            imageVector = if (entry.completed) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
+            contentDescription = if (entry.completed) "已完成" else "未完成",
             modifier = Modifier
+                .size(18.dp)
                 .clip(RoundedCornerShape(99.dp))
                 .background(Color.White.copy(alpha = 0.72f))
                 .clickable { onToggleCompleted() }
-                .padding(horizontal = 4.dp, vertical = 1.dp),
+                .padding(2.dp),
+            tint = statusColor,
         )
         if (editingId == entry.id) {
             BasicTextField(

@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Settings
@@ -1497,7 +1498,16 @@ private fun TargetDetailRouteOverlay(
                             .background(if (checked) GoaldayDesign.RouteTarget else GoaldayDesign.Pink),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(if (checked) "✓" else "%02d".format(itemIndex + 1), color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        if (checked) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = "已完成",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp),
+                            )
+                        } else {
+                            Text("%02d".format(itemIndex + 1), color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
                 TargetDetailSummaryStrip(

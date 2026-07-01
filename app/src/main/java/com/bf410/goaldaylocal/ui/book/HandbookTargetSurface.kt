@@ -19,6 +19,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -222,14 +226,15 @@ internal fun TargetDetailReplicaPage(
                                 .background(if (checked) GoaldayDesign.Positive else tint.copy(alpha = 0.18f))
                                 .padding(horizontal = 7.dp, vertical = 4.dp),
                         )
-                        Text(
-                            if (checked) "✓" else "□",
-                            color = if (checked) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkMuted,
-                            style = MaterialTheme.typography.titleSmall,
+                        Icon(
+                            imageVector = if (checked) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
+                            contentDescription = if (checked) "已完成" else "未完成",
+                            tint = if (checked) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkMuted,
                             modifier = Modifier
+                                .size(20.dp)
                                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                                 .clickable { onToggleChecked(pageTitle, item) }
-                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                                .padding(2.dp),
                         )
                     }
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
