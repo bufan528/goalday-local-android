@@ -150,13 +150,13 @@ internal fun GuideOverlay(
                     ),
                 ),
             )
-            .padding(horizontal = 18.dp, vertical = 16.dp),
+            .padding(horizontal = 18.dp, vertical = GoaldayDesign.Space4),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -174,7 +174,7 @@ internal fun GuideOverlay(
                     modifier = Modifier
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable(onClick = onClose)
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                        .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
                 )
             }
             GuideIllustration(page = page, index = index, meta = lottieMeta)
@@ -239,7 +239,7 @@ internal fun GuideOverlay(
                             onClose()
                             onOpenTarget(page.target)
                         }
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                        .padding(horizontal = GoaldayDesign.Space3, vertical = 10.dp),
                 )
             }
         }
@@ -370,7 +370,7 @@ private fun GuideTaskRail(page: GuidePage) {
             .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
             .background(GoaldayDesign.CardPaperGradient)
             .border(0.8.dp, page.tone.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusXL))
-            .padding(12.dp),
+            .padding(GoaldayDesign.Space3),
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
         Row(
@@ -392,7 +392,7 @@ private fun GuideTaskRail(page: GuidePage) {
                 modifier = Modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(page.tone.copy(alpha = 0.12f))
-                    .padding(horizontal = 8.dp, vertical = 3.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
             )
         }
         page.tasks.forEachIndexed { taskIndex, task ->
@@ -434,7 +434,7 @@ private fun GuidePreviewRow(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -445,7 +445,7 @@ private fun GuidePreviewRow(
             modifier = Modifier
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(tone.copy(alpha = 0.12f))
-                .padding(horizontal = 8.dp, vertical = 3.dp),
+                .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
         )
         Text(value, color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
     }
@@ -600,7 +600,7 @@ private fun GuideIllustration(
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 76.dp, end = 24.dp)
+                .padding(top = 76.dp, end = GoaldayDesign.Space6)
                 .size(58.dp)
                 .graphicsLayer {
                     scaleX = pulse
@@ -648,7 +648,7 @@ private fun GuideIllustration(
                 .align(Alignment.BottomStart)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.70f))
-                .padding(horizontal = 12.dp, vertical = 7.dp),
+                .padding(horizontal = GoaldayDesign.Space3, vertical = 7.dp),
         )
     }
 }

@@ -342,7 +342,7 @@ private fun PromoHeader(
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 6.dp, top = 8.dp, bottom = 8.dp)
+                    .padding(end = 6.dp, top = GoaldayDesign.Space2, bottom = GoaldayDesign.Space2)
                     .size(128.dp),
             )
         }
@@ -359,7 +359,7 @@ private fun PromoHeader(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = GoaldayDesign.Space4, vertical = 14.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -370,7 +370,7 @@ private fun PromoHeader(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(GoaldayDesign.RadiusPill))
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                        .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space1),
                 )
                 Text(
                     "今天",
@@ -404,7 +404,7 @@ private fun HomeHeroPill(label: String, color: Color) {
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .background(Color.White.copy(alpha = 0.72f), RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
     )
 }
 
@@ -580,7 +580,7 @@ private fun PaperPlanner(
                         doneEntries.forEach { entry ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
                             ) {
                                 Icon(
                                     Icons.Filled.Check,
@@ -658,7 +658,7 @@ private fun TimelineDayRow(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .background(if (selected) GoaldayDesign.Pink else GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .padding(horizontal = 8.dp, vertical = 3.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
             )
             Text(week, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
         }
@@ -724,7 +724,7 @@ private fun QuickInput(
                         .fillMaxWidth()
                         .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .border(0.7.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                        .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
@@ -737,11 +737,11 @@ private fun QuickInput(
                     }
                     Text("加入", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable(onClick = ::submitAndKeepFocus))
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1), verticalAlignment = Alignment.CenterVertically) {
                     Text("日期", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                     DateChipRow(days = weekDays.take(4), selectedDay = selectedDay, onSelectDay = onSelectDay)
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1), verticalAlignment = Alignment.CenterVertically) {
                     Spacer(Modifier.width(24.dp))
                     DateChipRow(days = weekDays.drop(4).take(3), selectedDay = selectedDay, onSelectDay = onSelectDay)
                 }
@@ -778,7 +778,7 @@ private fun PlannerMetric(
     Column(
         modifier = Modifier
             .background(color.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusM))
-            .padding(horizontal = 8.dp, vertical = 5.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
@@ -838,7 +838,7 @@ private fun TaskLine(
                     onDragCancel = onDragCancel,
                 )
             }
-            .padding(horizontal = 8.dp, vertical = 7.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = 7.dp),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
@@ -920,15 +920,15 @@ private fun HomeActionDock(
             .padding(GoaldayDesign.Space2),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), modifier = Modifier.fillMaxWidth()) {
             HomeActionCard("日历", "月视图", Icons.Filled.CalendarMonth, GoaldayDesign.Pink, Modifier.weight(1f), onOpenCalendar)
             HomeActionCard("灵感", "专题库", Icons.Filled.Lightbulb, GoaldayDesign.Today, Modifier.weight(1f), onOpenInspiration)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), modifier = Modifier.fillMaxWidth()) {
             HomeActionCard("书库", "本子", Icons.Filled.Book, GoaldayDesign.RouteOverview, Modifier.weight(1f), onOpenBook)
             HomeActionCard("手账", "书内页", Icons.AutoMirrored.Filled.Article, GoaldayDesign.RouteTarget, Modifier.weight(1f), onOpenHandbook)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), modifier = Modifier.fillMaxWidth()) {
             HomeActionCard("日记", "记录块", Icons.Filled.EditNote, GoaldayDesign.RouteDiary, Modifier.weight(1f), onOpenDiary)
             Spacer(modifier = Modifier.weight(1f))
         }

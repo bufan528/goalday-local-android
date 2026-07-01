@@ -80,7 +80,7 @@ fun DualLaneExecutionBoard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(GoaldayDesign.adaptiveSurfaceSoft)
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -95,10 +95,10 @@ fun DualLaneExecutionBoard(
                         .weight(1f)
                         .border(0.5.dp, GoaldayDesign.adaptiveDivider)
                         .clickable(enabled = onTimelineRowClick != null) { onTimelineRowClick?.invoke(index) }
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                        .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
                     verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), verticalAlignment = Alignment.CenterVertically) {
                         Column(modifier = Modifier.width(30.dp)) {
                             Text(day.first, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.adaptiveInkPrimary)
                             Text(day.second, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary)
@@ -133,7 +133,7 @@ fun DualLaneExecutionBoard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space2),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -144,13 +144,13 @@ fun DualLaneExecutionBoard(
                         .padding(horizontal = 7.dp, vertical = 3.dp),
                     style = MaterialTheme.typography.labelMedium,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, content = topActions)
+                Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), verticalAlignment = Alignment.CenterVertically, content = topActions)
             }
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = GoaldayDesign.Space2),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text("今日待办", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
@@ -184,7 +184,7 @@ private fun BoardRow(
         modifier = Modifier
             .fillMaxWidth()
             .background(if (selected) GoaldayDesign.BorderColor.copy(alpha = 0.09f) else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = 6.dp, vertical = 4.dp),
+            .padding(horizontal = 6.dp, vertical = GoaldayDesign.Space1),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.Top,
     ) {

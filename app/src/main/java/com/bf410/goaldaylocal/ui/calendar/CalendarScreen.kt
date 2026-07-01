@@ -178,7 +178,7 @@ fun CalendarScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 12.dp),
+                .padding(bottom = GoaldayDesign.Space3),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
         CalendarHeroHeader(
@@ -250,7 +250,7 @@ fun CalendarScreen(
 
         BoardCard(title = "${state.month}月${selectedDay}日 · 今日执行", subtitle = "待办 ${todoEntries.size} / 已完成 ${doneEntries.size}") {
             grabbedPoolEntry?.let { g ->
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), verticalAlignment = Alignment.CenterVertically) {
                     Text("已抓取：${g.title}（点上/下/晚投放）", color = GoaldayDesign.RouteDiary, style = MaterialTheme.typography.labelSmall)
                     Text("取消", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.clickable {
                         grabbedPoolEntry = null
@@ -306,7 +306,7 @@ fun CalendarScreen(
                     .fillMaxWidth()
                     .background(if (activeDoneDrop) GoaldayDesign.GreenSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
                     .border(0.5.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Column(
@@ -328,7 +328,7 @@ fun CalendarScreen(
                         doneEntries.take(4).forEach { entry ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
                             ) {
                                 Icon(
                                     Icons.Filled.Check,
@@ -355,7 +355,7 @@ fun CalendarScreen(
                         todoEntries.take(4).forEach { entry ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
                             ) {
                                 Icon(
                                     Icons.Filled.RadioButtonUnchecked,
@@ -468,7 +468,7 @@ fun CalendarScreen(
                     .align(Alignment.End)
                     .background(GoaldayDesign.Pink, RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .clickable { showAddDialog = true }
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space1),
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "新增", tint = Color.White, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(4.dp))
@@ -550,7 +550,7 @@ fun CalendarScreen(
                         }
                         .padding(horizontal = 9.dp, vertical = 7.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
                 ) {
                     Text(
                         "${entry.day}日",
@@ -573,7 +573,7 @@ fun CalendarScreen(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                         DropToSlotChip("上") {
                             viewModel.moveScheduleToDay(entry.id, selectedDay)
                             viewModel.updateSchedule(entry.id, entry.title, selectedDay, mergeTimeSlot(entry.note, "上午"))
@@ -608,7 +608,7 @@ fun CalendarScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("快速投放：${entry.title}", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                     DropToSlotChip("上") {
                         viewModel.moveScheduleToDay(entry.id, selectedDay)
                         viewModel.updateSchedule(entry.id, entry.title, selectedDay, mergeTimeSlot(entry.note, "上午"))
@@ -638,7 +638,7 @@ fun CalendarScreen(
                     .offset { IntOffset(dragPosition.x.toInt(), dragPosition.y.toInt()) }
                     .background(if (activeDropSlot != null || activeDoneDrop) GoaldayDesign.Pink else GoaldayDesign.Pink.copy(alpha = 0.87f), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .border(if (activeDropSlot != null || activeDoneDrop) 1.2.dp else 0.8.dp, GoaldayDesign.WhiteOverlayHigh, RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(entry.title, color = Color.White, style = MaterialTheme.typography.labelSmall)
@@ -704,7 +704,7 @@ fun CalendarScreen(
             onDismissRequest = { deleteCandidate = null },
             title = { Text("删除这条日程？") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
                     Text(
                         "将删除「${entry.title}」以及它的本地日程记录。",
                         color = GoaldayDesign.adaptiveInkSecondary,
@@ -723,7 +723,7 @@ fun CalendarScreen(
                                             RoundedCornerShape(GoaldayDesign.RadiusPill),
                                         )
                                         .clickable { deleteSeries = value }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                        .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
                                 )
                             }
                         }
@@ -810,7 +810,7 @@ private fun CalendarHintPill(text: String) {
             .fillMaxWidth()
             .background(GoaldayDesign.PinkSoft, RoundedCornerShape(GoaldayDesign.RadiusL))
             .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusL))
-            .padding(horizontal = 11.dp, vertical = 8.dp),
+            .padding(horizontal = 11.dp, vertical = GoaldayDesign.Space2),
     )
 }
 
@@ -930,8 +930,8 @@ private fun CalendarMonthControl(
             .shadow(5.dp, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
             .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusXL))
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusXL))
-            .padding(horizontal = 9.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = 9.dp, vertical = GoaldayDesign.Space2),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CalendarControlChip("上月", GoaldayDesign.RouteOverview, Modifier.weight(0.8f), onPreviousMonth)
@@ -960,7 +960,7 @@ private fun CalendarControlChip(
         modifier = modifier
             .background(color, RoundedCornerShape(GoaldayDesign.RadiusPill))
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
     )
 }
 
@@ -1064,7 +1064,7 @@ private fun CalendarMonthDayCell(
                 RoundedCornerShape(GoaldayDesign.RadiusM),
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 4.dp, vertical = 5.dp),
+            .padding(horizontal = GoaldayDesign.Space1, vertical = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -1112,7 +1112,7 @@ private fun BoardCard(
             .shadow(7.dp, RoundedCornerShape(GoaldayDesign.RadiusM), clip = false)
             .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusM))
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusM))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = GoaldayDesign.Space3, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -1123,7 +1123,7 @@ private fun BoardCard(
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .background(GoaldayDesign.BorderColor.copy(alpha = 0.06f), RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .padding(horizontal = 8.dp, vertical = 3.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
             )
         }
         content()
@@ -1150,9 +1150,9 @@ private fun TimeSlotRow(
                 RoundedCornerShape(GoaldayDesign.RadiusS),
             )
             .border(if (hover) 1.dp else 0.6.dp, if (hover) GoaldayDesign.Pink else GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = 8.dp, vertical = 7.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
         Text(
             slotShort,
@@ -1161,7 +1161,7 @@ private fun TimeSlotRow(
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .background(if (assigned != null) GoaldayDesign.PrimaryAction else GoaldayDesign.RouteDiary, RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
         )
         if (assigned != null) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
@@ -1246,7 +1246,7 @@ private fun CalendarImportRangeDialog(
         onDismissRequest = onDismiss,
         title = { Text("导入范围") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
                 options.forEach { (months, label) ->
                     Text(
                         label,
@@ -1259,7 +1259,7 @@ private fun CalendarImportRangeDialog(
                                 RoundedCornerShape(GoaldayDesign.RadiusS),
                             )
                             .clickable { draftMonths = months }
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                            .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space2),
                     )
                 }
             }
@@ -1294,7 +1294,7 @@ private fun CalendarImportSourceDialog(
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
             ) {
                 val rangeText = if (rangeMonths <= 1) "本月" else "未来${rangeMonths}个月"
                 Text("$rangeText 找到 ${events.size} 条系统日历事件", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
@@ -1327,7 +1327,7 @@ private fun CalendarImportSourceDialog(
             TextButton(onClick = onConfirm) { Text("预览") }
         },
         dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                 TextButton(onClick = onSelectAll) { Text("全选") }
                 TextButton(onClick = onDismiss) { Text("取消") }
             }
@@ -1359,7 +1359,7 @@ private fun CalendarImportPreviewDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(GoaldayDesign.adaptiveSurfaceSoft, RoundedCornerShape(GoaldayDesign.RadiusS))
-                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                            .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         val time = event.timeText.takeIf { it.isNotBlank() }?.let { " $it" }.orEmpty()
@@ -1484,7 +1484,7 @@ private fun ScheduleDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
                 OutlinedTextField(
                     value = draftTitle,
                     onValueChange = { draftTitle = it },
@@ -1515,7 +1515,7 @@ private fun ScheduleDialog(
                                     RoundedCornerShape(GoaldayDesign.RadiusPill),
                                 )
                                 .clickable { draftRepeatRule = rule }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
                         )
                     }
                 }
@@ -1555,7 +1555,7 @@ private fun ScheduleDialog(
                                         RoundedCornerShape(GoaldayDesign.RadiusPill),
                                     )
                                     .clickable { applySeries = value }
-                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                    .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
                             )
                         }
                     }
