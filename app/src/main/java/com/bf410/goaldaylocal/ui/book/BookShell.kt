@@ -60,11 +60,11 @@ fun BookShell(
     } else {
         RoundedCornerShape(GoaldayDesign.RadiusXL)
     }
-    val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 5.dp else 10.dp
-    val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 4.dp else 8.dp
-    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space6 else GoaldayDesign.Space5
-    val pageInsetH = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space2 else GoaldayDesign.Space2
-    val pageInsetV = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space2 else GoaldayDesign.Space2 + 2.dp
+    val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 5.dp else 6.dp
+    val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 4.dp else 4.dp
+    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space6 else GoaldayDesign.Space6
+    val pageInsetH = GoaldayDesign.Space2
+    val pageInsetV = GoaldayDesign.Space2
 
     Box(
         modifier = modifier
@@ -172,39 +172,12 @@ fun BookShell(
             )
         }
 
-        // 纸张层
-        if (shellStyle != ShellStyle.BOOK) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = pageInsetH, vertical = pageInsetV)
-                    .clip(innerShape)
-                    .background(GoaldayDesign.Paper),
-            )
-        }
-
-        if (shellStyle == ShellStyle.BOOK) {
-            OpenBookPaperChrome(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = pageInsetH, vertical = pageInsetV),
-            )
-        }
-
-        // 中央书脊线：仅非 BOOK 模式
-        if (shellStyle != ShellStyle.BOOK) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .width(1.dp)
-                    .fillMaxHeight()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color.Transparent, GoaldayDesign.BlackOverlayHairline, Color.Transparent),
-                        ),
-                    ),
-            )
-        }
+        // 纸张层：所有模式统一使用 OpenBookPaperChrome 渲染双页纸面
+        OpenBookPaperChrome(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = pageInsetH, vertical = pageInsetV),
+        )
 
         content()
 

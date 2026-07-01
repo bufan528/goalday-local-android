@@ -67,7 +67,7 @@ fun BookReader(
     var diaryCommand by remember(pageIndex, bookId) { mutableStateOf<RichEditorCommand?>(null) }
     var contentMode by remember(pageIndex, bookId) { mutableStateOf<PageContentMode>(PageContentMode.Browsing) }
     val turnEnabled = canTurnPage(contentMode)
-    val turnProfile = if (handbookMode || page is DiaryPage || shellStyle == ShellStyle.BOOK) TurnProfile.HANDBOOK else TurnProfile.DEFAULT
+    val turnProfile = if (handbookMode || page is DiaryPage) TurnProfile.HANDBOOK else TurnProfile.DEFAULT
     // 书页内边距：HANDBOOK 模式给足留白，让内容像真正的书页
     val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 16.dp else 28.dp
     val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 12.dp else 26.dp
