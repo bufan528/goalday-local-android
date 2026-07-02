@@ -11,3 +11,14 @@ externalNativeBuild/
 .worktrees/
 # 构建日志
 *.log
+# APK 静态分析临时产物（原版 Goalday APK 解压/反编译/资源 dump，仅本地参考）
+apk_ext/
+apk_dec/
+apk_decoded/
+jadx/
+jadx.zip
+apktool.jar
+goalday_orig.apk
+parse_dex.py
+ref.zip
+aapt_output.txt

@@ -5,8 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.bf410.goaldaylocal.R
 
 // 暗色模式开关：由 GoaldayApp 顶层根据 MMKV "dark_mode" (AUTO/LIGHT/DARK) + 系统主题决定后提供
 val LocalGoaldayDarkMode = compositionLocalOf { false }
@@ -109,7 +111,8 @@ object GoaldayDesign {
     val BlackOverlaySoft = Color(0x26000000)
     // BookShell 书脊/纸张阴影叠层
     val BlackOverlayLight = Color(0x18000000)
-    val BlackOverlayMedium = Color(0x38000000)
+    // 对齐原版 #36000000（22% 透明黑），用于卡片投影/翻页阴影
+    val BlackOverlayMedium = Color(0x36000000)
     val BlackOverlayStrong = Color(0x42000000)
     val BlackOverlayLine = Color(0x44000000)
     val BlackOverlayHairline = Color(0x14000000)
@@ -215,6 +218,22 @@ object GoaldayDesign {
     val TopicCraftDeep = Color(0xFF6B4E3A)
     val TopicCraftInk = Color(0xFFFFF2EB)
 
+    // 原版 Goalday Morandi 调色板（对齐 aapt2 提取的 color_* 资源，用于封面/标签/心情/分类色）
+    // 已存在的等价色：color_lightGreen=#BBD1AD=TopicMoss、color_orange=#F2C0A5=TopicPeach
+    val MorandiBrownLight = Color(0xFFE5DAD4)   // color_E5DAD4 浅褐
+    val MorandiKhaki = Color(0xFFE9D2B5)        // color_E9D2B5 浅卡其
+    val MorandiCoral = Color(0xFFF56968)        // color_F56968 珊瑚红
+    val MorandiApricot = Color(0xFFF5BD9F)       // color_F5BD9F 杏色
+    val MorandiYellow = Color(0xFFF5D88B)        // color_F5D88B 浅黄
+    val MorandiBeige = Color(0xFFF6EBDD)         // color_F6EBDD 米色
+    val MorandiOrange = Color(0xFFF79941)        // color_F79941 橘黄
+    val MorandiPeach = Color(0xFFFDE3D6)         // color_FDE3D6 浅桃
+    val MorandiCream = Color(0xFFFDF5EB)         // color_FDF5EB 奶白
+    val MorandiOffWhite = Color(0xFFFDFBF7)      // color_FDFBF7 雪白
+    val MorandiPinkSoft = Color(0xFFFEECEC)      // color_FEECEC 浅粉
+    val MorandiPinkRed = Color(0xFFFF98AF)       // color_FF98AF 粉红
+    val MorandiDivider = Color(0xFFC5BBB6)       // color_tab_divider 分隔灰
+
     // 书库桌面渐变
     val LibraryDeskTop = Color(0xFFF8EFE5)
     val LibraryDeskGradient: Brush
@@ -301,7 +320,7 @@ object GoaldayDesign {
             end = Offset(680f, 420f),
         ) else PaperGradient
 
-    // 字体族 token：封面/大标题用衬线（宋体感）建立手账氛围，UI 正文用默认无衬线保可读性
+    // 字体族 token：封面/大标题用衬线（宋体感）建立手账氛围，正文用苹方（对齐原版 PingFang SC）
     val DisplayFontFamily: FontFamily get() = FontFamily.Serif
-    val BodyFontFamily: FontFamily get() = FontFamily.Default
+    val BodyFontFamily: FontFamily get() = FontFamily(Font(R.font.pingfang_sc))
 }

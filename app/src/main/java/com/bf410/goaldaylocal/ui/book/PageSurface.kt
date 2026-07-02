@@ -534,6 +534,7 @@ fun ActivePageLayer(
                     contentMode = contentMode,
                     onContentModeChange = onContentModeChange,
                 )
+                }
             }
             is DiaryPage -> HandbookDiaryReplicaPage(
                 modifier = modifier,
