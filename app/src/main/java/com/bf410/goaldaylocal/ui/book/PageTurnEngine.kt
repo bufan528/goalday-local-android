@@ -49,11 +49,11 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 // DEFAULT 模式：边缘热区略窄，减少与内容横向滚动的冲突
-private const val DEFAULT_EDGE_GESTURE_RATIO = 0.10f
-// HANDBOOK 模式：保留足够的拇指触发宽度，同时避免误触
-private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.12f
-// HANDBOOK 拖动阈值：约 12~13px（按 360px 宽度计），灵敏但不易误翻
-private const val HANDBOOK_DRAG_START_RATIO = 0.035f
+private const val DEFAULT_EDGE_GESTURE_RATIO = 0.11f
+// HANDBOOK 模式：书页边缘应更宽，方便单手持书时拇指翻页
+private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.14f
+// HANDBOOK 拖动阈值：约 10px（按 360px 宽度计），翻页更跟手
+private const val HANDBOOK_DRAG_START_RATIO = 0.028f
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase
