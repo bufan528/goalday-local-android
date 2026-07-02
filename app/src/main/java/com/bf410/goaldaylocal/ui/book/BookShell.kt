@@ -1,5 +1,6 @@
 ﻿package com.bf410.goaldaylocal.ui.book
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -22,8 +23,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.bf410.goaldaylocal.R
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 
 enum class ShellStyle {
@@ -73,7 +77,13 @@ fun BookShell(
                 clip = false,
             )
             .clip(outerShape)
-            .background(bookBoardBrush(shellStyle))
+            .then(
+                if (shellStyle == ShellStyle.BOOK) {
+                    Modifier.background(Color.Transparent)
+                } else {
+                    Modifier.background(bookBoardBrush(shellStyle))
+                },
+            )
             .border(
                 width = GoaldayDesign.Hairline,
                 color = if (shellStyle == ShellStyle.BOOK) {
@@ -84,6 +94,16 @@ fun BookShell(
                 shape = outerShape,
             ),
     ) {
+        // 精装本使用原版布纹封面纹理
+        if (shellStyle == ShellStyle.BOOK) {
+            Image(
+                painter = painterResource(R.drawable.book_cover_fabric),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
         // 精装本书脊：硬质封面阴影 + 装订线
         if (shellStyle == ShellStyle.BOOK) {
             HardcoverSpine()
