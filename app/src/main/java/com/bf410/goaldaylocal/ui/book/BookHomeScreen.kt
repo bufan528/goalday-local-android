@@ -58,6 +58,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import java.time.LocalDate
+import java.time.YearMonth
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.PlanPage
@@ -73,9 +75,10 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 private val bookPalette = GoaldayDesign.BookCoverPalette
 
 private enum class BookSegment(val label: String) {
-    WEEK("周"),
-    DIARY("记录"),
     LIST("清单"),
+    WEEK("周"),
+    MONTH("月"),
+    DIARY("记录"),
 }
 
 private enum class HandbookSection(val label: String) {
@@ -983,9 +986,14 @@ private fun BookDetailView(
     LaunchedEffect(forcedSegment, book.id) {
         val desired = forcedSegment ?: return@LaunchedEffect
         segment = desired
-        val firstIndex = book.pages.indexOfFirst { page -> matchesSegment(page, desired) }
-        if (firstIndex >= 0 && uiState.selectedPageIndex != firstIndex) {
-            viewModel.setPage(firstIndex)
+        // 切换入口模式时，如果当前页已经符合目标 segment，优先保留当前页
+        val targetIndex = if (matchesSegment(currentPage, desired)) {
+            uiState.selectedPageIndex
+        } else {
+            book.pages.indexOfFirst { page -> matchesSegment(page, desired) }
+        }
+        if (targetIndex >= 0 && uiState.selectedPageIndex != targetIndex) {
+            viewModel.setPage(targetIndex)
         }
     }
     val filteredPages = remember(book.pages, segment, bookOnlyMode) {
@@ -1017,8 +1025,15 @@ private fun BookDetailView(
 
     fun switchSegment(next: BookSegment) {
         segment = next
-        val firstIndex = book.pages.indexOfFirst { page -> matchesSegment(page, next) }
-        if (firstIndex >= 0) viewModel.setPage(firstIndex)
+        // 切换 segment 时，如果当前页已符合目标 segment，优先保留当前页（周/月共享日程页）
+        val targetIndex = if (matchesSegment(currentPage, next)) {
+            uiState.selectedPageIndex
+        } else {
+            book.pages.indexOfFirst { page -> matchesSegment(page, next) }
+        }
+        if (targetIndex >= 0 && uiState.selectedPageIndex != targetIndex) {
+            viewModel.setPage(targetIndex)
+        }
     }
 
     Box(
@@ -1223,6 +1238,13 @@ private fun BookDetailView(
                     )
                 }
             }
+        } else if (segment == BookSegment.MONTH) {
+            MonthPageContent(
+                page = currentPage,
+                scheduleEntries = uiState.schedulePreviewEntries,
+                onSwitchToWeek = { switchSegment(BookSegment.WEEK) },
+                modifier = Modifier.fillMaxSize(),
+            )
         } else {
             BookReader(
                 bookId = book.id,
@@ -1808,23 +1830,26 @@ private fun TargetOptionRow(
 
 private fun matchesSegment(page: BookPage, segment: BookSegment): Boolean =
     when (segment) {
-        BookSegment.WEEK -> page is TargetPage || page is PlanPage || page is SchedulePage
-        BookSegment.DIARY -> page is DiaryPage
         BookSegment.LIST -> page is PlanPage || page is TargetPage
+        BookSegment.WEEK -> page is SchedulePage
+        BookSegment.MONTH -> page is SchedulePage
+        BookSegment.DIARY -> page is DiaryPage
     }
 
 private fun nextSegment(segment: BookSegment): BookSegment =
     when (segment) {
-        BookSegment.WEEK -> BookSegment.DIARY
-        BookSegment.DIARY -> BookSegment.LIST
         BookSegment.LIST -> BookSegment.WEEK
+        BookSegment.WEEK -> BookSegment.MONTH
+        BookSegment.MONTH -> BookSegment.DIARY
+        BookSegment.DIARY -> BookSegment.LIST
     }
 
 private fun previousSegment(segment: BookSegment): BookSegment =
     when (segment) {
-        BookSegment.WEEK -> BookSegment.LIST
-        BookSegment.DIARY -> BookSegment.WEEK
         BookSegment.LIST -> BookSegment.DIARY
+        BookSegment.WEEK -> BookSegment.LIST
+        BookSegment.MONTH -> BookSegment.WEEK
+        BookSegment.DIARY -> BookSegment.MONTH
     }
 
 private fun resolveSegment(page: BookPage): BookSegment =
@@ -1833,6 +1858,88 @@ private fun resolveSegment(page: BookPage): BookSegment =
         is PlanPage, is TargetPage -> BookSegment.LIST
         is SchedulePage -> BookSegment.WEEK
     }
+
+@Composable
+private fun MonthPageContent(
+    page: BookPage,
+    scheduleEntries: List<ScheduleEntry>,
+    onSwitchToWeek: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (page !is SchedulePage) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                "月视图需要日程页",
+                color = GoaldayDesign.adaptiveInkSecondary,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+            )
+        }
+        return
+    }
+    val today = LocalDate.now()
+    val pageMonth = page.title.extractMonthNumber()
+    val baseMonth = pageMonth ?: scheduleEntries.firstOrNull()?.month ?: today.monthValue
+    val baseYear = if (pageMonth != null) {
+        today.year
+    } else {
+        scheduleEntries.firstOrNull { it.year == today.year && it.month == baseMonth }?.year
+            ?: scheduleEntries.firstOrNull { it.month == baseMonth }?.year
+            ?: scheduleEntries.firstOrNull()?.year
+            ?: today.year
+    }
+    val yearMonth = YearMonth.of(baseYear, baseMonth)
+    val year = yearMonth.year
+    val month = yearMonth.monthValue
+    val monthLength = yearMonth.lengthOfMonth()
+    val entriesForMonth = scheduleEntries.filter { it.year == year && it.month == month }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    "$year GOALDAY",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GoaldayDesign.adaptiveInkMuted,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    "${month}月",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Text(
+                page.title,
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.adaptiveInkSecondary,
+            )
+        }
+        HandbookMonthBoard(
+            year = year,
+            month = month,
+            monthLength = monthLength,
+            entries = entriesForMonth,
+            selectedDays = emptyList(),
+            onSelectDay = { onSwitchToWeek() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+        )
+    }
+}
 
 @Composable
 private fun InspirationCenterView(

@@ -13,7 +13,9 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitHorizontalTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.horizontalDrag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -30,22 +32,28 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
-private const val EDGE_GESTURE_RATIO = 0.15f
-// HANDBOOK 热区：0.14f 平衡翻页触发与内容拖放
-private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.14f
-// 拖动阈值：0.02f 约 15px，轻微滑动即可触发翻页
-private const val HANDBOOK_DRAG_START_RATIO = 0.02f
+// DEFAULT 模式：边缘热区略窄，减少与内容横向滚动的冲突
+private const val DEFAULT_EDGE_GESTURE_RATIO = 0.10f
+// HANDBOOK 模式：保留足够的拇指触发宽度，同时避免误触
+private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.12f
+// HANDBOOK 拖动阈值：约 12~13px（按 360px 宽度计），灵敏但不易误翻
+private const val HANDBOOK_DRAG_START_RATIO = 0.035f
 
 sealed interface TurnPhase {
     data object Idle : TurnPhase
@@ -117,15 +125,14 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.9f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 92f else Spring.StiffnessLow,
+                            // HANDBOOK 提高刚度，让翻页收尾更利落、减少卡顿感
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.78f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 180f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipNext()
                     if (profile == TurnProfile.HANDBOOK) {
-                        // P0-3 修复：删除原 snapTo(0.12f)→animateTo(0f) 二段动画
-                        // 原逻辑翻完后跳到 0.12 再回弹到 0，造成"翻完又晃一下"的视觉跳变
-                        // 直接归零并清理状态，让翻页在到达 1f 时干净结束
+                        // 翻到位后直接归零并清理状态，避免“翻完又晃一下”
                         progress.snapTo(0f)
                         clearState()
                         return@launch
@@ -136,13 +143,12 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.9f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 92f else Spring.StiffnessLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.78f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 180f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipPrevious()
                     if (profile == TurnProfile.HANDBOOK) {
-                        // P0-3 修复：同 CompleteNext，删除二段回弹动画
                         progress.snapTo(0f)
                         clearState()
                         return@launch
@@ -153,8 +159,8 @@ fun PageTurnEngine(
                     progress.animateTo(
                         0f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.98f else 0.84f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 240f else Spring.StiffnessMediumLow,
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.92f else 0.84f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 300f else Spring.StiffnessMediumLow,
                         ),
                     )
                 }
@@ -192,40 +198,31 @@ fun PageTurnEngine(
                     pageWidthPx = it.width.toFloat().coerceAtLeast(1f)
                     pageHeightPx = it.height.toFloat().coerceAtLeast(1f)
                 }
-                .pointerInput(canTurnNext, canTurnPrevious, turnEnabled) {
-                    // P0-4 修复：从 key 中移除 pageWidthPx
-                    // 原代码 pageWidthPx 作为 key，尺寸变化（如旋转、动态布局）时 pointerInput 重启，
-                    // 导致正在进行的手势协程被取消，用户感觉"滑一半手势丢了"
-                    // pageWidthPx 是 var，lambda 内通过闭包读取最新值即可，无需作为 key 触发重启
+                .pointerInput(canTurnNext, canTurnPrevious, turnEnabled, profile) {
                     if (!turnEnabled) return@pointerInput
-                    detectHorizontalDragGestures(
-                        onDragStart = { startOffset ->
+                    val edgeRatio = if (profile == TurnProfile.HANDBOOK) {
+                        HANDBOOK_EDGE_GESTURE_RATIO
+                    } else {
+                        DEFAULT_EDGE_GESTURE_RATIO
+                    }
+                    detectEdgePageTurnGestures(
+                        canTurnNext = canTurnNext,
+                        canTurnPrevious = canTurnPrevious,
+                        edgeRatio = edgeRatio,
+                        onStart = { startOffset, startDirection ->
                             lastVelocityPxPerSecond = 0f
                             lastEventTimeMs = 0L
-                            direction = null
+                            direction = startDirection
                             dragStartX = startOffset.x
                             turnAnchorY = (startOffset.y / pageHeightPx).coerceIn(0.12f, 0.88f)
-                        },
-                        onHorizontalDrag = { change, dragAmount ->
-                            val edgeZonePx = pageWidthPx * if (profile == TurnProfile.HANDBOOK) HANDBOOK_EDGE_GESTURE_RATIO else EDGE_GESTURE_RATIO
-                            val canStartNextFromEdge = dragStartX >= pageWidthPx - edgeZonePx
-                            val canStartPreviousFromEdge = dragStartX <= edgeZonePx
-                            val startedAtEdge = canStartNextFromEdge || canStartPreviousFromEdge
-                            if (direction == null && !startedAtEdge) {
-                                return@detectHorizontalDragGestures
+                            phase = if (startDirection == TurnDirection.NEXT) {
+                                TurnPhase.DraggingNext
+                            } else {
+                                TurnPhase.DraggingPrevious
                             }
-                            val resolvedDirection = direction ?: resolveDragTurnDirection(
-                                profile = profile,
-                                dragStartX = dragStartX,
-                                pageWidthPx = pageWidthPx,
-                                dragAmountPx = dragAmount,
-                                edgeGestureRatio = if (profile == TurnProfile.HANDBOOK) HANDBOOK_EDGE_GESTURE_RATIO else EDGE_GESTURE_RATIO,
-                                dragStartThreshold = HANDBOOK_DRAG_START_RATIO,
-                            ) ?: return@detectHorizontalDragGestures
-
-                            direction = resolvedDirection
-                            phase = if (resolvedDirection == TurnDirection.NEXT) TurnPhase.DraggingNext else TurnPhase.DraggingPrevious
-
+                        },
+                        onDrag = { change, dragAmountPx ->
+                            val resolvedDirection = direction ?: return@detectEdgePageTurnGestures
                             val canTurn = when (resolvedDirection) {
                                 TurnDirection.NEXT -> canTurnNext
                                 TurnDirection.PREVIOUS -> canTurnPrevious
@@ -233,25 +230,25 @@ fun PageTurnEngine(
                             val adjustedProgress = updatedTurnProgress(
                                 currentProgress = progress.value,
                                 direction = resolvedDirection,
-                                dragAmountPx = dragAmount,
+                                dragAmountPx = dragAmountPx,
                                 pageWidthPx = pageWidthPx,
                                 canTurn = canTurn,
                             )
 
                             val nowMs = change.uptimeMillis
                             val deltaMs = (nowMs - lastEventTimeMs).coerceAtLeast(1L)
-                            lastVelocityPxPerSecond = if (abs(dragAmount) < 0.3f) {
+                            lastVelocityPxPerSecond = if (abs(dragAmountPx) < 0.3f) {
                                 0f
                             } else {
-                                (dragAmount / deltaMs) * 1000f
+                                (dragAmountPx / deltaMs) * 1000f
                             }
                             lastEventTimeMs = nowMs
 
                             scope.launch { progress.snapTo(adjustedProgress) }
                         },
-                        onDragCancel = { settle(TurnReleaseResult.SnapBack) },
-                        onDragEnd = {
-                            val activeDirection = direction ?: return@detectHorizontalDragGestures
+                        onEnd = { velocityX ->
+                            lastVelocityPxPerSecond = velocityX
+                            val activeDirection = direction ?: return@detectEdgePageTurnGestures
                             settle(
                                 resolvePageTurnRelease(
                                     direction = activeDirection,
@@ -263,6 +260,7 @@ fun PageTurnEngine(
                                 ),
                             )
                         },
+                        onCancel = { settle(TurnReleaseResult.SnapBack) },
                     )
                 },
         ) {
@@ -276,9 +274,7 @@ fun PageTurnEngine(
             activePage(visualProgress, direction, turnAnchorY)
 
             if (direction != null && dragProgress > 0.01f) {
-                // P1-2 精简：原 10 层装饰收敛为 3 层核心，消除视觉过载与渲染负担
-                // 删除：4 层 depth 阴影、底部/顶部角落 radial 高光、edge 高光窄条/宽条、顶部/底部 linear 高光
-                // 保留：center 暗带（书脊感）+ 全屏暗角（深度感）+ turnShadow（翻页核心阴影）
+                // 翻页过程中的核心阴影与暗角，营造 3D 卷曲感
                 if (profile == TurnProfile.HANDBOOK) {
                     Box(
                         modifier = Modifier
@@ -340,6 +336,78 @@ fun PageTurnEngine(
     }
 }
 
+/**
+ * 只在屏幕左右边缘拦截水平拖动手势。
+ * 非边缘按下时不消费事件，内部滚动/WebView 等内容优先响应，避免翻页手势抢占内容滚动。
+ */
+private suspend fun PointerInputScope.detectEdgePageTurnGestures(
+    canTurnNext: Boolean,
+    canTurnPrevious: Boolean,
+    edgeRatio: Float,
+    onStart: (Offset, TurnDirection) -> Unit,
+    onDrag: (PointerInputChange, Float) -> Unit,
+    onEnd: (Float) -> Unit,
+    onCancel: () -> Unit,
+) {
+    awaitPointerEventScope {
+        while (true) {
+            val down = awaitFirstDown()
+            val width = size.width.toFloat().coerceAtLeast(1f)
+            val edgePx = width * edgeRatio.coerceIn(0.05f, 0.45f)
+            val x = down.position.x
+            val startDirection = when {
+                canTurnPrevious && x <= edgePx -> TurnDirection.PREVIOUS
+                canTurnNext && x >= width - edgePx -> TurnDirection.NEXT
+                else -> null
+            }
+            if (startDirection == null) {
+                // 非边缘区域：不拦截，交给子组件处理
+                continue
+            }
+            down.consume()
+            onStart(down.position, startDirection)
+
+            // 等待水平 touch slop，只接受“向书内”拖动（右边缘向左滑、左边缘向右滑）
+            var inward = false
+            val drag = awaitHorizontalTouchSlopOrCancellation(down.id) { change, overSlop ->
+                inward = when (startDirection) {
+                    TurnDirection.NEXT -> overSlop < 0
+                    TurnDirection.PREVIOUS -> overSlop > 0
+                }
+                if (inward) change.consume()
+            }
+            if (drag == null || !inward) {
+                onCancel()
+                continue
+            }
+
+            val velocityTracker = VelocityTracker()
+            velocityTracker.addPointerInputChange(drag)
+
+            var previousX = down.position.x
+            var currentX = drag.position.x
+            onDrag(drag, currentX - previousX)
+            previousX = currentX
+
+            val success = horizontalDrag(drag.id) { change ->
+                velocityTracker.addPointerInputChange(change)
+                currentX = change.position.x
+                val deltaX = currentX - previousX
+                previousX = currentX
+                onDrag(change, deltaX)
+                true
+            }
+
+            val velocity = velocityTracker.calculateVelocity().x
+            if (success) {
+                onEnd(velocity)
+            } else {
+                onCancel()
+            }
+        }
+    }
+}
+
 fun Modifier.turningPageTransform(
     direction: TurnDirection?,
     visualProgress: Float,
@@ -363,7 +431,7 @@ fun Modifier.turningPageTransform(
     } else {
         0f
     }
-    // P0-1 大修：HANDBOOK translationX 从 ~20px 提升到 ~60px 量级，让水平扫过明显可见
+    // HANDBOOK translationX 从 ~20px 提升到 ~60px 量级，让水平扫过明显可见
     translationX = when {
         draggingToNext -> if (profile == TurnProfile.HANDBOOK) {
             -(visualProgress * 10f + progressCurve * 50f - tailRetract * 0.35f)
@@ -389,7 +457,7 @@ fun Modifier.turningPageTransform(
     } else {
         subtleDepthScale.coerceIn(0.965f, 1f)
     }
-    // P0-1 大修：HANDBOOK alpha 从 0.94-1.0 改为 0.78-1.0，让翻页中后段明显变暗，模拟纸张透视
+    // HANDBOOK alpha 从 0.78-1.0，让翻页中后段明显变暗，模拟纸张透视
     alpha = if (profile == TurnProfile.HANDBOOK) {
         (1f - visualProgress * 0.22f).coerceIn(0.78f, 1f)
     } else {
@@ -406,7 +474,7 @@ fun Modifier.pageBackTransform(
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     transformOrigin = TransformOrigin(turnTransformOriginX(profile, direction), 0.5f)
-    // P0-1 大修：背面角度从 80° 提升到 115°，与正面同步翻越中轴线
+    // 背面角度从 80° 提升到 115°，与正面同步翻越中轴线
     val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
         val tail = ((visualProgress - 0.82f) / 0.18f).coerceIn(0f, 1f)
         tail * 7f
@@ -420,8 +488,7 @@ fun Modifier.pageBackTransform(
         TurnDirection.PREVIOUS -> maxRotation * progressCurve * 0.92f
         null -> 0f
     }
-    // P0-1 大修：补上 translationX，与正面镜像（背面应该跟随正面一起水平移动）
-    // 原 pageBackTransform 无 translationX，背面"贴在原地旋转"与正面脱节
+    // 背面 translationX 与正面镜像，避免“贴在原地旋转”
     val backShift = if (profile == TurnProfile.HANDBOOK) {
         visualProgress * 8f + progressCurve * 42f
     } else {
@@ -443,7 +510,7 @@ fun Modifier.pageBackTransform(
     } else {
         subtleBackScale.coerceIn(0.972f, 1f)
     }
-    // P0-1 大修：补上 alpha 变化，让背面在中后段渐显（模拟纸张背面从暗到亮）
+    // 背面在中后段渐显（模拟纸张背面从暗到亮）
     alpha = if (profile == TurnProfile.HANDBOOK) {
         (0.70f + visualProgress * 0.28f).coerceIn(0.70f, 0.98f)
     } else {

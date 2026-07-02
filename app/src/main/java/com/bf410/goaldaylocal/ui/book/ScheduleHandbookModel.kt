@@ -84,7 +84,7 @@ internal fun buildScheduleHandbookModel(
     )
 }
 
-private fun String.extractMonthNumber(): Int? =
+internal fun String.extractMonthNumber(): Int? =
     Regex("(\\d{1,2})月")
         .find(this)
         ?.groupValues
