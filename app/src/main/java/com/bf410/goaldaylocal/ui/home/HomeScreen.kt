@@ -473,7 +473,7 @@ private fun PaperPlanner(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(GoaldayDesign.PinkSoft, RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .border(GoaldayDesign.Hairline, GoaldayDesign.Pink.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space2 - 1.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -572,7 +572,7 @@ private fun PaperPlanner(
                         .fillMaxWidth()
                         .onGloballyPositioned { onDoneBounds(it.boundsInRoot()) }
                         .background(if (activeDoneDrop) GoaldayDesign.GreenSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .border(0.7.dp, if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .border(GoaldayDesign.Hairline, if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1 + 1.dp),
                 ) {
                     if (doneEntries.isEmpty()) {
@@ -724,7 +724,7 @@ private fun QuickInput(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .border(0.7.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
+                        .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 + 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
