@@ -13,6 +13,8 @@ externalNativeBuild/
 *.log
 # APK 静态分析临时产物（原版 Goalday APK 解压/反编译/资源 dump，仅本地参考）
 apk_ext/
+apk_extract/
+apk_extract_ref/
 apk_dec/
 apk_decoded/
 jadx/
@@ -22,3 +24,4 @@ goalday_orig.apk
 parse_dex.py
 ref.zip
 aapt_output.txt
+apk_colors.txt
