@@ -59,7 +59,7 @@ fun BookReader(
     onUpdateTargetNote: (String, String) -> Unit,
     onUpdateTargetDeadline: (String, Int?) -> Unit,
     onOpenTargetDetail: (String) -> Unit,
-    shellStyle: ShellStyle = ShellStyle.LIGHT,
+    shellStyle: ShellStyle = ShellStyle.BOOK,
     handbookMode: Boolean = false,
     onFlipNext: () -> Unit,
     onFlipPrevious: () -> Unit,
