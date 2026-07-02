@@ -12,7 +12,8 @@ import androidx.compose.ui.unit.dp
 val LocalGoaldayDarkMode = compositionLocalOf { false }
 
 object GoaldayDesign {
-    val AppBg = Color(0xFFFAF8F4)
+    // P0 设计对齐：原版 Goalday 主背景为 #FDFAF6（暖奶白）
+    val AppBg = Color(0xFFFDFAF6)
     val Surface = Color(0xFFFFFEFB)
     val SurfaceSoft = Color(0xFFF7F3EE)
     val InkPrimary = Color(0xFF2F2923)
@@ -42,7 +43,8 @@ object GoaldayDesign {
     val BookBoardDark = Color(0xFF6C4A39)
     val BookSpine = Color(0xFF5A3B2E)
     val BookSpineLight = Color(0xFFB47C62)
-    val DeskTop = Color(0xFFFFFBF6)
+    // DeskTop 与 AppBg 对齐原版 #FDFAF6，桌面渐变从主背景色平滑过渡到深木色
+    val DeskTop = Color(0xFFFDFAF6)
     val DeskMid = Color(0xFFF5E4D2)
     val DeskBottom = Color(0xFFE4C7AE)
     val ShelfWood = Color(0xFFD3A681)

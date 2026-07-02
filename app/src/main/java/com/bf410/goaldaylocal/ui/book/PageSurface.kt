@@ -1731,11 +1731,30 @@ private enum class LongImageShortcutMode(
 
 private const val KEY_LONG_IMAGE_EXPORT_HISTORY = "long_image_export_history"
 private const val KEY_LONG_IMAGE_SHORTCUT_MODE = "long_image_shortcut_mode"
+// 默认 raw 值用常量字面量而非 LongImageShortcutMode.LONG.raw，规避 Kotlin 2.0.21
+// FirUninitializedEnumChecker 在分析 enum entry 属性访问时的内部 ClassCastException
+private const val DEFAULT_LONG_IMAGE_SHORTCUT_RAW = "long"
 private val longImageHistoryFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm")
 
+// 在顶层 val 初始化时缓存所有 enum 实例，避免在函数体内访问 enum entry 触发 FIR 检查器 bug
+private val ALL_LONG_IMAGE_SHORTCUT_MODES: List<LongImageShortcutMode> = listOf(
+    LongImageShortcutMode.DISABLED,
+    LongImageShortcutMode.LONG,
+    LongImageShortcutMode.SHORT,
+    LongImageShortcutMode.SHORT_1,
+    LongImageShortcutMode.SHORT_2,
+)
+private val LONG_IMAGE_SHORTCUT_MODE_BY_RAW: Map<String, LongImageShortcutMode> = buildMap {
+    for (mode in ALL_LONG_IMAGE_SHORTCUT_MODES) {
+        put(mode.raw, mode)
+    }
+}
+private val DEFAULT_LONG_IMAGE_SHORTCUT_MODE: LongImageShortcutMode =
+    LONG_IMAGE_SHORTCUT_MODE_BY_RAW.getValue(DEFAULT_LONG_IMAGE_SHORTCUT_RAW)
+
 private fun loadLongImageShortcutMode(): LongImageShortcutMode {
-    val raw = MMKV.defaultMMKV().decodeString(KEY_LONG_IMAGE_SHORTCUT_MODE, LongImageShortcutMode.LONG.raw)
-    return LongImageShortcutMode.entries.firstOrNull { it.raw == raw } ?: LongImageShortcutMode.LONG
+    val raw = MMKV.defaultMMKV().decodeString(KEY_LONG_IMAGE_SHORTCUT_MODE, DEFAULT_LONG_IMAGE_SHORTCUT_RAW)
+    return LONG_IMAGE_SHORTCUT_MODE_BY_RAW[raw] ?: DEFAULT_LONG_IMAGE_SHORTCUT_MODE
 }
 
 private fun saveLongImageShortcutMode(mode: LongImageShortcutMode) {
@@ -2144,7 +2163,7 @@ private fun LongImageShortcutPanel(
             horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            LongImageShortcutMode.entries.forEach { item ->
+            ALL_LONG_IMAGE_SHORTCUT_MODES.forEach { item ->
                 LongImageShortcutChip(
                     mode = item,
                     selected = item == mode,
