@@ -47,7 +47,7 @@ fun BookShell(
     content: @Composable BoxScope.() -> Unit,
 ) {
     // 左侧书脊圆角小，右侧书口圆角大，形成“书翻开”的不对称轮廓
-    val spineCorner = if (shellStyle == ShellStyle.BOOK) 2.dp else 4.dp
+    val spineCorner = if (shellStyle == ShellStyle.BOOK) 1.dp else 3.dp
     val foreEdgeCorner = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.RadiusXL else GoaldayDesign.Radius2XL
     val outerShape = RoundedCornerShape(
         topStart = spineCorner,
@@ -57,7 +57,7 @@ fun BookShell(
     )
 
     // 纸张内边距：精装本留白更多，平装本更紧凑
-    val pageInsetH = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space3 else GoaldayDesign.Space2
+    val pageInsetH = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space4 else GoaldayDesign.Space3
     val pageInsetV = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space3 else GoaldayDesign.Space2
     // 翻页热区：太宽会误触内容，太窄难触发；0.12 约等于拇指自然落点
     val edgeZoneWidth = GoaldayDesign.Space5
@@ -133,33 +133,42 @@ private fun bookBoardBrush(shellStyle: ShellStyle): Brush {
     val board = GoaldayDesign.BookBoard
     val boardLight = GoaldayDesign.BookBoardLight
     return if (shellStyle == ShellStyle.BOOK) {
-        // 精装本：深色书脊 → 封面 → 纸张暖色，硬质包裹感
+        // 精装硬壳：深褐书脊 → 皮革封面 → 暖黄书页，边缘压暗营造包裹感
         Brush.horizontalGradient(
-            listOf(boardDark, board, boardLight, GoaldayDesign.PaperWarm, GoaldayDesign.Paper),
+            listOf(
+                boardDark,
+                boardDark.copy(alpha = 0.92f),
+                board,
+                boardLight,
+                boardLight.copy(alpha = 0.88f),
+                GoaldayDesign.PaperWarm.copy(alpha = 0.95f),
+                GoaldayDesign.Paper,
+            ),
             startX = 0f,
-            endX = 360f,
+            endX = 420f,
         )
     } else {
         // 平装本：柔和封面色，中间露出纸张，边缘略深
         Brush.horizontalGradient(
             listOf(
-                board.copy(alpha = 0.85f),
-                boardLight.copy(alpha = 0.70f),
+                board.copy(alpha = 0.90f),
+                boardLight.copy(alpha = 0.78f),
                 GoaldayDesign.Paper,
                 GoaldayDesign.PaperWarm,
                 GoaldayDesign.Paper,
-                boardLight.copy(alpha = 0.70f),
-                board.copy(alpha = 0.85f),
+                boardLight.copy(alpha = 0.78f),
+                board.copy(alpha = 0.90f),
             ),
             startX = 0f,
-            endX = 680f,
+            endX = 720f,
         )
     }
 }
 
 @Composable
 private fun BoxScope.HardcoverSpine() {
-    val spineWidth = 28.dp
+    val spineWidth = 34.dp
+    // 书脊主体：深色皮革渐变，右侧与封面交界处有柔和高光
     Box(
         modifier = Modifier
             .align(Alignment.CenterStart)
@@ -168,36 +177,54 @@ private fun BoxScope.HardcoverSpine() {
             .background(
                 Brush.horizontalGradient(
                     listOf(
-                        GoaldayDesign.BookBoardDark.copy(alpha = 0.55f),
-                        GoaldayDesign.BookBoardDark.copy(alpha = 0.20f),
+                        GoaldayDesign.BookSpine,
+                        GoaldayDesign.BookSpineLight.copy(alpha = 0.70f),
+                        GoaldayDesign.BookBoardDark.copy(alpha = 0.35f),
                         Color.Transparent,
                     ),
+                    startX = 0f,
+                    endX = spineWidth.toPx(),
                 ),
             ),
     )
-    // 装订线：两股线模拟锁线装
-    val stitchColor = GoaldayDesign.BookBoardDark.copy(alpha = 0.35f)
+    // 装订凹槽：书脊与封面连接处的压痕阴影
     Box(
         modifier = Modifier
             .align(Alignment.CenterStart)
-            .padding(start = 8.dp, top = GoaldayDesign.Space5, bottom = GoaldayDesign.Space5)
-            .width(0.8.dp)
+            .padding(start = spineWidth - 4.dp)
+            .width(3.dp)
             .fillMaxHeight()
-            .background(stitchColor),
+            .background(
+                Brush.horizontalGradient(
+                    listOf(
+                        GoaldayDesign.BookBoardDark.copy(alpha = 0.28f),
+                        Color.Transparent,
+                    ),
+                    startX = 0f,
+                    endX = 3.dp.toPx(),
+                ),
+            ),
     )
-    Box(
-        modifier = Modifier
-            .align(Alignment.CenterStart)
-            .padding(start = 14.dp, top = GoaldayDesign.Space5, bottom = GoaldayDesign.Space5)
-            .width(0.6.dp)
-            .fillMaxHeight()
-            .background(stitchColor.copy(alpha = 0.65f)),
-    )
+    // 装订线：四股线模拟锁线装，更贴近真实精装书
+    val stitchColor = GoaldayDesign.BookSpine.copy(alpha = 0.55f)
+    val stitchPositions = listOf(6.dp, 12.dp, 19.dp, 25.dp)
+    stitchPositions.forEachIndexed { index, startPadding ->
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = startPadding, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
+                .width(if (index == 0) 1.dp else 0.7.dp)
+                .fillMaxHeight()
+                .background(
+                    if (index == 0) stitchColor else stitchColor.copy(alpha = 0.65f),
+                ),
+        )
+    }
 }
 
 @Composable
 private fun BoxScope.SoftcoverSpine() {
-    val spineWidth = 18.dp
+    val spineWidth = 22.dp
     Box(
         modifier = Modifier
             .align(Alignment.CenterStart)
@@ -206,27 +233,32 @@ private fun BoxScope.SoftcoverSpine() {
             .background(
                 Brush.horizontalGradient(
                     listOf(
-                        GoaldayDesign.BookBoardDark.copy(alpha = 0.32f),
-                        GoaldayDesign.BookBoardDark.copy(alpha = 0.10f),
+                        GoaldayDesign.BookBoardDark.copy(alpha = 0.38f),
+                        GoaldayDesign.BookBoardDark.copy(alpha = 0.16f),
                         Color.Transparent,
                     ),
+                    startX = 0f,
+                    endX = spineWidth.toPx(),
                 ),
             ),
     )
-    // 单条软脊压痕
-    Box(
-        modifier = Modifier
-            .align(Alignment.CenterStart)
-            .padding(start = 8.dp, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
-            .width(0.5.dp)
-            .fillMaxHeight()
-            .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.22f)),
-    )
+    // 软脊压痕：两股细线模拟胶装脊
+    listOf(7.dp, 13.dp).forEachIndexed { index, startPadding ->
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = startPadding, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
+                .width(if (index == 0) 0.8.dp else 0.5.dp)
+                .fillMaxHeight()
+                .background(GoaldayDesign.BookBoardDark.copy(alpha = if (index == 0) 0.26f else 0.16f)),
+        )
+    }
 }
 
 @Composable
 private fun BoxScope.PaperForeEdge(shellStyle: ShellStyle) {
-    val foreEdgeWidth = if (shellStyle == ShellStyle.BOOK) 10.dp else 6.dp
+    val foreEdgeWidth = if (shellStyle == ShellStyle.BOOK) 12.dp else 8.dp
+    val edgeColor = GoaldayDesign.PaperAged
     Box(
         modifier = Modifier
             .align(Alignment.CenterEnd)
@@ -236,12 +268,31 @@ private fun BoxScope.PaperForeEdge(shellStyle: ShellStyle) {
                 Brush.horizontalGradient(
                     listOf(
                         Color.Transparent,
-                        GoaldayDesign.PaperAged.copy(alpha = 0.25f),
-                        GoaldayDesign.PaperAged.copy(alpha = if (shellStyle == ShellStyle.BOOK) 0.42f else 0.32f),
+                        edgeColor.copy(alpha = 0.18f),
+                        edgeColor.copy(alpha = if (shellStyle == ShellStyle.BOOK) 0.46f else 0.34f),
+                        edgeColor.copy(alpha = if (shellStyle == ShellStyle.BOOK) 0.52f else 0.40f),
                     ),
+                    startX = 0f,
+                    endX = foreEdgeWidth.toPx(),
                 ),
             ),
     )
+    // 书页层叠细线：模拟纸张堆叠的横纹
+    val lineCount = if (shellStyle == ShellStyle.BOOK) 5 else 3
+    repeat(lineCount) { index ->
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = (1.5f + index * 1.8f).dp)
+                .width(0.6.dp)
+                .fillMaxHeight()
+                .background(
+                    GoaldayDesign.PaperAged.copy(
+                        alpha = (0.18f - index * 0.025f).coerceAtLeast(0.08f),
+                    ),
+                ),
+        )
+    }
 }
 
 @Composable
@@ -260,37 +311,42 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 val width = size.width
                 val height = size.height
                 val centerX = width / 2f
-                val lineColor = GoaldayDesign.PaperLine.copy(alpha = 0.28f)
                 val stroke = 1.dp.toPx().coerceAtMost(1.2f)
 
-                // 中央装订阴影：真实书脊处纸张凹陷
+                // 中央装订阴影：真实书脊处纸张凹陷，比原来更宽更深
                 drawRect(
                     brush = Brush.horizontalGradient(
                         listOf(
                             Color.Transparent,
-                            Color.Black.copy(alpha = 0.03f),
-                            Color.Black.copy(alpha = 0.09f),
-                            Color.Black.copy(alpha = 0.03f),
+                            Color.Black.copy(alpha = 0.04f),
+                            Color.Black.copy(alpha = 0.12f),
+                            Color.Black.copy(alpha = 0.04f),
                             Color.Transparent,
                         ),
-                        startX = centerX - 18.dp.toPx(),
-                        endX = centerX + 18.dp.toPx(),
+                        startX = centerX - 22.dp.toPx(),
+                        endX = centerX + 22.dp.toPx(),
                     ),
-                    size = androidx.compose.ui.geometry.Size(36.dp.toPx(), height),
-                    topLeft = Offset(centerX - 18.dp.toPx(), 0f),
+                    size = androidx.compose.ui.geometry.Size(44.dp.toPx(), height),
+                    topLeft = Offset(centerX - 22.dp.toPx(), 0f),
                 )
 
-                // 中央装订线
+                // 中央装订线：双股线模拟书脊折痕
                 drawLine(
                     color = GoaldayDesign.BlackOverlayHairline,
-                    start = Offset(centerX, 0f),
-                    end = Offset(centerX, height),
+                    start = Offset(centerX - 0.5f, 0f),
+                    end = Offset(centerX - 0.5f, height),
                     strokeWidth = stroke,
+                )
+                drawLine(
+                    color = GoaldayDesign.BlackOverlayHairline.copy(alpha = 0.6f),
+                    start = Offset(centerX + 0.5f, 0f),
+                    end = Offset(centerX + 0.5f, height),
+                    strokeWidth = stroke * 0.7f,
                 )
 
                 // 页面轻微纸张纹理：使用非常淡的噪点感竖线
-                val textureColor = GoaldayDesign.PaperAged.copy(alpha = 0.06f)
-                val textureSpacing = 6.dp.toPx()
+                val textureColor = GoaldayDesign.PaperAged.copy(alpha = 0.05f)
+                val textureSpacing = 5.dp.toPx()
                 var x = 0f
                 while (x < width) {
                     drawLine(
@@ -305,22 +361,22 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 // 顶部受光：纸张上边缘有轻微反光
                 drawRect(
                     brush = Brush.verticalGradient(
-                        listOf(GoaldayDesign.WhiteHighlight.copy(alpha = 0.35f), Color.Transparent),
+                        listOf(GoaldayDesign.WhiteHighlight.copy(alpha = 0.40f), Color.Transparent),
                     ),
-                    size = androidx.compose.ui.geometry.Size(width, 20.dp.toPx()),
+                    size = androidx.compose.ui.geometry.Size(width, 24.dp.toPx()),
                 )
 
                 // 底部厚度阴影
                 drawRect(
                     brush = Brush.verticalGradient(
-                        listOf(Color.Transparent, GoaldayDesign.BookBoardDark.copy(alpha = 0.06f)),
+                        listOf(Color.Transparent, GoaldayDesign.BookBoardDark.copy(alpha = 0.08f)),
                     ),
-                    topLeft = Offset(0f, height - 20.dp.toPx()),
-                    size = androidx.compose.ui.geometry.Size(width, 20.dp.toPx()),
+                    topLeft = Offset(0f, height - 24.dp.toPx()),
+                    size = androidx.compose.ui.geometry.Size(width, 24.dp.toPx()),
                 )
             },
     ) {
-        // 左页：略暖
+        // 左页：暖色调，靠书脊处略暗
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
@@ -328,7 +384,7 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 .fillMaxWidth(0.5f)
                 .background(GoaldayDesign.PaperGradient),
         )
-        // 右页：略亮
+        // 右页：亮色调，翻开时受光更多
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -336,9 +392,13 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
                 .fillMaxWidth(0.5f)
                 .background(
                     Brush.linearGradient(
-                        listOf(GoaldayDesign.PaperAged, GoaldayDesign.PaperWarm, GoaldayDesign.Paper),
+                        listOf(
+                            GoaldayDesign.PaperWarm.copy(alpha = 0.70f),
+                            GoaldayDesign.Paper,
+                            GoaldayDesign.Paper.copy(alpha = 0.95f),
+                        ),
                         start = Offset.Zero,
-                        end = Offset(320f, 260f),
+                        end = Offset(340f, 280f),
                     ),
                 ),
         )
