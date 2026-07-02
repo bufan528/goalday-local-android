@@ -208,7 +208,7 @@ private fun ScheduleWidgetConfigureScreen(
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
                 .background(Color(selectedStyle.accentColor))
                 .clickable { onConfirm(config) }
-                .padding(vertical = 13.dp),
+                .padding(vertical = GoaldayDesign.Space3 + 1.dp),
         )
     }
 }
@@ -221,7 +221,7 @@ private fun WidgetKindSignalStrip(kind: WidgetConfigureKind) {
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.CoverWhiteOverlayMedium)
             .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
-            .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space2),
+            .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space2),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Row(
@@ -258,7 +258,7 @@ private fun WidgetSignalPill(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(color.copy(alpha = 0.10f))
-            .padding(horizontal = 7.dp, vertical = 5.dp),
+            .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1 + 1.dp),
     )
 }
 
@@ -333,7 +333,7 @@ private fun WidgetPreviewCard(
                 modifier = Modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.CoverWhiteOverlay60)
-                    .padding(horizontal = 9.dp, vertical = 5.dp),
+                    .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space1 + 1.dp),
             )
         }
         if (kind == WidgetConfigureKind.DIARY_ADD) {
@@ -423,7 +423,7 @@ private fun PreviewScheduleRow(
             .fillMaxWidth()
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.CoverWhiteOverlay38)
-            .padding(horizontal = 9.dp, vertical = 6.dp),
+            .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space1 + 2.dp),
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -498,7 +498,7 @@ private fun <T> SegmentedPicker(
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
                     .background(if (active) GoaldayDesign.Pink else Color.Transparent)
                     .clickable { onSelect(item) }
-                    .padding(vertical = 9.dp),
+                    .padding(vertical = GoaldayDesign.Space2 + 1.dp),
             )
         }
     }

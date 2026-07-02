@@ -28,7 +28,7 @@ fun GoaldayTopBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .padding(top = 6.dp)
+            .padding(top = GoaldayDesign.Space1 + 2.dp)
             .fillMaxWidth(),
     ) {
         Row(
@@ -50,7 +50,7 @@ fun GoaldayTopBar(
                 modifier = Modifier
                     .background(GoaldayDesign.PrimaryAction, RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .clickable(onClick = onRightPrimaryClick)
-                    .padding(horizontal = GoaldayDesign.Space3, vertical = 7.dp),
+                    .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2 - 1.dp),
             )
         }
     }

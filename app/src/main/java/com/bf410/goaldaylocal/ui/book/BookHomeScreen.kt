@@ -556,7 +556,7 @@ private fun LibraryView(
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                 .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.4f))
                 .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusL))
-                .padding(horizontal = GoaldayDesign.Space3, vertical = 9.dp),
+                .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2 + 1.dp),
         )
         Spacer(Modifier.height(GoaldayDesign.Space3 + 2.dp))
         Column(
@@ -1039,7 +1039,7 @@ private fun BookDetailView(
                         modifier = Modifier
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .clickable(onClick = onShowInspiration)
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
                     ) {
                         Icon(Icons.Filled.Lightbulb, contentDescription = "灵感", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
                         Text("灵感", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
@@ -1052,7 +1052,7 @@ private fun BookDetailView(
                         modifier = Modifier
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .clickable(onClick = onToggleManagePanel)
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
                     ) {
                         Icon(Icons.Filled.Settings, contentDescription = "管理", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
                         Text("管理", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
@@ -1074,7 +1074,7 @@ private fun BookDetailView(
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                     .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.96f))
                     .border(0.7.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusL))
-                    .padding(horizontal = 9.dp, vertical = GoaldayDesign.Space2),
+                    .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space2),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
                 Row(
@@ -1141,7 +1141,7 @@ private fun BookDetailView(
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .background(if (idx == segmentPageIndex) GoaldayDesign.BorderColor.copy(alpha = 0.30f) else GoaldayDesign.adaptiveSurface.copy(alpha = 0.09f))
                             .clickable { viewModel.setPage(index) }
-                            .padding(horizontal = GoaldayDesign.Space3, vertical = 7.dp),
+                            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2 - 1.dp),
                     )
                 }
             }
@@ -1417,7 +1417,7 @@ private fun TargetDetailRouteOverlay(
                 .fillMaxWidth()
                 .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.8f))
                 .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(bottomStart = 22.dp, bottomEnd = 22.dp))
-                .padding(horizontal = GoaldayDesign.Space4 - 2.dp, vertical = 11.dp),
+                .padding(horizontal = GoaldayDesign.Space4 - 2.dp, vertical = GoaldayDesign.Space3 - 1.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -1428,7 +1428,7 @@ private fun TargetDetailRouteOverlay(
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(GoaldayDesign.BorderColor.copy(alpha = 0.06f))
                     .clickable(onClick = onClose)
-                    .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 6.dp),
+                    .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = GoaldayDesign.Space1 + 2.dp),
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回", tint = GoaldayDesign.adaptiveInkSecondary, modifier = Modifier.size(14.dp))
                 Text(
@@ -1644,7 +1644,7 @@ private fun TargetDetailSummaryStrip(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.8f))
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusXL))
-            .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 9.dp),
+            .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = GoaldayDesign.Space2 + 1.dp),
         horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1686,7 +1686,7 @@ private fun TargetDetailMetric(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
             .background(if (active) GoaldayDesign.Positive.copy(alpha = 0.08f) else GoaldayDesign.PinkTint)
-            .padding(horizontal = GoaldayDesign.Space2, vertical = 7.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space2 - 1.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -1784,7 +1784,7 @@ private fun TargetOptionRow(
             .background(accent.copy(alpha = 0.10f))
             .border(0.7.dp, accent.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .clickable(onClick = onClick)
-            .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 9.dp),
+            .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = GoaldayDesign.Space2 + 1.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1992,7 +1992,7 @@ private fun InspirationCenterView(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                         .background(GoaldayDesign.BorderColor.copy(alpha = 0.06f))
-                        .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 7.dp),
+                        .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = GoaldayDesign.Space2 - 1.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -2198,7 +2198,7 @@ private fun ActionChip(
             .background(bgColor)
             .border(0.6.dp, color.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusPill))
             .clickable(onClick = onClick)
-            .padding(horizontal = 11.dp, vertical = 6.dp),
+            .padding(horizontal = GoaldayDesign.Space3 - 1.dp, vertical = GoaldayDesign.Space1 + 2.dp),
     )
 }
 
@@ -2291,7 +2291,7 @@ private fun CreatePageDialog(
                                     }
                                     type = key
                                 }
-                                .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = 6.dp),
+                                .padding(horizontal = GoaldayDesign.Space3 - 2.dp, vertical = GoaldayDesign.Space1 + 2.dp),
                         )
                     }
                 }

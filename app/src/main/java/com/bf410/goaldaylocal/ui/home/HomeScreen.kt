@@ -343,7 +343,7 @@ private fun PromoHeader(
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 6.dp, top = GoaldayDesign.Space2, bottom = GoaldayDesign.Space2)
+                    .padding(end = GoaldayDesign.Space1 + 2.dp, top = GoaldayDesign.Space2, bottom = GoaldayDesign.Space2)
                     .size(128.dp),
             )
         }
@@ -360,7 +360,7 @@ private fun PromoHeader(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = GoaldayDesign.Space4, vertical = 14.dp),
+                .padding(horizontal = GoaldayDesign.Space4, vertical = GoaldayDesign.Space3 + 2.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -405,7 +405,7 @@ private fun HomeHeroPill(label: String, color: Color) {
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .background(GoaldayDesign.adaptiveWhiteOverlayMedium, RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 - 1.dp),
     )
 }
 
@@ -474,7 +474,7 @@ private fun PaperPlanner(
                         .fillMaxWidth()
                         .background(GoaldayDesign.PinkSoft, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .padding(horizontal = 9.dp, vertical = 7.dp),
+                        .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space2 - 1.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
@@ -522,7 +522,7 @@ private fun PaperPlanner(
             Column(
                 modifier = Modifier
                     .weight(1.18f)
-                    .padding(start = 10.dp),
+                    .padding(start = GoaldayDesign.Space2 + 2.dp),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
             ) {
                 Text("待办", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
@@ -573,7 +573,7 @@ private fun PaperPlanner(
                         .onGloballyPositioned { onDoneBounds(it.boundsInRoot()) }
                         .background(if (activeDoneDrop) GoaldayDesign.GreenSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .border(0.7.dp, if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .padding(horizontal = 6.dp, vertical = 5.dp),
+                        .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1 + 1.dp),
                 ) {
                     if (doneEntries.isEmpty()) {
                         EmptyHint("把完成的事项拖入")
@@ -647,7 +647,7 @@ private fun TimelineDayRow(
                 RoundedCornerShape(GoaldayDesign.RadiusS),
             )
             .combinedClickable(onClick = onSelect, onLongClick = onOpen)
-            .padding(horizontal = 6.dp, vertical = 6.dp),
+            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1 + 2.dp),
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalAlignment = Alignment.Top,
     ) {
@@ -659,7 +659,7 @@ private fun TimelineDayRow(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .background(if (selected) GoaldayDesign.Pink else GoaldayDesign.PinkTint, RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 - 1.dp),
             )
             Text(week, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
         }
@@ -725,7 +725,7 @@ private fun QuickInput(
                         .fillMaxWidth()
                         .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusS))
                         .border(0.7.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
+                        .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 + 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
@@ -765,7 +765,7 @@ private fun DateChipRow(
             modifier = Modifier
                 .background(if (day == selectedDay) GoaldayDesign.Pink else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .clickable { onSelectDay(day) }
-                .padding(horizontal = 6.dp, vertical = 3.dp),
+                .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1 - 1.dp),
         )
     }
 }
@@ -779,7 +779,7 @@ private fun PlannerMetric(
     Column(
         modifier = Modifier
             .background(color.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusM))
-            .padding(horizontal = GoaldayDesign.Space2, vertical = 5.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 + 1.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
@@ -839,7 +839,7 @@ private fun TaskLine(
                     onDragCancel = onDragCancel,
                 )
             }
-            .padding(horizontal = GoaldayDesign.Space2, vertical = 7.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space2 - 1.dp),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
@@ -847,7 +847,7 @@ private fun TaskLine(
             modifier = Modifier
                 .graphicsLayer { scaleX = bounce.value; scaleY = bounce.value }
                 .background(if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.Pink, RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .padding(horizontal = 6.dp, vertical = 2.dp),
+                .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

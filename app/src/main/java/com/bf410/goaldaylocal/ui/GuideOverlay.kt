@@ -150,7 +150,7 @@ internal fun GuideOverlay(
                     ),
                 ),
             )
-            .padding(horizontal = 18.dp, vertical = GoaldayDesign.Space4),
+            .padding(horizontal = GoaldayDesign.Space4 + 2.dp, vertical = GoaldayDesign.Space4),
     ) {
         Column(
             modifier = Modifier
@@ -205,7 +205,7 @@ internal fun GuideOverlay(
                             .clickable {
                                 if (index > 0) index -= 1
                             }
-                            .padding(horizontal = 10.dp, vertical = 7.dp),
+                            .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space2 - 1.dp),
                     )
                     Text(
                         if (index == pages.lastIndex) "完成" else "下一步",
@@ -222,7 +222,7 @@ internal fun GuideOverlay(
                                     index += 1
                                 }
                             }
-                            .padding(horizontal = 18.dp, vertical = 9.dp),
+                            .padding(horizontal = GoaldayDesign.Space4 + 2.dp, vertical = GoaldayDesign.Space2 + 1.dp),
                     )
                 }
                 Text(
@@ -239,7 +239,7 @@ internal fun GuideOverlay(
                             onClose()
                             onOpenTarget(page.target)
                         }
-                        .padding(horizontal = GoaldayDesign.Space3, vertical = 10.dp),
+                        .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2 + 2.dp),
                 )
             }
         }
@@ -319,7 +319,7 @@ private fun GuideStepTimeline(
                             if (selected) step.tone.copy(alpha = 0.28f) else GoaldayDesign.BorderColor.copy(alpha = 0.09f),
                             RoundedCornerShape(GoaldayDesign.RadiusM),
                         )
-                        .padding(horizontal = 7.dp, vertical = 6.dp),
+                        .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1 + 2.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
@@ -331,7 +331,7 @@ private fun GuideStepTimeline(
                         modifier = Modifier
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .background(if (selected) step.tone else GoaldayDesign.BorderColor.copy(alpha = 0.07f))
-                            .padding(horizontal = 7.dp, vertical = 2.dp),
+                            .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = 2.dp),
                     )
                     Text(
                         step.label,
@@ -353,7 +353,7 @@ private fun GuideActionPreview(page: GuidePage) {
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.80f))
             .border(0.7.dp, page.tone.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusL))
-            .padding(horizontal = 11.dp, vertical = 9.dp),
+            .padding(horizontal = GoaldayDesign.Space3 - 1.dp, vertical = GoaldayDesign.Space2 + 1.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         GuidePreviewRow("入口", page.action, page.tone)
@@ -392,7 +392,7 @@ private fun GuideTaskRail(page: GuidePage) {
                 modifier = Modifier
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .background(page.tone.copy(alpha = 0.12f))
-                    .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 - 1.dp),
             )
         }
         page.tasks.forEachIndexed { taskIndex, task ->
@@ -445,7 +445,7 @@ private fun GuidePreviewRow(
             modifier = Modifier
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(tone.copy(alpha = 0.12f))
-                .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
+                .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 - 1.dp),
         )
         Text(value, color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
     }
@@ -613,7 +613,7 @@ private fun GuideIllustration(
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 82.dp, end = 30.dp)
+                .padding(top = 82.dp, end = GoaldayDesign.Space8 - 2.dp)
                 .size(46.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(page.tone.copy(alpha = 0.88f)),
@@ -629,7 +629,7 @@ private fun GuideIllustration(
                 .align(Alignment.TopStart)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(page.tone.copy(alpha = 0.78f))
-                .padding(horizontal = 10.dp, vertical = 5.dp),
+                .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space1 + 1.dp),
         )
         GuideLottieStatusPill(
             meta = meta,
@@ -648,7 +648,7 @@ private fun GuideIllustration(
                 .align(Alignment.BottomStart)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.70f))
-                .padding(horizontal = GoaldayDesign.Space3, vertical = 7.dp),
+                .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2 - 1.dp),
         )
     }
 }
@@ -666,7 +666,7 @@ private fun GuideLottieStatusPill(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.72f))
             .border(0.8.dp, tone.copy(alpha = 0.24f), RoundedCornerShape(GoaldayDesign.RadiusL))
-            .padding(horizontal = 10.dp, vertical = 7.dp),
+            .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space2 - 1.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Text(

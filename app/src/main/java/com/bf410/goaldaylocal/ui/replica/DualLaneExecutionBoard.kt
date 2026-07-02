@@ -80,7 +80,7 @@ fun DualLaneExecutionBoard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(GoaldayDesign.adaptiveSurfaceSoft)
-                    .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
+                    .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 + 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -95,7 +95,7 @@ fun DualLaneExecutionBoard(
                         .weight(1f)
                         .border(0.5.dp, GoaldayDesign.adaptiveDivider)
                         .clickable(enabled = onTimelineRowClick != null) { onTimelineRowClick?.invoke(index) }
-                        .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
+                        .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 + 2.dp),
                     verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), verticalAlignment = Alignment.CenterVertically) {
@@ -141,7 +141,7 @@ fun DualLaneExecutionBoard(
                     rightHeader,
                     modifier = Modifier
                         .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .padding(horizontal = 7.dp, vertical = 3.dp),
+                        .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1 - 1.dp),
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), verticalAlignment = Alignment.CenterVertically, content = topActions)
@@ -184,7 +184,7 @@ private fun BoardRow(
         modifier = Modifier
             .fillMaxWidth()
             .background(if (selected) GoaldayDesign.BorderColor.copy(alpha = 0.09f) else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = 6.dp, vertical = GoaldayDesign.Space1),
+            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.Top,
     ) {

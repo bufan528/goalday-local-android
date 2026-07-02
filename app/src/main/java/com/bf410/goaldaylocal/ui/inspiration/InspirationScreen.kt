@@ -123,7 +123,7 @@ fun InspirationScreen(
                 .fillMaxWidth()
                 .background(GoaldayDesign.PaperGlass, RoundedCornerShape(GoaldayDesign.RadiusL))
                 .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusL))
-                .padding(horizontal = 7.dp, vertical = 6.dp),
+                .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1 + 2.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             listOf("灵感中心", "直接保存", "翻页").forEachIndexed { idx, label ->
@@ -134,7 +134,7 @@ fun InspirationScreen(
                         .weight(1f)
                         .background(if (mode == target) Color.White else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable { mode = target }
-                        .padding(vertical = 6.dp),
+                        .padding(vertical = GoaldayDesign.Space1 + 2.dp),
                     color = if (mode == target) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkMuted,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
@@ -265,7 +265,7 @@ private fun InspirationCatalogStrip(
             .fillMaxWidth()
             .background(GoaldayDesign.PaperGlassMedium, RoundedCornerShape(GoaldayDesign.RadiusL))
             .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusL))
-            .padding(horizontal = 10.dp, vertical = GoaldayDesign.Space2),
+            .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space2),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -310,7 +310,7 @@ private fun InspirationHeroCover(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = GoaldayDesign.Space4, vertical = 14.dp),
+                .padding(horizontal = GoaldayDesign.Space4, vertical = GoaldayDesign.Space3 + 2.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -321,7 +321,7 @@ private fun InspirationHeroCover(
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
                         .background(GoaldayDesign.CoverWhiteOverlaySubtle, RoundedCornerShape(GoaldayDesign.RadiusPill))
-                        .padding(horizontal = GoaldayDesign.Space2, vertical = 3.dp),
+                        .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 - 1.dp),
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -374,7 +374,7 @@ private fun InspirationCategoryRail(
                     .background(if (selected) GoaldayDesign.Pink else GoaldayDesign.PaperGlassMedium, RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .border(0.6.dp, if (selected) Color.White.copy(alpha = 0.45f) else GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .clickable { onSelect(category) }
-                    .padding(horizontal = GoaldayDesign.Space3, vertical = 6.dp),
+                    .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space1 + 2.dp),
             )
         }
     }
@@ -443,7 +443,7 @@ private fun InspirationCoverCard(
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
                     .background(GoaldayDesign.WhiteOverlayMedium, RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                    .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
             ) {
                 Text(template.category, color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
@@ -474,7 +474,7 @@ private fun InspirationDraftPanel(
                 .fillMaxWidth()
                 .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusXL))
                 .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusXL))
-                .padding(horizontal = 10.dp, vertical = 10.dp),
+                .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space2 + 2.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -507,7 +507,7 @@ private fun InspirationDraftPanel(
                     .fillMaxWidth()
                     .background(if (index == focusedIndex) GoaldayDesign.PinkSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
                     .clickable { onFocusedIndexChange(index) }
-                    .padding(horizontal = 6.dp, vertical = 5.dp),
+                    .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1 + 1.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -529,7 +529,7 @@ private fun InspirationDraftPanel(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(GoaldayDesign.adaptiveSurfaceSoft, RoundedCornerShape(GoaldayDesign.RadiusM))
-                    .padding(horizontal = 9.dp, vertical = GoaldayDesign.Space2),
+                    .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space2),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -548,7 +548,7 @@ private fun InspirationDraftPanel(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .padding(horizontal = 9.dp, vertical = 7.dp),
+                    .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space2 - 1.dp),
                 decorationBox = { inner ->
                     if (inputText.isBlank()) Text("输入灵感内容，点 + 插入", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)
                     inner()
@@ -563,14 +563,14 @@ private fun InspirationDraftPanel(
                     modifier = Modifier
                         .background(GoaldayDesign.adaptiveInkPrimary, RoundedCornerShape(GoaldayDesign.RadiusPill))
                         .clickable(onClick = onImport)
-                        .padding(horizontal = GoaldayDesign.Space3, vertical = 6.dp),
+                        .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space1 + 2.dp),
                 )
                 Text(
                     "导入并打开手账",
                     color = GoaldayDesign.Pink,
                     modifier = Modifier
                         .clickable(onClick = onImportAndOpen)
-                        .padding(horizontal = 6.dp, vertical = GoaldayDesign.Space1),
+                        .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1),
                 )
             }
     }

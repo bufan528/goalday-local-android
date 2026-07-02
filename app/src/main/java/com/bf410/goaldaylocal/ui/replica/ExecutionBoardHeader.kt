@@ -24,7 +24,7 @@ fun ExecutionBoardHeader(
         modifier = Modifier
             .fillMaxWidth()
             .background(GoaldayDesign.PinkSoft, RoundedCornerShape(GoaldayDesign.RadiusM))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space1 + 2.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

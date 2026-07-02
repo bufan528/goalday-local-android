@@ -225,7 +225,7 @@ internal fun TargetDetailReplicaPage(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                                 .background(if (checked) GoaldayDesign.Positive else tint.copy(alpha = 0.18f))
-                                .padding(horizontal = 7.dp, vertical = GoaldayDesign.Space1),
+                                .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1),
                         )
                         Icon(
                             imageVector = if (checked) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
@@ -266,7 +266,7 @@ internal fun TargetDetailReplicaPage(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .background(GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
-                                    .padding(horizontal = 7.dp, vertical = 5.dp),
+                                    .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1 + 1.dp),
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                                 TextActionButton("保存", GoaldayDesign.adaptiveInkSecondary) {
@@ -313,7 +313,7 @@ internal fun TargetDetailReplicaPage(
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.25f))
                             .border(0.45.dp, GoaldayDesign.BorderColor.copy(alpha = 0.07f), RoundedCornerShape(GoaldayDesign.RadiusS))
-                            .padding(horizontal = 7.dp, vertical = 5.dp),
+                            .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1 + 1.dp),
                         decorationBox = { inner ->
                             if (noteDraft.isBlank()) {
                                 Text("备注 / 做法 / 灵感", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
@@ -348,7 +348,7 @@ internal fun TargetDetailReplicaPage(
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .background(GoaldayDesign.adaptiveSurface)
                 .border(0.6.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
-                .padding(horizontal = GoaldayDesign.Space2, vertical = 6.dp),
+                .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 + 2.dp),
             horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -401,7 +401,7 @@ private fun TargetLedgerCell(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(color.copy(alpha = 0.11f))
             .border(0.7.dp, color.copy(alpha = 0.22f), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = 7.dp, vertical = 6.dp),
+            .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1 + 2.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -466,7 +466,7 @@ private fun TargetScheduleChip(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(GoaldayDesign.PinkTint)
             .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp, vertical = 3.dp),
+            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1 - 1.dp),
     )
 }
 
@@ -485,7 +485,7 @@ private fun TargetDeadlineChip(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
             .background(if (active) GoaldayDesign.Positive else GoaldayDesign.adaptiveDivider)
             .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp, vertical = 3.dp),
+            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1 - 1.dp),
     )
 }
 
@@ -507,6 +507,6 @@ private fun TextActionButton(
         modifier = Modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .clickable(onClick = onClick)
-            .padding(horizontal = GoaldayDesign.Space2, vertical = 5.dp),
+            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 + 1.dp),
     )
 }

@@ -26,7 +26,7 @@ fun GoaldaySegmentBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(GoaldayDesign.adaptiveSurfaceSoft, RoundedCornerShape(GoaldayDesign.RadiusM))
-            .padding(horizontal = 10.dp, vertical = 9.dp),
+            .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space2 + 1.dp),
         horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -39,7 +39,7 @@ fun GoaldaySegmentBar(
                         RoundedCornerShape(GoaldayDesign.RadiusS),
                     )
                     .clickable { onSelect(index) }
-                    .padding(vertical = 6.dp),
+                    .padding(vertical = GoaldayDesign.Space1 + 2.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
