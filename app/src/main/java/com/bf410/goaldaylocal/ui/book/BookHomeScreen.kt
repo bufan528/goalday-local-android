@@ -73,8 +73,8 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
 private val bookPalette = GoaldayDesign.BookCoverPalette
 
 private enum class BookSegment(val label: String) {
-    WEEK("日程"),
-    DIARY("日记"),
+    WEEK("周"),
+    DIARY("记录"),
     LIST("清单"),
 }
 

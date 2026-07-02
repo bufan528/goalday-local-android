@@ -1,3 +1,23 @@
 <resources>
     <string name="app_name">Goalday Local</string>
+
+    <!-- 手账空状态引导提示语（对齐原版 schedule_empty_hints 资源，按日期轮换避免重复疲劳） -->
+    <string-array name="schedule_empty_hints">
+        <item>今天最重要的一件事是？</item>
+        <item>写下你现在最想完成的事</item>
+        <item>先完成一个小目标 👇</item>
+        <item>3分钟内能完成的事？</item>
+        <item>今天有哪些必须完成的小任务？</item>
+        <item>今天做一件让自己开心的事吧</item>
+        <item>今天想尝试的新技能或小技巧是什么？</item>
+        <item>今天想给自己留出什么独处时间？</item>
+        <item>写下今天的待办优先级前三项</item>
+    </string-array>
+
+    <!-- 目标详情页展示模式选项（对齐原版 target_detail_options 资源） -->
+    <string-array name="target_detail_options">
+        <item>显示已完成</item>
+        <item>显示完成时间和日记</item>
+        <item>显示序号</item>
+    </string-array>
 </resources>
