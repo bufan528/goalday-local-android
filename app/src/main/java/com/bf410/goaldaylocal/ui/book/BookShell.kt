@@ -22,6 +22,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 
@@ -175,16 +176,18 @@ private fun BoxScope.HardcoverSpine() {
             .width(spineWidth)
             .fillMaxHeight()
             .background(
-                Brush.horizontalGradient(
-                    listOf(
-                        GoaldayDesign.BookSpine,
-                        GoaldayDesign.BookSpineLight.copy(alpha = 0.70f),
-                        GoaldayDesign.BookBoardDark.copy(alpha = 0.35f),
-                        Color.Transparent,
-                    ),
-                    startX = 0f,
-                    endX = spineWidth.toPx(),
-                ),
+                with(LocalDensity.current) {
+                    Brush.horizontalGradient(
+                        listOf(
+                            GoaldayDesign.BookSpine,
+                            GoaldayDesign.BookSpineLight.copy(alpha = 0.70f),
+                            GoaldayDesign.BookBoardDark.copy(alpha = 0.35f),
+                            Color.Transparent,
+                        ),
+                        startX = 0f,
+                        endX = spineWidth.toPx(),
+                    )
+                },
             ),
     )
     // 装订凹槽：书脊与封面连接处的压痕阴影
@@ -195,14 +198,16 @@ private fun BoxScope.HardcoverSpine() {
             .width(3.dp)
             .fillMaxHeight()
             .background(
-                Brush.horizontalGradient(
-                    listOf(
-                        GoaldayDesign.BookBoardDark.copy(alpha = 0.28f),
-                        Color.Transparent,
-                    ),
-                    startX = 0f,
-                    endX = 3.dp.toPx(),
-                ),
+                with(LocalDensity.current) {
+                    Brush.horizontalGradient(
+                        listOf(
+                            GoaldayDesign.BookBoardDark.copy(alpha = 0.28f),
+                            Color.Transparent,
+                        ),
+                        startX = 0f,
+                        endX = 3.dp.toPx(),
+                    )
+                },
             ),
     )
     // 装订线：四股线模拟锁线装，更贴近真实精装书
@@ -231,15 +236,17 @@ private fun BoxScope.SoftcoverSpine() {
             .width(spineWidth)
             .fillMaxHeight()
             .background(
-                Brush.horizontalGradient(
-                    listOf(
-                        GoaldayDesign.BookBoardDark.copy(alpha = 0.38f),
-                        GoaldayDesign.BookBoardDark.copy(alpha = 0.16f),
-                        Color.Transparent,
-                    ),
-                    startX = 0f,
-                    endX = spineWidth.toPx(),
-                ),
+                with(LocalDensity.current) {
+                    Brush.horizontalGradient(
+                        listOf(
+                            GoaldayDesign.BookBoardDark.copy(alpha = 0.38f),
+                            GoaldayDesign.BookBoardDark.copy(alpha = 0.16f),
+                            Color.Transparent,
+                        ),
+                        startX = 0f,
+                        endX = spineWidth.toPx(),
+                    )
+                },
             ),
     )
     // 软脊压痕：两股细线模拟胶装脊
@@ -265,16 +272,18 @@ private fun BoxScope.PaperForeEdge(shellStyle: ShellStyle) {
             .width(foreEdgeWidth)
             .fillMaxHeight()
             .background(
-                Brush.horizontalGradient(
-                    listOf(
-                        Color.Transparent,
-                        edgeColor.copy(alpha = 0.18f),
-                        edgeColor.copy(alpha = if (shellStyle == ShellStyle.BOOK) 0.46f else 0.34f),
-                        edgeColor.copy(alpha = if (shellStyle == ShellStyle.BOOK) 0.52f else 0.40f),
-                    ),
-                    startX = 0f,
-                    endX = foreEdgeWidth.toPx(),
-                ),
+                with(LocalDensity.current) {
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color.Transparent,
+                            edgeColor.copy(alpha = 0.18f),
+                            edgeColor.copy(alpha = if (shellStyle == ShellStyle.BOOK) 0.46f else 0.34f),
+                            edgeColor.copy(alpha = if (shellStyle == ShellStyle.BOOK) 0.52f else 0.40f),
+                        ),
+                        startX = 0f,
+                        endX = foreEdgeWidth.toPx(),
+                    )
+                },
             ),
     )
     // 书页层叠细线：模拟纸张堆叠的横纹

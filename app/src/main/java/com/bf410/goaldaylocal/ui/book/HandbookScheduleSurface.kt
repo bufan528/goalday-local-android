@@ -697,7 +697,7 @@ private fun ScheduleStatusDot(color: Color) {
  */
 internal fun Modifier.handbookPaperRuling(
     scrollState: ScrollState? = null,
-    lineSpacingDp: androidx.compose.ui.unit.Dp = 24.dp,
+    lineSpacingDp: androidx.compose.ui.unit.Dp = GoaldayDesign.Space6,
     lineColor: Color = GoaldayDesign.InkMuted.copy(alpha = 0.10f),
 ): Modifier = this.drawBehind {
     val spacingPx = lineSpacingDp.toPx()
