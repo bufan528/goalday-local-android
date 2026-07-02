@@ -69,7 +69,7 @@ fun DualLaneExecutionBoard(
             .fillMaxWidth()
             .height(472.dp)
             .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusL))
-            .border(1.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusL)),
+            .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusL)),
     ) {
         Column(
             modifier = Modifier
@@ -93,7 +93,7 @@ fun DualLaneExecutionBoard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .border(0.5.dp, GoaldayDesign.adaptiveDivider)
+                        .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveDivider)
                         .clickable(enabled = onTimelineRowClick != null) { onTimelineRowClick?.invoke(index) }
                         .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 + 2.dp),
                     verticalArrangement = Arrangement.spacedBy(3.dp),
@@ -128,7 +128,7 @@ fun DualLaneExecutionBoard(
             modifier = Modifier
                 .weight(1.08f)
                 .fillMaxHeight()
-                .border(1.dp, GoaldayDesign.adaptiveDivider),
+                .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveDivider),
         ) {
             Row(
                 modifier = Modifier

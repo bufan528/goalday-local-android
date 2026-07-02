@@ -122,7 +122,7 @@ fun InspirationScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(GoaldayDesign.PaperGlass, RoundedCornerShape(GoaldayDesign.RadiusL))
-                .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusL))
+                .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusL))
                 .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1 + 2.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
@@ -242,7 +242,7 @@ private fun InspirationUnavailableState() {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(GoaldayDesign.PaperGlassStrong, RoundedCornerShape(GoaldayDesign.Radius2XL))
-                .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.Radius2XL))
+                .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.Radius2XL))
                 .padding(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
@@ -263,9 +263,9 @@ private fun InspirationCatalogStrip(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(GoaldayDesign.PaperGlassMedium, RoundedCornerShape(GoaldayDesign.RadiusL))
-            .border(0.6.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusL))
-            .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space2),
+                .background(GoaldayDesign.PaperGlassMedium, RoundedCornerShape(GoaldayDesign.RadiusL))
+                .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusL))
+                .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space2),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -290,9 +290,9 @@ private fun InspirationHeroCover(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(184.dp)
-            .background(topicCoverBrush(template, index), RoundedCornerShape(GoaldayDesign.RadiusXL))
-            .border(1.dp, GoaldayDesign.WhiteOverlayBorder, RoundedCornerShape(GoaldayDesign.RadiusXL)),
+                .height(184.dp)
+                .background(topicCoverBrush(template, index), RoundedCornerShape(GoaldayDesign.RadiusXL))
+                .border(GoaldayDesign.Hairline, GoaldayDesign.WhiteOverlayBorder, RoundedCornerShape(GoaldayDesign.RadiusXL)),
     ) {
         TopicCoverArt(template = template, index = index)
         Box(
@@ -372,7 +372,7 @@ private fun InspirationCategoryRail(
                 maxLines = 1,
                 modifier = Modifier
                     .background(if (selected) GoaldayDesign.Pink else GoaldayDesign.PaperGlassMedium, RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .border(0.6.dp, if (selected) Color.White.copy(alpha = 0.45f) else GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .border(GoaldayDesign.Hairline, if (selected) Color.White.copy(alpha = 0.45f) else GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusPill))
                     .clickable { onSelect(category) }
                     .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space1 + 2.dp),
             )
@@ -425,9 +425,9 @@ private fun InspirationCoverCard(
     Column(
         modifier = modifier
             .height(176.dp)
-            .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusL))
-            .border(if (selected) 1.6.dp else 0.7.dp, if (selected) GoaldayDesign.Pink else GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusL))
-            .clickable(onClick = onClick)
+                .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusL))
+                .border(if (selected) 1.6.dp else GoaldayDesign.Hairline, if (selected) GoaldayDesign.Pink else GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusL))
+                .clickable(onClick = onClick)
             .padding(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -473,7 +473,7 @@ private fun InspirationDraftPanel(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusXL))
-                .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusXL))
+                .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.RadiusXL))
                 .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space2 + 2.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
