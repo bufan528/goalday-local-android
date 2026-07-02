@@ -60,9 +60,9 @@ fun BookShell(
     } else {
         RoundedCornerShape(GoaldayDesign.RadiusXL)
     }
-    val outerPaddingH = if (shellStyle == ShellStyle.BOOK) 5.dp else 6.dp
-    val outerPaddingV = if (shellStyle == ShellStyle.BOOK) 4.dp else 4.dp
-    val edgeZoneWidth = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space6 else GoaldayDesign.Space6
+    val outerPaddingH = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.Space1 + 1.dp else GoaldayDesign.Space1 + 2.dp
+    val outerPaddingV = GoaldayDesign.Space1
+    val edgeZoneWidth = GoaldayDesign.Space6
     val pageInsetH = GoaldayDesign.Space2
     val pageInsetV = GoaldayDesign.Space2
 
@@ -123,7 +123,7 @@ fun BookShell(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(start = 5.dp, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
+                    .padding(start = GoaldayDesign.Space1 + 1.dp, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
                     .width(0.6.dp)
                     .fillMaxHeight()
                     .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.25f)),
@@ -131,7 +131,7 @@ fun BookShell(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(start = 9.dp, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
+                    .padding(start = GoaldayDesign.Space2 + 1.dp, top = GoaldayDesign.Space6, bottom = GoaldayDesign.Space6)
                     .width(0.6.dp)
                     .fillMaxHeight()
                     .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.18f)),
@@ -165,7 +165,7 @@ fun BookShell(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 5.dp)
+                    .padding(end = GoaldayDesign.Space1 + 1.dp)
                     .width(0.4.dp)
                     .fillMaxHeight()
                     .background(GoaldayDesign.BookBoardDark.copy(alpha = 0.08f)),
@@ -261,7 +261,7 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .height(20.dp)
+                .height(GoaldayDesign.Space5)
                 .background(
                     Brush.verticalGradient(listOf(GoaldayDesign.WhiteHighlight, Color.Transparent)),
                 ),
@@ -271,7 +271,7 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(24.dp)
+                .height(GoaldayDesign.Space6)
                 .background(
                     Brush.verticalGradient(listOf(Color.Transparent, GoaldayDesign.BookBoardDark.copy(alpha = 0.10f))),
                 ),
