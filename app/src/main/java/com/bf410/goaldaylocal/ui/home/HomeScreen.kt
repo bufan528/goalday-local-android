@@ -814,7 +814,7 @@ private fun TaskLine(
             .fillMaxWidth()
             .shadow(if (entry.completed) 0.dp else 2.dp, RoundedCornerShape(GoaldayDesign.RadiusM), clip = false)
             .background(if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.05f) else GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusM))
-            .border(0.6.dp, if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.14f) else GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(GoaldayDesign.Hairline, if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.14f) else GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .combinedClickable(onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onToggleDone(entry)
