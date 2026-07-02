@@ -72,10 +72,13 @@ fun BookReader(
     val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 16.dp else 28.dp
     val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 12.dp else 26.dp
 
-    val turnStyle = remember {
-        val raw = MMKV.defaultMMKV().decodeString("page_turn_style", "SIMULATION")
-        runCatching { PageTurnStyle.valueOf((raw ?: "SIMULATION").uppercase()) }.getOrDefault(PageTurnStyle.SIMULATION)
+    // 默认使用 COVER 翻页：水平覆盖切换比仿真翻页更稳定，内容复杂时不易掉帧/误触。
+    // HANDBOOK 模式（手账页内容密集）强制使用 COVER，避免仿真翻页与内部滚动/拖拽冲突。
+    val storedTurnStyle = remember {
+        val raw = MMKV.defaultMMKV().decodeString("page_turn_style", "COVER")
+        runCatching { PageTurnStyle.valueOf((raw ?: "COVER").uppercase()) }.getOrDefault(PageTurnStyle.COVER)
     }
+    val turnStyle = if (turnProfile == TurnProfile.HANDBOOK) PageTurnStyle.COVER else storedTurnStyle
 
     @Composable
     fun renderActivePage(modifier: Modifier, progress: Float, direction: TurnDirection?) {

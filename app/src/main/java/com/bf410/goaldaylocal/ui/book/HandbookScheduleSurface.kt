@@ -570,7 +570,7 @@ internal fun HandbookReplicaPage(
 }
 
 @Composable
-private fun HandbookMonthBoard(
+internal fun HandbookMonthBoard(
     year: Int,
     month: Int,
     monthLength: Int,
@@ -580,12 +580,12 @@ private fun HandbookMonthBoard(
     modifier: Modifier = Modifier,
 ) {
     val today = LocalDate.now()
-    // 修复：按 1 号是星期几补前置空格，让月历对齐星期（原 chunked(7) 直接按自然数排列会误导用户）
+    // 按 1 号是星期几补前置空格；以周日为每周第一天（日一二三四五六）
     val firstWeekday = YearMonth.of(year, month).atDay(1).dayOfWeek.value // 1=周一 ... 7=周日
-    val leadingBlanks = firstWeekday - 1
+    val leadingBlanks = firstWeekday % 7
     val allSlots: List<Int?> = List(leadingBlanks) { null } + (1..monthLength).toList()
     val weeks = allSlots.chunked(7)
-    val weekdayLabels = listOf("一", "二", "三", "四", "五", "六", "日")
+    val weekdayLabels = listOf("日", "一", "二", "三", "四", "五", "六")
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
@@ -650,12 +650,15 @@ private fun HandbookMonthBoard(
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text("$day", style = MaterialTheme.typography.labelMedium, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
                                 if (todoCount + doneCount > 0) {
-                                    Text("$doneCount/$todoCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
+                                    Row(horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        if (todoCount > 0) ScheduleStatusDot(GoaldayDesign.Pink)
+                                        if (doneCount > 0) ScheduleStatusDot(GoaldayDesign.Positive)
+                                    }
                                 }
                             }
                             // P2-6：空日期不显示标题文字，避免"空白"噪音
                             if (title.isNotBlank()) {
-                                Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 2)
+                                Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 1)
                             }
                         }
                     }
@@ -667,6 +670,16 @@ private fun HandbookMonthBoard(
             }
         }
     }
+}
+
+@Composable
+private fun ScheduleStatusDot(color: Color) {
+    Box(
+        modifier = Modifier
+            .size(5.dp)
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+            .background(color),
+    )
 }
 
 /**

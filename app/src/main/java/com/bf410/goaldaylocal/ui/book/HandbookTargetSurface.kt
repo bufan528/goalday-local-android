@@ -23,9 +23,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,13 +47,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.bf410.goaldaylocal.R
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.TargetItemMeta
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HandbookTargetReplicaPage(
     modifier: Modifier,
@@ -77,6 +88,11 @@ internal fun HandbookTargetReplicaPage(
         null -> 0f
     }
     val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
+    // 目标页三种展示模式选项（对齐原版 target_detail_options）
+    var showCompleted by rememberSaveable(pageIndex) { mutableStateOf(false) }
+    var showCompletionTimeAndDiary by rememberSaveable(pageIndex) { mutableStateOf(false) }
+    var showSequenceNumber by rememberSaveable(pageIndex) { mutableStateOf(false) }
+    var showOptionsMenu by remember { mutableStateOf(false) }
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
@@ -102,7 +118,23 @@ internal fun HandbookTargetReplicaPage(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 SectionStamp("目标", tint)
-                Text("${pageIndex + 1}/$pageCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // 视图选项入口：点击弹出底部菜单切换三种展示模式
+                    Text(
+                        "视图",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = GoaldayDesign.adaptiveInkSecondary,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                            .background(tint.copy(alpha = 0.14f))
+                            .clickable { showOptionsMenu = true }
+                            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
+                    )
+                    Text("${pageIndex + 1}/$pageCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
+                }
             }
             TargetDetailReplicaPage(
                 pageTitle = page.title,
@@ -120,8 +152,79 @@ internal fun HandbookTargetReplicaPage(
                 onUpdateTargetNote = onUpdateTargetNote,
                 onUpdateTargetDeadline = onUpdateTargetDeadline,
                 onOpenTargetDetail = onOpenTargetDetail,
+                showCompleted = showCompleted,
+                showCompletionTimeAndDiary = showCompletionTimeAndDiary,
+                showSequenceNumber = showSequenceNumber,
             )
         }
+    }
+
+    // 目标页展示模式底部菜单
+    if (showOptionsMenu) {
+        val options = stringArrayResource(R.array.target_detail_options)
+        val sheetState = rememberModalBottomSheetState()
+        ModalBottomSheet(
+            onDismissRequest = { showOptionsMenu = false },
+            sheetState = sheetState,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = GoaldayDesign.Space3)
+                    .padding(bottom = GoaldayDesign.Space3),
+                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
+            ) {
+                Text("显示选项", style = MaterialTheme.typography.titleMedium, color = GoaldayDesign.adaptiveInkPrimary)
+                HorizontalDivider(color = GoaldayDesign.adaptiveDivider)
+                if (options.isNotEmpty()) {
+                    TargetOptionSheetRow(
+                        label = options[0],
+                        checked = showCompleted,
+                        onCheckedChange = { showCompleted = it },
+                    )
+                }
+                if (options.size > 1) {
+                    TargetOptionSheetRow(
+                        label = options[1],
+                        checked = showCompletionTimeAndDiary,
+                        onCheckedChange = { showCompletionTimeAndDiary = it },
+                    )
+                }
+                if (options.size > 2) {
+                    TargetOptionSheetRow(
+                        label = options[2],
+                        checked = showSequenceNumber,
+                        onCheckedChange = { showSequenceNumber = it },
+                    )
+                }
+                TextButton(
+                    onClick = { showOptionsMenu = false },
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text("关闭", color = GoaldayDesign.adaptiveInkSecondary)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TargetOptionSheetRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = GoaldayDesign.Space1),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.adaptiveInkPrimary)
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
@@ -142,8 +245,13 @@ internal fun TargetDetailReplicaPage(
     onUpdateTargetNote: (String, String) -> Unit,
     onUpdateTargetDeadline: (String, Int?) -> Unit,
     onOpenTargetDetail: (String) -> Unit,
+    showCompleted: Boolean = true,
+    showCompletionTimeAndDiary: Boolean = false,
+    showSequenceNumber: Boolean = true,
 ) {
     val items = remember(baseItems, customItems) { (baseItems + customItems).distinct() }
+    // 根据“显示已完成”选项过滤列表；关闭时隐藏已完成项
+    val visibleItems = if (showCompleted) items else items.filter { !isChecked(pageTitle, it) }
     var draft by rememberSaveable(pageTitle) { mutableStateOf("") }
     var editingItem by rememberSaveable(pageTitle) { mutableStateOf<String?>(null) }
     var editingText by rememberSaveable(pageTitle) { mutableStateOf("") }
@@ -201,7 +309,7 @@ internal fun TargetDetailReplicaPage(
             custom = customItems.size,
         )
 
-        items.forEachIndexed { index, item ->
+        visibleItems.forEachIndexed { index, item ->
             val checked = isChecked(pageTitle, item)
             val scheduledEntries = scheduledByTitle[item].orEmpty()
             val meta = targetItemMeta[item] ?: TargetItemMeta()
@@ -217,16 +325,19 @@ internal fun TargetDetailReplicaPage(
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(9.dp), verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
-                        Text(
-                            "%02d".format(index + 1),
-                            color = if (checked) Color.White else GoaldayDesign.Pink,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                                .background(if (checked) GoaldayDesign.Positive else tint.copy(alpha = 0.18f))
-                                .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1),
-                        )
+                        // 显示序号选项：开启后展示 1. 2. 3. 样式序号徽章
+                        if (showSequenceNumber) {
+                            Text(
+                                "${index + 1}.",
+                                color = if (checked) Color.White else GoaldayDesign.Pink,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                                    .background(if (checked) GoaldayDesign.Positive else tint.copy(alpha = 0.18f))
+                                    .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1),
+                            )
+                        }
                         Icon(
                             imageVector = if (checked) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
                             contentDescription = if (checked) "已完成" else "未完成",
@@ -294,6 +405,24 @@ internal fun TargetDetailReplicaPage(
                         // P1-3：截止日期常驻显示（轻量信息），调度元信息已移到上方行
                         meta.deadlineDay?.let {
                             Text("截止 ${it}日", color = GoaldayDesign.Positive, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+                // 显示完成时间和日记选项：已完成项展示完成日期与相关日记摘要
+                if (showCompletionTimeAndDiary && checked) {
+                    val completionDate = LocalDate.now()
+                    val dateText = completionDate.format(DateTimeFormatter.ofPattern("yyyy/M/d"))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .background(GoaldayDesign.Positive.copy(alpha = 0.08f))
+                            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        Text("完成时间：$dateText", color = GoaldayDesign.Positive, style = MaterialTheme.typography.labelSmall)
+                        if (meta.note.isNotBlank()) {
+                            Text("日记摘要：${meta.note}", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, maxLines = 2)
                         }
                     }
                 }
