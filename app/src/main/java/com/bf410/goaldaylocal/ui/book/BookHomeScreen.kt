@@ -607,7 +607,7 @@ private fun FeaturedHandbookCover(
                     end = Offset(920f, 620f),
                 ),
             )
-            .border(1.dp, GoaldayDesign.CoverWhiteOverlaySubtle, coverShape)
+            .border(GoaldayDesign.Hairline, GoaldayDesign.CoverWhiteOverlaySubtle, coverShape)
             .clickable(onClick = onClick),
     ) {
         Box(
@@ -836,7 +836,7 @@ private fun AddBookShelfCard(onCreateBook: () -> Unit) {
             .shadow(GoaldayDesign.Space1 + 2.dp, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
             .background(GoaldayDesign.adaptiveSurface.copy(alpha = 0.48f))
-            .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.19f), RoundedCornerShape(GoaldayDesign.RadiusXL))
+            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.19f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .clickable(onClick = onCreateBook)
             .padding(horizontal = GoaldayDesign.Space4),
         contentAlignment = Alignment.Center,
@@ -1488,7 +1488,7 @@ private fun TargetDetailRouteOverlay(
                             end = Offset(900f, 420f),
                         ),
                     )
-                    .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.Radius2XL))
+                    .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.14f), RoundedCornerShape(GoaldayDesign.Radius2XL))
                     .padding(GoaldayDesign.Space4),
                 verticalArrangement = Arrangement.spacedBy(11.dp),
             ) {
@@ -1898,6 +1898,9 @@ private fun MonthPageContent(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
+            .background(GoaldayDesign.adaptivePaperGradient)
+            .handbookPaperTexture(alpha = 0.10f)
             .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
     ) {
@@ -2063,7 +2066,7 @@ private fun InspirationCenterView(
                         .height(140.dp)
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
                         .background(topicCoverBrush(selected, selectedIndex))
-                        .border(1.dp, GoaldayDesign.CoverWhiteOverlaySubtle, RoundedCornerShape(GoaldayDesign.RadiusXL))
+                        .border(GoaldayDesign.Hairline, GoaldayDesign.CoverWhiteOverlaySubtle, RoundedCornerShape(GoaldayDesign.RadiusXL))
                         .padding(GoaldayDesign.Space4),
                 ) {
                     TopicCoverArt(template = selected, index = selectedIndex)

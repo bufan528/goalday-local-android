@@ -95,13 +95,26 @@ fun BookShell(
                 shape = outerShape,
             ),
     ) {
-        // 精装本使用原版布纹封面纹理
+        // 精装本使用原版布纹封面纹理，叠加暖色薄层让色调与书页统一，弱化纹理上的文字/年份
         if (shellStyle == ShellStyle.BOOK) {
             Image(
                 painter = painterResource(R.drawable.book_cover_fabric),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                GoaldayDesign.PaperAged.copy(alpha = 0.18f),
+                                GoaldayDesign.PaperWarm.copy(alpha = 0.10f),
+                                GoaldayDesign.PaperAged.copy(alpha = 0.16f),
+                            ),
+                        ),
+                    ),
             )
         }
 

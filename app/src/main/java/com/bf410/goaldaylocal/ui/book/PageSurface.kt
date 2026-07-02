@@ -1987,7 +1987,7 @@ internal fun LongImagePreviewDialog(
                     .weight(1f)
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
                     .background(GoaldayDesign.adaptiveSurfaceSoft)
-                    .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusXL))
+                    .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.RadiusXL))
                     .verticalScroll(rememberScrollState()),
             ) {
                 // P1-3 修复：长图预览滚动卡顿
@@ -2048,7 +2048,7 @@ internal fun LongImagePreviewDialog(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(GoaldayDesign.Radius2XL))
                     .background(GoaldayDesign.adaptiveWhiteOverlay)
-                    .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.Radius2XL))
+                    .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.13f), RoundedCornerShape(GoaldayDesign.Radius2XL))
                     .horizontalScroll(rememberScrollState())
                     .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space2 + 2.dp),
                 horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 - 1.dp),
@@ -2870,7 +2870,7 @@ private fun DiaryPhotoNoteGrid(notes: List<String>) {
                     .height(58.dp)
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                     .background(GoaldayDesign.adaptiveSurfaceSoft)
-                    .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.5f), RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.5f), RoundedCornerShape(GoaldayDesign.RadiusS))
                     .padding(GoaldayDesign.Space1 + 2.dp),
             ) {
                 Text(note, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 3)
@@ -3069,7 +3069,7 @@ internal fun DiaryImageTile(
             .height(76.dp)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.adaptiveSurfaceSoft)
-            .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.5f), RoundedCornerShape(GoaldayDesign.RadiusS)),
+            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.5f), RoundedCornerShape(GoaldayDesign.RadiusS)),
     ) {
         if (bitmap != null) {
             Image(
@@ -3114,7 +3114,7 @@ private fun DiaryBlock(title: String, content: String) {
                     listOf(GoaldayDesign.AiInsightStart, GoaldayDesign.AiInsightMid, GoaldayDesign.AiInsightEnd),
                 ),
             )
-            .border(1.dp, GoaldayDesign.AiInsightBorder, RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(GoaldayDesign.Hairline, GoaldayDesign.AiInsightBorder, RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space2 - 1.dp),
     ) {
         Text(content, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.adaptiveInkPrimary)
@@ -3182,7 +3182,7 @@ private fun PaperNoteCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
             .background(GoaldayDesign.adaptiveSurfaceSoft)
-            .border(1.dp, GoaldayDesign.BorderColor.copy(alpha = 0.5f), RoundedCornerShape(GoaldayDesign.RadiusM))
+            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.5f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space2 + 1.dp),
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(GoaldayDesign.adaptiveDivider))
