@@ -320,7 +320,7 @@ fun CalendarScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(if (activeDoneDrop) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked, contentDescription = null, tint = if (activeDoneDrop) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(12.dp))
                             if (activeDoneDrop) {
-                                Spacer(Modifier.width(4.dp))
+                                Spacer(Modifier.width(GoaldayDesign.Space1))
                                 Text("释放放入已完成", color = GoaldayDesign.Positive, style = MaterialTheme.typography.bodySmall)
                             }
                         }
@@ -471,7 +471,7 @@ fun CalendarScreen(
                     .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space1),
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "新增", tint = Color.White, modifier = Modifier.size(14.dp))
-                Spacer(Modifier.width(4.dp))
+                Spacer(Modifier.width(GoaldayDesign.Space1))
                 Text(
                     "新增当天任务",
                     color = Color.White,
@@ -982,7 +982,7 @@ private fun CalendarMonthGrid(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
+            .shadow(GoaldayDesign.ShadowSoft, RoundedCornerShape(GoaldayDesign.RadiusXL), clip = false)
             .background(GoaldayDesign.adaptiveSurface, RoundedCornerShape(GoaldayDesign.RadiusXL))
             .border(0.8.dp, GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusXL))
             .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space2 + 1.dp),

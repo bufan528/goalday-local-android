@@ -375,7 +375,7 @@ private fun SettingsHeroCard(
                     .background(GoaldayDesign.adaptiveWhiteOverlayLow, RoundedCornerShape(GoaldayDesign.RadiusL))
                     .border(
                         width = GoaldayDesign.Hairline,
-                        color = Color.White.copy(alpha = 0.46f),
+                        color = GoaldayDesign.WhiteOverlayBorder,
                         shape = RoundedCornerShape(GoaldayDesign.RadiusL)
                     )
                     .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
@@ -939,7 +939,7 @@ private fun StatusPill(
             .background(GoaldayDesign.adaptiveWhiteOverlayMedium, RoundedCornerShape(GoaldayDesign.RadiusPill))
             .border(
                 width = GoaldayDesign.Hairline,
-                color = Color.White.copy(alpha = 0.58f),
+                color = GoaldayDesign.WhiteOverlayBorder,
                 shape = RoundedCornerShape(GoaldayDesign.RadiusPill)
             )
             .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space1),
