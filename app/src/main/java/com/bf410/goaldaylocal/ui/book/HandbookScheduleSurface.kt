@@ -198,7 +198,7 @@ internal fun HandbookReplicaPage(
             .onGloballyPositioned { coordinates ->
                 spreadOrigin = coordinates.boundsInRoot().topLeft
             }
-            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2 + 2.dp),
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space3),
     ) {
         // P0-2 大修：删除外层 Box 级 HandbookPaperRuling() 调用
         // 原方案横线固定在 Box 层不随内容滚动，导致视觉错位；现改为 drawBehind 画在滚动 Column 内部

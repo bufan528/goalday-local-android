@@ -475,65 +475,65 @@ fun ActivePageLayer(
                 }
                 val planAlpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
                 Box(
-                modifier = modifier
-                    .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
-                    .background(GoaldayDesign.adaptivePaperGradient)
-                    .border(
-                        GoaldayDesign.Hairline,
-                        GoaldayDesign.BorderColor.copy(alpha = 0.18f),
-                        RoundedCornerShape(GoaldayDesign.RadiusL)
-                    )
-                    .graphicsLayer {
-                        translationX = planContentShift
-                        this.alpha = planAlpha
-                    }
-                    .padding(GoaldayDesign.Space3),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = modifier
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
+                        .background(GoaldayDesign.adaptivePaperGradient)
+                        .border(
+                            GoaldayDesign.Hairline,
+                            GoaldayDesign.BorderColor.copy(alpha = 0.18f),
+                            RoundedCornerShape(GoaldayDesign.RadiusL),
+                        )
+                        .graphicsLayer {
+                            translationX = planContentShift
+                            this.alpha = planAlpha
+                        }
+                        .padding(GoaldayDesign.Space3),
                 ) {
-                    Text(
-                        page.title,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = GoaldayDesign.adaptiveInkPrimary,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            page.title,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = GoaldayDesign.adaptiveInkPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                        )
+                        Text(
+                            "${pageIndex + 1} / $pageCount",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GoaldayDesign.adaptiveInkMuted,
+                        )
+                    }
+                    Spacer(Modifier.height(GoaldayDesign.Space2))
+                    EditableBulletPage(
+                        pageTitle = page.title,
+                        baseItems = page.items,
+                        customItems = customPageItems,
+                        tint = tint,
+                        inputLabel = BookStrings.addPlan,
+                        isSchedulePage = false,
+                        isChecked = isChecked,
+                        onToggleChecked = onToggleChecked,
+                        onAddCustomItem = onAddCustomItem,
+                        onAddCustomItemWithDeadline = onAddCustomItemWithDeadline,
+                        onRemoveCustomItem = onRemoveCustomItem,
+                        onRenameCustomItem = onRenameCustomItem,
+                        onAddToSchedule = onAddToSchedule,
+                        weeklyTheme = weeklyTheme,
+                        todayPlanItems = todayPlanItems,
+                        todayCompletedItems = todayCompletedItems,
+                        schedulePreviewEntries = schedulePreviewEntries,
+                        onWeeklyThemeChange = onWeeklyThemeChange,
+                        onMoveItemToToday = onMoveItemToToday,
+                        onMoveItemToCompleted = onMoveItemToCompleted,
+                        onRestoreItemFromToday = onRestoreItemFromToday,
+                        onRestoreItemFromCompleted = onRestoreItemFromCompleted,
+                        contentMode = contentMode,
+                        onContentModeChange = onContentModeChange,
                     )
-                    Text(
-                        "${pageIndex + 1} / $pageCount",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = GoaldayDesign.adaptiveInkMuted,
-                    )
-                }
-                Spacer(Modifier.height(GoaldayDesign.Space2))
-                EditableBulletPage(
-                    pageTitle = page.title,
-                    baseItems = page.items,
-                    customItems = customPageItems,
-                    tint = tint,
-                    inputLabel = BookStrings.addPlan,
-                    isSchedulePage = false,
-                    isChecked = isChecked,
-                    onToggleChecked = onToggleChecked,
-                    onAddCustomItem = onAddCustomItem,
-                    onAddCustomItemWithDeadline = onAddCustomItemWithDeadline,
-                    onRemoveCustomItem = onRemoveCustomItem,
-                    onRenameCustomItem = onRenameCustomItem,
-                    onAddToSchedule = onAddToSchedule,
-                    weeklyTheme = weeklyTheme,
-                    todayPlanItems = todayPlanItems,
-                    todayCompletedItems = todayCompletedItems,
-                    schedulePreviewEntries = schedulePreviewEntries,
-                    onWeeklyThemeChange = onWeeklyThemeChange,
-                    onMoveItemToToday = onMoveItemToToday,
-                    onMoveItemToCompleted = onMoveItemToCompleted,
-                    onRestoreItemFromToday = onRestoreItemFromToday,
-                    onRestoreItemFromCompleted = onRestoreItemFromCompleted,
-                    contentMode = contentMode,
-                    onContentModeChange = onContentModeChange,
-                )
                 }
             }
             is DiaryPage -> HandbookDiaryReplicaPage(

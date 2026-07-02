@@ -271,26 +271,26 @@ internal fun TargetDetailReplicaPage(
 
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(104.dp)
+                .height(108.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
                 .background(
                     Brush.linearGradient(
-                        listOf(tint.copy(alpha = 0.86f), tint.copy(alpha = 0.48f), Color.White.copy(alpha = 0.34f)),
+                        listOf(tint.copy(alpha = 0.86f), tint.copy(alpha = 0.48f), GoaldayDesign.adaptiveWhiteOverlay.copy(alpha = 0.34f)),
                         start = Offset.Zero,
                         end = Offset(760f, 460f),
                     ),
                 )
-                .border(0.8.dp, GoaldayDesign.adaptiveSurface.copy(alpha = 0.20f), RoundedCornerShape(GoaldayDesign.RadiusM))
-                .padding(14.dp),
+                .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveSurface.copy(alpha = 0.20f), RoundedCornerShape(GoaldayDesign.RadiusM))
+                .padding(GoaldayDesign.Space4),
         ) {
             Column(
                 modifier = Modifier.align(Alignment.BottomStart),
-                verticalArrangement = Arrangement.spacedBy(3.dp),
+                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
             ) {
                 Text(pageTitle, style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
                 // Header 只显示总数，细分统计（已完成/已排期/待整理/自定义）由下方 TargetLedgerSummary 承担，避免信息重复
@@ -319,11 +319,11 @@ internal fun TargetDetailReplicaPage(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
                     .background(if (checked) GoaldayDesign.GreenSoft else GoaldayDesign.adaptiveSurface)
-                    .border(0.8.dp, if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusM))
-                    .padding(10.dp),
-                verticalArrangement = Arrangement.spacedBy(7.dp),
+                    .border(GoaldayDesign.Hairline, if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusM))
+                    .padding(GoaldayDesign.Space3),
+                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(9.dp), verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 1.dp), verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                         // 显示序号选项：开启后展示 1. 2. 3. 样式序号徽章
                         if (showSequenceNumber) {
