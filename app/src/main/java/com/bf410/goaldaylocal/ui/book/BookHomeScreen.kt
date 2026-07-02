@@ -1287,7 +1287,6 @@ private fun BookDetailView(
                 onUpdateTargetNote = viewModel::updateTargetItemNote,
                 onUpdateTargetDeadline = viewModel::updateTargetItemDeadline,
                 onOpenTargetDetail = { openedTargetDetail = it },
-                shellStyle = ShellStyle.LIGHT,
                 handbookMode = handbookMode,
                 onFlipNext = { goToFilteredPage(segmentPageIndex + 1) },
                 onFlipPrevious = { goToFilteredPage(segmentPageIndex - 1) },
