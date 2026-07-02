@@ -42,9 +42,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -53,9 +55,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -69,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import com.bf410.goaldaylocal.R
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
@@ -683,10 +688,19 @@ private fun ScheduleStatusDot(color: Color) {
 }
 
 /**
- * P0-2 大修：信纸横线装饰，改用 drawBehind 画在滚动容器内部。
- *
- * 原实现用 align(TopCenter)+padding(top=...) 将 14 条横线固定在外层 Box，但内容在
- * verticalScroll 内滚动，导致"线不动内容动"的视觉错位，被错误地直接删除。
+ * 手账内页纸张纹理：叠加原版 APK 的 paper_texture_lined 纹理，低透明度避免干扰内容阅读。
+ * 与 handbookPaperRuling 配合使用，先铺渐变/纹理再画横线。
+ */
+internal fun Modifier.handbookPaperTexture(alpha: Float = 0.12f): Modifier = composed {
+    paint(
+        painter = painterResource(R.drawable.paper_texture_lined),
+        contentScale = ContentScale.Crop,
+        alpha = alpha,
+    )
+}
+
+/**
+ * 手账内页横线：模拟信纸/笔记本 ruled page。
  *
  * 现方案：作为 Modifier 应用到滚动 Column 上，drawBehind 在 Column 的视口坐标系绘制，
  * 通过 scrollState.value 偏移横线，使横线随内容同步滚动，恢复"信纸感"。

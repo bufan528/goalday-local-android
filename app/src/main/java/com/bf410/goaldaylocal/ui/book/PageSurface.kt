@@ -195,6 +195,7 @@ fun PageSurface(
             .clip(RoundedCornerShape(GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL))
             // 基底统一到 PaperGradient，与 handbook 路径一致，消除翻页交接瞬间的背景跳变
             .background(GoaldayDesign.adaptivePaperGradient)
+            .handbookPaperTexture(alpha = 0.08f)
             .padding(horizontal = GoaldayDesign.Space4 + 2.dp, vertical = GoaldayDesign.Space4),
     ) {
         // 中央折痕：书脊感，单层 10dp 渐变（P0 精简：删除左右阴影/顶部细线/斑驳层/角部高光 4 层冗余装饰）
@@ -478,6 +479,7 @@ fun ActivePageLayer(
                     modifier = modifier
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
                         .background(GoaldayDesign.adaptivePaperGradient)
+                        .handbookPaperTexture(alpha = 0.10f)
                         .border(
                             GoaldayDesign.Hairline,
                             GoaldayDesign.BorderColor.copy(alpha = 0.18f),
@@ -675,6 +677,7 @@ private fun HandbookDiaryReplicaPage(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             // 基底统一到 PaperGradient，与 Target/Plan/Schedule 页对齐，避免翻页时背景跳变
             .background(GoaldayDesign.adaptivePaperGradient)
+            .handbookPaperTexture(alpha = 0.10f)
             .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .graphicsLayer {
                 translationX = contentShift
@@ -1380,12 +1383,12 @@ private fun DiaryWorkspaceHeader(
                 )
                 Text(
                     diaryDateLabel(state.date),
-                    color = GoaldayDesign.adaptiveInkSecondary,
+                    color = GoaldayDesign.Deadline,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                        .background(GoaldayDesign.adaptiveWhiteOverlayMedium)
+                        .background(GoaldayDesign.Deadline.copy(alpha = 0.08f))
                         .clickable(onClick = onPickDate)
                         .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
                 )

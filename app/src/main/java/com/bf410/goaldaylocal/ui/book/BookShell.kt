@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -336,6 +337,11 @@ private fun OpenBookPaperChrome(modifier: Modifier = Modifier) {
         modifier = modifier
             .clip(pageShape)
             .background(GoaldayDesign.Paper)
+            .paint(
+                painter = painterResource(R.drawable.paper_texture_lined),
+                contentScale = ContentScale.Crop,
+                alpha = 0.10f,
+            )
             .drawBehind {
                 val width = size.width
                 val height = size.height

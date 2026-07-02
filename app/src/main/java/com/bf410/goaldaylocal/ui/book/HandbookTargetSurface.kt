@@ -98,6 +98,7 @@ internal fun HandbookTargetReplicaPage(
             .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             // 基底统一到 PaperGradient（tint 已在 SectionStamp/卡片内部体现，不再叠到页面基底）
             .background(GoaldayDesign.PaperGradient)
+            .handbookPaperTexture(alpha = 0.10f)
             .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .graphicsLayer {
                 translationX = contentShift
