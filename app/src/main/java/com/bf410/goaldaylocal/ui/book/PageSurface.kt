@@ -483,11 +483,24 @@ fun ActivePageLayer(
                         }
                         .padding(GoaldayDesign.Space3),
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .handbookPaperRuling(scrollState = null),
+                        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
                     ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            SectionStamp("计划", GoaldayDesign.RouteSchedule)
+                            Text(
+                                "${pageIndex + 1} / $pageCount",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = GoaldayDesign.adaptiveInkMuted,
+                            )
+                        }
                         Text(
                             page.title,
                             style = MaterialTheme.typography.titleSmall,
@@ -495,39 +508,33 @@ fun ActivePageLayer(
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 1,
                         )
-                        Text(
-                            "${pageIndex + 1} / $pageCount",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = GoaldayDesign.adaptiveInkMuted,
+                        EditableBulletPage(
+                            pageTitle = page.title,
+                            baseItems = page.items,
+                            customItems = customPageItems,
+                            tint = tint,
+                            inputLabel = BookStrings.addPlan,
+                            isSchedulePage = false,
+                            isChecked = isChecked,
+                            onToggleChecked = onToggleChecked,
+                            onAddCustomItem = onAddCustomItem,
+                            onAddCustomItemWithDeadline = onAddCustomItemWithDeadline,
+                            onRemoveCustomItem = onRemoveCustomItem,
+                            onRenameCustomItem = onRenameCustomItem,
+                            onAddToSchedule = onAddToSchedule,
+                            weeklyTheme = weeklyTheme,
+                            todayPlanItems = todayPlanItems,
+                            todayCompletedItems = todayCompletedItems,
+                            schedulePreviewEntries = schedulePreviewEntries,
+                            onWeeklyThemeChange = onWeeklyThemeChange,
+                            onMoveItemToToday = onMoveItemToToday,
+                            onMoveItemToCompleted = onMoveItemToCompleted,
+                            onRestoreItemFromToday = onRestoreItemFromToday,
+                            onRestoreItemFromCompleted = onRestoreItemFromCompleted,
+                            contentMode = contentMode,
+                            onContentModeChange = onContentModeChange,
                         )
                     }
-                    Spacer(Modifier.height(GoaldayDesign.Space2))
-                    EditableBulletPage(
-                        pageTitle = page.title,
-                        baseItems = page.items,
-                        customItems = customPageItems,
-                        tint = tint,
-                        inputLabel = BookStrings.addPlan,
-                        isSchedulePage = false,
-                        isChecked = isChecked,
-                        onToggleChecked = onToggleChecked,
-                        onAddCustomItem = onAddCustomItem,
-                        onAddCustomItemWithDeadline = onAddCustomItemWithDeadline,
-                        onRemoveCustomItem = onRemoveCustomItem,
-                        onRenameCustomItem = onRenameCustomItem,
-                        onAddToSchedule = onAddToSchedule,
-                        weeklyTheme = weeklyTheme,
-                        todayPlanItems = todayPlanItems,
-                        todayCompletedItems = todayCompletedItems,
-                        schedulePreviewEntries = schedulePreviewEntries,
-                        onWeeklyThemeChange = onWeeklyThemeChange,
-                        onMoveItemToToday = onMoveItemToToday,
-                        onMoveItemToCompleted = onMoveItemToCompleted,
-                        onRestoreItemFromToday = onRestoreItemFromToday,
-                        onRestoreItemFromCompleted = onRestoreItemFromCompleted,
-                        contentMode = contentMode,
-                        onContentModeChange = onContentModeChange,
-                    )
                 }
             }
             is DiaryPage -> HandbookDiaryReplicaPage(
