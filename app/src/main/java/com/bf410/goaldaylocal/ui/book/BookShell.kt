@@ -1,4 +1,4 @@
-﻿package com.bf410.goaldaylocal.ui.book
+package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
