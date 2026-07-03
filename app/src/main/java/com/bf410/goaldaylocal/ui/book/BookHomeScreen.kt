@@ -1181,10 +1181,7 @@ private fun BookDetailView(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .background(GoaldayDesign.DeskGradient)
-                    .padding(vertical = GoaldayDesign.Space2),
-                contentAlignment = Alignment.Center,
+                    .weight(1f),
             ) {
                 Box(
                     modifier = Modifier
@@ -1231,7 +1228,7 @@ private fun BookDetailView(
                         onUpdateTargetNote = viewModel::updateTargetItemNote,
                         onUpdateTargetDeadline = viewModel::updateTargetItemDeadline,
                         onOpenTargetDetail = { openedTargetDetail = it },
-                        shellStyle = ShellStyle.LIGHT,
+                        shellStyle = ShellStyle.BOOK,
                         handbookMode = true,
                         onFlipNext = { goToFilteredPage(segmentPageIndex + 1) },
                         onFlipPrevious = { goToFilteredPage(segmentPageIndex - 1) },
