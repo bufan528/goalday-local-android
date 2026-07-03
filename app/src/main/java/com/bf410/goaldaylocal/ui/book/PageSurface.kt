@@ -477,14 +477,6 @@ fun ActivePageLayer(
                 val planAlpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
                 Box(
                     modifier = modifier
-                        .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
-                        .background(GoaldayDesign.adaptivePaperGradient)
-                        .handbookPaperTexture(alpha = 0.10f)
-                        .border(
-                            GoaldayDesign.Hairline,
-                            GoaldayDesign.BorderColor.copy(alpha = 0.18f),
-                            RoundedCornerShape(GoaldayDesign.RadiusL),
-                        )
                         .graphicsLayer {
                             translationX = planContentShift
                             this.alpha = planAlpha
@@ -674,11 +666,6 @@ private fun HandbookDiaryReplicaPage(
     val editing = contentMode is PageContentMode.EditingDiary && contentMode.title == title
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
-            // 基底统一到 PaperGradient，与 Target/Plan/Schedule 页对齐，避免翻页时背景跳变
-            .background(GoaldayDesign.adaptivePaperGradient)
-            .handbookPaperTexture(alpha = 0.10f)
-            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.18f), RoundedCornerShape(GoaldayDesign.RadiusL))
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha

@@ -52,7 +52,7 @@ fun BookShell(
     onTapNext: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    // 左侧书脊圆角小，右侧书口圆角大，形成“书翻开”的不对称轮廓
+    // 左侧书脊圆角小，右侧书口圆角大，形成"书翻开"的不对称轮廓
     val spineCorner = if (shellStyle == ShellStyle.BOOK) 1.dp else 3.dp
     val foreEdgeCorner = if (shellStyle == ShellStyle.BOOK) GoaldayDesign.RadiusXL else GoaldayDesign.Radius2XL
     val outerShape = RoundedCornerShape(
