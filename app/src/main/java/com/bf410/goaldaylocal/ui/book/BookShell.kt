@@ -71,7 +71,6 @@ fun BookShell(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = GoaldayDesign.Space1, vertical = GoaldayDesign.Space1)
             .shadow(
                 elevation = GoaldayDesign.ShadowLarge,
                 shape = outerShape,

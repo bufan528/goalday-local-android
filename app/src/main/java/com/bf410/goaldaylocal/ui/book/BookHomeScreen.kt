@@ -869,12 +869,11 @@ private fun HandbookReadingDeskHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.CardPaperGradient)
-            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusXL))
-            // P1-4 精简：padding 11dp→Space2+2，spacedBy 9dp→7dp，压缩整体高度
-            .padding(GoaldayDesign.Space2 + 2.dp),
-        verticalArrangement = Arrangement.spacedBy(7.dp),
+            .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.16f), RoundedCornerShape(GoaldayDesign.RadiusL))
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1161,10 +1160,7 @@ private fun BookDetailView(
                 }
             }
             Spacer(Modifier.height(GoaldayDesign.Space4))
-        } else {
-            Spacer(Modifier.height(GoaldayDesign.Space2))
-        }
-        if (handbookMode) {
+        } else if (handbookMode) {
             HandbookReadingDeskHeader(
                 book = book,
                 currentPage = currentPage,
@@ -1175,7 +1171,6 @@ private fun BookDetailView(
                     if (realIndex in book.pages.indices) viewModel.setPage(realIndex)
                 },
             )
-            Spacer(Modifier.height(GoaldayDesign.Space2))
         }
         if (handbookMode) {
             Box(
