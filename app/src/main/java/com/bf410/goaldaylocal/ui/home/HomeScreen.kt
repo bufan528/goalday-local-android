@@ -41,7 +41,7 @@ import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -923,13 +923,8 @@ private fun HomeActionDock(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), modifier = Modifier.fillMaxWidth()) {
             HomeActionCard("日历", "月视图", Icons.Filled.CalendarMonth, GoaldayDesign.Pink, Modifier.weight(1f), onOpenCalendar)
-            HomeActionCard("书库", "本子", Icons.Filled.Book, GoaldayDesign.RouteOverview, Modifier.weight(1f), onOpenBook)
-            HomeActionCard("灵感", "专题库", Icons.Filled.Lightbulb, GoaldayDesign.Today, Modifier.weight(1f), onOpenInspiration)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), modifier = Modifier.fillMaxWidth()) {
-            HomeActionCard("手账", "书内页", Icons.AutoMirrored.Filled.Article, GoaldayDesign.RouteTarget, Modifier.weight(1f), onOpenHandbook)
-            HomeActionCard("日记", "记录块", Icons.Filled.EditNote, GoaldayDesign.RouteDiary, Modifier.weight(1f), onOpenDiary)
-            Spacer(modifier = Modifier.weight(1f))
+            HomeActionCard("书库", "本子列表", Icons.Filled.Book, GoaldayDesign.RouteOverview, Modifier.weight(1f), onOpenBook)
+            HomeActionCard("手账", "翻页手账本", Icons.AutoMirrored.Filled.MenuBook, GoaldayDesign.RouteTarget, Modifier.weight(1f), onOpenHandbook)
         }
     }
 }

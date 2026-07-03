@@ -440,8 +440,6 @@ private fun BookRootHeader(
     val subtitle = when {
         surface == BookRootSurface.HOME -> "今日计划、拖拽日程和桌面组件都在本地运行"
         surface == BookRootSurface.INSPIRATION -> "专题目标、导入任务和保存手账本"
-        entryMode == BookEntryMode.DIARY -> "日记条目、图片、目标块和长图导出"
-        entryMode == BookEntryMode.HANDBOOK -> "翻页手账、日程页、目标页和日记页"
         else -> "书库、本子封面和本地模板"
     }
     val isDark = LocalGoaldayDarkMode.current
@@ -477,7 +475,7 @@ private fun BookRootHeader(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BookRootSegmentChip(
-                label = "今日",
+                label = "首页",
                 icon = Icons.Filled.Today,
                 selected = surface == BookRootSurface.HOME,
                 onClick = onOpenHome,
@@ -491,20 +489,8 @@ private fun BookRootHeader(
             BookRootSegmentChip(
                 label = "手账",
                 icon = Icons.AutoMirrored.Filled.MenuBook,
-                selected = surface == BookRootSurface.BOOK && entryMode == BookEntryMode.HANDBOOK,
+                selected = (surface == BookRootSurface.BOOK && entryMode == BookEntryMode.HANDBOOK) || (surface == BookRootSurface.BOOK && entryMode == BookEntryMode.DIARY),
                 onClick = onOpenHandbook,
-            )
-            BookRootSegmentChip(
-                label = "日记",
-                icon = Icons.Filled.EditNote,
-                selected = surface == BookRootSurface.BOOK && entryMode == BookEntryMode.DIARY,
-                onClick = onOpenDiary,
-            )
-            BookRootSegmentChip(
-                label = "灵感",
-                icon = Icons.Filled.Lightbulb,
-                selected = surface == BookRootSurface.INSPIRATION,
-                onClick = onOpenInspiration,
             )
         }
     }
