@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -51,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
@@ -65,6 +67,7 @@ import java.time.YearMonth
 import java.time.temporal.WeekFields
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 internal enum class LocalHandbookSegment(val label: String) {
     PLAN("计划"), SCHEDULE("日程"), DIARY("日记"), TOPICS("主题")
@@ -426,33 +429,82 @@ private fun ReferenceListPage(bookTitle: String, items: List<String>, completed:
 
 @Composable
 private fun ReferencePlanRow(title: String, count: String, color: Color, completed: Boolean, onClick: () -> Unit) {
-    Row(
+    var revealOffset by remember { mutableStateOf(0f) }
+    val maxReveal = 200.dp
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(65.dp)
-            .background(Color.White)
-            .clickable(onClick = onClick)
-            .padding(start = 20.dp, end = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .height(65.dp),
     ) {
-        Box(
-            Modifier
-                .size(13.dp)
-                .clip(CircleShape)
-                .background(color),
-        )
-        Text(
-            title,
-            color = if (completed) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
-            fontSize = 21.sp,
-            textDecoration = if (completed) TextDecoration.LineThrough else TextDecoration.None,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .padding(start = 21.dp, top = 2.dp, bottom = 2.dp),
-        )
-        Text(count, color = GoaldayDesign.InkSecondary, fontSize = 18.sp, maxLines = 1)
+                .align(Alignment.CenterEnd)
+                .width(maxReveal)
+                .fillMaxHeight(),
+        ) {
+            PlanRevealAction("编辑", Color.Black, Modifier.weight(1f)) { revealOffset = 0f }
+            PlanRevealAction(if (completed) "恢复" else "完成", Color(0xFFED8888), Modifier.weight(1f)) {
+                revealOffset = 0f
+                onClick()
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .offset { IntOffset(revealOffset.roundToInt(), 0) }
+                .background(Color.White)
+                .pointerInput(title) {
+                    detectDragGestures(
+                        onDragEnd = {
+                            revealOffset = if (revealOffset < -maxReveal.toPx() * 0.35f) -maxReveal.toPx() else 0f
+                        },
+                        onDragCancel = { revealOffset = 0f },
+                    ) { change, drag ->
+                        if (abs(drag.x) > abs(drag.y)) {
+                            revealOffset = (revealOffset + drag.x).coerceIn(-maxReveal.toPx(), 0f)
+                            change.consume()
+                        }
+                    }
+                }
+                .clickable {
+                    if (revealOffset < 0f) revealOffset = 0f else onClick()
+                }
+                .padding(start = 20.dp, end = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier
+                    .size(13.dp)
+                    .clip(CircleShape)
+                    .background(color),
+            )
+            Text(
+                title,
+                color = if (completed) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
+                fontSize = 21.sp,
+                textDecoration = if (completed) TextDecoration.LineThrough else TextDecoration.None,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 21.dp, top = 2.dp, bottom = 2.dp),
+            )
+            Text(count, color = GoaldayDesign.InkSecondary, fontSize = 18.sp, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun PlanRevealAction(label: String, color: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .background(color)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 

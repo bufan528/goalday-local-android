@@ -1,47 +1,43 @@
+/**
+ * Copyright (C) 2020 Wasabeef
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@charset "UTF-8";
+
+
 html {
   height: 100%;
 }
 
 body {
-  margin: 0;
-  min-height: 100%;
-  background: #fffaf3;
-  color: #342c24;
-  font-family: sans-serif;
+  overflow: scroll;
+  display: table;
+  table-layout: fixed;
+  width: 100%;
+  min-height:100%;
 }
 
 #editor {
-  min-height: 100vh;
-  box-sizing: border-box;
-  padding: 18px 2px 24px;
-  outline: none;
-  line-height: 1.75;
-  font-size: 17px;
-  white-space: normal;
-  word-break: break-word;
+  display: table-cell;
+  outline: 0px solid transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
 }
 
 #editor[placeholder]:empty:not(:focus):before {
   content: attr(placeholder);
-  opacity: 0.45;
-}
-
-b, strong {
-  font-weight: 700;
-}
-
-h1, h2 {
-  font-weight: 700;
-  margin: 0.6em 0 0.35em;
-}
-
-ul, ol {
-  padding-left: 1.4em;
-}
-
-blockquote {
-  margin: 0.8em 0;
-  padding-left: 0.8em;
-  border-left: 3px solid #d8c0a8;
-  color: #6c635a;
+  opacity: .5;
 }
