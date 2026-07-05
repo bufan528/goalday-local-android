@@ -259,21 +259,24 @@ fun GoaldayApp(startTarget: String? = null) {
         Scaffold(
             containerColor = if (isDark) GoaldayDesign.DarkAppBg else GoaldayDesign.AppBg,
             bottomBar = {
-                GoaldayBottomDock(
-                    selectedTab = tab,
-                    onSelect = { item ->
-                        if (tab != item) {
-                            tab = item
-                            when (item) {
-                                RootTab.BOOK -> {
-                                    bookSurface = BookRootSurface.HOME
-                                    bookEntryMode = BookEntryMode.PLANNER
+                val immersiveBook = tab == RootTab.BOOK && bookSurface == BookRootSurface.BOOK && bookEntryMode != BookEntryMode.PLANNER
+                if (!immersiveBook) {
+                    GoaldayBottomDock(
+                        selectedTab = tab,
+                        onSelect = { item ->
+                            if (tab != item) {
+                                tab = item
+                                when (item) {
+                                    RootTab.BOOK -> {
+                                        bookSurface = BookRootSurface.HOME
+                                        bookEntryMode = BookEntryMode.PLANNER
+                                    }
+                                    RootTab.CALENDAR, RootTab.SETTINGS -> Unit
                                 }
-                                RootTab.CALENDAR, RootTab.SETTINGS -> Unit
                             }
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             },
         ) { padding ->
             Box(
@@ -610,3 +613,4 @@ private fun GoaldayBottomDockItem(
         )
     }
 }
+
