@@ -65,6 +65,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -414,12 +415,14 @@ internal fun HandbookReplicaPage(
                     DaySpreadEditableSection(
                         day = block.day,
                         visibleDays = visibleDays,
-                        entries = if (idx == 0 && block.todo.isEmpty()) {
+                        entries = if (idx == 0 && block.targetSlots.isEmpty()) {
                             fallbackRightTodo.mapIndexed { i, text ->
                                 ScheduleEntry(id = "fallback_${block.day}_$i", title = text, day = block.day, month = anchorMonth, year = anchorYear, completed = false, note = "")
                             }
                         } else {
-                            block.todo
+                            block.targetSlots.map { slot ->
+                                ScheduleEntry(id = slot.id, title = slot.title, day = block.day, month = anchorMonth, year = anchorYear, completed = slot.completed, note = "")
+                            }
                         },
                         editingId = editingId,
                         editingText = editingText,
@@ -1226,81 +1229,184 @@ private fun DaySpreadEditableSection(
     onEntryDragEnd: () -> Unit,
     onEntryDragCancel: () -> Unit,
 ) {
-    var showAllRows by remember(day, entries.map { it.id }) { mutableStateOf(false) }
-    val doneCount = entries.count { it.completed }
-    val todoCount = entries.count { !it.completed }
-    val visibleLimit = if (showAllRows) 6 else 3
-    val visibleEntries = entries.take(visibleLimit)
-    val hiddenCount = (entries.size - visibleEntries.size).coerceAtLeast(0)
-    Column(
+    val visibleEntries = entries.take(6)
+    val slots = List(6) { index -> visibleEntries.getOrNull(index) }
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (activeDrop) GoaldayDesign.PinkSoft else GoaldayDesign.adaptiveSurface.copy(alpha = 0.26f), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .border(if (activeDrop) 0.9.dp else 0.45.dp, if (activeDrop) GoaldayDesign.Pink else GoaldayDesign.BorderColor.copy(alpha = 0.09f), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) }
-            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+            .height(86.dp)
+            .background(if (activeDrop) GoaldayDesign.PinkSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
+            .border(if (activeDrop) 0.9.dp else 0.dp, if (activeDrop) GoaldayDesign.Pink else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
+            .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) },
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
-            Text("待办 $todoCount · 完成 $doneCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.RouteDiary)
+        Column(
+            modifier = Modifier
+                .width(24.5.dp)
+                .fillMaxHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                day.toString().padStart(2, '0'),
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.adaptiveInkPrimary,
+                fontWeight = FontWeight.Normal,
+                maxLines = 1,
+            )
+            Text("—", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveDivider, maxLines = 1)
+            Text(
+                weekdayLabel(day, visibleDays),
+                style = MaterialTheme.typography.labelSmall,
+                color = GoaldayDesign.adaptiveInkMuted,
+                maxLines = 1,
+            )
         }
-        repeat(visibleLimit.coerceAtLeast(3)) { idx ->
-            val entry = visibleEntries.getOrNull(idx)
-            if (entry == null) {
-                EmptyHandbookSlot(
-                    label = if (activeDrop && idx == visibleEntries.size.coerceAtMost(2)) "释放到${day}日" else "",
-                    highlight = activeDrop && idx == visibleEntries.size.coerceAtMost(2),
-                )
-            } else {
-                val dayIndex = visibleDays.indexOf(entry.day)
-                HandbookEntryLine(
-                    slotLabel = "${day}",
-                    entry = entry,
-                    editingId = editingId,
-                    editingText = editingText,
-                    onStartEdit = { onStartEdit(entry) },
-                    onTextChange = onTextChange,
-                    onCommit = { onCommit(entry) },
-                    onToggleCompleted = { onToggleCompleted(entry) },
-                    canMovePrevious = dayIndex > 0 && !entry.id.startsWith("fallback_"),
-                    canMoveNext = dayIndex >= 0 && dayIndex < visibleDays.lastIndex && !entry.id.startsWith("fallback_"),
-                    onMovePrevious = {
-                        visibleDays.getOrNull(dayIndex - 1)?.let { targetDay -> onMoveEntryToDay(entry, targetDay) }
-                    },
-                    onMoveNext = {
-                        visibleDays.getOrNull(dayIndex + 1)?.let { targetDay -> onMoveEntryToDay(entry, targetDay) }
-                    },
-                    onDragStart = { position -> onEntryDragStart(entry, position) },
-                    onDrag = onEntryDrag,
-                    onDragEnd = onEntryDragEnd,
-                    onDragCancel = onEntryDragCancel,
-                )
-            }
-        }
-        if (hiddenCount > 0 || showAllRows) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .background(GoaldayDesign.PinkTint)
-                    .clickable { showAllRows = !showAllRows }
-                    .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    if (showAllRows) "收起日程" else "展开 $hiddenCount 条更多",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = GoaldayDesign.Pink,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text("自适应", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .padding(vertical = 3.5.dp),
+        ) {
+            repeat(2) { columnIndex ->
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                ) {
+                    repeat(3) { rowIndex ->
+                        val slotIndex = columnIndex * 3 + rowIndex
+                        ReferenceScheduleTargetSlot(
+                            day = day,
+                            entry = slots[slotIndex],
+                            visibleDays = visibleDays,
+                            editingId = editingId,
+                            editingText = editingText,
+                            activeDrop = activeDrop && slotIndex == visibleEntries.size.coerceIn(0, 5),
+                            onStartEdit = onStartEdit,
+                            onTextChange = onTextChange,
+                            onCommit = onCommit,
+                            onToggleCompleted = onToggleCompleted,
+                            onMoveEntryToDay = onMoveEntryToDay,
+                            onEntryDragStart = onEntryDragStart,
+                            onEntryDrag = onEntryDrag,
+                            onEntryDragEnd = onEntryDragEnd,
+                            onEntryDragCancel = onEntryDragCancel,
+                        )
+                    }
+                }
             }
         }
     }
 }
 
+@Composable
+private fun ReferenceScheduleTargetSlot(
+    day: Int,
+    entry: ScheduleEntry?,
+    visibleDays: List<Int>,
+    editingId: String?,
+    editingText: String,
+    activeDrop: Boolean,
+    onStartEdit: (ScheduleEntry) -> Unit,
+    onTextChange: (String) -> Unit,
+    onCommit: (ScheduleEntry) -> Unit,
+    onToggleCompleted: (ScheduleEntry) -> Unit,
+    onMoveEntryToDay: (ScheduleEntry, Int) -> Unit,
+    onEntryDragStart: (ScheduleEntry, Offset) -> Unit,
+    onEntryDrag: (Offset) -> Unit,
+    onEntryDragEnd: () -> Unit,
+    onEntryDragCancel: () -> Unit,
+) {
+    if (entry == null) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(25.dp)
+                .padding(horizontal = 2.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            if (activeDrop) {
+                Text("释放到${day}日", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.Pink, maxLines = 1)
+            } else {
+                Box(Modifier.fillMaxWidth().height(0.55.dp).background(GoaldayDesign.adaptiveDivider.copy(alpha = 0.55f)))
+            }
+        }
+        return
+    }
+
+    val dayIndex = visibleDays.indexOf(entry.day)
+    if (editingId == entry.id) {
+        BasicTextField(
+            value = editingText,
+            onValueChange = onTextChange,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onCommit(entry) }),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(25.dp)
+                .padding(horizontal = 2.dp)
+                .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.45f), RoundedCornerShape(GoaldayDesign.RadiusS))
+                .padding(horizontal = 3.dp, vertical = 1.dp),
+            textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary),
+        )
+    } else {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(25.dp)
+                .padding(horizontal = 2.dp)
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                .background(if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.07f) else Color.Transparent)
+                .pointerInput(entry.id) {
+                    detectDragGesturesAfterLongPress(
+                        onDragStart = { position -> onEntryDragStart(entry, position) },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            onEntryDrag(dragAmount)
+                        },
+                        onDragEnd = onEntryDragEnd,
+                        onDragCancel = onEntryDragCancel,
+                    )
+                }
+                .clickable { onStartEdit(entry) }
+                .padding(horizontal = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(9.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .border(0.7.dp, if (entry.completed) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkMuted, RoundedCornerShape(2.dp))
+                    .background(if (entry.completed) GoaldayDesign.Positive else Color.Transparent)
+                    .clickable { onToggleCompleted(entry) },
+            )
+            Text(
+                entry.title,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (entry.completed) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                modifier = Modifier.weight(1f),
+            )
+            if (dayIndex > 0 && !entry.id.startsWith("fallback_")) {
+                Text("‹", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.clickable { onMoveEntryToDay(entry, visibleDays[dayIndex - 1]) })
+            }
+            if (dayIndex >= 0 && dayIndex < visibleDays.lastIndex && !entry.id.startsWith("fallback_")) {
+                Text("›", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.clickable { onMoveEntryToDay(entry, visibleDays[dayIndex + 1]) })
+            }
+        }
+    }
+}
+
+private fun weekdayLabel(day: Int, visibleDays: List<Int>): String {
+    val labels = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
+    val index = visibleDays.indexOf(day).takeIf { it >= 0 } ?: 0
+    return labels[index % labels.size]
+}
 @Composable
 private fun EmptyHandbookSlot(
     label: String,
