@@ -255,6 +255,51 @@ fun SettingsScreen(
                 },
             )
         }
+        // 对照逆向 activity_setting.xml「联系我们」段
+        SettingsSection(title = "联系我们") {
+            SettingRow(
+                title = "用户反馈",
+                subtitle = "把建议或问题告诉我们。",
+                meta = "打开",
+                onClick = {
+                    Toast.makeText(context, "反馈通道开发中", Toast.LENGTH_SHORT).show()
+                },
+            )
+            SettingRow(
+                title = "小红书",
+                subtitle = "搜索「Goalday」查看使用教程与示例。",
+                meta = "打开",
+                onClick = {
+                    Toast.makeText(context, "请到小红书搜索 Goalday", Toast.LENGTH_SHORT).show()
+                },
+            )
+            SettingRow(
+                title = "版本信息",
+                subtitle = "Goalday Local · 本地离线版",
+                meta = runCatching {
+                    context.packageManager.getPackageInfo(context.packageName, 0).versionName
+                }.getOrDefault("1.0"),
+                onClick = {
+                    Toast.makeText(context, "当前为本地离线版本", Toast.LENGTH_SHORT).show()
+                },
+            )
+            SettingRow(
+                title = "隐私政策",
+                subtitle = "查看应用隐私政策与数据使用说明。",
+                meta = "打开",
+                onClick = {
+                    Toast.makeText(context, "隐私政策文档开发中", Toast.LENGTH_SHORT).show()
+                },
+            )
+            SettingRow(
+                title = "用户条款",
+                subtitle = "查看用户服务协议。",
+                meta = "打开",
+                onClick = {
+                    Toast.makeText(context, "用户条款文档开发中", Toast.LENGTH_SHORT).show()
+                },
+            )
+        }
     }
 
     pendingRestore?.let { snapshot ->

@@ -26,6 +26,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.RadioButtonChecked
@@ -2549,33 +2550,98 @@ private fun DiaryLinkedTargetStrip(
     onPickDone: (String) -> Unit,
     onPickTodo: (String) -> Unit,
 ) {
-    val done = doneItems.map(String::trim).filter(String::isNotBlank).distinct().take(3)
-    val todo = todoItems.map(String::trim).filter(String::isNotBlank).filterNot { it in done }.distinct().take(3)
-    if (done.isEmpty() && todo.isEmpty()) return
+    // 对照逆向 item_diary_target.xml：标题「今日完成」+奖励图标，空态文案，圆点+文本子项
+    val done = doneItems.map(String::trim).filter(String::isNotBlank).distinct()
+    val todo = todoItems.map(String::trim).filter(String::isNotBlank).filterNot { it in done }.distinct()
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.PinkTint)
             .border(GoaldayDesign.Hairline, GoaldayDesign.Pink.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 + 2.dp),
-        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp),
+            .padding(bottom = GoaldayDesign.Space2),
+        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
     ) {
-        Text("关联目标", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.Medium)
-        if (done.isNotEmpty()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp), modifier = Modifier.fillMaxWidth()) {
-                done.forEach { item ->
-                    DiaryLinkedTargetChip(Icons.Filled.Check, item, GoaldayDesign.Positive, Modifier.weight(1f)) { onPickDone(item) }
-                }
+        // 标题行：奖励图标 + 「今日完成」
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = GoaldayDesign.Space3, top = GoaldayDesign.Space2 + 1.dp, bottom = GoaldayDesign.Space1),
+        ) {
+            Icon(
+                Icons.Filled.CardGiftcard,
+                contentDescription = null,
+                tint = GoaldayDesign.Pink,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                "今日完成",
+                style = MaterialTheme.typography.titleSmall,
+                color = GoaldayDesign.Pink,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        if (done.isEmpty() && todo.isEmpty()) {
+            // 空态文案：对照逆向 tv_empty
+            Text(
+                "这里会自动记录清单中完成的事项。",
+                style = MaterialTheme.typography.bodySmall,
+                color = GoaldayDesign.adaptiveInkMuted,
+                modifier = Modifier.padding(start = GoaldayDesign.Space3, top = GoaldayDesign.Space1),
+            )
+        } else {
+            // 子项列表：圆点 + 文本（对照 item_diary_target_child.xml）
+            done.forEach { item ->
+                DiaryLinkedTargetChildRow(
+                    text = item,
+                    completed = true,
+                    color = GoaldayDesign.Positive,
+                    onClick = { onPickDone(item) },
+                )
+            }
+            todo.forEach { item ->
+                DiaryLinkedTargetChildRow(
+                    text = item,
+                    completed = false,
+                    color = GoaldayDesign.RouteDiary,
+                    onClick = { onPickTodo(item) },
+                )
             }
         }
-        if (todo.isNotEmpty()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp), modifier = Modifier.fillMaxWidth()) {
-                todo.forEach { item ->
-                    DiaryLinkedTargetChip(Icons.Filled.RadioButtonUnchecked, item, GoaldayDesign.RouteDiary, Modifier.weight(1f)) { onPickTodo(item) }
-                }
-            }
-        }
+    }
+}
+
+// 对照逆向 item_diary_target_child.xml：5pt 圆点 + 内容文本，可点击
+@Composable
+private fun DiaryLinkedTargetChildRow(
+    text: String,
+    completed: Boolean,
+    color: Color,
+    onClick: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .clickable { onClick() }
+            .padding(start = GoaldayDesign.Space3),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(5.dp)
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(color),
+        )
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (completed) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveInkPrimary,
+            maxLines = 1,
+        )
     }
 }
 
