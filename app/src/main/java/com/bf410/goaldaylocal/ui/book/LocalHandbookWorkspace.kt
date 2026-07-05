@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -54,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.PlanPage
+import com.bf410.goaldaylocal.data.ReverseTopicConfigParser
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetPage
@@ -278,34 +280,116 @@ private fun ReferenceWeekPage(
 private fun ReferenceListPage(bookTitle: String, items: List<String>, completed: List<String>, onAdd: (String) -> Unit, onToggle: (String) -> Unit) {
     var detailOpen by rememberSaveable { mutableStateOf(false) }
     var draft by rememberSaveable { mutableStateOf("") }
-    if (!detailOpen) {
-        Column(Modifier.fillMaxSize().background(GoaldayDesign.AppBg).padding(start = 25.dp, top = 31.dp, end = 25.dp, bottom = 58.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ListOverviewCard("2026年愿望清单", "${completed.size}/${items.size.coerceAtLeast(100)}") { detailOpen = true }
-            ListOverviewCard("日程指南", "0/0") { detailOpen = true }
-            ListOverviewCard("清单指南", "0/0") { detailOpen = true }
-            Spacer(Modifier.weight(1f))
-            Text("＋", color = GoaldayDesign.InkSecondary, fontSize = 32.sp, modifier = Modifier.align(Alignment.End).padding(end = 18.dp).clickable { detailOpen = true })
-            Text("✎", color = GoaldayDesign.InkSecondary, fontSize = 30.sp, modifier = Modifier.align(Alignment.End).padding(end = 18.dp).clickable { detailOpen = true })
+    var showAddSheet by rememberSaveable { mutableStateOf(false) }
+    var bindSchedule by rememberSaveable { mutableStateOf(false) }
+    var selectedColorIndex by rememberSaveable { mutableStateOf(0) }
+    val planColors = listOf(Color(0xFFF2C0A5), Color(0xFFA1B774), Color(0xFF9EAADB), Color(0xFFF1D179), Color(0xFFED8888))
+
+    Box(Modifier.fillMaxSize().background(GoaldayDesign.AppBg)) {
+        if (!detailOpen) {
+            Column(Modifier.fillMaxSize().padding(start = 25.dp, top = 31.dp, end = 25.dp, bottom = 58.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ListOverviewCard("2026年愿望清单", "/") { detailOpen = true }
+                ListOverviewCard("日程指南", "0/0") { detailOpen = true }
+                ListOverviewCard("清单指南", "0/0") { detailOpen = true }
+                Spacer(Modifier.weight(1f))
+                FloatingPlanAction("+", tint = planColors[selectedColorIndex]) { showAddSheet = true }
+                FloatingPlanAction("?", tint = Color.Black) { detailOpen = true }
+            }
+        } else {
+            Column(Modifier.fillMaxSize().padding(bottom = 48.dp)) {
+                Row(Modifier.fillMaxWidth().height(70.dp).background(GoaldayDesign.MorandiBrownLight).padding(horizontal = 22.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("‹", fontSize = 34.sp, color = GoaldayDesign.InkPrimary, modifier = Modifier.clickable { detailOpen = false })
+                    Text(bookTitle.ifBlank { "2026年愿望清单" }, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                    Text("完成", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelLarge)
+                }
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                    items.distinct().take(100).forEachIndexed { index, item ->
+                        TargetDetailLine(index + 1, item, item in completed) { onToggle(item) }
+                    }
+                }
+                Row(Modifier.fillMaxWidth().height(46.dp).background(Color.White).padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("日期", color = GoaldayDesign.InkPrimary, fontSize = 15.sp, modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(Color(0xFFF6F6F6)).padding(horizontal = 10.dp, vertical = 5.dp))
+                    Spacer(Modifier.weight(1f))
+                    Text("删除", color = GoaldayDesign.InkSecondary, fontSize = 15.sp)
+                    Spacer(Modifier.width(18.dp))
+                    Text("置顶", color = GoaldayDesign.InkSecondary, fontSize = 15.sp)
+                    Spacer(Modifier.width(18.dp))
+                    Text("完成", color = GoaldayDesign.InkPrimary, fontSize = 15.sp)
+                }
+            }
         }
-        return
+
+        if (showAddSheet) {
+            ReferencePlanAddSheet(
+                draft = draft,
+                bindSchedule = bindSchedule,
+                colors = planColors,
+                selectedColorIndex = selectedColorIndex,
+                onDraftChange = { draft = it },
+                onBindScheduleChange = { bindSchedule = it },
+                onColorSelect = { selectedColorIndex = it },
+                onCancel = { showAddSheet = false; draft = "" },
+                onComplete = {
+                    if (draft.isNotBlank()) onAdd(draft)
+                    showAddSheet = false
+                    detailOpen = true
+                    draft = ""
+                },
+            )
+        }
     }
-    Column(Modifier.fillMaxSize().background(GoaldayDesign.AppBg).padding(bottom = 48.dp)) {
-        Row(Modifier.fillMaxWidth().height(70.dp).background(GoaldayDesign.MorandiBrownLight).padding(horizontal = 22.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("‹", fontSize = 34.sp, color = GoaldayDesign.InkPrimary, modifier = Modifier.clickable { detailOpen = false })
-            Text(bookTitle.ifBlank { "2026年愿望清单" }, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-            Text("完成", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelLarge)
+}
+
+@Composable
+private fun ColumnScope.FloatingPlanAction(label: String, tint: Color, onClick: () -> Unit) {
+    Box(
+        Modifier.align(Alignment.End).padding(end = 18.dp, bottom = 12.dp).size(48.dp).shadow(6.dp, CircleShape).clip(CircleShape).background(tint).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun ReferencePlanAddSheet(
+    draft: String,
+    bindSchedule: Boolean,
+    colors: List<Color>,
+    selectedColorIndex: Int,
+    onDraftChange: (String) -> Unit,
+    onBindScheduleChange: (Boolean) -> Unit,
+    onColorSelect: (Int) -> Unit,
+    onCancel: () -> Unit,
+    onComplete: () -> Unit,
+) {
+    Box(Modifier.fillMaxSize().background(Color(0x66000000)).clickable(onClick = onCancel), contentAlignment = Alignment.BottomCenter) {
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)).background(Color(0xFFFFFEFC)).clickable(enabled = false) { }.padding(bottom = 26.dp)) {
+            Row(Modifier.fillMaxWidth().height(74.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("取消", color = Color(0xFF397FEA), fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 22.dp).clickable(onClick = onCancel))
+                Spacer(Modifier.weight(1f))
+                Text("完成", color = Color(0xFFED8888), fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 22.dp).clickable(onClick = onComplete))
+            }
+            Text("清单名称", color = GoaldayDesign.InkPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 22.dp, bottom = 12.dp))
+            BasicTextField(
+                value = draft,
+                onValueChange = onDraftChange,
+                singleLine = true,
+                textStyle = TextStyle(color = GoaldayDesign.InkPrimary, fontSize = 20.sp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp).clip(RoundedCornerShape(6.dp)).background(Color(0xFFF8F3EE)).padding(horizontal = 10.dp, vertical = 14.dp),
+            )
+            Row(Modifier.fillMaxWidth().height(58.dp).padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("关联到日程", color = GoaldayDesign.InkPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Box(Modifier.width(48.dp).height(28.dp).clip(RoundedCornerShape(20.dp)).background(if (bindSchedule) Color(0xFFED8888) else Color(0xFFE7DED7)).clickable { onBindScheduleChange(!bindSchedule) }, contentAlignment = if (bindSchedule) Alignment.CenterEnd else Alignment.CenterStart) {
+                    Box(Modifier.padding(3.dp).size(22.dp).clip(CircleShape).background(Color.White))
+                }
+            }
+            Text("清单颜色", color = GoaldayDesign.InkPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 12.dp))
+            Row(Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                colors.forEachIndexed { index, color ->
+                    Box(Modifier.size(if (index == selectedColorIndex) 30.dp else 24.dp).clip(CircleShape).background(color).border(if (index == selectedColorIndex) 2.dp else 0.dp, GoaldayDesign.InkPrimary, CircleShape).clickable { onColorSelect(index) })
+                }
+            }
         }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            items.distinct().take(100).forEachIndexed { index, item -> TargetDetailLine(index + 1, item, item in completed) { onToggle(item) } }
-        }
-        BasicTextField(
-            value = draft,
-            onValueChange = { draft = it },
-            textStyle = TextStyle(color = GoaldayDesign.InkPrimary, fontSize = 15.sp),
-            modifier = Modifier.fillMaxWidth().height(44.dp).padding(horizontal = 42.dp),
-            decorationBox = { inner -> if (draft.isBlank()) Text("新目标", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodyMedium); inner() },
-        )
-        if (draft.isNotBlank()) Text("加入", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 42.dp).clickable { onAdd(draft); draft = "" })
     }
 }
 
@@ -326,7 +410,7 @@ private fun ReferenceTopicsPage(
     onSaveAsBook: (InspirationTemplate, List<String>) -> Unit,
 ) {
     val context = LocalContext.current
-    val templates = InspirationTemplates.all
+    val templates: List<InspirationTemplate> = remember(context) { loadReverseTopicTemplates(context) }
     var selectedIndex by rememberSaveable { mutableStateOf(0) }
     val selected = templates.getOrNull(selectedIndex) ?: return
     val targetItems: List<String> = remember(selected.id) {
@@ -695,4 +779,30 @@ private fun collectListItems(page: BookPage?, uiState: BookUiState): List<String
     }
     val fallback = listOf("制定2026计划", "坚持早睡早起", "每月复盘一次", "每月存一笔钱", "每月记一次帐", "制定年度预算计划", "闲置物品出售", "减少外卖次数", "定期问候长辈", "看完十本书")
     return (base + uiState.customPageItems + uiState.todayPlanItems + uiState.todayCompletedItems + fallback).filter { it.isNotBlank() }.distinct()
+}
+
+private fun loadReverseTopicTemplates(context: android.content.Context): List<InspirationTemplate> {
+    val parsed = runCatching {
+        context.assets.open("topic_center_config.json").bufferedReader(Charsets.UTF_8).use { reader ->
+            ReverseTopicConfigParser.parse(reader.readText())
+        }
+    }.getOrDefault(emptyList())
+    if (parsed.isEmpty()) return InspirationTemplates.all
+    return parsed.mapIndexed { index, topic ->
+        val color = runCatching { Color(android.graphics.Color.parseColor("#${topic.colorHex}")) }.getOrElse { GoaldayDesign.TopicPeach }
+        InspirationTemplate(
+            id = topic.id,
+            title = topic.title,
+            subtitle = if (topic.linkToSchedule) "可加入日程" else "本地清单模板",
+            color = color,
+            coverKey = topic.coverKey,
+            targetKey = topic.targetKey,
+            category = "主题",
+            catalogPath = "assets/topic_center_config.json",
+            coverAssetPath = "assets/cover/${topic.coverKey}.png",
+            targetAssetPath = "assets/topictarget/${topic.targetKey}.txt",
+            linkToSchedule = topic.linkToSchedule,
+            items = topic.targets.ifEmpty { InspirationTemplates.all.getOrNull(index)?.items ?: emptyList() },
+        )
+    }
 }
