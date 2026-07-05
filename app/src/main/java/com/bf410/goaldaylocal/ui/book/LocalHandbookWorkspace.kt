@@ -100,7 +100,7 @@ internal fun LocalHandbookWorkspace(
         if (index >= 0 && index != uiState.selectedPageIndex) viewModel.setPage(index)
     }
 
-    Box(Modifier.fillMaxSize().background(GoaldayDesign.AppBg)) {
+    Box(Modifier.fillMaxSize().background(Color(0xFFFDFaf6))) {
         Column(Modifier.fillMaxSize()) {
             ReferenceExactTopBar(
                 selected = segment,
@@ -111,7 +111,7 @@ internal fun LocalHandbookWorkspace(
                 onSelectDiary = { overlay = HandbookOverlay.NONE; segment = LocalHandbookSegment.DIARY },
                 onSelectTopics = { overlay = HandbookOverlay.NONE; segment = LocalHandbookSegment.TOPICS },
             )
-            Box(Modifier.weight(1f)) {
+            Box(Modifier.weight(1f).fillMaxWidth().background(Color(0xFFFDFaf6))) {
                 when (segment) {
                     LocalHandbookSegment.DIARY -> ReferenceDiaryPage(
                         draft = uiState.diaryDraft,
@@ -135,16 +135,11 @@ internal fun LocalHandbookWorkspace(
                         onAdd = viewModel::addCustomPageItem,
                         onToggle = { item -> if (item in uiState.todayCompletedItems) viewModel.restoreItemFromCompleted(item) else viewModel.moveItemToCompleted(item) },
                     )
-                                    LocalHandbookSegment.TOPICS -> ReferenceTopicsPage(
+                    LocalHandbookSegment.TOPICS -> ReferenceTopicsPage(
                         onApply = viewModel::applyInspirationTemplate,
                         onSaveAsBook = { template, items -> viewModel.createTemplateBook(template.title, template.subtitle, template.color, items) },
                     )
-}
-                ReferenceBottomBookBar(
-                    onSettings = { overlay = HandbookOverlay.SETTINGS },
-                    onCalendar = { overlay = HandbookOverlay.MONTH_PICKER },
-                    onBook = { overlay = HandbookOverlay.BOOK_OVERVIEW },
-                )
+                }
             }
         }
         when (overlay) {
@@ -169,7 +164,6 @@ internal fun LocalHandbookWorkspace(
         }
     }
 }
-
 @Composable
 private fun ReferenceExactTopBar(
     selected: LocalHandbookSegment,
@@ -180,31 +174,52 @@ private fun ReferenceExactTopBar(
     onSelectDiary: () -> Unit,
     onSelectTopics: () -> Unit,
 ) {
-    val scheduleLabel = if (selected == LocalHandbookSegment.SCHEDULE) "${weekNumber(date.plusWeeks(weekOffset.toLong()))}周" else "日程"
-    val diaryLabel = if (selected == LocalHandbookSegment.DIARY) "${date.monthValue}月${date.dayOfMonth}日" else "日记"
+    val scheduleLabel = if (selected == LocalHandbookSegment.SCHEDULE) "${weekNumber(date.plusWeeks(weekOffset.toLong()))}周" else HandbookLabels.schedule
+    val diaryLabel = if (selected == LocalHandbookSegment.DIARY) "${date.monthValue}月${date.dayOfMonth}日" else HandbookLabels.diary
     Row(
-        modifier = Modifier.fillMaxWidth().height(49.dp).background(GoaldayDesign.MorandiBrownLight).padding(horizontal = 26.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(49.dp)
+            .background(Color(0xFFE5DAD4))
+            .padding(start = 20.dp, end = 20.dp, bottom = 5.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Bottom,
     ) {
-        TopText("计划", selected == LocalHandbookSegment.PLAN, onSelectPlan)
+        TopText(HandbookLabels.plan, selected == LocalHandbookSegment.PLAN, onSelectPlan)
         TopText(scheduleLabel, selected == LocalHandbookSegment.SCHEDULE, onSelectSchedule)
         TopText(diaryLabel, selected == LocalHandbookSegment.DIARY, onSelectDiary)
-        TopText("主题", selected == LocalHandbookSegment.TOPICS, onSelectTopics)
+        TopText(HandbookLabels.topics, selected == LocalHandbookSegment.TOPICS, onSelectTopics)
     }
 }
 
 @Composable
 private fun TopText(text: String, selected: Boolean, onClick: () -> Unit) {
-    Text(
-        text = text,
-        color = if (selected) GoaldayDesign.InkPrimary else GoaldayDesign.InkSecondary,
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-        modifier = Modifier.pointerInput(onClick) { detectTapGestures { onClick() } },
-    )
+    Column(
+        modifier = Modifier
+            .width(64.dp)
+            .fillMaxHeight()
+            .pointerInput(onClick) { detectTapGestures { onClick() } },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Bottom,
+    ) {
+        Text(
+            text = text,
+            color = if (selected) GoaldayDesign.InkPrimary else GoaldayDesign.InkSecondary,
+            fontSize = if (selected) 20.sp else 18.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
+        Box(
+            Modifier
+                .padding(top = 5.dp)
+                .width(if (selected) 24.dp else 0.dp)
+                .height(2.dp)
+                .background(if (selected) GoaldayDesign.InkPrimary else Color.Transparent),
+        )
+    }
 }
-
 @Composable
 private fun ReferenceDiaryPage(draft: String, date: LocalDate, onDateChange: (LocalDate) -> Unit, onDraftChange: (String) -> Unit) {
     Column(
@@ -307,7 +322,7 @@ private fun ReferenceWeekPage(
     val days = (0..6).map { monday.plusDays(it.toLong()) }
     var draft by rememberSaveable { mutableStateOf("") }
     var selectedDay by rememberSaveable(anchorDate) { mutableStateOf(anchorDate.dayOfMonth) }
-    Column(Modifier.fillMaxSize().background(GoaldayDesign.AppBg).padding(bottom = 48.dp)) {
+    Column(Modifier.fillMaxSize().background(Color(0xFFFDFaf6))) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             days.forEach { day ->
                 ScheduleLine(
@@ -517,7 +532,7 @@ private fun ReferenceTopicsPage(
     val targetItems: List<String> = remember(selected.id) {
         loadTargetAssetItems(context, selected.targetAssetPath).ifEmpty { selected.items }
     }
-    Column(Modifier.fillMaxSize().background(GoaldayDesign.AppBg).padding(bottom = 48.dp)) {
+    Column(Modifier.fillMaxSize().background(Color(0xFFFDFaf6))) {
         Row(Modifier.fillMaxWidth().height(108.dp).padding(horizontal = 18.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.width(62.dp).height(82.dp).clip(RoundedCornerShape(3.dp))) {
                 TopicCoverArt(selected, selectedIndex, Modifier.fillMaxSize(), compact = true)
