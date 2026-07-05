@@ -206,7 +206,7 @@ fun SettingsScreen(
                 },
             )
         }
-        SettingsSection(title = "备份") {
+        SettingsSection(title = "备份与迁移") {
             BackupActionPanel(
                 backupCount = snapshots.size,
                 latestBackup = latestBackup,
@@ -222,10 +222,37 @@ fun SettingsScreen(
                     Toast.makeText(context, manager.backupRootPath(), Toast.LENGTH_LONG).show()
                 },
             )
+            SettingRow(
+                title = "导入日历",
+                subtitle = "从系统日历导入事件到本地日程。",
+                meta = "打开",
+                onClick = {
+                    Toast.makeText(context, "导入日历功能开发中", Toast.LENGTH_SHORT).show()
+                },
+            )
             BackupHistoryList(
                 snapshots = snapshots,
                 onRestore = { pendingRestore = it },
                 onDelete = { pendingDelete = it },
+            )
+        }
+        SettingsSection(title = "日记") {
+            var selectedDiaryImageSize by remember { mutableStateOf(mmkv.decodeString("diary_image_size", "standard") ?: "standard") }
+            val diaryImageSizeOptions = remember {
+                listOf(
+                    FontSizeOption("compact", "小", 0),
+                    FontSizeOption("standard", "标准", 0),
+                    FontSizeOption("large", "大", 0),
+                )
+            }
+            FontSizeMenu(
+                options = diaryImageSizeOptions,
+                selected = selectedDiaryImageSize,
+                onSelected = { option ->
+                    selectedDiaryImageSize = option.key
+                    mmkv.encode("diary_image_size", option.key)
+                    Toast.makeText(context, "日记图片尺寸已设为：${option.label}", Toast.LENGTH_SHORT).show()
+                },
             )
         }
     }
