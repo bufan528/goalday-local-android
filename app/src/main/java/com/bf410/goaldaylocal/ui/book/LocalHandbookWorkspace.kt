@@ -207,26 +207,89 @@ private fun TopText(text: String, selected: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun ReferenceDiaryPage(draft: String, date: LocalDate, onDateChange: (LocalDate) -> Unit, onDraftChange: (String) -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize().background(GoaldayDesign.AppBg).referencePaperLines().pointerInput(date) {
-            detectDragGestures { change, drag ->
-                if (abs(drag.y) > abs(drag.x) && abs(drag.y) > 24f) {
-                    onDateChange(if (drag.y < 0f) date.plusDays(1) else date.minusDays(1))
-                    change.consume()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(GoaldayDesign.AppBg)
+            .pointerInput(date) {
+                detectDragGestures { change, drag ->
+                    if (abs(drag.y) > abs(drag.x) && abs(drag.y) > 24f) {
+                        onDateChange(if (drag.y < 0f) date.plusDays(1) else date.minusDays(1))
+                        change.consume()
+                    }
                 }
-            }
-        }.padding(start = 12.dp, top = 15.dp, end = 12.dp, bottom = 58.dp),
-    ) {
-        BasicTextField(
-            value = draft,
-            onValueChange = onDraftChange,
-            textStyle = TextStyle(color = GoaldayDesign.InkPrimary, fontSize = 16.sp, lineHeight = 24.sp),
-            modifier = Modifier.fillMaxWidth(),
-            decorationBox = { inner ->
-                if (draft.isBlank()) Text(randomPrompt(date), color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.bodyLarge)
-                inner()
             },
-        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(24.dp)
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            Text(
+                "${date.monthValue}月${date.dayOfMonth}日 ${date.dayOfWeek.displayName()}",
+                color = GoaldayDesign.InkPrimary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(start = 10.dp, top = 5.dp, end = 10.dp, bottom = 0.dp)
+                .referencePaperLines(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                BasicTextField(
+                    value = draft,
+                    onValueChange = onDraftChange,
+                    textStyle = TextStyle(color = Color(0xFF2C2C2C), fontSize = 16.sp, lineHeight = 22.sp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp, bottom = 24.dp),
+                    decorationBox = { inner ->
+                        if (draft.isBlank()) Text("点击输入", color = GoaldayDesign.InkMuted, fontSize = 16.sp, lineHeight = 22.sp)
+                        inner()
+                    },
+                )
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(31.dp)
+                .background(Color.White),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(start = 5.dp)
+                    .size(31.dp)
+                    .clickable { if (draft.isBlank()) onDraftChange(randomPrompt(date)) },
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(17.dp)
+                        .border(1.dp, GoaldayDesign.InkSecondary, RoundedCornerShape(2.dp)),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 6.dp, bottom = 6.dp)
+                        .size(5.dp)
+                        .clip(CircleShape)
+                        .background(GoaldayDesign.InkSecondary),
+                )
+            }
+        }
     }
 }
 
