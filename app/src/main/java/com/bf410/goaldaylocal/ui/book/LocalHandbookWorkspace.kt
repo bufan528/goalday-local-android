@@ -341,45 +341,52 @@ private fun ReferenceWeekPage(
 
 @Composable
 private fun ReferenceListPage(bookTitle: String, items: List<String>, completed: List<String>, onAdd: (String) -> Unit, onToggle: (String) -> Unit) {
-    var detailOpen by rememberSaveable { mutableStateOf(false) }
     var draft by rememberSaveable { mutableStateOf("") }
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
     var bindSchedule by rememberSaveable { mutableStateOf(false) }
     var selectedColorIndex by rememberSaveable { mutableStateOf(0) }
+    var showTipRows by rememberSaveable { mutableStateOf(false) }
     val planColors = listOf(Color(0xFFF2C0A5), Color(0xFFA1B774), Color(0xFF9EAADB), Color(0xFFF1D179), Color(0xFFED8888))
+    val visibleItems = (items.distinct().take(100)).ifEmpty { listOf(bookTitle.ifBlank { "2026年愿望清单" }) }
 
     Box(Modifier.fillMaxSize().background(GoaldayDesign.AppBg)) {
-        if (!detailOpen) {
-            Column(Modifier.fillMaxSize().padding(start = 25.dp, top = 31.dp, end = 25.dp, bottom = 58.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ListOverviewCard("2026年愿望清单", "/") { detailOpen = true }
-                ListOverviewCard("日程指南", "0/0") { detailOpen = true }
-                ListOverviewCard("清单指南", "0/0") { detailOpen = true }
-                Spacer(Modifier.weight(1f))
-                FloatingPlanAction("+", tint = planColors[selectedColorIndex]) { showAddSheet = true }
-                FloatingPlanAction("?", tint = Color.Black) { detailOpen = true }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(start = 20.dp, top = 11.dp, end = 20.dp, bottom = 108.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            visibleItems.forEachIndexed { index, item ->
+                ReferencePlanRow(
+                    title = item,
+                    count = if (item in completed) "1/1" else "0/1",
+                    color = planColors[index % planColors.size],
+                    completed = item in completed,
+                    onClick = { onToggle(item) },
+                )
             }
-        } else {
-            Column(Modifier.fillMaxSize().padding(bottom = 48.dp)) {
-                Row(Modifier.fillMaxWidth().height(70.dp).background(GoaldayDesign.MorandiBrownLight).padding(horizontal = 22.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("‹", fontSize = 34.sp, color = GoaldayDesign.InkPrimary, modifier = Modifier.clickable { detailOpen = false })
-                    Text(bookTitle.ifBlank { "2026年愿望清单" }, color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-                    Text("完成", color = GoaldayDesign.InkPrimary, style = MaterialTheme.typography.labelLarge)
-                }
-                Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                    items.distinct().take(100).forEachIndexed { index, item ->
-                        TargetDetailLine(index + 1, item, item in completed) { onToggle(item) }
-                    }
-                }
-                Row(Modifier.fillMaxWidth().height(46.dp).background(Color.White).padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("日期", color = GoaldayDesign.InkPrimary, fontSize = 15.sp, modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(Color(0xFFF6F6F6)).padding(horizontal = 10.dp, vertical = 5.dp))
-                    Spacer(Modifier.weight(1f))
-                    Text("删除", color = GoaldayDesign.InkSecondary, fontSize = 15.sp)
-                    Spacer(Modifier.width(18.dp))
-                    Text("置顶", color = GoaldayDesign.InkSecondary, fontSize = 15.sp)
-                    Spacer(Modifier.width(18.dp))
-                    Text("完成", color = GoaldayDesign.InkPrimary, fontSize = 15.sp)
+            if (showTipRows) {
+                listOf("左侧圆点对应清单颜色", "点击条目切换完成状态", "右下按钮新增或查看提示").forEachIndexed { index, tip ->
+                    ReferencePlanRow(
+                        title = tip,
+                        count = "提示",
+                        color = Color.Black,
+                        completed = false,
+                        onClick = {},
+                    )
                 }
             }
+        }
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 20.dp, bottom = 80.dp),
+            verticalArrangement = Arrangement.spacedBy(13.dp),
+            horizontalAlignment = Alignment.End,
+        ) {
+            FloatingPlanAction("+", tint = planColors[selectedColorIndex]) { showAddSheet = true }
+            FloatingPlanAction("?", tint = Color.Black) { showTipRows = !showTipRows }
         }
 
         if (showAddSheet) {
@@ -395,11 +402,42 @@ private fun ReferenceListPage(bookTitle: String, items: List<String>, completed:
                 onComplete = {
                     if (draft.isNotBlank()) onAdd(draft)
                     showAddSheet = false
-                    detailOpen = true
                     draft = ""
                 },
             )
         }
+    }
+}
+
+@Composable
+private fun ReferencePlanRow(title: String, count: String, color: Color, completed: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(65.dp)
+            .background(Color.White)
+            .clickable(onClick = onClick)
+            .padding(start = 20.dp, end = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(13.dp)
+                .clip(CircleShape)
+                .background(color),
+        )
+        Text(
+            title,
+            color = if (completed) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
+            fontSize = 21.sp,
+            textDecoration = if (completed) TextDecoration.LineThrough else TextDecoration.None,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 21.dp, top = 2.dp, bottom = 2.dp),
+        )
+        Text(count, color = GoaldayDesign.InkSecondary, fontSize = 18.sp, maxLines = 1)
     }
 }
 
