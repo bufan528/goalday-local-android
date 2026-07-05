@@ -79,6 +79,31 @@ class ScheduleHandbookModelTest {
         assertEquals(listOf("完成一", "完成二", "完成三"), model.fallbackDone)
     }
 
+    @Test
+    fun day_blocks_expose_six_reference_target_slots() {
+        val model = buildScheduleHandbookModel(
+            page = SchedulePage("6月日程", emptyList()),
+            scheduleEntries = listOf(
+                entry("1", "未完成一", 2026, 6, 1),
+                entry("2", "已完成", 2026, 6, 1, completed = true),
+                entry("3", "未完成二", 2026, 6, 1),
+                entry("4", "未完成三", 2026, 6, 1),
+                entry("5", "未完成四", 2026, 6, 1),
+                entry("6", "未完成五", 2026, 6, 1),
+                entry("7", "已完成二被截断", 2026, 6, 1, completed = true),
+            ),
+            todayPlanItems = emptyList(),
+            todayCompletedItems = emptyList(),
+            requestedWindowStart = 0,
+            today = LocalDate.of(2026, 6, 28),
+        )
+
+        val firstDay = model.dayBlocks.first()
+        assertEquals(6, firstDay.targetSlots.size)
+        assertEquals(listOf("未完成一", "未完成二", "未完成三", "未完成四", "未完成五", "已完成"), firstDay.targetSlots.map { it.title })
+        assertEquals(listOf(false, false, false, false, false, true), firstDay.targetSlots.map { it.completed })
+    }
+
     private fun entry(
         id: String,
         title: String,

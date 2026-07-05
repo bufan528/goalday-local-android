@@ -5,10 +5,17 @@ import com.bf410.goaldaylocal.data.ScheduleEntry
 import java.time.LocalDate
 import java.time.YearMonth
 
+internal data class ScheduleTargetSlot(
+    val id: String,
+    val title: String,
+    val completed: Boolean,
+)
+
 internal data class ScheduleDaySpreadBlock(
     val day: Int,
     val done: List<ScheduleEntry>,
     val todo: List<ScheduleEntry>,
+    val targetSlots: List<ScheduleTargetSlot>,
 )
 
 internal data class ScheduleHandbookModel(
@@ -57,14 +64,23 @@ internal fun buildScheduleHandbookModel(
     val start = (requestedWindowStart ?: defaultStart).coerceIn(0, maxStart)
     val sorted = scheduleEntries
         .filter { it.year == anchorYear && it.month == anchorMonth }
-        .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }, { it.title.lowercase() }, { it.id }))
+        .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }))
     val dayBlocks = List(3) { offset ->
         val day = start + offset + 1
         val dayEntries = sorted.filter { it.day == day }
+        val todo = dayEntries.filterNot { it.completed }
+        val done = dayEntries.filter { it.completed }
         ScheduleDaySpreadBlock(
             day = day,
-            done = dayEntries.filter { it.completed }.take(5),
-            todo = dayEntries.filterNot { it.completed }.take(5),
+            done = done.take(5),
+            todo = todo.take(5),
+            targetSlots = (todo + done).take(6).map { entry ->
+                ScheduleTargetSlot(
+                    id = entry.id,
+                    title = entry.title,
+                    completed = entry.completed,
+                )
+            },
         )
     }
     val scheduledTitles = sorted.map { it.title }.toSet()
