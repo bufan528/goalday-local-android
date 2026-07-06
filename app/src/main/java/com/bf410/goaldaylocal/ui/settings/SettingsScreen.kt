@@ -278,7 +278,7 @@ fun SettingsScreen(
                 subtitle = "Goalday Local · 本地离线版",
                 meta = runCatching {
                     context.packageManager.getPackageInfo(context.packageName, 0).versionName
-                }.getOrDefault("1.0"),
+                }.getOrDefault("1.0") ?: "1.0",
                 onClick = {
                     Toast.makeText(context, "当前为本地离线版本", Toast.LENGTH_SHORT).show()
                 },
