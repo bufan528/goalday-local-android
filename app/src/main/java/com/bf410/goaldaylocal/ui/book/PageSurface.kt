@@ -651,6 +651,7 @@ fun ActivePageLayer(
     }
 }
 
+// 对照逆向 fragment_diary_inbook.xml：日期标签 + 内容区 + 底部图片按钮栏
 @Composable
 private fun HandbookDiaryReplicaPage(
     modifier: Modifier,
@@ -678,31 +679,41 @@ private fun HandbookDiaryReplicaPage(
     }
     val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
     val editing = contentMode is PageContentMode.EditingDiary && contentMode.title == title
-    Box(
+    val today = LocalDate.now()
+    // 对照 fragment_diary_inbook.xml fl_date：24dp 高，paddingStart/End=7.5dp，tv_date 12sp
+    val diaryScrollState = rememberScrollState()
+    Column(
         modifier = modifier
             .graphicsLayer {
                 translationX = contentShift
                 this.alpha = alpha
             }
-            .padding(GoaldayDesign.Space3),
+            .fillMaxSize(),
     ) {
-        // P0-2 大修：HandbookPaperRuling 改为 Modifier 扩展，画在滚动 Column 内部，随内容同步滚动
-        val diaryScrollState = rememberScrollState()
-        Column(
+        // 日期标签行（对照 fl_date）
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(diaryScrollState)
-                .handbookPaperRuling(diaryScrollState),
-            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 1.dp),
+                .fillMaxWidth()
+                .height(24.dp)
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.Bottom,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                SectionStamp("日记", GoaldayDesign.Pink)
-                Text("${pageIndex + 1}/$pageCount", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
-            }
+            Text(
+                "${today.monthValue}月${today.dayOfMonth}日 周${today.dayOfWeek.value}",
+                color = GoaldayDesign.adaptiveInkPrimary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+            )
+        }
+        // 内容区（对照 rv_container: marginTop=5dp, marginStart/End=7.5dp, marginBottom=30dp）
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(start = 10.dp, top = 5.dp, end = 10.dp, bottom = 0.dp)
+                .handbookPaperRuling(diaryScrollState),
+        ) {
             if (editing) {
                 DiarySection(
                     title = title,
@@ -719,28 +730,61 @@ private fun HandbookDiaryReplicaPage(
                     inBook = true,
                 )
             } else {
-                StructuredDiaryPreview(
-                    state = StructuredDiary.fromRaw(diaryDraft),
-                    onAddImage = { onContentModeChange(PageContentMode.EditingDiary(title)) },
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        "编辑日记",
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
+                // 对照 item_diary_text.xml：16sp #2C2C2C，hint="点击输入"
+                val plainText = plainTextFromHtml(diaryDraft).ifBlank { diaryDraft }
+                if (plainText.isNotBlank()) {
+                    Column(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .background(GoaldayDesign.Pink)
-                            .clickable { onContentModeChange(PageContentMode.EditingDiary(title)) }
-                            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2 - 1.dp),
-                    )
-                    Text(prompt, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 2, modifier = Modifier.weight(1f))
+                            .fillMaxSize()
+                            .verticalScroll(diaryScrollState),
+                    ) {
+                        Text(
+                            plainText,
+                            fontSize = 16.sp,
+                            color = Color(0xFF2C2C2C),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(diaryScrollState)
+                            .clickable { onContentModeChange(PageContentMode.EditingDiary(title)) },
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            "点击输入",
+                            fontSize = 16.sp,
+                            color = GoaldayDesign.adaptiveInkMuted,
+                        )
+                    }
                 }
+            }
+        }
+        // 底部图片按钮栏（对照 fl_bottom_bar: 23dp 白底，fl_select_pic 23dp ic_select_pic）
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(31.dp)
+                .background(Color.White),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(start = 5.dp)
+                    .size(31.dp)
+                    .clickable { onContentModeChange(PageContentMode.EditingDiary(title)) },
+                contentAlignment = Alignment.Center,
+            ) {
+                // 对照 ic_select_pic：图片选择图标
+                Icon(
+                    Icons.Filled.Image,
+                    contentDescription = "插入图片",
+                    modifier = Modifier.size(17.dp),
+                    tint = GoaldayDesign.adaptiveInkSecondary,
+                )
             }
         }
     }
