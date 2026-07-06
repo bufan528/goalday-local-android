@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Restore
@@ -68,6 +69,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -806,6 +808,8 @@ private fun EditableBulletPage(
             windowStart = windowStart,
             onMoveItemToCompleted = onMoveItemToCompleted,
             onRestoreItemFromDone = onRestoreItemFromCompleted,
+            onEditTask = onRenameCustomItem,
+            onDeleteTask = onRemoveCustomItem,
         )
     }
 }
@@ -862,9 +866,12 @@ private fun ReferencePlannerBoard(
     onMoveItemToToday: (String) -> Unit,
     onMoveItemToCompleted: (String) -> Unit,
     onRestoreItemFromDone: (String) -> Unit,
+    onEditTask: (String, String) -> Unit = { _, _ -> },
+    onDeleteTask: (String) -> Unit = {},
     // 时间窗口参数化：默认今天+7天，调用方可传入任意起点实现月历联动
     windowStart: LocalDate = LocalDate.now(),
 ) {
+    var editingTask by remember { mutableStateOf<String?>(null) }
     val weekDates = (0..6).map { windowStart.plusDays(it.toLong()) }
     val weekday = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
     val dayLabels = weekDates.map { date ->
@@ -893,6 +900,16 @@ private fun ReferencePlannerBoard(
     val allRight = (todayPool + poolSource + donePreview)
     var selectedId by remember(allRight) { mutableStateOf(allRight.firstOrNull()?.id) }
 
+    if (editingTask != null) {
+        RenameTaskDialog(
+            initial = editingTask!!,
+            onDismiss = { editingTask = null },
+            onConfirm = { newName ->
+                onEditTask(editingTask!!, newName)
+                editingTask = null
+            },
+        )
+    }
     DualLaneExecutionBoard(
         leftHeader = "执行",
         rightHeader = selectedListName,
@@ -906,6 +923,8 @@ private fun ReferencePlannerBoard(
         onActionDone = { onMoveItemToCompleted(it.title) },
         onActionAdd = { onMoveItemToToday(it.title) },
         onActionRestore = { onRestoreItemFromDone(it.title) },
+        onEditTask = { editingTask = it.title },
+        onDeleteTask = { onDeleteTask(it.title) },
         topActions = {
             Text("切换", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1, modifier = Modifier
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
@@ -952,6 +971,37 @@ private fun ReferencePlannerBoard(
                     color = Color.White,
                     style = MaterialTheme.typography.labelSmall,
                 )
+            }
+        },
+    )
+}
+
+@Composable
+private fun RenameTaskDialog(
+    initial: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var text by remember { mutableStateOf(initial) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("重命名任务") },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                label = { Text("任务名称") },
+                singleLine = true,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(text.trim()) }) {
+                Text("确定")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
             }
         },
     )
@@ -1137,6 +1187,17 @@ private fun DiarySection(
                 DatePicker(state = datePickerState)
             }
         }
+        // 对照逆向 fragment_diary.xml：编辑态底部固定工具栏（图片 + 键盘收起）
+        if (editingDiary?.title == title) {
+            DiaryBottomToolbar(
+                onPickImage = { imagePicker.launch(arrayOf("image/*")) },
+                onDismissKeyboard = {
+                    // 关闭当前编辑器键盘焦点，仅切换浏览态
+                    onDiaryChange(structured.toRaw())
+                    onContentModeChange(PageContentMode.Browsing)
+                },
+            )
+        }
         DiaryExportDock(
             hint = exportHint,
             onPreview = {
@@ -1165,6 +1226,43 @@ private fun DiarySection(
         OnThisDayFlashbackDialog(
             flashback = flashback,
             onDismiss = { expandedFlashback = null },
+        )
+    }
+}
+
+// 对照逆向 fragment_diary.xml：底部工具栏，左侧图片按钮 + 右侧键盘按钮
+@Composable
+private fun DiaryBottomToolbar(
+    onPickImage: () -> Unit,
+    onDismissKeyboard: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(GoaldayDesign.adaptiveSurfaceSoft)
+            .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
+            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 2.dp)) {
+            Icon(
+                Icons.Filled.Image,
+                contentDescription = "插入图片",
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable(onClick = onPickImage),
+                tint = GoaldayDesign.adaptiveInkPrimary,
+            )
+        }
+        Icon(
+            Icons.Filled.Keyboard,
+            contentDescription = "收起键盘",
+            modifier = Modifier
+                .size(22.dp)
+                .clickable(onClick = onDismissKeyboard),
+            tint = GoaldayDesign.adaptiveInkPrimary,
         )
     }
 }
@@ -2640,38 +2738,6 @@ private fun DiaryLinkedTargetChildRow(
             text,
             style = MaterialTheme.typography.bodyMedium,
             color = if (completed) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveInkPrimary,
-            maxLines = 1,
-        )
-    }
-}
-
-@Composable
-private fun DiaryLinkedTargetChip(
-    icon: ImageVector,
-    text: String,
-    color: Color,
-    modifier: Modifier,
-    onClick: () -> Unit,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
-        modifier = modifier
-            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .background(GoaldayDesign.adaptiveWhiteOverlayMedium)
-            .clickable { onClick() }
-            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1),
-    ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            modifier = Modifier.size(12.dp),
-            tint = color,
-        )
-        Text(
-            text,
-            color = color,
-            style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
         )
     }

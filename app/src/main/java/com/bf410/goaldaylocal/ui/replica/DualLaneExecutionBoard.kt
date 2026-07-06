@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -76,6 +78,8 @@ fun DualLaneExecutionBoard(
     onActionDone: (BoardTask) -> Unit,
     onActionAdd: (BoardTask) -> Unit,
     onActionRestore: (BoardTask) -> Unit,
+    onEditTask: (BoardTask) -> Unit = {},
+    onDeleteTask: (BoardTask) -> Unit = {},
     topActions: @Composable RowScope.() -> Unit = {},
 ) {
     Row(
@@ -169,15 +173,40 @@ fun DualLaneExecutionBoard(
             ) {
                 Text("今日待办", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
                 todayTasks.forEach { task ->
-                    BoardRow(task = task, selected = selectedTaskId == task.id, actionIcon = Icons.Filled.Check, onSelect = { onSelectTask(task.id) }, onAction = { onActionDone(task) })
+                    BoardRow(
+                        task = task,
+                        selected = selectedTaskId == task.id,
+                        actionIcon = Icons.Filled.Check,
+                        onSelect = { onSelectTask(task.id) },
+                        onAction = { onActionDone(task) },
+                        onEdit = { onEditTask(task) },
+                        onDelete = { onDeleteTask(task) },
+                    )
                 }
                 Text("任务池", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
                 poolTasks.forEach { task ->
-                    BoardRow(task = task, selected = selectedTaskId == task.id, actionIcon = Icons.Filled.Add, onSelect = { onSelectTask(task.id) }, onAction = { onActionAdd(task) })
+                    BoardRow(
+                        task = task,
+                        selected = selectedTaskId == task.id,
+                        actionIcon = Icons.Filled.Add,
+                        onSelect = { onSelectTask(task.id) },
+                        onAction = { onActionAdd(task) },
+                        onEdit = { onEditTask(task) },
+                        onDelete = { onDeleteTask(task) },
+                    )
                 }
                 Text("已完成", color = GoaldayDesign.Positive, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 2.dp))
                 donePreviewTasks.forEach { task ->
-                    BoardRow(task = task, selected = selectedTaskId == task.id, actionIcon = Icons.Filled.Restore, onSelect = { onSelectTask(task.id) }, onAction = { onActionRestore(task) }, completed = true)
+                    BoardRow(
+                        task = task,
+                        selected = selectedTaskId == task.id,
+                        actionIcon = Icons.Filled.Restore,
+                        onSelect = { onSelectTask(task.id) },
+                        onAction = { onActionRestore(task) },
+                        onEdit = { onEditTask(task) },
+                        onDelete = { onDeleteTask(task) },
+                        completed = true,
+                    )
                 }
             }
             Spacer(modifier = Modifier.weight(1f))
@@ -198,11 +227,13 @@ private fun BoardRow(
 ) {
     // 对照逆向 item_plan_item.xml：SwipeRevealLayout 左滑露出编辑/删除按钮
     var swipeOffset by remember(task.id) { mutableStateOf(0f) }
-    val revealWidth = 100.dp.toPx()
+    val density = LocalDensity.current
+    val revealWidth = with(density) { 100.dp.toPx() }
     val clampedOffset = swipeOffset.coerceIn(-revealWidth, 0f)
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .height(IntrinsicSize.Min)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS)),
     ) {
         // 底层：编辑 + 删除按钮（右对齐，左侧滑出）
@@ -260,7 +291,7 @@ private fun BoardRow(
                     },
                     onDragStopped = {
                         // 滑动超过一半就完全展开，否则收起
-                        swipeOffset = if (swipeOffset < -revealWidth / 2f) -revealWidth else 0f
+                        swipeOffset = if (swipeOffset < -revealWidth / 2) -revealWidth else 0f
                     },
                 )
                 .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1),
