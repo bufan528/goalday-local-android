@@ -823,23 +823,41 @@ private fun EditableBulletPage(
     }
 }
 
-// 对照逆向 fragment_plan.xml：右下角浮动按钮条（添加 + 提示/切换）
+// 对照逆向 fragment_plan.xml：右下角独立浮动按钮，添加按钮在上(marginBottom=93dp)，提示按钮在下(marginBottom=32dp)
 @Composable
 private fun PlannerFloatingActionStrip(
     onAdd: () -> Unit,
     onTip: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        modifier = Modifier.fillMaxHeight(),
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.Bottom,
     ) {
-        // 提示/切换按钮
+        // 添加按钮：bg_plan_menu 背景 tint=#E5DAD4(mi色)
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .padding(end = 20.dp, bottom = 93.dp)
+                .size(46.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .background(GoaldayDesign.adaptiveInkPrimary)
+                .background(GoaldayDesign.TabBarBg)
+                .clickable { onAdd() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.Add,
+                contentDescription = "添加",
+                tint = GoaldayDesign.adaptiveInkPrimary,
+                modifier = Modifier.size(24.dp),
+            )
+        }
+        // 提示/切换清单按钮：bg_plan_menu 背景 tint=黑色
+        Box(
+            modifier = Modifier
+                .padding(end = 20.dp, bottom = 32.dp)
+                .size(46.dp)
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(Color.Black)
                 .clickable { onTip() },
             contentAlignment = Alignment.Center,
         ) {
@@ -848,23 +866,6 @@ private fun PlannerFloatingActionStrip(
                 contentDescription = "切换清单",
                 tint = Color.White,
                 modifier = Modifier.size(20.dp),
-            )
-        }
-        Spacer(modifier = Modifier.width(GoaldayDesign.Space2))
-        // 添加按钮
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .background(GoaldayDesign.PrimaryAction)
-                .clickable { onAdd() },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                Icons.Filled.Add,
-                contentDescription = "添加",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp),
             )
         }
     }
