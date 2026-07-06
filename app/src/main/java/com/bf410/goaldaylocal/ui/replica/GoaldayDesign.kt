@@ -14,13 +14,18 @@ import com.bf410.goaldaylocal.R
 val LocalGoaldayDarkMode = compositionLocalOf { false }
 
 object GoaldayDesign {
-    // P0 设计对齐：原版 Goalday 主背景为 #FDFAF6（暖奶白）
+    // 对照原版 colors.xml：主背景 #FDFAF6（暖奶白），Tab 背景 #E5DAD4（浅褐米色）
     val AppBg = Color(0xFFFDFAF6)
     val Surface = Color(0xFFFFFEFB)
     val SurfaceSoft = Color(0xFFF7F3EE)
-    val InkPrimary = Color(0xFF2F2923)
-    val InkSecondary = Color(0xFF7D756B)
-    val InkMuted = Color(0xFF766B60)
+    // 原版 color_252525=#252525（主文字），color_727272=#727272（次要），color_9E9E9E=#9E9E9E（弱化）
+    val InkPrimary = Color(0xFF252525)
+    val InkSecondary = Color(0xFF727272)
+    val InkMuted = Color(0xFF9E9E9E)
+    // 原版 Tab 背景 color_E5DAD4
+    val TabBarBg = Color(0xFFE5DAD4)
+    // 原版蓝色 color_3875F6（链接/强调按钮）
+    val ActionBlue = Color(0xFF3875F6)
     // 主品牌色：统一用 Pink/PinkSoft 语义（Accent/AccentSoft 别名已合并去重）
     val Pink = Color(0xFFE88FAE)
     val PinkSoft = Color(0xFFFFECF3)
@@ -29,7 +34,8 @@ object GoaldayDesign {
         get() = Pink.copy(alpha = 0.18f)
     val GreenSoft = Color(0xFFEAF4E4)
     val Positive = Color(0xFF769B69)
-    val Danger = Color(0xFFA15E58)
+    // 原版删除色 #ED8888（item_plan_item fl_delete）
+    val Danger = Color(0xFFED8888)
     // DangerInk：危险操作文字色（深红），用于删除/重置等警示标签
     val DangerInk = Color(0xFF7A2F2F)
     // DangerTint：危险操作浅底色（alpha 0.10），用于警示 chip 背景

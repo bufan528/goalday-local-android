@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 
 data class BoardTask(
@@ -225,7 +226,7 @@ private fun BoardRow(
     onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
 ) {
-    // 对照逆向 item_plan_item.xml：SwipeRevealLayout 左滑露出编辑/删除按钮
+    // 对照逆向 item_plan_item.xml：SwipeRevealLayout 左滑露出编辑(黑底)+删除(#ED8888)按钮
     var swipeOffset by remember(task.id) { mutableStateOf(0f) }
     val density = LocalDensity.current
     val revealWidth = with(density) { 100.dp.toPx() }
@@ -236,7 +237,7 @@ private fun BoardRow(
             .height(IntrinsicSize.Min)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS)),
     ) {
-        // 底层：编辑 + 删除按钮（右对齐，左侧滑出）
+        // 底层：编辑 + 删除按钮（右对齐，左侧滑出，各 50dp 宽）
         if (onEdit != null || onDelete != null) {
             Row(
                 modifier = Modifier
@@ -250,7 +251,7 @@ private fun BoardRow(
                         modifier = Modifier
                             .width(50.dp)
                             .fillMaxHeight()
-                            .background(GoaldayDesign.adaptiveInkPrimary)
+                            .background(Color.Black)
                             .clickable {
                                 swipeOffset = 0f
                                 onEdit()
@@ -265,7 +266,7 @@ private fun BoardRow(
                         modifier = Modifier
                             .width(50.dp)
                             .fillMaxHeight()
-                            .background(Color(0xFFED8888))
+                            .background(GoaldayDesign.Danger)
                             .clickable {
                                 swipeOffset = 0f
                                 onDelete()
@@ -277,7 +278,7 @@ private fun BoardRow(
                 }
             }
         }
-        // 上层：内容卡片，可拖动
+        // 上层：内容卡片，可拖动。对照 item_plan_item.xml：圆点 10dp + 文本 16sp + 计数 14sp，minHeight 49dp
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -290,33 +291,43 @@ private fun BoardRow(
                         swipeOffset = (swipeOffset + delta).coerceIn(-revealWidth, 0f)
                     },
                     onDragStopped = {
-                        // 滑动超过一半就完全展开，否则收起
                         swipeOffset = if (swipeOffset < -revealWidth / 2) -revealWidth else 0f
                     },
                 )
-                .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = GoaldayDesign.Space1),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.Top,
+                .padding(start = 15.dp, end = 14.dp)
+                .height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                if (selected) Icons.Filled.RadioButtonChecked else if (completed) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
-                contentDescription = null,
-                modifier = Modifier.size(12.dp),
-                tint = if (completed) GoaldayDesign.Positive else if (selected) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.Sand,
+            // 对照 v_dot：10dp 圆点（bg_toolbar_plan_dot），选中时填充强调色
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .background(
+                        when {
+                            completed -> GoaldayDesign.Positive
+                            selected -> GoaldayDesign.Pink
+                            else -> GoaldayDesign.MorandiCoral
+                        }
+                    ),
             )
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { onSelect() },
+                    .clickable { onSelect() }
+                    .padding(vertical = 14.dp),
             ) {
                 Text(
                     task.title,
-                    color = GoaldayDesign.adaptiveInkPrimary,
+                    color = if (completed || task.completed) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                     textDecoration = if (completed || task.completed) TextDecoration.LineThrough else TextDecoration.None,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = 16.sp,
                     maxLines = 2,
                 )
                 if (task.subtitle.isNotBlank()) {
-                    Text(task.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 1)
+                    Text(task.subtitle, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontSize = 14.sp, maxLines = 1)
                 }
             }
             Icon(
