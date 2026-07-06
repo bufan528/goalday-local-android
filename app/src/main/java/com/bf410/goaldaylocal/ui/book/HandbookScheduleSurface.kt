@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -73,6 +74,7 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
@@ -274,277 +276,62 @@ internal fun HandbookReplicaPage(
                     .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1 - 1.dp),
             )
         }
-        if (boardMode == ScheduleBoardMode.MONTH) {
-            HandbookMonthBoard(
-                year = anchorYear,
-                month = anchorMonth,
-                monthLength = monthLength,
-                entries = sorted,
-                selectedDays = visibleDays,
-                onSelectDay = { day ->
-                    windowStart = (day - 1).coerceIn(0, maxStart)
-                    draftDay = day
-                    boardMode = ScheduleBoardMode.SPREAD
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(start = GoaldayDesign.Space3 + 2.dp, end = GoaldayDesign.Space3 + 2.dp, top = 92.dp, bottom = GoaldayDesign.Space8),
-            )
-        } else {
-            // P1-2 修复：左右双列共享同一个 ScrollState，滚动同步，恢复对开页整体感
-            // 原代码左右各自 rememberScrollState()，独立滚动破坏"一本书两页"的视觉一致性
-            val spreadScrollState = rememberScrollState()
+        // 对照逆向 fragment_schedule_inbook.xml + item_schedule_item_in_book.xml：
+        // 简单垂直列表，每行一天：24.5dp 日期列 + 2列x3行目标槽
+        val scheduleScrollState = rememberScrollState()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 92.dp, bottom = GoaldayDesign.Space8)
+                .verticalScroll(scheduleScrollState)
+                .handbookPaperRuling(scheduleScrollState),
+        ) {
+            leftBlocks.forEach { block ->
+                ScheduleDayRow(
+                    day = block.day,
+                    month = anchorMonth,
+                    year = anchorYear,
+                    entries = sorted.filter { it.day == block.day },
+                    onToggleCompleted = { id -> onToggleScheduleCompleted(id) },
+                    onAddSchedule = { title -> onAddSchedule(title, anchorMonth, block.day, "", 1); saveHint = "已加入${block.day}日" },
+                )
+            }
+            // 快速添加行
             Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(start = GoaldayDesign.Space3 + 2.dp, end = GoaldayDesign.Space3 + 2.dp, top = 92.dp, bottom = GoaldayDesign.Space8),
-                horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 2.dp),
+                    .fillMaxWidth()
+                    .padding(start = 24.5.dp, top = 4.dp, end = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(spreadScrollState)
-                        .handbookPaperRuling(spreadScrollState),
-                    verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 - 1.dp),
-                ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = GoaldayDesign.Space1 - 1.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    SectionStamp(
-                        label = "完成",
-                        color = GoaldayDesign.Positive,
-                    )
-                    Text(
-                        "已执行",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = GoaldayDesign.adaptiveInkMuted,
-                    )
-                }
-                leftBlocks.forEachIndexed { idx, block ->
-                    DaySpreadSection(
-                        day = block.day,
-                        doneEntries = block.done,
-                        fallbackDone = if (idx == 0 && block.done.isEmpty()) fallbackLeftDone else emptyList(),
-                        todoCount = block.todo.size,
-                        accent = GoaldayDesign.Positive,
-                        activeDrop = activeDoneDropDay == block.day,
-                        onBounds = { rect -> doneDropBounds[block.day] = rect },
-                        onToggleCompleted = { entry ->
-                            if (!entry.id.startsWith("fallback_")) {
-                                onToggleScheduleCompleted(entry.id)
-                            }
-                        },
-                    )
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(spreadScrollState)
-                    .handbookPaperRuling(spreadScrollState),
-                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 - 1.dp),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = GoaldayDesign.Space1 - 1.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    SectionStamp(
-                        label = "待办",
-                        color = GoaldayDesign.Pink,
-                    )
-                    Text(
-                        "待计划",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = GoaldayDesign.adaptiveInkMuted,
-                    )
-                }
-                HandbookQuickAddRow(
+                BasicTextField(
                     value = draftText,
                     onValueChange = { draftText = it },
-                    days = rightBlocks.map { it.day },
-                    selectedDay = selectedDraftDay,
-                    onSelectDay = { draftDay = it },
-                    poolItems = visiblePoolItems,
-                    onAddPoolItem = { text ->
-                        onAddPoolItem(text)
-                        draftText = ""
-                        saveHint = "已加入待安排"
+                    textStyle = TextStyle(color = GoaldayDesign.adaptiveInkPrimary, fontSize = 14.sp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(36.dp),
+                    decorationBox = { inner ->
+                        if (draftText.isBlank()) Text("写一件待安排的事", color = GoaldayDesign.adaptiveInkMuted, fontSize = 14.sp)
+                        inner()
                     },
-                    onRemovePoolItem = { text ->
-                        onRemovePoolItem(text)
-                        saveHint = "已从待安排移除"
-                    },
-                    onPickPoolItem = { text ->
-                        onAddSchedule(text, anchorMonth, selectedDraftDay, repeatRuleForNewSchedule, repeatIntervalForNewSchedule)
-                        saveHint = "已放入${selectedDraftDay}日"
-                    },
-                    onPoolDragStart = { text, position ->
-                        draggingPoolItem = text
-                        dragPosition = position
-                        activePoolDropDay = todoDropBounds.entries.firstOrNull { it.value.contains(position) }?.key
-                    },
-                    onPoolDrag = { delta ->
-                        dragPosition += delta
-                        activePoolDropDay = todoDropBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
-                    },
-                    onPoolDragEnd = {
-                        val text = draggingPoolItem
-                        val targetDay = activePoolDropDay
-                        if (text != null && targetDay != null) {
-                            onAddSchedule(text, anchorMonth, targetDay, repeatRuleForNewSchedule, repeatIntervalForNewSchedule)
-                            draftDay = targetDay
-                            saveHint = "已拖入${targetDay}日"
-                        } else if (text != null) {
-                            saveHint = "未命中日期"
-                        }
-                        clearPoolDrag()
-                    },
-                    onPoolDragCancel = {
-                        saveHint = "已取消拖放"
-                        clearPoolDrag()
-                    },
-                    onDone = {
-                        val text = draftText.trim()
-                        if (text.isNotBlank()) {
-                            onAddSchedule(text, anchorMonth, selectedDraftDay, repeatRuleForNewSchedule, repeatIntervalForNewSchedule)
-                            draftText = ""
-                            saveHint = "已加入${selectedDraftDay}日"
-                        }
-                    },
-                    repeatLabel = scheduleRepeatLabel(ScheduleEntry(id = "", title = "", year = 0, month = 0, day = 0, repeatRule = repeatRuleForNewSchedule, repeatInterval = repeatIntervalForNewSchedule)),
-                    onPickRepeat = { showRepeatPicker = true },
                 )
-                rightBlocks.forEachIndexed { idx, block ->
-                    DaySpreadEditableSection(
-                        day = block.day,
-                        visibleDays = visibleDays,
-                        entries = if (idx == 0 && block.targetSlots.isEmpty()) {
-                            fallbackRightTodo.mapIndexed { i, text ->
-                                ScheduleEntry(id = "fallback_${block.day}_$i", title = text, day = block.day, month = anchorMonth, year = anchorYear, completed = false, note = "")
-                            }
-                        } else {
-                            block.targetSlots.map { slot ->
-                                ScheduleEntry(id = slot.id, title = slot.title, day = block.day, month = anchorMonth, year = anchorYear, completed = slot.completed, note = "")
-                            }
-                        },
-                        editingId = editingId,
-                        editingText = editingText,
-                        // 修复：拖动 entry 时排除自身所在槽位高亮，避免反馈自相矛盾
-                        activeDrop = activePoolDropDay == block.day && draggingTodoEntry?.day != block.day,
-                        onBounds = { rect -> todoDropBounds[block.day] = rect },
-                        onStartEdit = { entry ->
-                            if (!entry.id.startsWith("fallback_")) {
-                                editingId = entry.id
-                                editingText = entry.title
-                            } else {
-                                onAddSchedule(entry.title, anchorMonth, entry.day, repeatRuleForNewSchedule, repeatIntervalForNewSchedule)
-                                saveHint = "已放入${entry.day}日"
-                            }
-                        },
-                        onTextChange = { editingText = it },
-                        onCommit = { entry ->
-                            if (!entry.id.startsWith("fallback_")) {
-                                onUpdateScheduleTitle(entry.id, editingText)
-                                editingId = null
-                                saveHint = "已保存"
-                            }
-                        },
-                        onToggleCompleted = { entry ->
-                            if (!entry.id.startsWith("fallback_")) {
-                                onToggleScheduleCompleted(entry.id)
-                            } else {
-                                onAddSchedule(entry.title, anchorMonth, entry.day, repeatRuleForNewSchedule, repeatIntervalForNewSchedule)
-                                saveHint = "已放入${entry.day}日"
-                            }
-                        },
-                        onMoveEntryToDay = { entry, targetDay ->
-                            if (!entry.id.startsWith("fallback_")) {
-                                onMoveScheduleDay(entry.id, anchorMonth, targetDay)
-                                draftDay = targetDay
-                                saveHint = "已移动到${targetDay}日"
-                            }
-                        },
-                        onEntryDragStart = { entry, position ->
-                            if (!entry.id.startsWith("fallback_")) {
-                                draggingTodoEntry = entry
-                                dragPosition = position
-                                activePoolDropDay = todoDropBounds.entries.firstOrNull { it.value.contains(position) }?.key
-                                activeDoneDropDay = doneDropBounds.entries.firstOrNull { it.value.contains(position) }?.key
-                            }
-                        },
-                        onEntryDrag = { delta ->
-                            dragPosition += delta
-                            activePoolDropDay = todoDropBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
-                            activeDoneDropDay = doneDropBounds.entries.firstOrNull { it.value.contains(dragPosition) }?.key
-                        },
-                        onEntryDragEnd = {
-                            val entry = draggingTodoEntry
-                            val doneTargetDay = activeDoneDropDay
-                            val todoTargetDay = activePoolDropDay
-                            when {
-                                entry != null && doneTargetDay == entry.day -> {
-                                    onToggleScheduleCompleted(entry.id)
-                                    saveHint = "已放入${doneTargetDay}日已完成"
+                if (draftText.isNotBlank()) {
+                    Text(
+                        "加入${selectedDraftDay}日",
+                        color = GoaldayDesign.adaptiveInkSecondary,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clickable {
+                                val text = draftText.trim()
+                                if (text.isNotBlank()) {
+                                    onAddSchedule(text, anchorMonth, selectedDraftDay, "", 1)
+                                    draftText = ""
+                                    saveHint = "已加入${selectedDraftDay}日"
                                 }
-                                entry != null && todoTargetDay != null && todoTargetDay != entry.day -> {
-                                    onMoveScheduleDay(entry.id, anchorMonth, todoTargetDay)
-                                    draftDay = todoTargetDay
-                                    saveHint = "已拖到${todoTargetDay}日"
-                                }
-                                // 修复：拖回自己原位时给明确反馈，原代码静默无反馈
-                                entry != null && todoTargetDay == entry.day -> saveHint = "未移动"
-                                entry != null && doneTargetDay != null -> saveHint = "请拖到同日期已完成"
-                                entry != null -> saveHint = "未命中日期或已完成"
-                            }
-                            clearTodoDrag()
-                        },
-                        onEntryDragCancel = {
-                            saveHint = "已取消拖放"
-                            clearTodoDrag()
-                        },
+                            },
                     )
                 }
-            }
-            }
-        }
-
-        (draggingPoolItem ?: draggingTodoEntry?.title)?.let { text ->
-            // P1-8 修复：用 Popup 渲染拖动跟随 Text，绕过父级 Box 的 clip 裁剪
-            // 原代码 Text 在第 183 行 Box 内，被 .clip(RoundedCornerShape(RadiusL)) 裁剪
-            // 拖动到 Box 边界外时 Text 消失，用户看不到拖动跟随反馈
-            // Popup 在窗口最顶层渲染，不受父级 clip 限制，+8 偏移避免手指遮挡
-            val dragPositionProvider = object : PopupPositionProvider {
-                override fun calculatePosition(
-                    anchorBounds: IntRect,
-                    windowSize: IntSize,
-                    layoutDirection: LayoutDirection,
-                    popupContentSize: IntSize,
-                ): IntOffset = IntOffset(
-                    (dragPosition.x.toInt() + 8).coerceAtLeast(0),
-                    (dragPosition.y.toInt() + 8).coerceAtLeast(0),
-                )
-            }
-            Popup(
-                popupPositionProvider = dragPositionProvider,
-                onDismissRequest = {},
-                properties = PopupProperties(focusable = false, clippingEnabled = false),
-            ) {
-                Text(
-                    text,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White,
-                    maxLines = 1,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .background(GoaldayDesign.Pink)
-                        .border(0.8.dp, Color.White, RoundedCornerShape(GoaldayDesign.RadiusS))
-                        .padding(horizontal = GoaldayDesign.Space2 - 1.dp, vertical = GoaldayDesign.Space1),
-                )
             }
         }
 
@@ -1758,4 +1545,117 @@ private fun RepeatModePickerDialog(
             TextButton(onClick = onDismiss) { Text("取消") }
         },
     )
+}
+
+// 对照逆向 item_schedule_item_in_book.xml：
+// 24.5dp 日期列 + 2列(weight=1) x 3行(12dp) 目标槽
+@Composable
+private fun ScheduleDayRow(
+    day: Int,
+    month: Int,
+    year: Int,
+    entries: List<ScheduleEntry>,
+    onToggleCompleted: (String) -> Unit,
+    onAddSchedule: (String) -> Unit,
+) {
+    val dayDate = try { LocalDate.of(year, month, day) } catch (_: Exception) { null }
+    val weekdayLabel = dayDate?.dayOfWeek?.value?.let { "周$it" } ?: ""
+    val dayStr = day.toString().padStart(2, '0')
+    // 分成2列，每列最多3条
+    val leftEntries = entries.take(3)
+    val rightEntries = entries.drop(3).take(3)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min),
+    ) {
+        // 左侧日期列（对照 fl_day_1: 24.5dp 宽，9sp 日期 + "—" + 6sp 周几）
+        Box(
+            modifier = Modifier.width(24.5.dp).fillMaxHeight(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(dayStr, fontSize = 9.sp, color = GoaldayDesign.adaptiveInkPrimary)
+                Text("—", fontSize = 9.sp, color = GoaldayDesign.adaptiveInkMuted)
+                Text(weekdayLabel, fontSize = 6.sp, color = GoaldayDesign.adaptiveInkMuted)
+            }
+        }
+        // 第一列（weight=1, paddingVertical=3.5dp）
+        ScheduleTargetColumn(
+            entries = leftEntries,
+            onToggleCompleted = onToggleCompleted,
+            modifier = Modifier.weight(1f),
+        )
+        // 第二列（weight=1, paddingVertical=3.5dp）
+        ScheduleTargetColumn(
+            entries = rightEntries,
+            onToggleCompleted = onToggleCompleted,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun ScheduleTargetColumn(
+    entries: List<ScheduleEntry>,
+    onToggleCompleted: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(vertical = 3.5.dp),
+    ) {
+        for (i in 0 until 3) {
+            val entry = entries.getOrNull(i)
+            ScheduleTargetSlot(
+                entry = entry,
+                onToggleCompleted = onToggleCompleted,
+                modifier = Modifier.height(36.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScheduleTargetSlot(
+    entry: ScheduleEntry?,
+    onToggleCompleted: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // 对照 cb_target: 9dp 勾选图标
+        if (entry != null && entry.id.isNotBlank() && !entry.id.startsWith("fallback_")) {
+            Box(
+                modifier = Modifier
+                    .size(9.dp)
+                    .clickable { onToggleCompleted(entry.id) },
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(9.dp)
+                        .clip(RoundedCornerShape(1.dp))
+                        .background(if (entry.completed) GoaldayDesign.Positive else Color.Transparent)
+                        .border(1.dp, GoaldayDesign.adaptiveInkMuted, RoundedCornerShape(1.dp)),
+                )
+            }
+        }
+        // 对照 et_target: style_schedule_day_form（文字内容）
+        Text(
+            text = entry?.title ?: "",
+            fontSize = 12.sp,
+            color = if (entry?.completed == true) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+            textDecoration = if (entry?.completed == true) TextDecoration.LineThrough else TextDecoration.None,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 2.dp),
+        )
+    }
 }
