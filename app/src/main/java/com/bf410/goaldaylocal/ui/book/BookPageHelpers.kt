@@ -21,6 +21,7 @@ internal fun scheduleRepeatLabel(entry: ScheduleEntry): String {
         "daily" -> "天"
         "weekly" -> "周"
         "monthly" -> "月"
+        "yearly" -> "年"
         else -> return ""
     }
     val interval = entry.repeatInterval.coerceAtLeast(1)

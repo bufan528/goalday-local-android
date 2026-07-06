@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Restore
@@ -49,6 +50,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -95,6 +97,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -429,7 +432,7 @@ fun ActivePageLayer(
     onAddToSchedule: (String, Int) -> Unit,
     onAddHandbookPoolItem: (String) -> Unit,
     onRemoveHandbookPoolItem: (String) -> Unit,
-    onAddScheduleFromHandbook: (String, Int, Int) -> Unit,
+    onAddScheduleFromHandbook: (String, Int, Int, String, Int) -> Unit,
     onWeeklyThemeChange: (String) -> Unit,
     onMoveItemToToday: (String) -> Unit,
     onMoveItemToCompleted: (String) -> Unit,
@@ -712,6 +715,7 @@ private fun HandbookDiaryReplicaPage(
                     onDiaryChange = onDiaryChange,
                     contentMode = contentMode,
                     onContentModeChange = onContentModeChange,
+                    inBook = true,
                 )
             } else {
                 StructuredDiaryPreview(
@@ -811,6 +815,58 @@ private fun EditableBulletPage(
             onEditTask = onRenameCustomItem,
             onDeleteTask = onRemoveCustomItem,
         )
+        // 对照逆向 fragment_plan.xml：右下角添加 + 提示按钮
+        PlannerFloatingActionStrip(
+            onAdd = { onAddCustomItem("") },
+            onTip = { selectedListIndex = (selectedListIndex + 1) % listNames.size },
+        )
+    }
+}
+
+// 对照逆向 fragment_plan.xml：右下角浮动按钮条（添加 + 提示/切换）
+@Composable
+private fun PlannerFloatingActionStrip(
+    onAdd: () -> Unit,
+    onTip: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // 提示/切换按钮
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(GoaldayDesign.adaptiveInkPrimary)
+                .clickable { onTip() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.Lightbulb,
+                contentDescription = "切换清单",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Spacer(modifier = Modifier.width(GoaldayDesign.Space2))
+        // 添加按钮
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(GoaldayDesign.PrimaryAction)
+                .clickable { onAdd() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.Add,
+                contentDescription = "添加",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp),
+            )
+        }
     }
 }
 
@@ -1021,6 +1077,7 @@ private fun DiarySection(
     onDiaryChange: (String) -> Unit,
     contentMode: PageContentMode,
     onContentModeChange: (PageContentMode) -> Unit,
+    inBook: Boolean = false,
 ) {
     val editingDiary = contentMode as? PageContentMode.EditingDiary
     var structured by remember(title, diaryDraft) { mutableStateOf(StructuredDiary.fromRaw(diaryDraft)) }
@@ -1196,6 +1253,7 @@ private fun DiarySection(
                     onDiaryChange(structured.toRaw())
                     onContentModeChange(PageContentMode.Browsing)
                 },
+                inBook = inBook,
             )
         }
         DiaryExportDock(
@@ -1230,40 +1288,39 @@ private fun DiarySection(
     }
 }
 
-// 对照逆向 fragment_diary.xml：底部工具栏，左侧图片按钮 + 右侧键盘按钮
+// 对照逆向 fragment_diary.xml / fragment_diary_inbook.xml：
+// 独立日记页有图片+键盘两个按钮，手账内日记页仅保留图片按钮且高度更小
 @Composable
 private fun DiaryBottomToolbar(
     onPickImage: () -> Unit,
     onDismissKeyboard: () -> Unit,
+    inBook: Boolean = false,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .height(if (inBook) 31.dp else 46.dp)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-            .background(GoaldayDesign.adaptiveSurfaceSoft)
+            .background(if (inBook) GoaldayDesign.adaptiveSurface else GoaldayDesign.adaptiveSurfaceSoft)
             .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(horizontal = GoaldayDesign.Space3, vertical = if (inBook) GoaldayDesign.Space1 else GoaldayDesign.Space2),
+        horizontalArrangement = if (inBook) Arrangement.Start else Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 2.dp)) {
+        Icon(
+            Icons.Filled.Image,
+            contentDescription = "插入图片",
+            modifier = Modifier.size(if (inBook) 20.dp else 22.dp).clickable(onClick = onPickImage),
+            tint = GoaldayDesign.adaptiveInkPrimary,
+        )
+        if (!inBook) {
             Icon(
-                Icons.Filled.Image,
-                contentDescription = "插入图片",
-                modifier = Modifier
-                    .size(22.dp)
-                    .clickable(onClick = onPickImage),
+                Icons.Filled.Keyboard,
+                contentDescription = "收起键盘",
+                modifier = Modifier.size(22.dp).clickable(onClick = onDismissKeyboard),
                 tint = GoaldayDesign.adaptiveInkPrimary,
             )
         }
-        Icon(
-            Icons.Filled.Keyboard,
-            contentDescription = "收起键盘",
-            modifier = Modifier
-                .size(22.dp)
-                .clickable(onClick = onDismissKeyboard),
-            tint = GoaldayDesign.adaptiveInkPrimary,
-        )
     }
 }
 
@@ -2804,9 +2861,14 @@ internal fun plainTextFromHtml(html: String): String =
         .filter(String::isNotBlank)
         .joinToString("\n")
 
+// 对照逆向 item_diary_text.xml：文字块 16sp、#2c2c2c、行间距 2dp（lineHeight ≈ 18sp）
 @Composable
 internal fun diaryBlockTextStyle(block: DiaryEntryBlock): TextStyle {
-    val base = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary)
+    val base = MaterialTheme.typography.bodyMedium.copy(
+        color = Color(0xFF2C2C2C),
+        fontSize = 16.sp,
+        lineHeight = 18.sp,
+    )
     return when (block.style) {
         DiaryBlockStyle.BODY -> base
         DiaryBlockStyle.BOLD -> base.copy(fontWeight = FontWeight.SemiBold)
@@ -3086,6 +3148,7 @@ private fun DiaryTypedBlockPreview(
                                 uri = block.text,
                                 onRemove = null,
                                 modifier = Modifier.fillMaxWidth(),
+                                fixedHeight = false,
                             )
                         } else {
                             Text(
@@ -3176,11 +3239,13 @@ internal fun DiaryImageStrip(
     }
 }
 
+// 对照逆向 item_diary_img.xml：图片块水平内边距 5pt（≈7dp），高度自适应保持比例
 @Composable
 internal fun DiaryImageTile(
     uri: String,
     onRemove: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    fixedHeight: Boolean = true,
 ) {
     val context = LocalContext.current
     val bitmap = remember(uri) {
@@ -3190,9 +3255,17 @@ internal fun DiaryImageTile(
             }
         }.getOrNull()
     }
+    val aspectRatio = remember(bitmap) {
+        if (bitmap != null && bitmap.width > 0 && bitmap.height > 0) {
+            bitmap.width.toFloat() / bitmap.height.toFloat()
+        } else {
+            1f
+        }
+    }
     Box(
         modifier = modifier
-            .height(76.dp)
+            .then(if (fixedHeight) Modifier.height(76.dp) else Modifier.padding(horizontal = 7.dp))
+            .then(if (!fixedHeight && bitmap != null) Modifier.aspectRatio(aspectRatio) else Modifier)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.adaptiveSurfaceSoft)
             .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.5f), RoundedCornerShape(GoaldayDesign.RadiusS)),
@@ -3201,7 +3274,7 @@ internal fun DiaryImageTile(
             Image(
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
+                contentScale = if (fixedHeight) ContentScale.Crop else ContentScale.Fit,
                 modifier = Modifier.fillMaxSize(),
             )
         } else {

@@ -21,8 +21,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -41,6 +45,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -253,6 +258,7 @@ internal fun TargetDetailReplicaPage(
     var editingText by rememberSaveable(pageTitle) { mutableStateOf("") }
     // P1-3 精简：备注框+chip 行默认折叠，点击"展开"才显示，避免每项都像数据看板卡片
     var expandedItem by rememberSaveable(pageTitle) { mutableStateOf<String?>(null) }
+    var selectedItem by rememberSaveable(pageTitle) { mutableStateOf<String?>(null) }
     val dateShortcuts = remember { targetDateShortcuts() }
     val completedCount = items.count { isChecked(pageTitle, it) }
     val scheduledByTitle = remember(schedulePreviewEntries, items) {
@@ -310,12 +316,18 @@ internal fun TargetDetailReplicaPage(
             val scheduledEntries = scheduledByTitle[item].orEmpty()
             val meta = targetItemMeta[item] ?: TargetItemMeta()
             var noteDraft by remember(item, meta.note) { mutableStateOf(meta.note) }
+            val isSelected = selectedItem == item
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
                     .background(if (checked) GoaldayDesign.GreenSoft else GoaldayDesign.adaptiveSurface)
-                    .border(GoaldayDesign.Hairline, if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusM))
+                    .border(
+                        GoaldayDesign.Hairline,
+                        if (isSelected) tint.copy(alpha = 0.55f) else if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else GoaldayDesign.adaptiveDivider,
+                        RoundedCornerShape(GoaldayDesign.RadiusM),
+                    )
+                    .clickable { selectedItem = if (isSelected) null else item }
                     .padding(GoaldayDesign.Space3),
                 verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
             ) {
@@ -495,6 +507,115 @@ internal fun TargetDetailReplicaPage(
                     draft = ""
                 }
             })
+        }
+        // 对照逆向 activity_target_detail.xml：选中目标项后底部显示 46dp 操作栏
+        selectedItem?.let { item ->
+            TargetBottomActionBar(
+                selectedItem = item,
+                pageTitle = pageTitle,
+                tint = tint,
+                onComplete = {
+                    if (!isChecked(pageTitle, item)) onToggleChecked(pageTitle, item)
+                    selectedItem = null
+                },
+                onTop = {
+                    // 置顶：把该项移到自定义列表最前（仅自定义项）
+                    if (item in customItems) {
+                        onRemoveCustomItem(item)
+                        onAddCustomItem(item)
+                    }
+                    selectedItem = null
+                },
+                onDelete = {
+                    if (item in customItems) onRemoveCustomItem(item)
+                    selectedItem = null
+                },
+                onDatePick = {
+                    onUpdateTargetDeadline(item, dateShortcuts.today)
+                    selectedItem = null
+                },
+            )
+        }
+    }
+}
+
+// 对照逆向 activity_target_detail.xml：底部 46dp 操作栏
+// 左侧日期选择，中间分隔线，右侧删除/置顶/完成图标
+@Composable
+private fun TargetBottomActionBar(
+    selectedItem: String,
+    pageTitle: String,
+    tint: Color,
+    onComplete: () -> Unit,
+    onTop: () -> Unit,
+    onDelete: () -> Unit,
+    onDatePick: () -> Unit,
+) {
+    val context = LocalContext.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(46.dp)
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(GoaldayDesign.adaptiveSurface)
+            .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
+            .padding(horizontal = GoaldayDesign.Space3),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // 左侧：日期选择按钮
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
+            modifier = Modifier
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(GoaldayDesign.adaptiveSurfaceSoft)
+                .clickable { onDatePick() }
+                .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
+        ) {
+            Icon(
+                Icons.Filled.CalendarMonth,
+                contentDescription = "选择日期",
+                modifier = Modifier.size(16.dp),
+                tint = GoaldayDesign.adaptiveInkSecondary,
+            )
+            Text("日期", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary)
+        }
+        // 中间分隔线 + 右侧图标组
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(22.dp)
+                    .background(GoaldayDesign.adaptiveDivider),
+            )
+            Icon(
+                Icons.Filled.Delete,
+                contentDescription = "删除",
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable { onDelete() },
+                tint = GoaldayDesign.Danger,
+            )
+            Icon(
+                Icons.Filled.VerticalAlignTop,
+                contentDescription = "置顶",
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable { onTop() },
+                tint = GoaldayDesign.adaptiveInkPrimary,
+            )
+            Icon(
+                Icons.Filled.CheckCircle,
+                contentDescription = "完成",
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable { onComplete() },
+                tint = GoaldayDesign.Positive,
+            )
         }
     }
 }

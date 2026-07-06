@@ -35,9 +35,21 @@ body {
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
+  font-size: 16px;
+  color: #2c2c2c;
+  line-height: 1.25;
+  padding: 0px;
 }
 
 #editor[placeholder]:empty:not(:focus):before {
   content: attr(placeholder);
   opacity: .5;
+}
+
+#editor img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 7px 0;
+  border-radius: 4px;
 }

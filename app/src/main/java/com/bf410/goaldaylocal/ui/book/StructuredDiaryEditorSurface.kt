@@ -496,6 +496,7 @@ private fun DiaryTypedBlockEditRow(
                 uri = block.text,
                 onRemove = null,
                 modifier = Modifier.fillMaxWidth(),
+                fixedHeight = false,
             )
             BasicTextField(
                 value = block.text,
