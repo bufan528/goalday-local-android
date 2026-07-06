@@ -224,11 +224,29 @@ fun BookHomeScreen(
                     consumedEntryLandingKey = landingKey
                 }
             }
-            LocalHandbookWorkspace(
+            val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
+            val currentPage = book.pages[clampedPageIndex]
+            val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
+            val nextPage = book.pages.getOrNull(clampedPageIndex + 1)
+            BookDetailView(
                 viewModel = viewModel,
+                book = book,
+                currentPage = currentPage,
+                previousPage = previousPage,
+                nextPage = nextPage,
                 uiState = uiState.copy(selectedBookIndex = safeBookIndex),
-                initialSegment = LocalHandbookSegment.DIARY,
-                onBack = onBack,
+                onBackToLibrary = onBack,
+                onShowAddPage = {
+                    pageDialogPreset = PageDialogPreset(type = "schedule", title = "日程页")
+                    showPageDialog = true
+                },
+                onShowRenamePage = { showRenamePageDialog = true },
+                onShowEditBook = { showEditBookDialog = true },
+                onToggleManagePanel = { showManagePanel = !showManagePanel },
+                showManagePanel = showManagePanel,
+                forcedSegment = null,
+                bookOnlyMode = true,
+                onShowInspiration = { },
             )
         }
 
@@ -262,11 +280,29 @@ fun BookHomeScreen(
                     consumedEntryLandingKey = landingKey
                 }
             }
-            LocalHandbookWorkspace(
+            val clampedPageIndex = uiState.selectedPageIndex.coerceIn(0, book.pages.lastIndex)
+            val currentPage = book.pages[clampedPageIndex]
+            val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
+            val nextPage = book.pages.getOrNull(clampedPageIndex + 1)
+            BookDetailView(
                 viewModel = viewModel,
+                book = book,
+                currentPage = currentPage,
+                previousPage = previousPage,
+                nextPage = nextPage,
                 uiState = uiState.copy(selectedBookIndex = safeBookIndex),
-                initialSegment = LocalHandbookSegment.DIARY,
-                onBack = onBack,
+                onBackToLibrary = onBack,
+                onShowAddPage = {
+                    pageDialogPreset = PageDialogPreset(type = "diary", title = "日记页")
+                    showPageDialog = true
+                },
+                onShowRenamePage = { showRenamePageDialog = true },
+                onShowEditBook = { showEditBookDialog = true },
+                onToggleManagePanel = { showManagePanel = !showManagePanel },
+                showManagePanel = showManagePanel,
+                forcedSegment = BookSegment.DIARY,
+                bookOnlyMode = false,
+                onShowInspiration = { },
             )
         }
 
