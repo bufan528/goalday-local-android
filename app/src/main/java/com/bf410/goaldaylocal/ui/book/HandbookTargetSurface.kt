@@ -55,6 +55,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.R
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.TargetItemMeta
@@ -539,8 +540,7 @@ internal fun TargetDetailReplicaPage(
     }
 }
 
-// 对照逆向 activity_target_detail.xml：底部 46dp 操作栏
-// 左侧日期选择，中间分隔线，右侧删除/置顶/完成图标
+// 对照逆向 activity_target_detail.xml cl_bottom_board：46dp 白底，日期标签 + 1dp 分隔线 + 删除/置顶/完成
 @Composable
 private fun TargetBottomActionBar(
     selectedItem: String,
@@ -556,47 +556,38 @@ private fun TargetBottomActionBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(46.dp)
-            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-            .background(GoaldayDesign.adaptiveSurface)
-            .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = GoaldayDesign.Space3),
+            .background(Color.White),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 左侧：日期选择按钮
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
+        // 左侧：日期标签（对照 tv_date: 20sp, bg_target_detail_date, bgTint=#F6F6F6）
+        Text(
+            text = "日期",
+            fontSize = 20.sp,
+            color = GoaldayDesign.adaptiveInkPrimary,
             modifier = Modifier
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .background(GoaldayDesign.adaptiveSurfaceSoft)
+                .background(Color(0xFFF6F6F6))
                 .clickable { onDatePick() }
-                .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
-        ) {
-            Icon(
-                Icons.Filled.CalendarMonth,
-                contentDescription = "选择日期",
-                modifier = Modifier.size(16.dp),
-                tint = GoaldayDesign.adaptiveInkSecondary,
-            )
-            Text("日期", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary)
-        }
-        // 中间分隔线 + 右侧图标组
+                .padding(horizontal = 10.dp),
+        )
+        // 右侧图标组：分隔线(1dp/22dp #D3CDC6) + 删除 + 置顶 + 完成（各 padding=13dp）
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
+            horizontalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             Box(
                 modifier = Modifier
                     .width(1.dp)
                     .height(22.dp)
-                    .background(GoaldayDesign.adaptiveDivider),
+                    .background(Color(0xFFD3CDC6)),
             )
             Icon(
                 Icons.Filled.Delete,
                 contentDescription = "删除",
                 modifier = Modifier
                     .size(22.dp)
+                    .padding(13.dp)
                     .clickable { onDelete() },
                 tint = GoaldayDesign.Danger,
             )
@@ -605,6 +596,7 @@ private fun TargetBottomActionBar(
                 contentDescription = "置顶",
                 modifier = Modifier
                     .size(22.dp)
+                    .padding(13.dp)
                     .clickable { onTop() },
                 tint = GoaldayDesign.adaptiveInkPrimary,
             )
@@ -613,6 +605,7 @@ private fun TargetBottomActionBar(
                 contentDescription = "完成",
                 modifier = Modifier
                     .size(22.dp)
+                    .padding(13.dp)
                     .clickable { onComplete() },
                 tint = GoaldayDesign.Positive,
             )

@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SubdirectoryArrowRight
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.Icon
@@ -3115,59 +3116,140 @@ private fun DiaryInBookRow(
     }
 }
 
+// 对照逆向 item_diary_target_in_book.xml / item_diary_topic_target_inbook.xml / item_diary_text.xml
 @Composable
 private fun DiaryTypedBlockPreview(
     blocks: List<DiaryEntryBlock>,
 ) {
     if (blocks.isEmpty()) return
-    Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp), modifier = Modifier.fillMaxWidth()) {
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
         blocks.take(6).forEachIndexed { index, block ->
-            val color = diaryBlockTypeColor(block.type)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .background(diaryBlockTypeBackground(block.type))
-                    .border(GoaldayDesign.Hairline, color.copy(alpha = 0.24f), RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 + 2.dp),
-                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp),
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 - 1.dp), verticalAlignment = Alignment.Top) {
-                    DiaryInBookTypeMarker(type = block.type, index = index + 1)
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 - 1.dp)) {
-                        Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                                Text(diaryBlockDisplayTitle(block.type), style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
-                                Text(diaryInBookItemLabel(block.type), style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
-                            }
-                            if (block.type != DiaryBlockType.IMAGE) {
-                                Text(block.style.label, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted)
-                            }
-                        }
-                        if (block.type == DiaryBlockType.IMAGE) {
-                            DiaryImageTile(
-                                uri = block.text,
-                                onRemove = null,
-                                modifier = Modifier.fillMaxWidth(),
-                                fixedHeight = false,
-                            )
-                        } else {
-                            Text(
-                                block.mainText.ifBlank { "空内容" },
-                                style = diaryBlockTextStyle(block),
-                                color = GoaldayDesign.adaptiveInkPrimary,
-                            )
-                        }
-                    }
-                }
-                if (block.type != DiaryBlockType.IMAGE) {
-                    block.childLines.take(4).forEachIndexed { childIndex, child ->
-                        DiaryChildPreviewRow(index = childIndex + 1, text = child, color = color)
-                    }
-                }
+            when (block.type) {
+                DiaryBlockType.TARGET -> DiaryTargetBlockPreview(block)
+                DiaryBlockType.TOPIC_TARGET -> DiaryTopicTargetBlockPreview(block)
+                DiaryBlockType.TARGET_CHILD -> DiaryTargetChildPreview(block)
+                else -> DiaryTextBlockPreviewRow(block)
             }
         }
     }
+}
+
+// 对照 item_diary_target_in_book.xml：bg_diary_target 背景，"今日完成"标签(9sp #503311 ic_reward) + 子目标列表
+@Composable
+private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(Color(0xFFF6EBDD))
+            .padding(bottom = 6.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 11.dp, top = 6.dp, bottom = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Icon(
+                Icons.Filled.Star,
+                contentDescription = null,
+                modifier = Modifier.size(10.dp),
+                tint = Color(0xFF503311),
+            )
+            Text(
+                if (block.style == DiaryBlockStyle.CHECK) "今日完成" else "今日待办",
+                fontSize = 9.sp,
+                color = Color(0xFF503311),
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        if (block.mainText.isBlank() && block.childLines.isEmpty()) {
+            Text(
+                "这里会自动记录清单中完成的事项。",
+                fontSize = 9.sp,
+                color = Color(0xFFCBCBCB),
+                modifier = Modifier.padding(start = 11.dp, bottom = 4.dp),
+            )
+        } else {
+            if (block.mainText.isNotBlank()) {
+                DiaryTargetChildRow(text = block.mainText)
+            }
+            block.childLines.take(4).forEach { child ->
+                DiaryTargetChildRow(text = child)
+            }
+        }
+    }
+}
+
+// 对照 item_diary_target_child_inbook.xml：12dp 高，2.5pt 圆点 + 文字
+@Composable
+private fun DiaryTargetChildRow(text: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(16.dp)
+            .padding(start = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(4.dp)
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(GoaldayDesign.MorandiCoral),
+        )
+        Text(
+            text,
+            fontSize = 9.sp,
+            color = GoaldayDesign.adaptiveInkPrimary,
+            modifier = Modifier.padding(start = 5.dp),
+            maxLines = 1,
+        )
+    }
+}
+
+// 对照 item_diary_topic_target_inbook.xml：bg_diary_topic_target 深色背景，8sp 白色标题 + 9sp 副标题
+@Composable
+private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+            .background(Color(0xFF6F523D))
+            .padding(horizontal = 7.dp, vertical = 5.dp),
+    ) {
+        Text(
+            block.mainText.ifBlank { "专题目标" },
+            fontSize = 8.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            maxLines = 2,
+        )
+        if (block.childLines.isNotEmpty()) {
+            Text(
+                block.childLines.first(),
+                fontSize = 9.sp,
+                color = Color.White.copy(alpha = 0.6f),
+                maxLines = 1,
+                modifier = Modifier.padding(top = 3.dp),
+            )
+        }
+    }
+}
+
+// 对照 item_diary_target_child_inbook.xml：单独子目标预览
+@Composable
+private fun DiaryTargetChildPreview(block: DiaryEntryBlock) {
+    DiaryTargetChildRow(text = block.mainText.ifBlank { "下一步行动" })
+}
+
+// 对照 item_diary_text.xml：16sp #2C2C2C 文字块
+@Composable
+private fun DiaryTextBlockPreviewRow(block: DiaryEntryBlock) {
+    Text(
+        block.mainText.ifBlank { "空内容" },
+        style = diaryBlockTextStyle(block),
+        color = GoaldayDesign.adaptiveInkPrimary,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable
