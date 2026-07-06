@@ -30,9 +30,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -100,7 +102,7 @@ internal fun HandbookReplicaPage(
     weeklyTheme: String,
     onAddPoolItem: (String) -> Unit,
     onRemovePoolItem: (String) -> Unit,
-    onAddSchedule: (String, Int, Int) -> Unit,
+    onAddSchedule: (String, Int, Int, String, Int) -> Unit,
     onWeeklyThemeChange: (String) -> Unit,
     onUpdateScheduleTitle: (String, String) -> Unit,
     onMoveScheduleDay: (String, Int, Int) -> Unit,
@@ -168,6 +170,10 @@ internal fun HandbookReplicaPage(
     var saveHint by remember(pageIndex) { mutableStateOf("") }
     var boardMode by rememberSaveable(pageIndex) { mutableStateOf(ScheduleBoardMode.SPREAD) }
     var spreadOrigin by remember(pageIndex) { mutableStateOf(Offset.Zero) }
+    // 对照逆向 pop_repeat.xml：新增日程时的重复模式
+    var repeatRuleForNewSchedule by rememberSaveable(pageIndex) { mutableStateOf("") }
+    var repeatIntervalForNewSchedule by rememberSaveable(pageIndex) { mutableStateOf(1) }
+    var showRepeatPicker by rememberSaveable(pageIndex) { mutableStateOf(false) }
     val todoDropBounds = remember(pageIndex) { mutableMapOf<Int, Rect>() }
     val doneDropBounds = remember(pageIndex) { mutableMapOf<Int, Rect>() }
     var draggingPoolItem by remember(pageIndex) { mutableStateOf<String?>(null) }
@@ -374,7 +380,7 @@ internal fun HandbookReplicaPage(
                         saveHint = "已从待安排移除"
                     },
                     onPickPoolItem = { text ->
-                        onAddSchedule(text, anchorMonth, selectedDraftDay)
+                        onAddSchedule(text, anchorMonth, selectedDraftDay, repeatRuleForNewSchedule, repeatIntervalForNewSchedule)
                         saveHint = "已放入${selectedDraftDay}日"
                     },
                     onPoolDragStart = { text, position ->
@@ -390,7 +396,7 @@ internal fun HandbookReplicaPage(
                         val text = draggingPoolItem
                         val targetDay = activePoolDropDay
                         if (text != null && targetDay != null) {
-                            onAddSchedule(text, anchorMonth, targetDay)
+                            onAddSchedule(text, anchorMonth, targetDay, repeatRuleForNewSchedule, repeatIntervalForNewSchedule)
                             draftDay = targetDay
                             saveHint = "已拖入${targetDay}日"
                         } else if (text != null) {
@@ -405,11 +411,13 @@ internal fun HandbookReplicaPage(
                     onDone = {
                         val text = draftText.trim()
                         if (text.isNotBlank()) {
-                            onAddSchedule(text, anchorMonth, selectedDraftDay)
+                            onAddSchedule(text, anchorMonth, selectedDraftDay, repeatRuleForNewSchedule, repeatIntervalForNewSchedule)
                             draftText = ""
                             saveHint = "已加入${selectedDraftDay}日"
                         }
                     },
+                    repeatLabel = scheduleRepeatLabel(ScheduleEntry(id = "", title = "", year = 0, month = 0, day = 0, repeatRule = repeatRuleForNewSchedule, repeatInterval = repeatIntervalForNewSchedule)),
+                    onPickRepeat = { showRepeatPicker = true },
                 )
                 rightBlocks.forEachIndexed { idx, block ->
                     DaySpreadEditableSection(
@@ -434,7 +442,7 @@ internal fun HandbookReplicaPage(
                                 editingId = entry.id
                                 editingText = entry.title
                             } else {
-                                onAddSchedule(entry.title, anchorMonth, entry.day)
+                                onAddSchedule(entry.title, anchorMonth, entry.day, repeatRuleForNewSchedule, repeatIntervalForNewSchedule)
                                 saveHint = "已放入${entry.day}日"
                             }
                         },
@@ -450,7 +458,7 @@ internal fun HandbookReplicaPage(
                             if (!entry.id.startsWith("fallback_")) {
                                 onToggleScheduleCompleted(entry.id)
                             } else {
-                                onAddSchedule(entry.title, anchorMonth, entry.day)
+                                onAddSchedule(entry.title, anchorMonth, entry.day, repeatRuleForNewSchedule, repeatIntervalForNewSchedule)
                                 saveHint = "已放入${entry.day}日"
                             }
                         },
@@ -573,6 +581,16 @@ internal fun HandbookReplicaPage(
         LongImagePreviewDialog(
             preview = preview,
             onDismiss = { longImagePreview = null },
+        )
+    }
+    if (showRepeatPicker) {
+        RepeatModePickerDialog(
+            selectedRule = repeatRuleForNewSchedule,
+            onDismiss = { showRepeatPicker = false },
+            onSelect = { rule, interval ->
+                repeatRuleForNewSchedule = rule
+                repeatIntervalForNewSchedule = interval.coerceAtLeast(1)
+            },
         )
     }
 }
@@ -1092,6 +1110,8 @@ private fun HandbookQuickAddRow(
     onPoolDragEnd: () -> Unit,
     onPoolDragCancel: () -> Unit,
     onDone: () -> Unit,
+    repeatLabel: String,
+    onPickRepeat: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
     fun submitAndKeepFocus() {
@@ -1161,6 +1181,18 @@ private fun HandbookQuickAddRow(
                         .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
                 )
             }
+            // 对照逆向 pop_repeat.xml：重复模式选择按钮
+            Text(
+                repeatLabel.ifBlank { "不重复" },
+                color = if (repeatLabel.isBlank()) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.Pink,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = if (repeatLabel.isBlank()) FontWeight.Normal else FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                    .background(if (repeatLabel.isBlank()) GoaldayDesign.adaptiveDivider else GoaldayDesign.PinkTint)
+                    .clickable { onPickRepeat() }
+                    .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
+            )
         }
         if (poolItems.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -1668,5 +1700,62 @@ private fun HandbookMoveTargetButton(
             .background(if (enabled) GoaldayDesign.adaptiveSurface.copy(alpha = 0.66f) else Color.Transparent)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = GoaldayDesign.Space1, vertical = 1.dp),
+    )
+}
+
+// 对照逆向 pop_repeat.xml：5 选项重复模式弹窗，左侧勾选图标 + 右侧标题
+@Composable
+private fun RepeatModePickerDialog(
+    selectedRule: String,
+    onDismiss: () -> Unit,
+    onSelect: (String, Int) -> Unit,
+) {
+    val options = listOf(
+        Triple("", "不重复", 1),
+        Triple("daily", "每天重复", 1),
+        Triple("weekly", "每周重复", 1),
+        Triple("monthly", "每月重复", 1),
+        Triple("yearly", "每年重复", 1),
+    )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("重复模式", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                options.forEach { (rule, label, interval) ->
+                    val selected = selectedRule == rule
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                            .clickable {
+                                onSelect(rule, interval)
+                                onDismiss()
+                            }
+                            .padding(horizontal = GoaldayDesign.Space2),
+                    ) {
+                        Icon(
+                            if (selected) Icons.Filled.Check else Icons.Filled.RadioButtonUnchecked,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = if (selected) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkMuted,
+                        )
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (selected) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkPrimary,
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("取消") }
+        },
     )
 }

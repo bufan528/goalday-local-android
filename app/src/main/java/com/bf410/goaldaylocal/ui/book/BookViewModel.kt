@@ -285,7 +285,7 @@ class BookViewModel(
         _uiState.update { it.copy(schedulePreviewEntries = yearEntriesForAnchor()) }
     }
 
-    fun addScheduleFromHandbook(item: String, month: Int, day: Int) {
+    fun addScheduleFromHandbook(item: String, month: Int, day: Int, repeatRule: String = "", repeatInterval: Int = 1) {
         val title = item.trim()
         if (title.isBlank()) return
         val year = store.calendarAnchorYear()
@@ -305,6 +305,8 @@ class BookViewModel(
             month = safeMonth,
             day = safeDay,
             note = currentBook().title,
+            repeatRule = repeatRule,
+            repeatInterval = repeatInterval.coerceAtLeast(1),
         )
         syncEditableContent()
     }
@@ -389,6 +391,24 @@ class BookViewModel(
         if (entryId.isBlank() || normalized.isBlank()) return
         val updated = scheduleRepository.entries().map { entry ->
             if (entry.id == entryId) entry.copy(title = normalized) else entry
+        }
+        scheduleRepository.saveEntries(updated)
+        syncEditableContent()
+    }
+
+    fun updateScheduleRepeatFromHandbook(entryId: String, repeatRule: String, repeatInterval: Int = 1) {
+        if (entryId.isBlank()) return
+        val updated = scheduleRepository.entries().map { entry ->
+            if (entry.id == entryId) {
+                entry.copy(
+                    repeatRule = repeatRule,
+                    repeatInterval = repeatInterval.coerceAtLeast(1),
+                    repeatEndDate = "",
+                    repeatGroupId = if (repeatRule.isBlank()) "" else entry.repeatGroupId.ifBlank { entry.id },
+                )
+            } else {
+                entry
+            }
         }
         scheduleRepository.saveEntries(updated)
         syncEditableContent()

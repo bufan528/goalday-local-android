@@ -47,7 +47,7 @@ fun BookReader(
     onAddToSchedule: (String, Int) -> Unit,
     onAddHandbookPoolItem: (String) -> Unit,
     onRemoveHandbookPoolItem: (String) -> Unit,
-    onAddScheduleFromHandbook: (String, Int, Int) -> Unit,
+    onAddScheduleFromHandbook: (String, Int, Int, String, Int) -> Unit,
     onWeeklyThemeChange: (String) -> Unit,
     onMoveItemToToday: (String) -> Unit,
     onMoveItemToCompleted: (String) -> Unit,
