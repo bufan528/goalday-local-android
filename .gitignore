@@ -11,19 +11,44 @@ local.properties
 /reverse_root/
 /apk_dec*/
 /reverse-assets/
+/jadx/
+/link_wrapper/
+/.superpowers/
+/.worktrees/
+/__pycache__/
 
-# Python test scripts
-*.py
-test_*.py
+# APK files and signatures
+*.apk
+*.idsig
 
-# OS files
-.DS_Store
-Thumbs.db
+# Native libraries and tools
+*.so
+*.jar
+frida-gadget*.so
 
-# IDE
-.vscode/
-*.swp
-*.swo
+# Scripts
+*.js
+*.bat
+*.c
 
-# Logs
+# Reference files
+docs/reference-apk/
+goalday_orig.apk
+ref.apk
+ref.zip
+
+# Temporary files
+*.txt
+*.zip
 *.log
+*.py
+apk_*/
+
+# Kotlin cache
+.kotlin/
+
+# Debug keys
+debug.keystore
+
+# Docs (reference materials)
+docs/superpowers/plans/
