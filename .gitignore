@@ -1,61 +1,29 @@
-.gradle/
-.kotlin/
-build/
-app/build/
-local.properties
+# Build outputs
+/build
+/app/build
+/.gradle
+/.idea
 *.iml
-.idea/
-captures/
-externalNativeBuild/
-.cxx/
-.worktrees/
-# 构建日志
+local.properties
+
+# Android SDK and reverse engineering assets (large directories)
+/android-sdk/
+/reverse_root/
+/apk_dec*/
+/reverse-assets/
+
+# Python test scripts
+*.py
+test_*.py
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# Logs
 *.log
-# APK 静态分析临时产物（原版 Goalday APK 解压/反编译/资源 dump，仅本地参考）
-apk_ext/
-apk_extract/
-apk_extract_ref/
-apk_dec/
-apk_decoded/
-apk_dec_new/
-apk_dec_new2/
-apk_dec_new3/
-apk_zip_work/
-jadx/
-jadx.zip
-apktool.jar
-goalday_orig.apk
-parse_dex.py
-ref.zip
-aapt_output.txt
-apk_colors.txt
-# 逆向分析临时脚本与产物（FRIDA/DEX dump/patch）
-.superpowers/
-__pycache__/
-analyze_arm32.py
-apk_*.apk
-apk_*.apk.idsig
-apk_*.idsig
-auto_dexdump.js
-build_frida.bat
-build_frida.py
-check_env.bat
-check_link.bat
-debug.keystore
-dex_dump_*.js
-dump_*.py
-fake_quickcompile.*
-fix_arm64_patch.py
-frida-gadget-*.so
-link_wrapper/
-patch_*.py
-patch_stub.py
-ref.apk
-run_dump*.py
-scan_dex.js
-scan_run.py
-test_batch.bat
-test_java.js
-docs/reference-apk/captures-bottom/
-docs/reference-apk/reverse-engineering-2026-07-03.md
-docs/superpowers/plans/2026-07-03-local-handbook-rebuild.md
