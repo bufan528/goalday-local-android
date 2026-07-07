@@ -1612,7 +1612,7 @@ private fun ScheduleTargetColumn(
             ScheduleTargetSlot(
                 entry = entry,
                 onToggleCompleted = onToggleCompleted,
-                modifier = Modifier.height(36.dp),
+                modifier = Modifier.height(12.dp),
             )
         }
     }
