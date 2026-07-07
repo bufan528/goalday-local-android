@@ -1576,7 +1576,7 @@ private fun ScheduleDayRow(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(dayStr, fontSize = 9.sp, color = GoaldayDesign.adaptiveInkPrimary)
                 Text("—", fontSize = 9.sp, color = GoaldayDesign.adaptiveInkMuted)
