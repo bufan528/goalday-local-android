@@ -103,7 +103,7 @@ internal fun LocalHandbookWorkspace(
         if (index >= 0 && index != uiState.selectedPageIndex) viewModel.setPage(index)
     }
 
-    Box(Modifier.fillMaxSize().background(Color(0xFFFDFaf6))) {
+    Box(Modifier.fillMaxSize().background(GoaldayDesign.adaptivePaper)) {
         Column(Modifier.fillMaxSize()) {
             ReferenceExactTopBar(
                 selected = segment,
@@ -114,7 +114,7 @@ internal fun LocalHandbookWorkspace(
                 onSelectDiary = { overlay = HandbookOverlay.NONE; segment = LocalHandbookSegment.DIARY },
                 onSelectTopics = { overlay = HandbookOverlay.NONE; segment = LocalHandbookSegment.TOPICS },
             )
-            Box(Modifier.weight(1f).fillMaxWidth().background(Color(0xFFFDFaf6))) {
+            Box(Modifier.weight(1f).fillMaxWidth().background(GoaldayDesign.adaptivePaper)) {
                 when (segment) {
                     LocalHandbookSegment.DIARY -> ReferenceDiaryPage(
                         draft = uiState.diaryDraft,
@@ -183,7 +183,7 @@ private fun ReferenceExactTopBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(49.dp)
-            .background(Color(0xFFE5DAD4))
+            .background(GoaldayDesign.adaptiveSurface)
             .padding(start = 20.dp, end = 20.dp, bottom = 5.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom,
@@ -207,7 +207,7 @@ private fun TopText(text: String, selected: Boolean, onClick: () -> Unit) {
     ) {
         Text(
             text = text,
-            color = if (selected) GoaldayDesign.InkPrimary else GoaldayDesign.InkSecondary,
+            color = if (selected) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkSecondary,
             fontSize = if (selected) 20.sp else 18.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             maxLines = 1,
@@ -219,7 +219,7 @@ private fun TopText(text: String, selected: Boolean, onClick: () -> Unit) {
                 .padding(top = 5.dp)
                 .width(if (selected) 24.dp else 0.dp)
                 .height(2.dp)
-                .background(if (selected) GoaldayDesign.InkPrimary else Color.Transparent),
+                .background(if (selected) GoaldayDesign.adaptiveInkPrimary else Color.Transparent),
         )
     }
 }
@@ -268,12 +268,12 @@ private fun ReferenceDiaryPage(draft: String, date: LocalDate, onDateChange: (Lo
                 BasicTextField(
                     value = draft,
                     onValueChange = onDraftChange,
-                    textStyle = TextStyle(color = Color(0xFF2C2C2C), fontSize = 16.sp, lineHeight = 22.sp),
+                    textStyle = TextStyle(color = GoaldayDesign.adaptiveInkPrimary, fontSize = 16.sp, lineHeight = 22.sp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 2.dp, bottom = 24.dp),
                     decorationBox = { inner ->
-                        if (draft.isBlank()) Text("点击输入", color = GoaldayDesign.InkMuted, fontSize = 16.sp, lineHeight = 22.sp)
+                        if (draft.isBlank()) Text("点击输入", color = GoaldayDesign.adaptiveInkMuted, fontSize = 16.sp, lineHeight = 22.sp)
                         inner()
                     },
                 )
@@ -325,7 +325,7 @@ private fun ReferenceWeekPage(
     val days = (0..6).map { monday.plusDays(it.toLong()) }
     var draft by rememberSaveable { mutableStateOf("") }
     var selectedDay by rememberSaveable(anchorDate) { mutableStateOf(anchorDate.dayOfMonth) }
-    Column(Modifier.fillMaxSize().background(Color(0xFFFDFaf6))) {
+    Column(Modifier.fillMaxSize().background(GoaldayDesign.adaptivePaper)) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             days.forEach { day ->
                 ScheduleLine(
@@ -364,7 +364,13 @@ private fun ReferenceListPage(bookTitle: String, items: List<String>, completed:
     var bindSchedule by rememberSaveable { mutableStateOf(false) }
     var selectedColorIndex by rememberSaveable { mutableStateOf(0) }
     var showTipRows by rememberSaveable { mutableStateOf(false) }
-    val planColors = listOf(Color(0xFFF2C0A5), Color(0xFFA1B774), Color(0xFF9EAADB), Color(0xFFF1D179), Color(0xFFED8888))
+    val planColors = listOf(
+        GoaldayDesign.MorandiApricot,
+        GoaldayDesign.MorandiBrownLight,
+        GoaldayDesign.MorandiKhaki,
+        GoaldayDesign.MorandiYellow,
+        GoaldayDesign.MorandiCoral
+    )
     val visibleItems = (items.distinct().take(100)).ifEmpty { listOf(bookTitle.ifBlank { "2026年愿望清单" }) }
 
     Box(Modifier.fillMaxSize().background(GoaldayDesign.AppBg)) {
@@ -442,8 +448,8 @@ private fun ReferencePlanRow(title: String, count: String, color: Color, complet
                 .width(maxReveal)
                 .fillMaxHeight(),
         ) {
-            PlanRevealAction("编辑", Color.Black, Modifier.weight(1f)) { revealOffset = 0f }
-            PlanRevealAction(if (completed) "恢复" else "完成", Color(0xFFED8888), Modifier.weight(1f)) {
+            PlanRevealAction("编辑", GoaldayDesign.adaptiveInkPrimary, Modifier.weight(1f)) { revealOffset = 0f }
+            PlanRevealAction(if (completed) "恢复" else "完成", GoaldayDesign.MorandiCoral, Modifier.weight(1f)) {
                 revealOffset = 0f
                 onClick()
             }
@@ -530,31 +536,31 @@ private fun ReferencePlanAddSheet(
     onCancel: () -> Unit,
     onComplete: () -> Unit,
 ) {
-    Box(Modifier.fillMaxSize().background(Color(0x66000000)).clickable(onClick = onCancel), contentAlignment = Alignment.BottomCenter) {
-        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)).background(Color(0xFFFFFEFC)).clickable(enabled = false) { }.padding(bottom = 26.dp)) {
+    Box(Modifier.fillMaxSize().background(GoaldayDesign.adaptiveScrim).clickable(onClick = onCancel), contentAlignment = Alignment.BottomCenter) {
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)).background(GoaldayDesign.adaptivePaper).clickable(enabled = false) { }.padding(bottom = 26.dp)) {
             Row(Modifier.fillMaxWidth().height(74.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("取消", color = Color(0xFF397FEA), fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 22.dp).clickable(onClick = onCancel))
+                Text("取消", color = GoaldayDesign.adaptiveInkSecondary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 22.dp).clickable(onClick = onCancel))
                 Spacer(Modifier.weight(1f))
-                Text("完成", color = Color(0xFFED8888), fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 22.dp).clickable(onClick = onComplete))
+                Text("完成", color = GoaldayDesign.Positive, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 22.dp).clickable(onClick = onComplete))
             }
-            Text("清单名称", color = GoaldayDesign.InkPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 22.dp, bottom = 12.dp))
+            Text("清单名称", color = GoaldayDesign.adaptiveInkPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 22.dp, bottom = 12.dp))
             BasicTextField(
                 value = draft,
                 onValueChange = onDraftChange,
                 singleLine = true,
-                textStyle = TextStyle(color = GoaldayDesign.InkPrimary, fontSize = 20.sp),
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp).clip(RoundedCornerShape(6.dp)).background(Color(0xFFF8F3EE)).padding(horizontal = 10.dp, vertical = 14.dp),
+                textStyle = TextStyle(color = GoaldayDesign.adaptiveInkPrimary, fontSize = 20.sp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp).clip(RoundedCornerShape(6.dp)).background(GoaldayDesign.adaptiveSurfaceSoft).padding(horizontal = 10.dp, vertical = 14.dp),
             )
             Row(Modifier.fillMaxWidth().height(58.dp).padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("关联到日程", color = GoaldayDesign.InkPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                Box(Modifier.width(48.dp).height(28.dp).clip(RoundedCornerShape(20.dp)).background(if (bindSchedule) Color(0xFFED8888) else Color(0xFFE7DED7)).clickable { onBindScheduleChange(!bindSchedule) }, contentAlignment = if (bindSchedule) Alignment.CenterEnd else Alignment.CenterStart) {
-                    Box(Modifier.padding(3.dp).size(22.dp).clip(CircleShape).background(Color.White))
+                Text("关联到日程", color = GoaldayDesign.adaptiveInkPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Box(Modifier.width(48.dp).height(28.dp).clip(RoundedCornerShape(20.dp)).background(if (bindSchedule) GoaldayDesign.Positive else GoaldayDesign.adaptiveSurfaceSoft).clickable { onBindScheduleChange(!bindSchedule) }, contentAlignment = if (bindSchedule) Alignment.CenterEnd else Alignment.CenterStart) {
+                    Box(Modifier.padding(3.dp).size(22.dp).clip(CircleShape).background(GoaldayDesign.adaptivePaper))
                 }
             }
-            Text("清单颜色", color = GoaldayDesign.InkPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 12.dp))
+            Text("清单颜色", color = GoaldayDesign.adaptiveInkPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 12.dp))
             Row(Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 colors.forEachIndexed { index, color ->
-                    Box(Modifier.size(if (index == selectedColorIndex) 30.dp else 24.dp).clip(CircleShape).background(color).border(if (index == selectedColorIndex) 2.dp else 0.dp, GoaldayDesign.InkPrimary, CircleShape).clickable { onColorSelect(index) })
+                    Box(Modifier.size(if (index == selectedColorIndex) 30.dp else 24.dp).clip(CircleShape).background(color).border(if (index == selectedColorIndex) 2.dp else 0.dp, GoaldayDesign.adaptiveInkPrimary, CircleShape).clickable { onColorSelect(index) })
                 }
             }
         }
@@ -564,11 +570,11 @@ private fun ReferencePlanAddSheet(
 @Composable
 private fun ListOverviewCard(title: String, progress: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().height(92.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFFFFFEFC)).border(0.6.dp, Color(0x11000000), RoundedCornerShape(3.dp)).clickable(onClick = onClick).padding(horizontal = 42.dp),
+        modifier = Modifier.fillMaxWidth().height(92.dp).clip(RoundedCornerShape(3.dp)).background(GoaldayDesign.adaptivePaper).border(0.6.dp, GoaldayDesign.adaptiveDivider, RoundedCornerShape(3.dp)).clickable(onClick = onClick).padding(horizontal = 42.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, color = GoaldayDesign.InkPrimary, fontSize = 24.sp, modifier = Modifier.weight(1f))
-        Text(progress, color = GoaldayDesign.InkSecondary, fontSize = 20.sp)
+        Text(title, color = GoaldayDesign.adaptiveInkPrimary, fontSize = 24.sp, modifier = Modifier.weight(1f))
+        Text(progress, color = GoaldayDesign.adaptiveInkSecondary, fontSize = 20.sp)
     }
 }
 
@@ -584,26 +590,26 @@ private fun ReferenceTopicsPage(
     val targetItems: List<String> = remember(selected.id) {
         loadTargetAssetItems(context, selected.targetAssetPath).ifEmpty { selected.items }
     }
-    Column(Modifier.fillMaxSize().background(Color(0xFFFDFaf6))) {
+    Column(Modifier.fillMaxSize().background(GoaldayDesign.adaptivePaper)) {
         Row(Modifier.fillMaxWidth().height(108.dp).padding(horizontal = 18.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.width(62.dp).height(82.dp).clip(RoundedCornerShape(3.dp))) {
                 TopicCoverArt(selected, selectedIndex, Modifier.fillMaxSize(), compact = true)
             }
             Column(Modifier.weight(1f).padding(start = 14.dp)) {
-                Text(selected.title, color = GoaldayDesign.InkPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${targetItems.size} 个目标 · ${selected.coverKey}.png", color = GoaldayDesign.InkSecondary, fontSize = 12.sp, maxLines = 1)
+                Text(selected.title, color = GoaldayDesign.adaptiveInkPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("${targetItems.size} 个目标 · ${selected.coverKey}.png", color = GoaldayDesign.adaptiveInkSecondary, fontSize = 12.sp, maxLines = 1)
             }
-            Text("保存", color = GoaldayDesign.InkPrimary, fontSize = 16.sp, modifier = Modifier.clickable { onSaveAsBook(selected, targetItems) })
+            Text("保存", color = GoaldayDesign.adaptiveInkPrimary, fontSize = 16.sp, modifier = Modifier.clickable { onSaveAsBook(selected, targetItems) })
         }
         Row(Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("导入日程", color = GoaldayDesign.InkPrimary, fontSize = 15.sp, modifier = Modifier.clickable { onApply(targetItems, true, false) })
+            Text("导入日程", color = GoaldayDesign.adaptiveInkPrimary, fontSize = 15.sp, modifier = Modifier.clickable { onApply(targetItems, true, false) })
             Spacer(Modifier.width(22.dp))
-            Text("加入清单", color = GoaldayDesign.InkSecondary, fontSize = 15.sp, modifier = Modifier.clickable { onApply(targetItems, false, false) })
+            Text("加入清单", color = GoaldayDesign.adaptiveInkSecondary, fontSize = 15.sp, modifier = Modifier.clickable { onApply(targetItems, false, false) })
         }
         Row(Modifier.fillMaxWidth().weight(1f)) {
             Column(Modifier.width(132.dp).verticalScroll(rememberScrollState()).padding(start = 12.dp, end = 8.dp)) {
                 templates.forEachIndexed { index, item ->
-                    Box(Modifier.fillMaxWidth().height(78.dp).padding(vertical = 4.dp).clip(RoundedCornerShape(4.dp)).border(if (index == selectedIndex) 1.2.dp else 0.4.dp, if (index == selectedIndex) GoaldayDesign.InkPrimary else GoaldayDesign.BorderColor, RoundedCornerShape(4.dp)).clickable { selectedIndex = index }) {
+                    Box(Modifier.fillMaxWidth().height(78.dp).padding(vertical = 4.dp).clip(RoundedCornerShape(4.dp)).border(if (index == selectedIndex) 1.2.dp else 0.4.dp, if (index == selectedIndex) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveDivider, RoundedCornerShape(4.dp)).clickable { selectedIndex = index }) {
                         TopicCoverArt(item, index, Modifier.fillMaxSize(), compact = true)
                     }
                 }
@@ -707,20 +713,20 @@ private fun MiniBookPage(
     onClick: () -> Unit,
 ) {
     Box(
-        modifier.shadow(14.dp, RoundedCornerShape(2.dp)).background(Brush.horizontalGradient(listOf(Color(0xFFFFF9F0), Color(0xFFFEFCF8), Color(0xFFF2E3D5)))).border(0.8.dp, Color(0x22000000)).clickable(onClick = onClick).padding(18.dp),
+        modifier.shadow(14.dp, RoundedCornerShape(2.dp)).background(GoaldayDesign.adaptivePaperGradient).border(0.8.dp, GoaldayDesign.adaptiveDivider).clickable(onClick = onClick).padding(18.dp),
     ) {
         Column(Modifier.fillMaxSize()) {
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(title, color = GoaldayDesign.InkPrimary, fontSize = if (mode == "week") 18.sp else 20.sp, fontWeight = FontWeight.SemiBold)
-                Text(subTitle, color = GoaldayDesign.InkSecondary, fontSize = 13.sp)
+                Text(title, color = GoaldayDesign.adaptiveInkPrimary, fontSize = if (mode == "week") 18.sp else 20.sp, fontWeight = FontWeight.SemiBold)
+                Text(subTitle, color = GoaldayDesign.adaptiveInkSecondary, fontSize = 13.sp)
             }
             Spacer(Modifier.height(12.dp))
             if (mode == "week") {
                 (0..6).forEach { MiniWeekRow(it, entries) }
             } else {
-                Text(diaryDraft.ifBlank { "点击输入" }, color = GoaldayDesign.InkPrimary, fontSize = 12.sp, lineHeight = 18.sp, maxLines = 3)
+                Text(diaryDraft.ifBlank { "点击输入" }, color = GoaldayDesign.adaptiveInkPrimary, fontSize = 12.sp, lineHeight = 18.sp, maxLines = 3)
                 Spacer(Modifier.height(12.dp))
-                listItems.take(5).forEachIndexed { index, item -> Text("${index + 1}. $item", color = GoaldayDesign.InkSecondary, fontSize = 10.sp, maxLines = 1) }
+                listItems.take(5).forEachIndexed { index, item -> Text("${index + 1}. $item", color = GoaldayDesign.adaptiveInkSecondary, fontSize = 10.sp, maxLines = 1) }
             }
         }
     }
@@ -793,7 +799,7 @@ private fun ExportDateLine(text: String, onClick: () -> Unit) {
 @Composable
 private fun ReferenceMonthPicker(date: LocalDate, onPick: (LocalDate) -> Unit, onClose: () -> Unit) {
     val month = YearMonth.from(date)
-    Box(Modifier.fillMaxSize().background(Color(0x44000000)).clickable(onClick = onClose)) {
+    Box(Modifier.fillMaxSize().background(GoaldayDesign.adaptiveScrim.copy(alpha = 0.27f)).clickable(onClick = onClose)) {
         Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(420.dp).background(GoaldayDesign.AppBg).padding(horizontal = 39.dp, vertical = 16.dp)) {
             Row(Modifier.fillMaxWidth().height(52.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("${month.monthValue}月 ${month.year}", color = GoaldayDesign.InkPrimary, fontSize = 22.sp, modifier = Modifier.weight(1f))

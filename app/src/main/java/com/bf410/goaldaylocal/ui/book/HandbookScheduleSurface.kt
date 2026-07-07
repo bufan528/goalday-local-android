@@ -1569,18 +1569,45 @@ private fun ScheduleDayRow(
             .fillMaxWidth()
             .height(IntrinsicSize.Min),
     ) {
-        // 左侧日期列（对照 fl_day_1: 24.5dp 宽，9sp 日期 + "—" + 6sp 周几）
+        // 左侧日期列（对照逆向 ConstraintLayout + Guideline(50%)）：
+        // 日期 9sp 在上半区底部（marginBottom=2dp），"—" 9sp 垂直居中，周几 6sp 在下半区顶部（marginTop=2dp）
         Box(
             modifier = Modifier.width(24.5.dp).fillMaxHeight(),
-            contentAlignment = Alignment.Center,
         ) {
             Column(
+                modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(dayStr, fontSize = 9.sp, color = GoaldayDesign.adaptiveInkPrimary)
-                Text("—", fontSize = 9.sp, color = GoaldayDesign.adaptiveInkMuted)
-                Text(weekdayLabel, fontSize = 6.sp, color = GoaldayDesign.adaptiveInkMuted)
+                // 上半区：日期贴底部，距中线 2dp
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.BottomCenter,
+                ) {
+                    Text(
+                        dayStr,
+                        fontSize = 9.sp,
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                        modifier = Modifier.padding(bottom = 2.dp),
+                    )
+                }
+                // 垂直居中的分隔符
+                Text(
+                    "—",
+                    fontSize = 9.sp,
+                    color = GoaldayDesign.adaptiveInkMuted,
+                )
+                // 下半区：周几贴顶部，距中线 2dp
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.TopCenter,
+                ) {
+                    Text(
+                        weekdayLabel,
+                        fontSize = 6.sp,
+                        color = GoaldayDesign.adaptiveInkMuted,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
             }
         }
         // 第一列（weight=1, paddingVertical=3.5dp）
