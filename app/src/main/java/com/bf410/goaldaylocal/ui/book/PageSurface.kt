@@ -712,7 +712,7 @@ private fun HandbookDiaryReplicaPage(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(23.dp)
-                .background(Color.White),
+                .background(GoaldayDesign.adaptiveSurface),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
