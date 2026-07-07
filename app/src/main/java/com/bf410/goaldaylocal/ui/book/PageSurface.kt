@@ -199,54 +199,10 @@ fun PageSurface(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL))
-            // 基底统一到 PaperGradient，与 handbook 路径一致，消除翻页交接瞬间的背景跳变
+            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
             .background(GoaldayDesign.adaptivePaperGradient)
-            .handbookPaperTexture(alpha = 0.08f)
-            .padding(horizontal = GoaldayDesign.Space4 + 2.dp, vertical = GoaldayDesign.Space4),
+            .padding(horizontal = GoaldayDesign.Space4, vertical = GoaldayDesign.Space3),
     ) {
-        // 中央折痕：书脊感，单层 10dp 渐变（P0 精简：删除左右阴影/顶部细线/斑驳层/角部高光 4 层冗余装饰）
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .width(10.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            Color.Transparent,
-                            GoaldayDesign.BlackOverlayHairline,
-                            GoaldayDesign.PaperWarm.copy(alpha = 0.06f),
-                            GoaldayDesign.BlackOverlayHairline,
-                            Color.Transparent,
-                        ),
-                    ),
-                ),
-        )
-        // 右边距 4 个彩色书签色标：P2-1 增大尺寸与对比度，原 3dp×16dp alpha 0x33 过小过淡
-        Column(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = GoaldayDesign.Space1 / 2),
-            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp),
-            horizontalAlignment = Alignment.End,
-        ) {
-            listOf(
-                GoaldayDesign.Pink.copy(alpha = 0.5f),
-                GoaldayDesign.Today.copy(alpha = 0.5f),
-                GoaldayDesign.RouteTarget.copy(alpha = 0.5f),
-                GoaldayDesign.Positive.copy(alpha = 0.5f),
-            ).forEach { c ->
-                Box(
-                    modifier = Modifier
-                        .width(4.dp)
-                        .height(22.dp)
-                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                        .background(c),
-                )
-            }
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -264,18 +220,6 @@ fun PageSurface(
             Spacer(Modifier.height(GoaldayDesign.Space2))
             body()
         }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(10.dp)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color.Transparent, GoaldayDesign.BlackOverlayLight),
-                    ),
-                ),
-        )
     }
 }
 
