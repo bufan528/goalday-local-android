@@ -634,12 +634,12 @@ private fun HandbookDiaryReplicaPage(
             }
             .fillMaxSize(),
     ) {
-        // 日期标签行（对照 fl_date）
+        // 日期标签行（对照 fl_date: paddingStart/End=7.5pt）
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(24.dp)
-                .padding(horizontal = 10.dp),
+                .padding(horizontal = 7.5.dp),
             verticalAlignment = Alignment.Bottom,
         ) {
             Text(
@@ -655,7 +655,7 @@ private fun HandbookDiaryReplicaPage(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(start = 10.dp, top = 5.dp, end = 10.dp, bottom = 0.dp)
+                .padding(start = 7.5.dp, top = 5.dp, end = 7.5.dp, bottom = 30.dp)
                 .handbookPaperRuling(diaryScrollState),
         ) {
             if (editing) {
@@ -711,22 +711,22 @@ private fun HandbookDiaryReplicaPage(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(31.dp)
+                .height(23.dp)
                 .background(Color.White),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .padding(start = 5.dp)
-                    .size(31.dp)
+                    .padding(start = 3.75.dp)
+                    .size(23.dp)
                     .clickable { onContentModeChange(PageContentMode.EditingDiary(title)) },
                 contentAlignment = Alignment.Center,
             ) {
-                // 对照 ic_select_pic：图片选择图标
+                // 对照 ic_select_pic：图片选择图标 12.5dp
                 Icon(
                     Icons.Filled.Image,
                     contentDescription = "插入图片",
-                    modifier = Modifier.size(17.dp),
+                    modifier = Modifier.size(12.5.dp),
                     tint = GoaldayDesign.adaptiveInkSecondary,
                 )
             }
