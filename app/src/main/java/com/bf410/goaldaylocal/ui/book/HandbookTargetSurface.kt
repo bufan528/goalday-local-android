@@ -567,11 +567,11 @@ private fun TargetBottomActionBar(
             color = GoaldayDesign.adaptiveInkPrimary,
             modifier = Modifier
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .background(Color(0xFFF6F6F6))
+                .background(GoaldayDesign.adaptiveSurface)
                 .clickable { onDatePick() }
                 .padding(horizontal = 10.dp),
         )
-        // 右侧图标组：分隔线(1dp/22dp #D3CDC6) + 删除 + 置顶 + 完成（各 padding=13dp）
+        // 右侧图标组：分隔线(1dp/22dp 自适应色) + 删除 + 置顶 + 完成（各 padding=13dp）
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(0.dp),
@@ -580,7 +580,7 @@ private fun TargetBottomActionBar(
                 modifier = Modifier
                     .width(1.dp)
                     .height(22.dp)
-                    .background(Color(0xFFD3CDC6)),
+                    .background(GoaldayDesign.adaptiveDivider),
             )
             Icon(
                 Icons.Filled.Delete,
