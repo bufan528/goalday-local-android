@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import java.util.Date
 
@@ -21,7 +22,6 @@ enum class PageContentType {
 /**
  * 日历书本视图
  * 将3D翻页系统集成到BookShell视觉框架中
- * 保留书脊、纸张纹理、书口等视觉效果
  */
 @Composable
 fun CalendarBookView(
@@ -29,9 +29,11 @@ fun CalendarBookView(
     pageState: CircularCalendarPageState,
     shellStyle: ShellStyle = ShellStyle.LIGHT,
     pageContentType: PageContentType = PageContentType.SCHEDULE,
+    scheduleEntries: List<ScheduleEntry> = emptyList(),
+    diaryText: String = "",
+    completedItems: List<String> = emptyList(),
     onScheduleStatusUpdate: (Int, Boolean) -> Unit = { _, _ -> }
 ) {
-    // 使用BookShell作为外层容器，保留所有视觉效果
     BookShell(
         modifier = modifier,
         shellStyle = shellStyle,
@@ -41,7 +43,6 @@ fun CalendarBookView(
         onTapPrevious = { pageState.goPreviousPage() },
         onTapNext = { pageState.goNextPage() }
     ) {
-        // 在BookShell内部使用BaseBookView实现3D翻页
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -51,24 +52,25 @@ fun CalendarBookView(
                 modifier = Modifier.fillMaxSize(),
                 pageState = pageState
             ) { calendarPage, index ->
-                // 页面内容使用纸张背景
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(GoaldayDesign.adaptivePaperGradient)
                         .padding(GoaldayDesign.Space4)
                 ) {
-                    // 根据页面类型渲染不同内容
                     when (pageContentType) {
                         PageContentType.SCHEDULE -> {
                             CalendarPageContent(
                                 calendarPage = calendarPage,
+                                scheduleEntries = scheduleEntries,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
                         PageContentType.DIARY -> {
                             DiaryPageContent(
                                 calendarPage = calendarPage,
+                                diaryText = diaryText,
+                                completedItems = completedItems,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }

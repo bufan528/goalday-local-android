@@ -31,6 +31,8 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 @Composable
 fun DiaryPageContent(
     calendarPage: CalendarPage,
+    diaryText: String,
+    completedItems: List<String>,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -55,7 +57,10 @@ fun DiaryPageContent(
         Spacer(modifier = Modifier.height(GoaldayDesign.Space2))
         
         // 日记内容区域（可滚动）
-        DiaryContentArea(calendarPage)
+        DiaryContentArea(
+            diaryText = diaryText,
+            completedItems = completedItems
+        )
         
         Spacer(modifier = Modifier.weight(1f))
         
@@ -128,16 +133,21 @@ private fun DiaryDateHeader(calendarPage: CalendarPage) {
  * 日记内容区域 - 对齐逆向fragment_diary_inbook.xml的rv_container
  */
 @Composable
-private fun DiaryContentArea(calendarPage: CalendarPage) {
+private fun DiaryContentArea(
+    diaryText: String,
+    completedItems: List<String>
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3)
     ) {
-        // 日记文本内容占位
-        DiaryTextBlock()
+        // 日记文本内容
+        DiaryTextBlock(diaryText)
         
         // 已完成目标回顾块（如果有）
-        CompletedTargetRecap()
+        if (completedItems.isNotEmpty()) {
+            CompletedTargetRecap(completedItems)
+        }
     }
 }
 
@@ -145,7 +155,7 @@ private fun DiaryContentArea(calendarPage: CalendarPage) {
  * 日记文本块 - 对齐逆向item_diary_text.xml
  */
 @Composable
-private fun DiaryTextBlock() {
+private fun DiaryTextBlock(diaryText: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -153,13 +163,23 @@ private fun DiaryTextBlock() {
             .background(GoaldayDesign.adaptiveSurfaceSoft.copy(alpha = 0.5f))
             .padding(GoaldayDesign.Space3)
     ) {
-        Text(
-            text = "点击输入日记内容...",
-            style = MaterialTheme.typography.bodyLarge,
-            color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.6f),
-            fontFamily = GoaldayDesign.BodyFontFamily,
-            lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
-        )
+        if (diaryText.isNotBlank()) {
+            Text(
+                text = diaryText,
+                style = MaterialTheme.typography.bodyLarge,
+                color = GoaldayDesign.adaptiveInkPrimary,
+                fontFamily = GoaldayDesign.BodyFontFamily,
+                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
+            )
+        } else {
+            Text(
+                text = "点击输入日记内容...",
+                style = MaterialTheme.typography.bodyLarge,
+                color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.6f),
+                fontFamily = GoaldayDesign.BodyFontFamily,
+                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
+            )
+        }
     }
 }
 
@@ -167,7 +187,7 @@ private fun DiaryTextBlock() {
  * 已完成目标回顾块 - 对齐逆向item_diary_target_in_book.xml
  */
 @Composable
-private fun CompletedTargetRecap() {
+private fun CompletedTargetRecap(completedItems: List<String>) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -199,13 +219,15 @@ private fun CompletedTargetRecap() {
                 )
             }
             
-            // 空状态提示
-            Text(
-                text = "这里会自动记录清单中完成的事项。",
-                style = MaterialTheme.typography.bodySmall,
-                color = GoaldayDesign.adaptiveInkMuted,
-                fontFamily = GoaldayDesign.BodyFontFamily
-            )
+            // 已完成项目列表
+            completedItems.forEach { item ->
+                Text(
+                    text = "• $item",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GoaldayDesign.adaptiveInkSecondary,
+                    fontFamily = GoaldayDesign.BodyFontFamily
+                )
+            }
         }
     }
 }
