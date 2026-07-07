@@ -197,6 +197,7 @@ fun BaseBookView(
 /**
  * 书本页面层
  * 用于渲染单个页面，支持3D旋转和真实纸张效果
+ * 对齐逆向Goalday手账的纸张质感和翻页阴影
  */
 @Composable
 private fun BookPageLayer(
@@ -217,32 +218,82 @@ private fun BookPageLayer(
             }
             .fillMaxSize()
             .drawBehind {
-                // 绘制纸张边缘阴影，增强立体感
-                val shadowAlpha = (abs(rotationY) / 180f).coerceIn(0f, 0.3f)
+                val absRotation = abs(rotationY)
+                val width = size.width
+                val height = size.height
+                
+                // 左侧书脊阴影 - 翻页时加深
+                val spineShadowAlpha = (absRotation / 180f).coerceIn(0f, 0.35f)
                 drawRect(
                     brush = Brush.horizontalGradient(
                         colors = listOf(
-                            Color.Black.copy(alpha = shadowAlpha),
+                            Color.Black.copy(alpha = spineShadowAlpha),
+                            Color.Black.copy(alpha = spineShadowAlpha * 0.6f),
                             Color.Transparent
                         ),
                         startX = 0f,
-                        endX = 20f
+                        endX = 24f
                     ),
-                    size = androidx.compose.ui.geometry.Size(20f, size.height)
+                    size = androidx.compose.ui.geometry.Size(24f, height)
                 )
                 
-                // 右侧边缘高光，模拟纸张反光
+                // 右侧边缘高光 - 模拟纸张反光
+                val edgeHighlightAlpha = 0.08f + (absRotation / 180f) * 0.04f
                 drawRect(
                     brush = Brush.horizontalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            Color.White.copy(alpha = 0.05f)
+                            Color.White.copy(alpha = edgeHighlightAlpha * 0.5f),
+                            Color.White.copy(alpha = edgeHighlightAlpha)
                         ),
-                        startX = size.width - 10f,
-                        endX = size.width
+                        startX = width - 12f,
+                        endX = width
                     ),
-                    size = androidx.compose.ui.geometry.Size(10f, size.height)
+                    size = androidx.compose.ui.geometry.Size(12f, height)
                 )
+                
+                // 顶部受光效果 - 翻页时纸张上边缘更亮
+                val topLightAlpha = 0.12f + (absRotation / 180f) * 0.08f
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        listOf(
+                            Color.White.copy(alpha = topLightAlpha),
+                            Color.Transparent
+                        ),
+                    ),
+                    size = androidx.compose.ui.geometry.Size(width, 16f)
+                )
+                
+                // 底部厚度阴影 - 模拟纸张堆叠
+                val bottomShadowAlpha = 0.06f + (absRotation / 180f) * 0.04f
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        listOf(
+                            Color.Transparent,
+                            GoaldayDesign.BookBoardDark.copy(alpha = bottomShadowAlpha)
+                        ),
+                    ),
+                    topLeft = Offset(0f, height - 12f),
+                    size = androidx.compose.ui.geometry.Size(width, 12f)
+                )
+                
+                // 翻页时的动态阴影 - 模拟纸张弯曲
+                if (absRotation > 5f && absRotation < 175f) {
+                    val curveShadowAlpha = (absRotation / 180f).coerceIn(0f, 0.15f)
+                    val curveCenter = width * (if (rotationY > 0) 0.3f else 0.7f)
+                    drawRect(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = curveShadowAlpha),
+                                Color.Transparent
+                            ),
+                            startX = curveCenter - 40f,
+                            endX = curveCenter + 40f
+                        ),
+                        size = androidx.compose.ui.geometry.Size(80f, height)
+                    )
+                }
             }
     ) {
         content()

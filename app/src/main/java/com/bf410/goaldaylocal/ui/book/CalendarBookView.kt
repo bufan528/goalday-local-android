@@ -11,6 +11,14 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import java.util.Date
 
 /**
+ * 页面内容类型
+ */
+enum class PageContentType {
+    SCHEDULE,  // 日程页
+    DIARY      // 日记页
+}
+
+/**
  * 日历书本视图
  * 将3D翻页系统集成到BookShell视觉框架中
  * 保留书脊、纸张纹理、书口等视觉效果
@@ -20,6 +28,7 @@ fun CalendarBookView(
     modifier: Modifier = Modifier,
     pageState: CircularCalendarPageState,
     shellStyle: ShellStyle = ShellStyle.LIGHT,
+    pageContentType: PageContentType = PageContentType.SCHEDULE,
     onScheduleStatusUpdate: (Int, Boolean) -> Unit = { _, _ -> }
 ) {
     // 使用BookShell作为外层容器，保留所有视觉效果
@@ -49,10 +58,21 @@ fun CalendarBookView(
                         .background(GoaldayDesign.adaptivePaperGradient)
                         .padding(GoaldayDesign.Space4)
                 ) {
-                    CalendarPageContent(
-                        calendarPage = calendarPage,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    // 根据页面类型渲染不同内容
+                    when (pageContentType) {
+                        PageContentType.SCHEDULE -> {
+                            CalendarPageContent(
+                                calendarPage = calendarPage,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        PageContentType.DIARY -> {
+                            DiaryPageContent(
+                                calendarPage = calendarPage,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
                 }
             }
         }
