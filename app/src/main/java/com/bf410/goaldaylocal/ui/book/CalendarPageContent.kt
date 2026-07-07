@@ -22,7 +22,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import java.util.Date
 
@@ -33,6 +35,7 @@ import java.util.Date
 @Composable
 fun CalendarPageContent(
     calendarPage: CalendarPage,
+    scheduleEntries: List<ScheduleEntry>,
     modifier: Modifier = Modifier
 ) {
     // 主布局：左侧日期栏 + 右侧任务格
@@ -53,6 +56,7 @@ fun CalendarPageContent(
         // 右侧任务格（占约2/3宽度）
         TaskGridSection(
             calendarPage = calendarPage,
+            scheduleEntries = scheduleEntries,
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(0.67f)
@@ -131,6 +135,7 @@ private fun DateRailSection(
 @Composable
 private fun TaskGridSection(
     calendarPage: CalendarPage,
+    scheduleEntries: List<ScheduleEntry>,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -148,8 +153,9 @@ private fun TaskGridSection(
                 // 每行2个任务格
                 repeat(2) { colIndex ->
                     val taskIndex = rowIndex * 2 + colIndex
+                    val entry = scheduleEntries.getOrNull(taskIndex)
                     TaskSlot(
-                        taskIndex = taskIndex,
+                        entry = entry,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -178,7 +184,7 @@ private fun TaskGridSection(
  */
 @Composable
 private fun TaskSlot(
-    taskIndex: Int,
+    entry: ScheduleEntry?,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -189,27 +195,58 @@ private fun TaskSlot(
             .padding(GoaldayDesign.Space3),
         contentAlignment = Alignment.TopStart
     ) {
-        // 任务序号指示器
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .clip(CircleShape)
-                .background(GoaldayDesign.adaptiveDivider)
-        )
-        
-        // 任务内容占位
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)
-        ) {
-            Text(
-                text = "任务 ${taskIndex + 1}",
-                style = MaterialTheme.typography.bodySmall,
-                color = GoaldayDesign.adaptiveInkMuted,
-                fontFamily = GoaldayDesign.BodyFontFamily
-            )
+        if (entry != null) {
+            // 显示真实日程数据
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)
+            ) {
+                // 时间标签
+                if (entry.timeText.isNotBlank()) {
+                    Text(
+                        text = entry.timeText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = GoaldayDesign.Pink,
+                        fontFamily = GoaldayDesign.BodyFontFamily,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                
+                // 标题
+                Text(
+                    text = entry.title,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                    fontFamily = GoaldayDesign.BodyFontFamily,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                // 备注（如果有）
+                if (entry.note.isNotBlank()) {
+                    Text(
+                        text = entry.note,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = GoaldayDesign.adaptiveInkMuted,
+                        fontFamily = GoaldayDesign.BodyFontFamily,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        } else {
+            // 空状态
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "暂无日程",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.5f),
+                    fontFamily = GoaldayDesign.BodyFontFamily
+                )
+            }
         }
     }
 }
