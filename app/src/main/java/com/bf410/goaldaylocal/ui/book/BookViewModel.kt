@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
+import java.util.Date
 import java.util.UUID
 
 class BookViewModel(
@@ -36,6 +37,39 @@ class BookViewModel(
         val todo: List<String>,
         val done: List<String>,
     )
+
+    // 日历页面状态管理器
+    private var calendarPageState: CircularCalendarPageState? = null
+
+    fun getCalendarPageState(): CircularCalendarPageState {
+        if (calendarPageState == null) {
+            calendarPageState = CircularCalendarPageState()
+        }
+        return calendarPageState!!
+    }
+
+    fun initCalendarPageState(initialDate: Date? = null, dateRange: BookPageDateRange? = null) {
+        calendarPageState = CircularCalendarPageState(
+            initialCenterDate = initialDate ?: Date(),
+            dateRange = dateRange
+        )
+    }
+
+    fun navigateToNextPage() {
+        calendarPageState?.goNextPage()
+    }
+
+    fun navigateToPreviousPage() {
+        calendarPageState?.goPreviousPage()
+    }
+
+    fun jumpToDate(date: Date) {
+        calendarPageState?.jumpToDate(date)
+    }
+
+    fun setDateRange(range: BookPageDateRange) {
+        calendarPageState?.setDateRange(range)
+    }
 
     private fun allBooks(): List<TopicBook> = SampleLibrary.books + store.customBooks()
 
