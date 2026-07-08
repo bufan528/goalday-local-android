@@ -1073,7 +1073,7 @@ private fun DaySpreadEditableSection(
                 fontWeight = FontWeight.Normal,
                 maxLines = 1,
             )
-            Text("—", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveDivider, maxLines = 1)
+            Text("—", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.ScheduleDateColumnSeparator, maxLines = 1)
             Text(
                 weekdayLabel(day, visibleDays),
                 style = MaterialTheme.typography.labelSmall,
@@ -1594,7 +1594,7 @@ private fun ScheduleDayRow(
                 Text(
                     "—",
                     fontSize = 9.sp,
-                    color = GoaldayDesign.adaptiveInkMuted,
+                    color = GoaldayDesign.ScheduleDateColumnSeparator,
                 )
                 // 下半区：周几贴顶部，距中线 2dp
                 Box(
