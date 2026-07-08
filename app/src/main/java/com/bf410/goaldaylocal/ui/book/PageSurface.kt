@@ -3499,10 +3499,10 @@ private fun DiaryToolChip(
 ) {
     Text(
         text = label,
-        color = GoaldayDesign.RouteOverview,
+        color = GoaldayDesign.adaptiveInkSecondary,
         modifier = Modifier
             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-            .background(GoaldayDesign.BorderColor.copy(alpha = 0.10f))
+            .background(GoaldayDesign.adaptiveSurfaceSoft)
             .clickable(onClick = onClick)
             .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
     )
