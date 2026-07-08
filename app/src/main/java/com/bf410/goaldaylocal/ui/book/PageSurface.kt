@@ -92,6 +92,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -105,6 +106,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bf410.goaldaylocal.R
 import com.bf410.goaldaylocal.data.BookPage
 import com.bf410.goaldaylocal.data.DiaryPage
 import com.bf410.goaldaylocal.data.PlanPage
@@ -634,12 +636,12 @@ private fun HandbookDiaryReplicaPage(
             }
             .fillMaxSize(),
     ) {
-        // 日期标签行（对照 fl_date: paddingStart/End=7.5pt）
+        // 日期标签行（对照 fl_date: paddingStart/End=7.5pt → 10dp）
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(24.dp)
-                .padding(horizontal = 7.5.dp),
+                .padding(horizontal = 10.dp),
             verticalAlignment = Alignment.Bottom,
         ) {
             Text(
@@ -650,12 +652,12 @@ private fun HandbookDiaryReplicaPage(
                 maxLines = 1,
             )
         }
-        // 内容区（对照 rv_container: marginTop=5dp, marginStart/End=7.5dp, marginBottom=30dp）
+        // 内容区（对照 rv_container: marginTop=5dp, marginStart/End=7.5pt → 10dp, marginBottom=30dp）
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(start = 7.5.dp, top = 5.dp, end = 7.5.dp, bottom = 30.dp)
+                .padding(start = 10.dp, top = 5.dp, end = 10.dp, bottom = 30.dp)
                 .handbookPaperRuling(diaryScrollState),
         ) {
             if (editing) {
@@ -677,6 +679,7 @@ private fun HandbookDiaryReplicaPage(
                 // 对照 item_diary_text.xml：16sp #2C2C2C，hint="点击输入"
                 val plainText = plainTextFromHtml(diaryDraft).ifBlank { diaryDraft }
                 if (plainText.isNotBlank()) {
+                    // 对照 item_diary_text.xml：16sp 字体 + 2dp 行距 = 18sp lineHeight
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -686,7 +689,7 @@ private fun HandbookDiaryReplicaPage(
                             plainText,
                             fontSize = 16.sp,
                             color = GoaldayDesign.adaptiveInkPrimary,
-                            lineHeight = 20.sp,
+                            lineHeight = 18.sp,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -708,26 +711,26 @@ private fun HandbookDiaryReplicaPage(
                 }
             }
         }
-        // 底部图片按钮栏（对照 fl_bottom_bar: 23dp 白底，fl_select_pic 23dp ic_select_pic）
+        // 底部图片按钮栏（对照 fl_bottom_bar: 23pt → 30.7dp 白底，fl_select_pic 23pt → 30.7dp）
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(23.dp)
+                .height(30.7.dp)
                 .background(GoaldayDesign.adaptiveSurface),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .padding(start = 3.75.dp)
-                    .size(23.dp)
+                    .padding(start = 5.dp)  // 3.75pt → 5dp
+                    .size(30.7.dp)
                     .clickable { onContentModeChange(PageContentMode.EditingDiary(title)) },
                 contentAlignment = Alignment.Center,
             ) {
-                // 对照 ic_select_pic：图片选择图标 12.5dp
+                // 对照 ic_select_pic：图片选择图标 12.5pt → 16.7dp
                 Image(
                     painter = painterResource(R.drawable.ic_select_pic),
                     contentDescription = "插入图片",
-                    modifier = Modifier.size(12.5.dp),
+                    modifier = Modifier.size(16.7.dp),
                 )
             }
         }
@@ -3123,18 +3126,20 @@ private fun DiaryTypedBlockPreview(
 }
 
 // 对照 item_diary_target_in_book.xml：bg_diary_target 背景，"今日完成"标签(9sp #503311) + 子目标列表
+// 单位转换：4.5pt≈6dp, 1.5pt≈2dp, 8.0pt≈10.7dp, marginBottom=5dp
 @Composable
 private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(bottom = 5.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(GoaldayDesign.DiaryTargetBackground)
             .border(0.5.dp, Color(0x4D000000), RoundedCornerShape(8.dp))
-            .padding(bottom = 4.5.dp),
+            .padding(bottom = 6.dp),
     ) {
         Row(
-            modifier = Modifier.padding(start = 8.dp, top = 4.5.dp, bottom = 1.5.dp),
+            modifier = Modifier.padding(start = 10.7.dp, top = 6.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
@@ -3169,19 +3174,21 @@ private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
     }
 }
 
-// 对照 item_diary_target_child_inbook.xml：12dp 高，2.5pt 圆点 + 文字
+// 对照 item_diary_target_child_inbook.xml：12dp 高，2.5pt≈3.3dp 圆点 + 文字
+// 单位转换：5.0pt≈6.7dp, 4.0dip=4dp, 2.5pt≈3.3dp, 圆点 marginStart=4dp marginEnd=4dp
 @Composable
 private fun DiaryTargetChildRow(text: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(12.dp)
-            .padding(start = 5.dp),
+            .padding(start = 6.7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .size(2.5.dp)
+                .padding(start = 4.dp, end = 4.dp)
+                .size(3.3.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(GoaldayDesign.DiaryTargetChildDot),
         )
@@ -3189,22 +3196,23 @@ private fun DiaryTargetChildRow(text: String) {
             text,
             fontSize = 9.sp,
             color = GoaldayDesign.adaptiveInkPrimary,
-            modifier = Modifier.padding(start = 4.dp),
             maxLines = 1,
         )
     }
 }
 
 // 对照 item_diary_topic_target_inbook.xml：bg_diary_topic_target 深色背景，8sp 白色标题 + 9sp 副标题
+// 单位转换：5.0pt≈6.7dp, 3.5pt≈4.7dp, marginBottom=5dp
 @Composable
 private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(bottom = 5.dp)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.adaptiveInkSecondary)
-            .padding(horizontal = 5.dp)
-            .padding(bottom = 5.dp),
+            .padding(horizontal = 6.7.dp)
+            .padding(bottom = 6.7.dp),
     ) {
         Text(
             block.mainText.ifBlank { "专题目标" },
@@ -3212,7 +3220,7 @@ private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
             fontWeight = FontWeight.SemiBold,
             color = GoaldayDesign.adaptivePaper,
             maxLines = 2,
-            modifier = Modifier.padding(top = 5.dp, bottom = 3.5.dp),
+            modifier = Modifier.padding(top = 6.7.dp, bottom = 4.7.dp),
         )
         if (block.childLines.isNotEmpty()) {
             Text(
@@ -3221,7 +3229,7 @@ private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
                 fontWeight = FontWeight.SemiBold,
                 color = GoaldayDesign.adaptivePaper.copy(alpha = 0.61f),
                 maxLines = 1,
-                modifier = Modifier.padding(bottom = 3.5.dp),
+                modifier = Modifier.padding(bottom = 4.7.dp),
             )
         }
     }
@@ -3233,13 +3241,14 @@ private fun DiaryTargetChildPreview(block: DiaryEntryBlock) {
     DiaryTargetChildRow(text = block.mainText.ifBlank { "下一步行动" })
 }
 
-// 对照 item_diary_text.xml：16sp #2C2C2C 文字块
+// 对照 item_diary_text.xml：16sp #2C2C2C 文字块，lineSpacingExtra="2.0dip"
 @Composable
 private fun DiaryTextBlockPreviewRow(block: DiaryEntryBlock) {
     Text(
         block.mainText.ifBlank { "空内容" },
-        style = diaryBlockTextStyle(block),
+        fontSize = 16.sp,
         color = GoaldayDesign.DiarySectionInk,
+        lineHeight = 18.sp,  // 16sp + 2dp 行距
         modifier = Modifier.fillMaxWidth(),
     )
 }

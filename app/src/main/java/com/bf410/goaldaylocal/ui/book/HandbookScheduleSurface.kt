@@ -238,10 +238,11 @@ internal fun HandbookReplicaPage(
         // P1-1 精简：右上角工具栏从 4 个 chip（手账/整月/预览/快存）收敛为 3 个
         // "预览/快存"合并为单个"导出"（点击直接快存到本地），减少 App 浮动工具栏感
         // 背景从 PinkTint 改为 Surface/InkMuted 素雅色，降低视觉噪音回归手账感
+        // 对照逆向 fragment_schedule_inbook.xml：marginEnd=10.0dip, marginTop=10.0dip
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 33.dp),
+                .padding(top = 10.dp, end = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1 + 1.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -277,12 +278,13 @@ internal fun HandbookReplicaPage(
             )
         }
         // 对照逆向 fragment_schedule_inbook.xml + item_schedule_item_in_book.xml：
-        // 简单垂直列表，每行一天：24.5dp 日期列 + 2列x3行目标槽
+        // 简单垂直列表，每行一天：24.5dp 日期列 + 2 列 x3 行目标槽
+        // 对照逆向 fragment_schedule_inbook.xml: marginBottom=30dp
         val scheduleScrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 92.dp, bottom = GoaldayDesign.Space8)
+                .padding(top = 92.dp, bottom = 30.dp)
                 .verticalScroll(scheduleScrollState)
                 .handbookPaperRuling(scheduleScrollState),
         ) {
@@ -296,11 +298,11 @@ internal fun HandbookReplicaPage(
                     onAddSchedule = { title -> onAddSchedule(title, anchorMonth, block.day, "", 1); saveHint = "已加入${block.day}日" },
                 )
             }
-            // 快速添加行
+            // 快速添加行（对照逆向 fragment_schedule_inbook.xml: 日期列宽度 24.5pt ≈ 32.7dp）
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 24.5.dp, top = 4.dp, end = 4.dp),
+                    .padding(start = 32.7.dp, top = 4.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 BasicTextField(
@@ -1059,9 +1061,10 @@ private fun DaySpreadEditableSection(
             .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // 对照逆向 fragment_schedule_inbook.xml: layout_width=24.5pt ≈ 32.7dp
         Column(
             modifier = Modifier
-                .width(24.5.dp)
+                .width(32.7.dp)
                 .fillMaxHeight(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -1569,10 +1572,10 @@ private fun ScheduleDayRow(
             .fillMaxWidth()
             .height(IntrinsicSize.Min),
     ) {
-        // 左侧日期列（对照逆向 ConstraintLayout + Guideline(50%)）：
+        // 左侧日期列（对照逆向 fragment_schedule_inbook.xml: layout_width=24.5pt ≈ 32.7dp）：
         // 日期 9sp 在上半区底部（marginBottom=2dp），"—" 9sp 垂直居中，周几 6sp 在下半区顶部（marginTop=2dp）
         Box(
-            modifier = Modifier.width(24.5.dp).fillMaxHeight(),
+            modifier = Modifier.width(32.7.dp).fillMaxHeight(),
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -1631,15 +1634,17 @@ private fun ScheduleTargetColumn(
     onToggleCompleted: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // 对照 item_schedule_item_in_book.xml: paddingVertical=3.5pt ≈ 4.7dp
     Column(
-        modifier = modifier.padding(vertical = 3.5.dp),
+        modifier = modifier.padding(vertical = 4.7.dp),
     ) {
         for (i in 0 until 3) {
             val entry = entries.getOrNull(i)
+            // 对照逆向 item_schedule_item_in_book.xml: layout_height=12.0pt (≈16dp)
             ScheduleTargetSlot(
                 entry = entry,
                 onToggleCompleted = onToggleCompleted,
-                modifier = Modifier.height(12.dp),
+                modifier = Modifier.height(16.dp),
             )
         }
     }
