@@ -401,22 +401,14 @@ fun ActivePageLayer(
 ) {
     if (handbookMode) {
         when (page) {
-            is SchedulePage -> HandbookReplicaPage(
+            is SchedulePage -> InBookSchedulePreview(
                 modifier = modifier,
                 page = page,
                 pageIndex = pageIndex,
                 pageCount = pageCount,
-                todayPlanItems = todayPlanItems,
-                todayCompletedItems = todayCompletedItems,
                 schedulePreviewEntries = schedulePreviewEntries,
-                weeklyTheme = weeklyTheme,
-                onAddPoolItem = onAddHandbookPoolItem,
-                onRemovePoolItem = onRemoveHandbookPoolItem,
-                onAddSchedule = onAddScheduleFromHandbook,
-                onWeeklyThemeChange = onWeeklyThemeChange,
-                onUpdateScheduleTitle = onUpdateScheduleTitle,
-                onMoveScheduleDay = onMoveScheduleDay,
-                onToggleScheduleCompleted = onToggleScheduleCompleted,
+                isChecked = isChecked,
+                tint = tint,
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
             )
@@ -490,42 +482,27 @@ fun ActivePageLayer(
                     }
                 }
             }
-            is DiaryPage -> HandbookDiaryReplicaPage(
-                modifier = modifier,
-                title = page.title,
-                prompt = page.prompt,
-                tint = tint,
-                diaryDraft = diaryDraft,
-                todayPlanItems = todayPlanItems,
-                todayCompletedItems = todayCompletedItems,
-                pendingCommand = pendingCommand,
-                onCommand = onCommand,
-                onDiaryChange = onDiaryChange,
-                contentMode = contentMode,
-                onContentModeChange = onContentModeChange,
-                pageIndex = pageIndex,
-                pageCount = pageCount,
-                turnProgress = turnProgress,
-                turnDirection = turnDirection,
-            )
-            is TargetPage -> HandbookTargetReplicaPage(
+            is DiaryPage -> InBookDiaryPreview(
                 modifier = modifier,
                 page = page,
                 pageIndex = pageIndex,
                 pageCount = pageCount,
+                diaryDraft = diaryDraft,
                 tint = tint,
+                turnProgress = turnProgress,
+                turnDirection = turnDirection,
+            )
+            is TargetPage -> InBookTargetPreview(
+                modifier = modifier,
+                page = page,
+                pageIndex = pageIndex,
+                pageCount = pageCount,
                 customPageItems = customPageItems,
-                schedulePreviewEntries = schedulePreviewEntries,
                 targetItemMeta = targetItemMeta,
                 isChecked = isChecked,
                 onToggleChecked = onToggleChecked,
-                onAddCustomItem = onAddCustomItem,
-                onRemoveCustomItem = onRemoveCustomItem,
-                onRenameCustomItem = onRenameCustomItem,
-                onAddToSchedule = onAddToSchedule,
-                onUpdateTargetNote = onUpdateTargetNote,
-                onUpdateTargetDeadline = onUpdateTargetDeadline,
                 onOpenTargetDetail = onOpenTargetDetail,
+                tint = tint,
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
             )
