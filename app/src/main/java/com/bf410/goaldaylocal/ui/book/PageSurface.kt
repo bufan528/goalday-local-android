@@ -686,6 +686,7 @@ private fun HandbookDiaryReplicaPage(
                             plainText,
                             fontSize = 16.sp,
                             color = GoaldayDesign.adaptiveInkPrimary,
+                            lineHeight = 20.sp,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
