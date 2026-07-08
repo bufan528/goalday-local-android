@@ -338,7 +338,7 @@ internal fun TargetDetailReplicaPage(
                         if (showSequenceNumber) {
                             Text(
                                 "${index + 1}.",
-                                color = if (checked) Color.White else GoaldayDesign.Pink,
+                                color = if (checked) GoaldayDesign.adaptivePaper else GoaldayDesign.Pink,
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier
@@ -556,7 +556,7 @@ private fun TargetBottomActionBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(46.dp)
-            .background(Color.White),
+            .background(GoaldayDesign.adaptivePaper),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -717,7 +717,7 @@ private fun TargetDeadlineChip(
 ) {
     Text(
         label,
-        color = if (active) Color.White else GoaldayDesign.adaptiveInkSecondary,
+        color = if (active) GoaldayDesign.adaptivePaper else GoaldayDesign.adaptiveInkSecondary,
         style = MaterialTheme.typography.labelSmall,
         maxLines = 1,
         modifier = Modifier

@@ -846,14 +846,14 @@ private fun PlannerFloatingActionStrip(
                 .padding(end = 20.dp, bottom = 32.dp)
                 .size(46.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .background(Color.Black)
+                .background(GoaldayDesign.adaptiveInkPrimary)
                 .clickable { onTip() },
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 Icons.Filled.Lightbulb,
                 contentDescription = "切换清单",
-                tint = Color.White,
+                tint = GoaldayDesign.adaptivePaper,
                 modifier = Modifier.size(20.dp),
             )
         }
