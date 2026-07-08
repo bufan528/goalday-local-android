@@ -311,6 +311,7 @@ object GoaldayDesign {
     val adaptivePaper: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkPaper else Paper
     val adaptivePaperWarm: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkPaperWarm else PaperWarm
     val adaptiveDivider: Color @Composable get() = if (LocalGoaldayDarkMode.current) DarkDivider else Color(0x14000000)
+    val adaptiveBorderColor: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xFF5A4E42) else BorderColor
 
     // 自适应白色叠层（夜间模式反转为深色叠层）
     val adaptiveWhiteOverlay: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0x22FFFFFF) else Color(0xDEFFFFFF)
