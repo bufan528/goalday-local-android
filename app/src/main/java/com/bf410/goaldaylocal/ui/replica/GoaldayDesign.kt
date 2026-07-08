@@ -328,7 +328,7 @@ object GoaldayDesign {
         ) else PaperGradient
 
     // 日记模块专用自适应色（对照逆向硬编码色值）
-    val DiarySectionInk: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xFFD4C4B0) else Color(0xFF503311)
+    val DiarySectionInk: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xFFD4C4B0) else Color(0xFF2C2C2C)
     val DiaryTimeInk: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xFF9E9E9E) else Color(0xFFCBCBCB)
     val DiaryTargetBackground: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xFF3D342C) else Color(0xFFF6EBDD)
     val DiaryTargetChildBackground: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xFF332D27) else Color(0xFFF6EBDD)

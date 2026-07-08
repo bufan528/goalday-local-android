@@ -3122,18 +3122,19 @@ private fun DiaryTypedBlockPreview(
     }
 }
 
-// 对照 item_diary_target_in_book.xml：bg_diary_target 背景，"今日完成"标签(9sp 自适应色 ic_reward) + 子目标列表
+// 对照 item_diary_target_in_book.xml：bg_diary_target 背景，"今日完成"标签(9sp #503311) + 子目标列表
 @Composable
 private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+            .clip(RoundedCornerShape(8.dp))
             .background(GoaldayDesign.DiaryTargetBackground)
-            .padding(bottom = 6.dp),
+            .border(0.5.dp, Color(0x4D000000), RoundedCornerShape(8.dp))
+            .padding(bottom = 4.5.dp),
     ) {
         Row(
-            modifier = Modifier.padding(start = 11.dp, top = 6.dp, bottom = 2.dp),
+            modifier = Modifier.padding(start = 8.dp, top = 4.5.dp, bottom = 1.5.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
@@ -3141,12 +3142,12 @@ private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
                 Icons.Filled.Star,
                 contentDescription = null,
                 modifier = Modifier.size(10.dp),
-                tint = GoaldayDesign.adaptiveInkSecondary,
+                tint = Color(0xFF503311),
             )
             Text(
                 if (block.style == DiaryBlockStyle.CHECK) "今日完成" else "今日待办",
                 fontSize = 9.sp,
-                color = GoaldayDesign.adaptiveInkSecondary,
+                color = Color(0xFF503311),
                 fontWeight = FontWeight.SemiBold,
             )
         }
@@ -3174,13 +3175,13 @@ private fun DiaryTargetChildRow(text: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(16.dp)
-            .padding(start = 7.dp),
+            .height(12.dp)
+            .padding(start = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .size(4.dp)
+                .size(2.5.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(GoaldayDesign.DiaryTargetChildDot),
         )
@@ -3188,7 +3189,7 @@ private fun DiaryTargetChildRow(text: String) {
             text,
             fontSize = 9.sp,
             color = GoaldayDesign.adaptiveInkPrimary,
-            modifier = Modifier.padding(start = 5.dp),
+            modifier = Modifier.padding(start = 4.dp),
             maxLines = 1,
         )
     }
@@ -3202,22 +3203,25 @@ private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.adaptiveInkSecondary)
-            .padding(horizontal = 7.dp, vertical = 5.dp),
+            .padding(horizontal = 5.dp)
+            .padding(bottom = 5.dp),
     ) {
         Text(
             block.mainText.ifBlank { "专题目标" },
             fontSize = 8.sp,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             color = GoaldayDesign.adaptivePaper,
             maxLines = 2,
+            modifier = Modifier.padding(top = 5.dp, bottom = 3.5.dp),
         )
         if (block.childLines.isNotEmpty()) {
             Text(
                 block.childLines.first(),
                 fontSize = 9.sp,
-                color = GoaldayDesign.adaptivePaper.copy(alpha = 0.6f),
+                fontWeight = FontWeight.SemiBold,
+                color = GoaldayDesign.adaptivePaper.copy(alpha = 0.61f),
                 maxLines = 1,
-                modifier = Modifier.padding(top = 3.dp),
+                modifier = Modifier.padding(bottom = 3.5.dp),
             )
         }
     }
