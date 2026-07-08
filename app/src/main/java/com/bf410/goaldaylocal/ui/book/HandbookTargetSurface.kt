@@ -351,7 +351,7 @@ internal fun TargetDetailReplicaPage(
                         tint = Color.White,
                         modifier = Modifier
                             .size(24.dp)
-                            .padding(end = 21.dp)
+                            .padding(end = 26.dp)  // 对照 activity_target_detail.xml: padding=13dp + marginEnd=13dp = 26dp
                             .clickable {
                                 swipeOffset = 0f
                                 if (item in customItems) onRemoveCustomItem(item)
