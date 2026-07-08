@@ -283,7 +283,7 @@ private fun ReferenceDiaryPage(draft: String, date: LocalDate, onDateChange: (Lo
             modifier = Modifier
                 .fillMaxWidth()
                 .height(31.dp)
-                .background(Color.White),
+                .background(GoaldayDesign.adaptivePaper),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
@@ -395,7 +395,7 @@ private fun ReferenceListPage(bookTitle: String, items: List<String>, completed:
                     ReferencePlanRow(
                         title = tip,
                         count = "提示",
-                        color = Color.Black,
+                        color = GoaldayDesign.adaptiveInkPrimary,
                         completed = false,
                         onClick = {},
                     )
@@ -410,7 +410,7 @@ private fun ReferenceListPage(bookTitle: String, items: List<String>, completed:
             horizontalAlignment = Alignment.End,
         ) {
             FloatingPlanAction("+", tint = planColors[selectedColorIndex]) { showAddSheet = true }
-            FloatingPlanAction("?", tint = Color.Black) { showTipRows = !showTipRows }
+            FloatingPlanAction("?", tint = GoaldayDesign.adaptiveInkPrimary) { showTipRows = !showTipRows }
         }
 
         if (showAddSheet) {
@@ -459,7 +459,7 @@ private fun ReferencePlanRow(title: String, count: String, color: Color, complet
                 .fillMaxWidth()
                 .fillMaxHeight()
                 .offset { IntOffset(revealOffset.roundToInt(), 0) }
-                .background(Color.White)
+                .background(GoaldayDesign.adaptivePaper)
                 .pointerInput(title) {
                     detectDragGestures(
                         onDragEnd = {
@@ -624,7 +624,7 @@ private fun ReferenceTopicsPage(
 }
 @Composable
 private fun ReferenceBottomBookBar(onSettings: () -> Unit, onCalendar: () -> Unit, onBook: () -> Unit) {
-    Row(Modifier.fillMaxWidth().height(48.dp).background(Color.White)) {
+    Row(Modifier.fillMaxWidth().height(48.dp).background(GoaldayDesign.adaptivePaper)) {
         BottomIconSlot(Modifier.weight(1f), onSettings, "⚙")
         BottomIconSlot(Modifier.weight(1f), onCalendar, "□")
         BottomIconSlot(Modifier.weight(1f), onBook, "▰")
