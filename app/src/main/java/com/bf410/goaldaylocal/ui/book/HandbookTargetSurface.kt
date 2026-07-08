@@ -3,14 +3,19 @@ package com.bf410.goaldaylocal.ui.book
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -46,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -54,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.R
@@ -63,6 +70,7 @@ import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -318,20 +326,62 @@ internal fun TargetDetailReplicaPage(
             val meta = targetItemMeta[item] ?: TargetItemMeta()
             var noteDraft by remember(item, meta.note) { mutableStateOf(meta.note) }
             val isSelected = selectedItem == item
-            Column(
+            // 对照 item_target_detail.xml：SwipeRevealLayout 从右向左滑动露出删除按钮
+            var swipeOffset by remember(item) { mutableStateOf(0f) }
+            val density = LocalDensity.current
+            val revealWidth = with(density) { 66.7.dp.toPx() } // 50pt ≈ 66.7dp
+            val clampedOffset = swipeOffset.coerceIn(-revealWidth, 0f)
+
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
-                    .background(if (checked) GoaldayDesign.GreenSoft else GoaldayDesign.adaptiveSurface)
-                    .border(
-                        GoaldayDesign.Hairline,
-                        if (isSelected) tint.copy(alpha = 0.55f) else if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else GoaldayDesign.adaptiveDivider,
-                        RoundedCornerShape(GoaldayDesign.RadiusM),
-                    )
-                    .clickable { selectedItem = if (isSelected) null else item }
-                    .padding(GoaldayDesign.Space3),
-                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+                    .height(IntrinsicSize.Min)
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusM)),
             ) {
+                // 底层：删除按钮（右侧，对照逆向 #ed8888 背景）
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(GoaldayDesign.Danger),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    Icon(
+                        Icons.Filled.Delete,
+                        contentDescription = "删除",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .padding(end = 21.dp)
+                            .clickable {
+                                swipeOffset = 0f
+                                if (item in customItems) onRemoveCustomItem(item)
+                            },
+                    )
+                }
+                // 上层：内容卡片，可拖动
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset { IntOffset(clampedOffset.roundToInt(), 0) }
+                        .background(if (checked) GoaldayDesign.GreenSoft else GoaldayDesign.adaptiveSurface)
+                        .border(
+                            GoaldayDesign.Hairline,
+                            if (isSelected) tint.copy(alpha = 0.55f) else if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else GoaldayDesign.adaptiveDivider,
+                            RoundedCornerShape(GoaldayDesign.RadiusM),
+                        )
+                        .clickable { selectedItem = if (isSelected) null else item }
+                        .draggable(
+                            orientation = Orientation.Horizontal,
+                            state = rememberDraggableState { delta ->
+                                swipeOffset = (swipeOffset + delta).coerceIn(-revealWidth, 0f)
+                            },
+                            onDragStopped = {
+                                swipeOffset = if (swipeOffset < -revealWidth / 2) -revealWidth else 0f
+                            },
+                        )
+                        .padding(start = 27.dp, top = 21.dp, end = 27.dp, bottom = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+                ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2 + 1.dp), verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                         // 显示序号选项：开启后展示 1. 2. 3. 样式序号徽章
@@ -398,7 +448,7 @@ internal fun TargetDetailReplicaPage(
                         } else {
                             Text(
                                 item,
-                                style = MaterialTheme.typography.bodyMedium,
+                                fontSize = 20.sp,
                                 color = if (checked) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.adaptiveInkPrimary,
                                 fontWeight = FontWeight.Medium,
                                 textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
@@ -412,8 +462,14 @@ internal fun TargetDetailReplicaPage(
                             )
                         }
                         // P1-3：截止日期常驻显示（轻量信息），调度元信息已移到上方行
+                        // 对照逆向 item_target_detail.xml：deadline 标签 marginBottom=13.0dip
                         meta.deadlineDay?.let {
-                            Text("截止 ${it}日", color = GoaldayDesign.Positive, style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                "截止 ${it}日",
+                                color = GoaldayDesign.Positive,
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(bottom = 13.dp)
+                            )
                         }
                     }
                 }
@@ -477,7 +533,16 @@ internal fun TargetDetailReplicaPage(
                         TextActionButton("查看详情", GoaldayDesign.adaptiveInkSecondary) { onOpenTargetDetail(item) }
                     }
                 }
+                // 对照 item_target_detail.xml：底部 4dp 分隔线，向下偏移 3dp
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .offset(y = 3.dp)
+                        .background(GoaldayDesign.adaptiveBorderColor.copy(alpha = 0.3f)),
+                )
             }
+        }
         }
 
         Row(
@@ -497,7 +562,7 @@ internal fun TargetDetailReplicaPage(
                 textStyle = MaterialTheme.typography.bodySmall.copy(color = GoaldayDesign.adaptiveInkPrimary),
                 modifier = Modifier.weight(1f),
                 decorationBox = { inner ->
-                    if (draft.isBlank()) Text("新增一个目标", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)
+                    if (draft.isBlank()) Text("新增一个目标", color = GoaldayDesign.InkMuted, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                     inner()
                 },
             )
