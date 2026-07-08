@@ -724,11 +724,10 @@ private fun HandbookDiaryReplicaPage(
                 contentAlignment = Alignment.Center,
             ) {
                 // 对照 ic_select_pic：图片选择图标 12.5dp
-                Icon(
-                    Icons.Filled.Image,
+                Image(
+                    painter = painterResource(R.drawable.ic_select_pic),
                     contentDescription = "插入图片",
                     modifier = Modifier.size(12.5.dp),
-                    tint = GoaldayDesign.adaptiveInkSecondary,
                 )
             }
         }
