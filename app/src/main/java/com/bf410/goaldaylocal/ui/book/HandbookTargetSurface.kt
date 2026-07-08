@@ -652,8 +652,7 @@ private fun TargetBottomActionBar(
                 contentDescription = "删除",
                 modifier = Modifier
                     .size(22.dp)
-                    .padding(13.dp)
-                    .padding(end = 13.dp)  // 对照 activity_target_detail.xml 删除图标 marginEnd=13dp
+                    .padding(start = 13.dp, top = 13.dp, bottom = 13.dp, end = 26.dp)  // 对照 activity_target_detail.xml 删除图标 marginEnd=13dp
                     .clickable { onDelete() },
                 tint = GoaldayDesign.Danger,
             )
