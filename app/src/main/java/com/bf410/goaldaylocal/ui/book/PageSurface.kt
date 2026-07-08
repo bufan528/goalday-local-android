@@ -2855,7 +2855,7 @@ internal fun plainTextFromHtml(html: String): String =
 @Composable
 internal fun diaryBlockTextStyle(block: DiaryEntryBlock): TextStyle {
     val base = MaterialTheme.typography.bodyMedium.copy(
-        color = GoaldayDesign.adaptiveInkPrimary,
+        color = GoaldayDesign.DiarySectionInk,
         fontSize = 16.sp,
         lineHeight = 18.sp,
     )
@@ -2971,7 +2971,7 @@ private fun DiaryInBookHeader(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text(title, style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                Text(subtitle, style = MaterialTheme.typography.titleSmall, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(subtitle, style = MaterialTheme.typography.titleSmall, color = GoaldayDesign.DiaryTimeInk, fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text("书内日记", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkMuted, maxLines = 1)
@@ -3129,7 +3129,7 @@ private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-            .background(GoaldayDesign.adaptivePaperWarm)
+            .background(GoaldayDesign.DiaryTargetBackground)
             .padding(bottom = 6.dp),
     ) {
         Row(
@@ -3182,7 +3182,7 @@ private fun DiaryTargetChildRow(text: String) {
             modifier = Modifier
                 .size(4.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .background(GoaldayDesign.MorandiCoral),
+                .background(GoaldayDesign.DiaryTargetChildDot),
         )
         Text(
             text,
@@ -3235,7 +3235,7 @@ private fun DiaryTextBlockPreviewRow(block: DiaryEntryBlock) {
     Text(
         block.mainText.ifBlank { "空内容" },
         style = diaryBlockTextStyle(block),
-        color = GoaldayDesign.adaptiveInkPrimary,
+        color = GoaldayDesign.DiarySectionInk,
         modifier = Modifier.fillMaxWidth(),
     )
 }
@@ -3387,7 +3387,7 @@ private fun DiaryBlock(title: String, content: String) {
             .border(GoaldayDesign.Hairline, GoaldayDesign.AiInsightBorder, RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space2 - 1.dp),
     ) {
-        Text(content, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.adaptiveInkPrimary)
+        Text(content, style = MaterialTheme.typography.bodyMedium, color = GoaldayDesign.DiarySectionInk)
     }
 }
 

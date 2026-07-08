@@ -295,7 +295,7 @@ internal fun TargetDetailReplicaPage(
                 modifier = Modifier.align(Alignment.BottomStart),
                 verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
             ) {
-                Text(pageTitle, style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
+                Text(pageTitle, style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.Medium)
                 // Header 只显示总数，细分统计（已完成/已排期/待整理/自定义）由下方 TargetLedgerSummary 承担，避免信息重复
                 Text("目标档案 · 共 ${items.size} 项", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkSecondary)
                 TargetProgressBar(
