@@ -1657,10 +1657,11 @@ private fun ScheduleTargetSlot(
             .padding(start = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 对照 cb_target: 9dp 勾选图标
+        // 对照 cb_target: 9dp 勾选图标，marginTop=2dp
         if (entry != null && entry.id.isNotBlank() && !entry.id.startsWith("fallback_")) {
             Box(
                 modifier = Modifier
+                    .padding(top = 2.dp)
                     .size(9.dp)
                     .clickable { onToggleCompleted(entry.id) },
                 contentAlignment = Alignment.Center,
