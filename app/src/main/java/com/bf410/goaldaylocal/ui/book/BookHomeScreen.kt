@@ -905,7 +905,7 @@ private fun HandbookReadingDeskHeader(
         ) {
             // P1-4 精简：删除"全书"指标（与 TopBar 的书本信息重复），只保留页数+内容
             HandbookDeskMetric("页数", routeMetrics.pageCount.coerceAtLeast(1).toString(), routeColor(route), Modifier.weight(1f))
-            HandbookDeskMetric("内容", routeMetrics.itemCount.toString(), GoaldayDesign.RouteOverview, Modifier.weight(1f))
+            HandbookDeskMetric("内容", routeMetrics.itemCount.toString(), GoaldayDesign.adaptiveInkSecondary, Modifier.weight(1f))
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -954,9 +954,9 @@ private fun HandbookDeskMetric(
 
 private fun routeColor(route: HandbookSection): Color =
     when (route) {
-        HandbookSection.OVERVIEW -> GoaldayDesign.RouteOverview
+        HandbookSection.OVERVIEW -> GoaldayDesign.adaptiveInkSecondary
         HandbookSection.SCHEDULE -> GoaldayDesign.RouteSchedule
-        HandbookSection.DIARY -> GoaldayDesign.RouteDiary
+        HandbookSection.DIARY -> GoaldayDesign.adaptiveInkSecondary
         HandbookSection.TARGET -> GoaldayDesign.RouteTarget
     }
 
@@ -1103,11 +1103,11 @@ private fun BookDetailView(
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
                 ) {
-                    ActionChip(label = BookStrings.editBook, color = GoaldayDesign.RouteOverview, onClick = onShowEditBook)
-                    ActionChip(label = BookStrings.addPage, color = GoaldayDesign.RouteOverview, onClick = onShowAddPage)
-                    ActionChip(label = BookStrings.renamePage, color = GoaldayDesign.RouteOverview, onClick = onShowRenamePage)
-                    ActionChip(label = BookStrings.moveLeft, color = GoaldayDesign.RouteOverview, onClick = viewModel::moveCurrentPageLeft)
-                    ActionChip(label = BookStrings.moveRight, color = GoaldayDesign.RouteOverview, onClick = viewModel::moveCurrentPageRight)
+                    ActionChip(label = BookStrings.editBook, color = GoaldayDesign.adaptiveInkSecondary, onClick = onShowEditBook)
+                    ActionChip(label = BookStrings.addPage, color = GoaldayDesign.adaptiveInkSecondary, onClick = onShowAddPage)
+                    ActionChip(label = BookStrings.renamePage, color = GoaldayDesign.adaptiveInkSecondary, onClick = onShowRenamePage)
+                    ActionChip(label = BookStrings.moveLeft, color = GoaldayDesign.adaptiveInkSecondary, onClick = viewModel::moveCurrentPageLeft)
+                    ActionChip(label = BookStrings.moveRight, color = GoaldayDesign.adaptiveInkSecondary, onClick = viewModel::moveCurrentPageRight)
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
@@ -1460,7 +1460,7 @@ private fun TargetDetailRouteOverlay(
                 )
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text("目标详情", color = GoaldayDesign.RouteDiary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text("目标详情", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                 Text("本地目标详情", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
             }
             Text(
@@ -1558,7 +1558,7 @@ private fun TargetDetailRouteOverlay(
                         code = "日记",
                         title = "写入日记目标块",
                         subtitle = "生成 item_diary_target 风格记录，并同步到本地日程",
-                        accent = GoaldayDesign.RouteDiary,
+                        accent = GoaldayDesign.adaptiveInkSecondary,
                     ) {
                         onAddToDiary(checked)
                         appendDetailNote("日记：已把「$item」写入目标记录块")
@@ -1568,7 +1568,7 @@ private fun TargetDetailRouteOverlay(
                         code = "复盘",
                         title = "加入复盘",
                         subtitle = "排入本周末，并写入复盘备注",
-                        accent = GoaldayDesign.RouteDiary,
+                        accent = GoaldayDesign.adaptiveInkSecondary,
                     ) {
                         appendDetailNote("复盘：本周检查「$item」推进情况")
                         onAddToSchedule(dateShortcuts.weekend)
@@ -1712,7 +1712,7 @@ private fun TargetDetailMetric(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(label, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
-        Text(value, color = if (active) GoaldayDesign.Positive else GoaldayDesign.RouteDiary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(value, color = if (active) GoaldayDesign.Positive else GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
 
@@ -1982,7 +1982,7 @@ private fun InspirationCenterView(
         ) {
             Text("灵感中心", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("返回", color = GoaldayDesign.RouteOverview, modifier = Modifier.clickable(onClick = onBack))
+                Text("返回", color = GoaldayDesign.adaptiveInkSecondary, modifier = Modifier.clickable(onClick = onBack))
                 Text(
                     "完成",
                     color = GoaldayDesign.adaptiveSurface,
@@ -2176,12 +2176,12 @@ private fun InspirationCenterView(
                 Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2), verticalAlignment = Alignment.CenterVertically) {
                     ActionChip(
                         label = if (pushToToday) "导入任务池:开" else "导入任务池:关",
-                        color = GoaldayDesign.RouteOverview,
+                        color = GoaldayDesign.adaptiveInkSecondary,
                         onClick = { pushToToday = !pushToToday },
                     )
                     ActionChip(
                         label = if (clearSourceAfterApply) "应用后移出来源:开" else "应用后移出来源:关",
-                        color = GoaldayDesign.RouteOverview,
+                        color = GoaldayDesign.adaptiveInkSecondary,
                         onClick = { clearSourceAfterApply = !clearSourceAfterApply },
                     )
                 }
