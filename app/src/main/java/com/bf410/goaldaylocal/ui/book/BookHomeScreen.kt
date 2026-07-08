@@ -952,6 +952,7 @@ private fun HandbookDeskMetric(
     }
 }
 
+@Composable
 private fun routeColor(route: HandbookSection): Color =
     when (route) {
         HandbookSection.OVERVIEW -> GoaldayDesign.adaptiveInkSecondary

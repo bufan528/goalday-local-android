@@ -94,14 +94,6 @@ data class CalendarPage(
      */
     fun isWeekday(): Boolean = !isWeekend()
     
-    /**
-     * 创建副本，允许部分更新
-     */
-    fun copy(
-        date: Date = this.date,
-        isSchedule: Boolean = this.isSchedule
-    ): CalendarPage = CalendarPage(date, isSchedule)
-    
     companion object {
         /**
          * 从今天创建日历页面

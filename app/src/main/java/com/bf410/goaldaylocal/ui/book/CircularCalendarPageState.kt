@@ -18,7 +18,7 @@ class CircularCalendarPageState(
     private val dateRange: BookPageDateRange? = null
 ) {
     // 10个页面的循环缓冲区
-    private val pages = Array(10) { index ->
+    private val pages = MutableList(10) { index ->
         CalendarPage(getDateByOffset(index - 4), false)
     }
     

@@ -636,22 +636,23 @@ private fun HandbookDiaryReplicaPage(
             }
             .fillMaxSize(),
     ) {
-        // 日期标签行（对照 fl_date: paddingStart/End=7.5pt → 10dp）
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(24.dp)
-                .padding(horizontal = 10.dp),
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Text(
-                "${today.monthValue}月${today.dayOfMonth}日 周${today.dayOfWeek.value}",
-                color = GoaldayDesign.adaptiveInkPrimary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-            )
-        }
+        // 日期标签行（对照 fl_date: visibility=2 GONE, paddingStart/End=7.5pt → 10dp）
+        // 逆向资源中默认隐藏,日期信息已在 DiaryInBookHeader 中显示
+        // Row(
+        //     modifier = Modifier
+        //         .fillMaxWidth()
+        //         .height(24.dp)
+        //         .padding(horizontal = 10.dp),
+        //     verticalAlignment = Alignment.Bottom,
+        // ) {
+        //     Text(
+        //         "${today.monthValue}月${today.dayOfMonth}日 周${today.dayOfWeek.value}",
+        //         color = GoaldayDesign.adaptiveInkPrimary,
+        //         fontSize = 12.sp,
+        //         fontWeight = FontWeight.Medium,
+        //         maxLines = 1,
+        //     )
+        // }
         // 内容区（对照 rv_container: marginTop=5dp, marginStart/End=7.5pt → 10dp, marginBottom=30dp）
         Box(
             modifier = Modifier

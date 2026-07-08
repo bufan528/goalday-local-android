@@ -19,25 +19,6 @@ data class PageRotations(
     val pageFourRotation: Float = 0f,
     val lastRotation: Float = 0f
 ) {
-    /**
-     * 创建新的 PageRotations 实例，允许部分更新
-     */
-    fun copy(
-        frontRotation: Float = this.frontRotation,
-        pageOneRotation: Float = this.pageOneRotation,
-        pageTwoRotation: Float = this.pageTwoRotation,
-        pageThreeRotation: Float = this.pageThreeRotation,
-        pageFourRotation: Float = this.pageFourRotation,
-        lastRotation: Float = this.lastRotation
-    ): PageRotations = PageRotations(
-        frontRotation = frontRotation,
-        pageOneRotation = pageOneRotation,
-        pageTwoRotation = pageTwoRotation,
-        pageThreeRotation = pageThreeRotation,
-        pageFourRotation = pageFourRotation,
-        lastRotation = lastRotation
-    )
-    
     companion object {
         /**
          * 默认旋转角度（所有页面都在 0°，即完全展开状态）
