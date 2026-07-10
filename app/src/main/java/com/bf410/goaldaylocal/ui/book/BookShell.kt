@@ -11,7 +11,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import android.app.Activity
+import android.graphics.Rect
+import android.os.Build
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -23,6 +31,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.R
@@ -66,10 +77,44 @@ fun BookShell(
     val pageCorner = if (isBookStyle) GoaldayDesign.RadiusM else GoaldayDesign.RadiusL
     val coverShape = RoundedCornerShape(coverCorner)
     val pageShape = RoundedCornerShape(pageCorner)
-    val edgeZoneWidth = 32.dp
+    // 热区加宽，方便拇指翻页
+    val edgeZoneWidth = 56.dp
+    val view = LocalView.current
+    var bookBounds by remember { mutableStateOf<Rect?>(null) }
+
+    // 把当前书壳区域（左右翻页热区）排除在系统边缘返回手势之外，避免翻页时触发系统返回
+    DisposableEffect(isBookStyle, turnEnabled, bookBounds) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || !isBookStyle || !turnEnabled) {
+            return@DisposableEffect onDispose { }
+        }
+        val bounds = bookBounds
+        val decor = (view.context as? Activity)?.window?.decorView
+        if (decor != null && bounds != null && bounds.width() > 0 && bounds.height() > 0) {
+            val edgePx = with(view.context.resources.displayMetrics) {
+                (56f * density).toInt()
+            }
+            // 仅排除左右两条翻页热区，保留屏幕中间区域可使用系统返回手势
+            val leftRect = Rect(bounds.left, bounds.top, bounds.left + edgePx, bounds.bottom)
+            val rightRect = Rect(bounds.right - edgePx, bounds.top, bounds.right, bounds.bottom)
+            decor.systemGestureExclusionRects = listOf(leftRect, rightRect)
+        }
+        onDispose {
+            decor?.systemGestureExclusionRects = emptyList()
+        }
+    }
 
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .onGloballyPositioned {
+                val pos = it.positionInWindow()
+                bookBounds = Rect(
+                    pos.x.toInt(),
+                    pos.y.toInt(),
+                    (pos.x + it.size.width).toInt(),
+                    (pos.y + it.size.height).toInt(),
+                )
+            },
     ) {
         if (isBookStyle) {
             // 外层：硬壳书皮，留出明显的封面边距
