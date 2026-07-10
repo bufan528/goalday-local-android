@@ -197,75 +197,13 @@ fun PageTurnEngine(
                 .onSizeChanged {
                     pageWidthPx = it.width.toFloat().coerceAtLeast(1f)
                     pageHeightPx = it.height.toFloat().coerceAtLeast(1f)
-                }
-                .pointerInput(canTurnNext, canTurnPrevious, turnEnabled, profile) {
-                    if (!turnEnabled) return@pointerInput
-                    val edgeRatio = if (profile == TurnProfile.HANDBOOK) {
-                        HANDBOOK_EDGE_GESTURE_RATIO
-                    } else {
-                        DEFAULT_EDGE_GESTURE_RATIO
-                    }
-                    detectEdgePageTurnGestures(
-                        canTurnNext = canTurnNext,
-                        canTurnPrevious = canTurnPrevious,
-                        edgeRatio = edgeRatio,
-                        onStart = { startOffset, startDirection ->
-                            lastVelocityPxPerSecond = 0f
-                            lastEventTimeMs = 0L
-                            direction = startDirection
-                            dragStartX = startOffset.x
-                            turnAnchorY = (startOffset.y / pageHeightPx).coerceIn(0.12f, 0.88f)
-                            phase = if (startDirection == TurnDirection.NEXT) {
-                                TurnPhase.DraggingNext
-                            } else {
-                                TurnPhase.DraggingPrevious
-                            }
-                        },
-                        onDrag = { change, dragAmountPx ->
-                            val resolvedDirection = direction ?: return@detectEdgePageTurnGestures
-                            val canTurn = when (resolvedDirection) {
-                                TurnDirection.NEXT -> canTurnNext
-                                TurnDirection.PREVIOUS -> canTurnPrevious
-                            }
-                            val adjustedProgress = updatedTurnProgress(
-                                currentProgress = progress.value,
-                                direction = resolvedDirection,
-                                dragAmountPx = dragAmountPx,
-                                pageWidthPx = pageWidthPx,
-                                canTurn = canTurn,
-                            )
-
-                            val nowMs = change.uptimeMillis
-                            val deltaMs = (nowMs - lastEventTimeMs).coerceAtLeast(1L)
-                            lastVelocityPxPerSecond = if (abs(dragAmountPx) < 0.3f) {
-                                0f
-                            } else {
-                                (dragAmountPx / deltaMs) * 1000f
-                            }
-                            lastEventTimeMs = nowMs
-
-                            scope.launch { progress.snapTo(adjustedProgress) }
-                        },
-                        onEnd = { velocityX ->
-                            lastVelocityPxPerSecond = velocityX
-                            val activeDirection = direction ?: return@detectEdgePageTurnGestures
-                            settle(
-                                resolvePageTurnRelease(
-                                    direction = activeDirection,
-                                    progress = progress.value.coerceIn(0f, 1f),
-                                    velocity = lastVelocityPxPerSecond,
-                                    hasPreviousPage = canTurnPrevious,
-                                    hasNextPage = canTurnNext,
-                                    profile = profile,
-                                ),
-                            )
-                        },
-                        onCancel = { settle(TurnReleaseResult.SnapBack) },
-                    )
                 },
         ) {
             spine(visualProgress, direction != null)
-            destination(dragProgress, direction)
+
+            if (direction != null) {
+                destination(dragProgress, direction)
+            }
 
             if (direction != null && dragProgress > 0.01f) {
                 pageBack(visualProgress, direction, turnAnchorY)
@@ -279,14 +217,14 @@ fun PageTurnEngine(
                     Box(
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .width((8f + visualProgress * 12f).dp)
+                            .width((10f + visualProgress * 16f).dp)
                             .fillMaxHeight()
                             .background(
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.10f).coerceAtMost(0.14f)),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.04f + latePhase * 0.14f).coerceAtMost(0.20f)),
                                         Color.White.copy(alpha = (0.02f + latePhase * 0.10f).coerceAtMost(0.14f)),
-                                        Color.Black.copy(alpha = (0.02f + latePhase * 0.10f).coerceAtMost(0.14f)),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.04f + latePhase * 0.14f).coerceAtMost(0.20f)),
                                     ),
                                 ),
                             ),
@@ -315,8 +253,8 @@ fun PageTurnEngine(
                             if (draggingToNext) {
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color.Black.copy(alpha = (0.04f + latePhase * 0.24f).coerceAtMost(0.30f)),
-                                        GoaldayDesign.BlackOverlaySoft,
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.06f + latePhase * 0.34f).coerceAtMost(0.42f)),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = 0.10f),
                                         Color.Transparent,
                                     ),
                                 )
@@ -324,8 +262,8 @@ fun PageTurnEngine(
                                 Brush.horizontalGradient(
                                     listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BlackOverlaySoft,
-                                        Color.Black.copy(alpha = (0.04f + latePhase * 0.24f).coerceAtMost(0.30f)),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = 0.10f),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.06f + latePhase * 0.34f).coerceAtMost(0.42f)),
                                     ),
                                 )
                             },
@@ -417,9 +355,9 @@ fun Modifier.turningPageTransform(
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     transformOrigin = TransformOrigin(turnTransformOriginX(profile, direction), 0.5f)
-    // 简化翻页：HANDBOOK 用 75° 柔和旋转，DEFAULT 保持 118°
-    val progressCurve = (visualProgress * 0.35f) + (visualProgress * visualProgress * 0.65f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 75f else 118f
+    // 仿真翻页：HANDBOOK 模拟真实书页翻越，DEFAULT 保持 118°
+    val progressCurve = (visualProgress * 0.28f) + (visualProgress * visualProgress * 0.72f)
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 92f else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve
         TurnDirection.PREVIOUS -> maxRotation * progressCurve
@@ -434,12 +372,12 @@ fun Modifier.turningPageTransform(
     // HANDBOOK translationX 从 ~20px 提升到 ~60px 量级，让水平扫过明显可见
     translationX = when {
         draggingToNext -> if (profile == TurnProfile.HANDBOOK) {
-            -(visualProgress * 10f + progressCurve * 50f - tailRetract * 0.35f)
+            -(visualProgress * 14f + progressCurve * 72f - tailRetract * 0.45f)
         } else {
             -(visualProgress * 14f + progressCurve * 68f - tailRetract)
         }
         draggingToPrevious -> if (profile == TurnProfile.HANDBOOK) {
-            visualProgress * 10f + progressCurve * 50f - tailRetract * 0.35f
+            visualProgress * 14f + progressCurve * 72f - tailRetract * 0.45f
         } else {
             visualProgress * 14f + progressCurve * 68f - tailRetract
         }
@@ -474,15 +412,15 @@ fun Modifier.pageBackTransform(
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     transformOrigin = TransformOrigin(turnTransformOriginX(profile, direction), 0.5f)
-    // 背面角度从 80° 提升到 115°，与正面同步翻越中轴线
+    // 背面角度与正面同步，HANDBOOK 模拟真实书页翻越
     val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
         val tail = ((visualProgress - 0.82f) / 0.18f).coerceIn(0f, 1f)
-        tail * 7f
+        tail * 9f
     } else {
         0f
     }
-    val progressCurve = (visualProgress * 0.32f) + (visualProgress * visualProgress * 0.68f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 75f else 118f
+    val progressCurve = (visualProgress * 0.28f) + (visualProgress * visualProgress * 0.72f)
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 92f else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve * 0.92f
         TurnDirection.PREVIOUS -> maxRotation * progressCurve * 0.92f

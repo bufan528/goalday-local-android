@@ -42,6 +42,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.book.InspirationTemplate
 import com.bf410.goaldaylocal.ui.book.BookViewModel
@@ -98,15 +100,17 @@ fun InspirationScreen(
         }
     }
 
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(GoaldayDesign.DeskGradient),
+    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                GoaldayDesign.DeskGradient,
-            )
             .verticalScroll(rememberScrollState())
             .padding(horizontal = GoaldayDesign.Space3)
-            .padding(bottom = GoaldayDesign.Space3),
+            .padding(bottom = 100.dp),
         verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
     ) {
         GoaldayTopBar(
@@ -225,6 +229,37 @@ fun InspirationScreen(
             Text("已保存内容可在手账中翻页查看", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
+
+    // P2: 底部保存栏（对照 activity_plan_idea_center.xml fl_bottom_layout）
+    Box(
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .fillMaxWidth()
+            .height(88.dp)
+            .background(Color(0xF2FFFFFF))
+            .shadow(10.dp, clip = true),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            "保存到我的计划",
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .background(
+                    brush = Brush.horizontalGradient(
+                        listOf(GoaldayDesign.Pink, GoaldayDesign.Pink.copy(alpha = 0.85f))
+                    ),
+                    shape = RoundedCornerShape(GoaldayDesign.RadiusPill),
+                )
+                .clickable {
+                    viewModel.applyInspirationToToday(draftItems.filter { it.selected }.map { it.text })
+                    mode = InspirationMode.SAVE
+                }
+                .padding(horizontal = 40.dp, vertical = 10.dp),
+        )
+    }
+    }
 }
 
 @Composable
@@ -325,8 +360,31 @@ private fun InspirationHeroCover(
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text(template.title, color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, maxLines = 2)
-                Text(template.subtitle, color = GoaldayDesign.WhiteOverlayHigh, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                Text(
+                    template.title,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        shadow = Shadow(
+                            color = Color(0x40000000),
+                            offset = Offset(0f, 4f),
+                            blurRadius = 6f,
+                        )
+                    )
+                )
+                Text(
+                    template.subtitle,
+                    color = GoaldayDesign.WhiteOverlayHigh,
+                    maxLines = 2,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        shadow = Shadow(
+                            color = Color(0x40000000),
+                            offset = Offset(0f, 2f),
+                            blurRadius = 4f,
+                        )
+                    )
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
                     InspirationHeroMetric("目标", itemCount.toString())
                     InspirationHeroMetric("已选", selectedCount.toString())

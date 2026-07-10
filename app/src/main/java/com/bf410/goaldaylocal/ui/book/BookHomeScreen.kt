@@ -58,6 +58,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 import java.time.YearMonth
 import com.bf410.goaldaylocal.data.BookPage
@@ -1037,42 +1038,86 @@ private fun BookDetailView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = GoaldayDesign.Space2),
+            .padding(top = if (handbookMode) 0.dp else GoaldayDesign.Space2),
     ) {
         Column(Modifier.fillMaxSize()) {
-            GoaldayTopBar(
-            leftTitle = if (handbookMode) "手账本" else book.title,
-            rightPrimaryText = if (handbookMode) "返回" else "完成",
-            onRightPrimaryClick = { onBackToLibrary() },
-            rightSecondary = {
-                if (!handbookMode && forcedSegment != BookSegment.DIARY) {
+            if (handbookMode) {
+                // 对照 fragment_main_page.xml: 顶部 Tab 导航栏
+                // 背景色 #E5DAD4，minHeight=49dp，paddingBottom=5dp
+                // Tab 文字 18sp bold，选中黑色，未选中 #36000000
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFE5DAD4))
+                        .padding(bottom = 5.dp),
+                ) {
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .clickable(onClick = onShowInspiration)
-                            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
                     ) {
-                        Icon(Icons.Filled.Lightbulb, contentDescription = "灵感", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
-                        Text("灵感", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
+                        // 左侧返回按钮
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "返回",
+                            tint = Color(0x36000000),
+                            modifier = Modifier
+                                .size(22.dp)
+                                .clickable { onBackToLibrary() }
+                                .padding(2.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        // Tab 文字：对照 tab_main.xml textSize=18dip bold
+                        BookSegment.entries.forEachIndexed { idx, seg ->
+                            val isSelected = BookSegment.entries.indexOf(segment) == idx
+                            Text(
+                                text = seg.label,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSelected) Color.Black else Color(0x36000000),
+                                modifier = Modifier
+                                    .clickable { switchSegment(seg) }
+                                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                            )
+                        }
                     }
                 }
-                if (!handbookMode && book.id.startsWith("custom_")) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .clickable(onClick = onToggleManagePanel)
-                            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
-                    ) {
-                        Icon(Icons.Filled.Settings, contentDescription = "管理", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
-                        Text("管理", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
+            } else {
+                GoaldayTopBar(
+                leftTitle = book.title,
+                rightPrimaryText = "完成",
+                onRightPrimaryClick = { onBackToLibrary() },
+                onBackClick = { onBackToLibrary() },
+                rightSecondary = {
+                    if (forcedSegment != BookSegment.DIARY) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                                .clickable(onClick = onShowInspiration)
+                                .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
+                        ) {
+                            Icon(Icons.Filled.Lightbulb, contentDescription = "灵感", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
+                            Text("灵感", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
+                        }
                     }
-                }
-            },
-            )
+                    if (book.id.startsWith("custom_")) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                                .clickable(onClick = onToggleManagePanel)
+                                .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
+                        ) {
+                            Icon(Icons.Filled.Settings, contentDescription = "管理", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
+                            Text("管理", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                },
+                )
+            }
         if (!handbookMode) {
             GoaldaySegmentBar(
                 items = BookSegment.entries.map { it.label },
@@ -1160,44 +1205,7 @@ private fun BookDetailView(
             }
             Spacer(Modifier.height(GoaldayDesign.Space4))
         } else if (handbookMode) {
-            // 书页标签导航：按月去重，避免 "1月 1月 2月 2月" 重复
-            // 同一月份可能包含日程页和日记页，只显示一次月份标签，点击跳到该月第一页
-            val monthGroups = remember(filteredPages) {
-                filteredPages
-                    .mapIndexed { idx, page -> monthLabelForPage(page.title, fallback = page.title) to idx }
-                    .fold(listOf<Pair<String, Int>>()) { acc, pair ->
-                        if (acc.isEmpty() || acc.last().first != pair.first) acc + pair else acc
-                    }
-            }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = GoaldayDesign.Space3)
-                    .horizontalScroll(rememberScrollState()),
-            ) {
-                monthGroups.forEach { (monthLabel, filteredIndex) ->
-                    val targetPage = filteredPages[filteredIndex]
-                    val targetRealIndex = realPageIndex(targetPage)
-                    val selected = book.pages.getOrNull(uiState.selectedPageIndex)?.let {
-                        monthLabelForPage(it.title, fallback = it.title) == monthLabel
-                    } ?: false
-                    Text(
-                        text = monthLabel,
-                        color = if (selected) GoaldayDesign.adaptiveSurface else GoaldayDesign.adaptiveInkMuted,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .background(if (selected) GoaldayDesign.Deadline else GoaldayDesign.adaptiveSurface.copy(alpha = 0.06f))
-                            .clickable {
-                                if (targetRealIndex in book.pages.indices) viewModel.setPage(targetRealIndex)
-                            }
-                            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space1),
-                    )
-                }
-            }
+            // 原版书页阅读没有顶部月份条，翻页靠左右滑动/点击热区，保持页面沉浸
         }
         if (handbookMode) {
             Box(

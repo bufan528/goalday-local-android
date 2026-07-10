@@ -411,6 +411,7 @@ fun ActivePageLayer(
                 tint = tint,
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
+                handbookMode = true,
             )
             is PlanPage -> InBookPlanPreview(
                 modifier = modifier,
@@ -420,9 +421,11 @@ fun ActivePageLayer(
                 customPageItems = customPageItems,
                 isChecked = isChecked,
                 onToggleChecked = onToggleChecked,
+                onDeleteItem = { item -> onRemoveCustomItem(item) },
                 tint = tint,
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
+                handbookMode = true,
             )
             is DiaryPage -> InBookDiaryPreview(
                 modifier = modifier,
@@ -433,6 +436,7 @@ fun ActivePageLayer(
                 tint = tint,
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
+                handbookMode = true,
             )
             is TargetPage -> InBookTargetPreview(
                 modifier = modifier,
@@ -447,6 +451,7 @@ fun ActivePageLayer(
                 tint = tint,
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
+                handbookMode = true,
             )
         }
         return
@@ -1209,29 +1214,33 @@ private fun DiaryBottomToolbar(
     onDismissKeyboard: () -> Unit,
     inBook: Boolean = false,
 ) {
+    // 对照 fragment_diary.xml：底栏 bg=#E5DAD4，高 46pt=102.22dp
+    // 书内日记页 fragment_diary_inbook.xml：底栏 23pt=51.11dp，仅 ic_select_pic 6.25pt=13.89dp
+    val toolbarHeight = if (inBook) 51.11.dp else 102.22.dp
+    val iconSize = if (inBook) 13.89.dp else 55.56.dp
+    val contentPadding = if (inBook) 4.17.dp else 8.33.dp
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(if (inBook) 31.dp else 46.dp)
+            .height(toolbarHeight)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-            .background(if (inBook) GoaldayDesign.adaptiveSurface else GoaldayDesign.adaptiveSurfaceSoft)
-            .border(GoaldayDesign.Hairline, GoaldayDesign.adaptiveDivider, RoundedCornerShape(GoaldayDesign.RadiusS))
-            .padding(horizontal = GoaldayDesign.Space3, vertical = if (inBook) GoaldayDesign.Space1 else GoaldayDesign.Space2),
-        horizontalArrangement = if (inBook) Arrangement.Start else Arrangement.SpaceBetween,
+            .background(GoaldayDesign.TabBarBg)
+            .padding(horizontal = contentPadding),
+        horizontalArrangement = if (inBook) Arrangement.Start else Arrangement.spacedBy(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            Icons.Filled.Image,
+        Image(
+            painter = painterResource(R.drawable.ic_select_pic),
             contentDescription = "插入图片",
-            modifier = Modifier.size(if (inBook) 20.dp else 22.dp).clickable(onClick = onPickImage),
-            tint = GoaldayDesign.adaptiveInkPrimary,
+            modifier = Modifier.size(iconSize).clickable(onClick = onPickImage),
+            contentScale = ContentScale.Fit,
         )
         if (!inBook) {
-            Icon(
-                Icons.Filled.Keyboard,
+            Image(
+                painter = painterResource(R.drawable.ic_keyboard),
                 contentDescription = "收起键盘",
-                modifier = Modifier.size(22.dp).clickable(onClick = onDismissKeyboard),
-                tint = GoaldayDesign.adaptiveInkPrimary,
+                modifier = Modifier.size(iconSize).clickable(onClick = onDismissKeyboard),
+                contentScale = ContentScale.Fit,
             )
         }
     }
@@ -3063,11 +3072,11 @@ private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Icon(
-                Icons.Filled.Star,
+            Image(
+                painter = painterResource(R.drawable.ic_reward),
                 contentDescription = null,
                 modifier = Modifier.size(10.dp),
-                tint = Color(0xFF503311),
+                contentScale = ContentScale.Fit,
             )
             Text(
                 if (block.style == DiaryBlockStyle.CHECK) "今日完成" else "今日待办",
@@ -3137,17 +3146,16 @@ private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
         Text(
             block.mainText.ifBlank { "专题目标" },
             fontSize = 8.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = GoaldayDesign.adaptivePaper,
-            maxLines = 2,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            maxLines = 1,
             modifier = Modifier.padding(top = 11.11.dp, bottom = 7.78.dp),
         )
         if (block.childLines.isNotEmpty()) {
             Text(
                 block.childLines.first(),
                 fontSize = 9.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = GoaldayDesign.adaptivePaper.copy(alpha = 0.61f),
+                color = Color(0x9CFFFFFF),
                 maxLines = 1,
                 modifier = Modifier.padding(bottom = 7.78.dp),
             )
