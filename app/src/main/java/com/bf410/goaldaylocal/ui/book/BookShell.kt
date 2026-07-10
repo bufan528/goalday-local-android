@@ -13,7 +13,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+
+/**
+ * 书页纸张色：始终使用浅色纸张，模拟真实手账页面。
+ * 即使在系统暗色模式下，书内页也保持米白/奶白色，避免深色背景破坏书页质感。
+ */
+private val BookPagePaper = GoaldayDesign.Paper
 
 enum class ShellStyle {
     LIGHT,
@@ -41,9 +48,9 @@ fun BookShell(
     val cornerRadius = GoaldayDesign.RadiusL
     val outerShape = RoundedCornerShape(cornerRadius)
 
-    // 纸张内边距：给内容留出呼吸空间
-    val pageInsetH = GoaldayDesign.Space3
-    val pageInsetV = GoaldayDesign.Space2
+    // 纸张内边距：对照原版 NoTouchConstraintLayout 填满父容器，无额外 padding
+    val pageInsetH = 0.dp
+    val pageInsetV = 0.dp
     // 翻页热区
     val edgeZoneWidth = GoaldayDesign.Space5
 
@@ -51,7 +58,8 @@ fun BookShell(
         modifier = modifier
             .fillMaxSize()
             .clip(outerShape)
-            .background(GoaldayDesign.adaptivePaperGradient),
+            .background(BookPagePaper)
+            .handbookPaperTexture(alpha = 0.10f),
     ) {
         // 内容限定在纸面范围内
         Box(
