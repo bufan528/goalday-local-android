@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -346,6 +347,7 @@ private fun InBookPlanRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 108.89.dp)
             .padding(bottom = 4.44.dp),
         verticalAlignment = Alignment.Top,
     ) {
@@ -537,7 +539,7 @@ private fun InBookTargetRow(
                 modifier = Modifier.padding(top = 2.dp),
                 size = 20,
             )
-            // 目标文字：对照 tv_content textSize=20dip=20sp, marginStart=10dp
+            // 目标文字：对照 tv_content textSize=20dip=20sp, marginStart=10dp, paddingBottom=12dp
             Text(
                 item,
                 fontSize = 20.sp,
@@ -545,7 +547,7 @@ private fun InBookTargetRow(
                 textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier
-                    .padding(start = 10.dp)
+                    .padding(start = 10.dp, bottom = 12.dp)
                     .weight(1f),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
