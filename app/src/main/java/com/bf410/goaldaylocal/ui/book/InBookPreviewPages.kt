@@ -2,7 +2,6 @@ package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,13 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.R
 import com.bf410.goaldaylocal.data.DiaryPage
+import com.bf410.goaldaylocal.data.PlanPage
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetItemMeta
@@ -49,11 +46,43 @@ import java.time.YearMonth
 // 书内静态预览页面 — 对照逆向 fragment_*_inbook.xml + item_*_inbook.xml
 // 原版书内页面使用 NoTouchConstraintLayout (clickable=false)，
 // 大部分控件 visibility=GONE，只保留最简内容列表。
+//
+// 重要：aapt2 dump 验证（T5.xml = item_schedule_item_in_book.xml）：
+// paddingVertical=3.5pt、layout_height=12.0pt 为真实 pt（1pt = 160/72 dp ≈ 2.222dp）
+// layout_width=24.5dp、textSize=9dp/6dp 为 dp（非 pt）
+// pt 按 1pt = 2.222dp 换算，dp 保持 1:1。
 // ============================================================
+
+// 勾选框：使用逆向资源中的原版图标（ic_box_empty / ic_box_full）
+// 对照 item_schedule_item_in_book.xml: 9dp 勾选框
+// 对照 item_target_detail.xml: wrap_content (约 20dp)
+@Composable
+private fun InBookCheckbox(
+    checked: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Int = 9,
+) {
+    Box(
+        modifier = modifier
+            .size(size.dp)
+            .clickable { onToggle() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(if (checked) R.drawable.ic_box_full else R.drawable.ic_box_empty),
+            contentDescription = if (checked) "已完成" else "未完成",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit,
+        )
+    }
+}
 
 // region 日程页 (fragment_schedule_inbook.xml + item_schedule_item_in_book.xml)
 // 结构：RecyclerView 垂直列表，每行一天
-// 每天结构：24.5dp日期列 + 2列×3行目标槽(paddingVertical=3.5pt≈4.7dp)
+// 每天结构：24.5dp日期列 + 2列×3行目标槽(paddingVertical=3.5dp)
+// 日期列：9sp日期 + 9sp分隔线"—" + 6sp周几
+// 目标槽：9dp勾选框 + style_schedule_day_form文字
 @Composable
 internal fun InBookSchedulePreview(
     modifier: Modifier,
@@ -93,19 +122,8 @@ internal fun InBookSchedulePreview(
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
-        if (groupedByDay.isEmpty()) {
-            // 无日程数据时，显示页面标题对应的items
-            page.items.take(6).forEach { item ->
-                Text(
-                    item,
-                    fontSize = 9.sp,
-                    color = GoaldayDesign.adaptiveInkPrimary,
-                    modifier = Modifier.padding(vertical = 2.dp, horizontal = 10.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        } else {
+        if (groupedByDay.isNotEmpty()) {
+            // 有实际日程数据时，按天显示
             groupedByDay.forEach { (dayMonth, entries) ->
                 val (day, month) = dayMonth
                 val date = LocalDate.of(today.year, month, day)
@@ -119,13 +137,55 @@ internal fun InBookSchedulePreview(
                     isChecked = isChecked,
                 )
             }
+        } else {
+            // 无日程数据时，显示整月网格，用 page.items 轮填目标槽
+            // 对照原版 fragment_schedule_inbook.xml: RecyclerView 显示整月日程
+            // 每天有 2列×3行 = 6个目标槽
+            val items = page.items
+            val monthNum = Regex("(\\d+)月").find(page.title)?.groupValues?.get(1)?.toIntOrNull()
+            val scheduleMonth = monthNum ?: today.monthValue
+            val yearMonth = YearMonth.of(today.year, scheduleMonth)
+            val weekdayNames = listOf("一", "二", "三", "四", "五", "六", "日")
+            val days = (1..yearMonth.lengthOfMonth()).map { day ->
+                val date = LocalDate.of(today.year, scheduleMonth, day)
+                val weekday = weekdayNames.getOrElse(date.dayOfWeek.value - 1) { "" }
+                day to weekday
+            }
+            days.forEachIndexed { index, (day, weekday) ->
+                // 每天生成6个目标槽条目，轮换填充 page.items
+                val dayEntries = (0 until 6).mapNotNull { slot ->
+                    if (items.isEmpty()) return@mapNotNull null
+                    val itemIndex = (index * 6 + slot) % items.size
+                    val title = items.getOrNull(itemIndex) ?: ""
+                    if (title.isBlank()) return@mapNotNull null
+                    ScheduleEntry(
+                        id = "preview_${day}_${slot}",
+                        title = title,
+                        year = today.year,
+                        month = scheduleMonth,
+                        day = day,
+                        timeText = "",
+                        completed = false,
+                    )
+                }
+                InBookScheduleDayRow(
+                    day = day,
+                    weekday = weekday,
+                    entries = dayEntries,
+                    pageTitle = page.title,
+                    isChecked = isChecked,
+                )
+            }
         }
-        // 底部留白（对照 RecyclerView marginBottom=30dp）
-        Box(modifier = Modifier.height(30.dp))
+        // 底部留白
+        Box(modifier = Modifier.height(20.dp))
     }
 }
 
 // 对照 item_schedule_item_in_book.xml
+// 结构：横向 LinearLayout
+//   - FrameLayout(24.5dp) 日期列
+//   - 2个 LinearLayout(weight=1, paddingVertical=3.5dp)，各含3行(12dp高)
 @Composable
 private fun InBookScheduleDayRow(
     day: Int,
@@ -137,8 +197,10 @@ private fun InBookScheduleDayRow(
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
-        // 左侧日期列：24.5dp 宽
-        // 对照 ConstraintLayout: 9sp日期 + 9sp分隔线 + 6sp周几
+        // 左侧日期列：24.5dp 宽（aapt2 验证为 dp）
+        // tv_day_1: textSize=9dp, marginBottom=2dp, 上半区
+        // divider_line: textSize=9dp "—", color_tab_divider(#C5BBB6), 居中
+        // tv_day_2: textSize=6dp, marginTop=2dp, 下半区
         Box(
             modifier = Modifier.width(24.5.dp),
             contentAlignment = Alignment.Center,
@@ -149,24 +211,24 @@ private fun InBookScheduleDayRow(
                 Text(
                     day.toString(),
                     fontSize = 9.sp,
-                    color = GoaldayDesign.adaptiveInkPrimary,
+                    color = GoaldayDesign.InkPrimary,
                     modifier = Modifier.padding(bottom = 2.dp),
                 )
                 Text(
                     "—",
                     fontSize = 9.sp,
-                    color = GoaldayDesign.adaptiveInkSecondary,
+                    color = GoaldayDesign.MorandiDivider,
                 )
                 Text(
                     weekday,
                     fontSize = 6.sp,
-                    color = GoaldayDesign.adaptiveInkMuted,
+                    color = GoaldayDesign.InkMuted,
                     modifier = Modifier.padding(top = 2.dp),
                 )
             }
         }
         // 右侧 2 列 × 3 行目标槽
-        // 对照：2个 LinearLayout(weight=1), paddingVertical=3.5pt≈4.7dp
+        // 对照：2个 LinearLayout(weight=1), paddingVertical=3.5pt=7.78dp（aapt2 验证为 pt）
         val leftEntries = entries.filterIndexed { i, _ -> i % 2 == 0 }.take(3)
         val rightEntries = entries.filterIndexed { i, _ -> i % 2 == 1 }.take(3)
         InBookScheduleTargetColumn(
@@ -191,48 +253,30 @@ private fun InBookScheduleTargetColumn(
     isChecked: (String, String) -> Boolean,
     modifier: Modifier = Modifier,
 ) {
+    // 对照：paddingVertical=3.5pt=7.78dp（aapt2 验证为 pt）
     Column(
-        modifier = modifier.padding(vertical = 4.7.dp),
+        modifier = modifier.padding(vertical = 7.78.dp),
     ) {
         for (i in 0 until 3) {
             val entry = entries.getOrNull(i)
-            // 对照 item_schedule_item_in_book.xml: layout_height=12.0pt≈16dp
-            Row(
-                modifier = Modifier.height(16.dp),
-                verticalAlignment = Alignment.Top,
+            // 对照 item_schedule_item_in_book.xml: layout_height=12.0pt=26.67dp（aapt2 验证为 pt）
+            // cb_target visibility=gone → 不渲染勾选框
+            // et_target: style_schedule_day_form textSize=20dip，预览用10sp
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(26.67.dp),
+                contentAlignment = Alignment.CenterStart,
             ) {
                 if (entry != null) {
                     val checked = entry.completed || isChecked(pageTitle, entry.title)
-                    // 勾选框 9×9dp, marginStart=2dp, marginTop=2dp
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 2.dp, top = 2.dp)
-                            .size(9.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(if (checked) GoaldayDesign.Positive else Color.Transparent)
-                            .border(0.5.dp, GoaldayDesign.adaptiveInkMuted, RoundedCornerShape(2.dp)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (checked) {
-                            Icon(
-                                Icons.Filled.Check,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(7.dp),
-                            )
-                        }
-                    }
-                    // 目标文字
                     Text(
                         entry.title,
-                        fontSize = 9.sp,
-                        color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                        fontSize = 10.sp,
+                        color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
                         textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .padding(start = 2.dp)
-                            .weight(1f),
                     )
                 }
             }
@@ -241,8 +285,97 @@ private fun InBookScheduleTargetColumn(
 }
 // endregion
 
+// region 计划页 (fragment_plan.xml + item_plan_item.xml)
+// 结构：RecyclerView(paddingTop=11dp, paddingStart/End=20dp) + 浮动按钮(GONE)
+// 每项：黑色圆点(10dp) + 内容文字(16sp)，最小高度 49dp
+@Composable
+internal fun InBookPlanPreview(
+    modifier: Modifier,
+    page: PlanPage,
+    pageIndex: Int,
+    pageCount: Int,
+    customPageItems: List<String>,
+    isChecked: (String, String) -> Boolean,
+    onToggleChecked: (String, String) -> Unit,
+    tint: Color,
+    turnProgress: Float,
+    turnDirection: TurnDirection?,
+) {
+    val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
+    val shift = when (turnDirection) {
+        TurnDirection.NEXT -> -(eased * 8f)
+        TurnDirection.PREVIOUS -> eased * 8f
+        null -> 0f
+    }
+    val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
+
+    val items = remember(page.items, customPageItems) {
+        (page.items + customPageItems).distinct()
+    }
+
+    Column(
+        modifier = modifier
+            .graphicsLayer {
+                translationX = shift
+                this.alpha = alpha
+            }
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            // 对照 fragment_plan.xml: RecyclerView paddingTop=11dp, paddingStart/End=20dp
+            .padding(top = 11.dp, start = 20.dp, end = 20.dp),
+    ) {
+        items.forEach { item ->
+            InBookPlanRow(
+                item = item,
+                checked = isChecked(page.title, item),
+                onToggleChecked = { onToggleChecked(page.title, item) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun InBookPlanRow(
+    item: String,
+    checked: Boolean,
+    onToggleChecked: () -> Unit,
+) {
+    // 对照 item_plan_item.xml（aapt2 验证：全部值为 pt，1pt=2.222dp）:
+    // SwipeRevealLayout marginBottom=2pt=4.44dp
+    // cl_content minHeight=49pt=108.89dp, white background
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 4.44.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        // 对照 v_dot: 10pt=22.22dp, marginTop=19.5pt=43.33dp, marginStart=15pt=33.33dp
+        // bg_toolbar_plan_dot: 黑色圆形(radius=90dp) when not selected
+        Box(
+            modifier = Modifier
+                .padding(start = 33.33.dp, top = 43.33.dp)
+                .size(22.22.dp)
+                .background(GoaldayDesign.InkPrimary, shape = RoundedCornerShape(90.dp))
+                .clickable { onToggleChecked() },
+        )
+        // 对照 tv_content: textSize=16pt=35.56sp, width=266pt=591.11dp, paddingTop/Bottom=14pt=31.11dp, marginStart=16pt=35.56dp
+        Text(
+            item,
+            fontSize = 35.56.sp,
+            color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
+            textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
+            modifier = Modifier
+                .padding(start = 35.56.dp, top = 31.11.dp, bottom = 31.11.dp)
+                .weight(1f),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+// endregion
+
 // region 日记页 (fragment_diary_inbook.xml + item_diary_*.xml)
-// 结构：RecyclerView(marginTop=5dp, marginBottom=30dp, marginStart/End=7.5pt≈10dp) + 底部图片栏(23pt≈30.7dp)
+// 结构：RecyclerView(marginTop=5dp, marginBottom=30dp, marginStart/End=7.5pt=16.67dp) + 底部图片栏(23pt=51.11dp)
 @Composable
 internal fun InBookDiaryPreview(
     modifier: Modifier,
@@ -270,20 +403,20 @@ internal fun InBookDiaryPreview(
             }
             .fillMaxSize(),
     ) {
-        // 内容区：对照 fragment_diary_inbook.xml RecyclerView
-        // marginTop=5dp, marginBottom=30dp, marginStart/End=7.5pt(10dp)
+        // 内容区：对照 fragment_diary_inbook.xml RecyclerView（aapt2 验证：marginStart/End 为 pt）
+        // marginTop=5dp, marginBottom=30dp, marginStart/End=7.5pt=16.67dp
         Box(
             modifier = Modifier
                 .weight(1f)
-                .padding(top = 5.dp, bottom = 30.dp, start = 10.dp, end = 10.dp),
+                .padding(top = 5.dp, bottom = 30.dp, start = 16.67.dp, end = 16.67.dp),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(5.dp),  // 对照 marginBottom=5dp
+                verticalArrangement = Arrangement.spacedBy(5.dp),
             ) {
-                // 对照 item_diary_text.xml：16sp #2C2C2C, lineSpacingExtra=2dp→lineHeight=18sp
+                // 对照 item_diary_text.xml：16sp #2C2C2C, lineHeight=18sp
                 val plainText = diaryDraft.ifBlank { page.prompt }
                 plainText.split("\n").filter { it.isNotBlank() }.forEach { line ->
                     Text(
@@ -296,28 +429,26 @@ internal fun InBookDiaryPreview(
                 }
             }
         }
-        // 底部图片栏：对照 fl_bottom_bar: 23pt(30.7dp) 高, 背景@2131100579(白)
+        // 底部图片栏：对照 fl_bottom_bar: 23pt=51.11dp 高（aapt2 验证为 pt）, 白色背景
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(30.7.dp)
-                .background(GoaldayDesign.adaptiveSurface),
+                .height(51.11.dp)
+                .background(GoaldayDesign.Surface),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // fl_select_pic: 23pt(30.7dp) × 23pt, marginStart=3.75pt(5dp)
+            // fl_select_pic: 23pt=51.11dp × 51.11dp, marginStart=3.75pt=8.33dp（aapt2 验证为 pt）
             Box(
                 modifier = Modifier
-                    .padding(start = 5.dp)
-                    .size(30.7.dp),
+                    .padding(start = 8.33.dp)
+                    .size(51.11.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                // ic_select_pic: 12.5pt(16.7dp) × 12.5pt, marginStart=3.75pt(5dp)
+                // ic_select_pic: 12.5pt=27.78dp × 27.78dp（aapt2 验证为 pt）
                 Image(
                     painter = painterResource(R.drawable.ic_select_pic),
                     contentDescription = "插入图片",
-                    modifier = Modifier
-                        .size(16.7.dp)
-                        .padding(start = 5.dp),
+                    modifier = Modifier.size(27.78.dp),
                 )
             }
         }
@@ -326,7 +457,7 @@ internal fun InBookDiaryPreview(
 // endregion
 
 // region 目标页 (item_target_detail.xml 简化版, 无滑动删除)
-// 结构：列表，每项 → 勾选框 + 目标文字(20sp) + 底部分隔线(4dp)
+// 结构：列表，每项 → 勾选框(20dp) + 目标文字(20sp) + 底部分隔线(4dp)
 @Composable
 internal fun InBookTargetPreview(
     modifier: Modifier,
@@ -375,7 +506,11 @@ internal fun InBookTargetPreview(
     }
 }
 
-// 对照 item_target_detail.xml（简化，无 SwipeRevealLayout）
+// 对照 item_target_detail.xml
+// fl_check: paddingTop=21dp, paddingBottom=20dp, paddingStart/End=27dp
+// iv_check: wrap_content (ic_box_full 背景 + ic_box_select 前景, 约20dp)
+// tv_content: textSize=20dip=20sp, marginStart=10dp, marginEnd=27dp, paddingBottom=12dp
+// view2: bg_topic_detail_dot(虚线), height=4dp, translationY=3dp
 @Composable
 private fun InBookTargetRow(
     item: String,
@@ -395,30 +530,18 @@ private fun InBookTargetRow(
                 .padding(start = 27.dp, top = 21.dp, end = 27.dp, bottom = 20.dp),
             verticalAlignment = Alignment.Top,
         ) {
-            // 勾选框（对照原版自定义drawable样式）
-            Box(
-                modifier = Modifier
-                    .size(20.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(if (checked) GoaldayDesign.Positive else Color.Transparent)
-                    .border(1.dp, GoaldayDesign.adaptiveInkMuted, RoundedCornerShape(4.dp))
-                    .clickable { onToggleChecked() },
-                contentAlignment = Alignment.Center,
-            ) {
-                if (checked) {
-                    Icon(
-                        Icons.Filled.Check,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(14.dp),
-                    )
-                }
-            }
-            // 目标文字：对照 tv_content textSize=20sp
+            // 勾选框：原版 wrap_content (ic_box_full + ic_box_select)，约20dp
+            InBookCheckbox(
+                checked = checked,
+                onToggle = onToggleChecked,
+                modifier = Modifier.padding(top = 2.dp),
+                size = 20,
+            )
+            // 目标文字：对照 tv_content textSize=20dip=20sp, marginStart=10dp
             Text(
                 item,
                 fontSize = 20.sp,
-                color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
                 textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier
@@ -428,13 +551,13 @@ private fun InBookTargetRow(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        // 底部分隔线：对照 view height=4dp, translationY=3dp
+        // 底部分隔线：对照 view2 bg_topic_detail_dot(虚线2dp), height=4dp, translationY=3dp
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)
                 .graphicsLayer { translationY = 3f }
-                .background(GoaldayDesign.adaptiveDivider),
+                .background(GoaldayDesign.DividerMuted),
         )
     }
 }

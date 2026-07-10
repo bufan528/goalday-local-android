@@ -26,10 +26,10 @@ object GoaldayDesign {
     val TabBarBg = Color(0xFFE5DAD4)
     // 原版蓝色 color_3875F6（链接/强调按钮）
     val ActionBlue = Color(0xFF3875F6)
-    // 主品牌色：统一用 Pink/PinkSoft 语义（Accent/AccentSoft 别名已合并去重）
-    val Pink = Color(0xFFE88FAE)
-    val PinkSoft = Color(0xFFFFECF3)
-    // PinkTint：粉色薄叠层（alpha 0.18），用于 chip 背景、高亮底色等场景，替代散落的 Color(0x18E88FAE) 与 Pink.copy(alpha = 0.18f)
+    // 主品牌色：对齐原版 color_F79941 橙黄（保留 Pink/PinkSoft 名称避免 165 处重命名）
+    val Pink = Color(0xFFF79941)
+    val PinkSoft = Color(0xFFFDE3D6)
+    // PinkTint：主色薄叠层（alpha 0.18），用于 chip 背景、高亮底色等场景
     val PinkTint: Color
         get() = Pink.copy(alpha = 0.18f)
     val GreenSoft = Color(0xFFEAF4E4)
@@ -292,6 +292,7 @@ object GoaldayDesign {
     // 暗色色板储备（夜间纸张色，非纯黑，保留手账暖意）
     val DarkAppBg = Color(0xFF221E1A)
     val DarkSurface = Color(0xFF2C2722)
+    val DarkTabBarBg = Color(0xFF3A332D)
     val DarkSurfaceSoft = Color(0xFF332D27)
     val DarkInkPrimary = Color(0xFFF0E9DD)
     val DarkInkSecondary = Color(0xFFB8AE9F)

@@ -70,6 +70,7 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.LocalGoaldayDarkMode
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
 import com.bf410.goaldaylocal.START_TARGET_DIARY
+import com.bf410.goaldaylocal.START_TARGET_HANDBOOK
 import com.tencent.mmkv.MMKV
 
 private val goaldayColorScheme = lightColorScheme(
@@ -128,10 +129,22 @@ fun GoaldayApp(startTarget: String? = null) {
         mutableStateOf(RootTab.BOOK)
     }
     var bookSurface by rememberSaveable(startTarget) {
-        mutableStateOf(if (startTarget == START_TARGET_DIARY) BookRootSurface.BOOK else BookRootSurface.HOME)
+        mutableStateOf(
+            if (startTarget == START_TARGET_DIARY || startTarget == START_TARGET_HANDBOOK) {
+                BookRootSurface.BOOK
+            } else {
+                BookRootSurface.HOME
+            }
+        )
     }
     var bookEntryMode by rememberSaveable(startTarget) {
-        mutableStateOf(if (startTarget == START_TARGET_DIARY) BookEntryMode.DIARY else BookEntryMode.PLANNER)
+        mutableStateOf(
+            when (startTarget) {
+                START_TARGET_DIARY -> BookEntryMode.DIARY
+                START_TARGET_HANDBOOK -> BookEntryMode.HANDBOOK
+                else -> BookEntryMode.PLANNER
+            }
+        )
     }
     var calendarFocusDay by rememberSaveable { mutableStateOf<Int?>(null) }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
@@ -145,7 +158,8 @@ fun GoaldayApp(startTarget: String? = null) {
         "LIGHT" -> false
         else -> systemDark
     }
-    var showGuide by remember { mutableStateOf(!mmkv.decodeBool(KEY_GUIDE_SEEN, false)) }
+    // 通过 deep-link 入口（handbook/diary）启动时直接跳过引导，方便验证手账页
+    var showGuide by remember(startTarget) { mutableStateOf(startTarget == null && !mmkv.decodeBool(KEY_GUIDE_SEEN, false)) }
 
     val canGoBackInsideApp = tab != RootTab.BOOK ||
         bookSurface != BookRootSurface.HOME ||
@@ -258,10 +272,11 @@ fun GoaldayApp(startTarget: String? = null) {
         CompositionLocalProvider(LocalGoaldayDarkMode provides isDark) {
         Scaffold(
             containerColor = if (isDark) GoaldayDesign.DarkAppBg else GoaldayDesign.AppBg,
-            bottomBar = {
+            topBar = {
+                // P1-1：导航改为顶部文字 Tab（对照原版 FlexibleTabLayout：minHeight=49dp, 纯文字 18sp bold）
                 val immersiveBook = tab == RootTab.BOOK && bookSurface == BookRootSurface.BOOK && bookEntryMode != BookEntryMode.PLANNER
                 if (!immersiveBook) {
-                    GoaldayBottomDock(
+                    GoaldayTopTabBar(
                         selectedTab = tab,
                         onSelect = { item ->
                             if (tab != item) {
@@ -538,8 +553,10 @@ private fun BookRootSegmentChip(
     }
 }
 
+// P1-1：顶部文字 Tab（对照原版 FlexibleTabLayout: minHeight=49dp, paddingBottom=5dp, 纯文字 18sp bold）
+// 选中=#252525 加粗，未选中=#9E9E9E 常规，背景=#E5DAD4
 @Composable
-private fun GoaldayBottomDock(
+private fun GoaldayTopTabBar(
     selectedTab: RootTab,
     onSelect: (RootTab) -> Unit,
 ) {
@@ -547,70 +564,22 @@ private fun GoaldayBottomDock(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = GoaldayDesign.ShadowMedium,
-                shape = RoundedCornerShape(topStart = GoaldayDesign.Radius2XL, topEnd = GoaldayDesign.Radius2XL)
-            )
-            .clip(RoundedCornerShape(topStart = GoaldayDesign.Radius2XL, topEnd = GoaldayDesign.Radius2XL))
-            .background(if (isDark) GoaldayDesign.DarkSurface else GoaldayDesign.Paper)
-            .border(
-                width = GoaldayDesign.Hairline,
-                color = GoaldayDesign.BorderColor.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(topStart = GoaldayDesign.Radius2XL, topEnd = GoaldayDesign.Radius2XL)
-            )
-            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
-        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+            .height(49.dp)
+            .background(if (isDark) GoaldayDesign.DarkTabBarBg else GoaldayDesign.TabBarBg)
+            .padding(bottom = 5.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RootTab.entries.forEach { tab ->
-            GoaldayBottomDockItem(
-                tab = tab,
-                selected = selectedTab == tab,
-                onClick = { onSelect(tab) },
-                modifier = Modifier.weight(1f)
+            Text(
+                text = tab.label,
+                fontSize = 18.sp,
+                fontWeight = if (selectedTab == tab) FontWeight.Bold else FontWeight.Normal,
+                color = if (selectedTab == tab) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
+                maxLines = 1,
+                modifier = Modifier.clickable { onSelect(tab) },
             )
         }
-    }
-}
-
-@Composable
-private fun GoaldayBottomDockItem(
-    tab: RootTab,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val isDark = LocalGoaldayDarkMode.current
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(GoaldayDesign.RadiusXL))
-            .background(
-                if (selected) GoaldayDesign.PinkSoft
-                else Color.Transparent
-            )
-            .border(
-                width = if (selected) GoaldayDesign.Hairline else 0.dp,
-                color = if (selected) GoaldayDesign.Pink.copy(alpha = 0.30f) else Color.Transparent,
-                shape = RoundedCornerShape(GoaldayDesign.RadiusXL)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = GoaldayDesign.Space1, vertical = GoaldayDesign.Space2),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Icon(
-            imageVector = tab.icon,
-            contentDescription = tab.label,
-            tint = if (selected) GoaldayDesign.Pink else if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.adaptiveInkMuted,
-            modifier = Modifier.size(22.dp),
-        )
-        Text(
-            text = tab.label,
-            color = if (selected) (if (isDark) GoaldayDesign.DarkInkPrimary else GoaldayDesign.adaptiveInkPrimary) else if (isDark) GoaldayDesign.DarkInkSecondary else GoaldayDesign.adaptiveInkMuted,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            maxLines = 1,
-        )
     }
 }
 

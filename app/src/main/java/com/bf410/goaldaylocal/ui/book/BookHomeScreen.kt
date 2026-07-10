@@ -1160,26 +1160,39 @@ private fun BookDetailView(
             }
             Spacer(Modifier.height(GoaldayDesign.Space4))
         } else if (handbookMode) {
-            // 书页标签导航：紧凑的标签带，不破坏书的沉浸感
+            // 书页标签导航：按月去重，避免 "1月 1月 2月 2月" 重复
+            // 同一月份可能包含日程页和日记页，只显示一次月份标签，点击跳到该月第一页
+            val monthGroups = remember(filteredPages) {
+                filteredPages
+                    .mapIndexed { idx, page -> monthLabelForPage(page.title, fallback = page.title) to idx }
+                    .fold(listOf<Pair<String, Int>>()) { acc, pair ->
+                        if (acc.isEmpty() || acc.last().first != pair.first) acc + pair else acc
+                    }
+            }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = GoaldayDesign.Space3),
+                    .padding(horizontal = GoaldayDesign.Space3)
+                    .horizontalScroll(rememberScrollState()),
             ) {
-                filteredPages.forEach { item ->
-                    val selected = book.pages.indexOf(item) == uiState.selectedPageIndex
+                monthGroups.forEach { (monthLabel, filteredIndex) ->
+                    val targetPage = filteredPages[filteredIndex]
+                    val targetRealIndex = realPageIndex(targetPage)
+                    val selected = book.pages.getOrNull(uiState.selectedPageIndex)?.let {
+                        monthLabelForPage(it.title, fallback = it.title) == monthLabel
+                    } ?: false
                     Text(
-                        text = monthLabelForPage(item.title, fallback = item.title),
+                        text = monthLabel,
                         color = if (selected) GoaldayDesign.adaptiveSurface else GoaldayDesign.adaptiveInkMuted,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        maxLines = 1,
                         modifier = Modifier
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                             .background(if (selected) GoaldayDesign.Deadline else GoaldayDesign.adaptiveSurface.copy(alpha = 0.06f))
                             .clickable {
-                                val realIndex = realPageIndex(item)
-                                if (realIndex in book.pages.indices) viewModel.setPage(realIndex)
+                                if (targetRealIndex in book.pages.indices) viewModel.setPage(targetRealIndex)
                             }
                             .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space1),
                     )
@@ -1240,58 +1253,70 @@ private fun BookDetailView(
                 )
             }
         } else if (segment == BookSegment.MONTH) {
-            MonthPageContent(
-                page = currentPage,
-                scheduleEntries = uiState.schedulePreviewEntries,
-                onSwitchToWeek = { switchSegment(BookSegment.WEEK) },
-                modifier = Modifier.fillMaxSize(),
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                MonthPageContent(
+                    page = currentPage,
+                    scheduleEntries = uiState.schedulePreviewEntries,
+                    onSwitchToWeek = { switchSegment(BookSegment.WEEK) },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         } else {
-            BookReader(
-                bookId = book.id,
-                bookTitle = book.title,
-                subtitle = book.subtitle,
-                page = currentPage,
-                previousPage = readerPreviousPage,
-                nextPage = readerNextPage,
-                pageIndex = segmentPageIndex,
-                pageCount = filteredPages.size,
-                tint = book.color,
-                isSaved = book.id in uiState.savedBookIds,
-                diaryDraft = uiState.diaryDraft,
-                customPageItems = uiState.customPageItems,
-                weeklyTheme = uiState.weeklyTheme,
-                todayPlanItems = uiState.todayPlanItems,
-                todayCompletedItems = uiState.todayCompletedItems,
-                schedulePreviewEntries = uiState.schedulePreviewEntries,
-                targetItemMeta = uiState.targetItemMeta,
-                onToggleSaved = viewModel::toggleSavedCurrentBook,
-                isChecked = { pageTitle, item -> viewModel.isChecked(pageTitle, item) },
-                onToggleChecked = { pageTitle, item -> viewModel.toggleChecked(pageTitle, item) },
-                onDiaryChange = viewModel::updateDiaryDraft,
-                onAddCustomItem = viewModel::addCustomPageItem,
-                onAddCustomItemWithDeadline = viewModel::addCustomPageItemWithDeadline,
-                onRemoveCustomItem = viewModel::removeCustomPageItem,
-                onRenameCustomItem = viewModel::renameCustomPageItem,
-                onAddToSchedule = viewModel::addItemToSchedule,
-                onAddHandbookPoolItem = viewModel::addHandbookPoolItem,
-                onRemoveHandbookPoolItem = viewModel::removeHandbookPoolItem,
-                onAddScheduleFromHandbook = viewModel::addScheduleFromHandbook,
-                onWeeklyThemeChange = viewModel::updateWeeklyTheme,
-                onMoveItemToToday = viewModel::moveItemToToday,
-                onMoveItemToCompleted = viewModel::moveItemToCompleted,
-                onRestoreItemFromToday = viewModel::restoreItemFromToday,
-                onRestoreItemFromCompleted = viewModel::restoreItemFromCompleted,
-                onUpdateScheduleTitle = viewModel::updateScheduleTitleFromHandbook,
-                onMoveScheduleDay = viewModel::moveScheduleDayFromHandbook,
-                onToggleScheduleCompleted = viewModel::toggleScheduleCompletedFromHandbook,
-                onUpdateTargetNote = viewModel::updateTargetItemNote,
-                onUpdateTargetDeadline = viewModel::updateTargetItemDeadline,
-                onOpenTargetDetail = { openedTargetDetail = it },
-                handbookMode = handbookMode,
-                onFlipNext = { goToFilteredPage(segmentPageIndex + 1) },
-                onFlipPrevious = { goToFilteredPage(segmentPageIndex - 1) },
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                BookReader(
+                    bookId = book.id,
+                    bookTitle = book.title,
+                    subtitle = book.subtitle,
+                    page = currentPage,
+                    previousPage = readerPreviousPage,
+                    nextPage = readerNextPage,
+                    pageIndex = segmentPageIndex,
+                    pageCount = filteredPages.size,
+                    tint = book.color,
+                    isSaved = book.id in uiState.savedBookIds,
+                    diaryDraft = uiState.diaryDraft,
+                    customPageItems = uiState.customPageItems,
+                    weeklyTheme = uiState.weeklyTheme,
+                    todayPlanItems = uiState.todayPlanItems,
+                    todayCompletedItems = uiState.todayCompletedItems,
+                    schedulePreviewEntries = uiState.schedulePreviewEntries,
+                    targetItemMeta = uiState.targetItemMeta,
+                    onToggleSaved = viewModel::toggleSavedCurrentBook,
+                    isChecked = { pageTitle, item -> viewModel.isChecked(pageTitle, item) },
+                    onToggleChecked = { pageTitle, item -> viewModel.toggleChecked(pageTitle, item) },
+                    onDiaryChange = viewModel::updateDiaryDraft,
+                    onAddCustomItem = viewModel::addCustomPageItem,
+                    onAddCustomItemWithDeadline = viewModel::addCustomPageItemWithDeadline,
+                    onRemoveCustomItem = viewModel::removeCustomPageItem,
+                    onRenameCustomItem = viewModel::renameCustomPageItem,
+                    onAddToSchedule = viewModel::addItemToSchedule,
+                    onAddHandbookPoolItem = viewModel::addHandbookPoolItem,
+                    onRemoveHandbookPoolItem = viewModel::removeHandbookPoolItem,
+                    onAddScheduleFromHandbook = viewModel::addScheduleFromHandbook,
+                    onWeeklyThemeChange = viewModel::updateWeeklyTheme,
+                    onMoveItemToToday = viewModel::moveItemToToday,
+                    onMoveItemToCompleted = viewModel::moveItemToCompleted,
+                    onRestoreItemFromToday = viewModel::restoreItemFromToday,
+                    onRestoreItemFromCompleted = viewModel::restoreItemFromCompleted,
+                    onUpdateScheduleTitle = viewModel::updateScheduleTitleFromHandbook,
+                    onMoveScheduleDay = viewModel::moveScheduleDayFromHandbook,
+                    onToggleScheduleCompleted = viewModel::toggleScheduleCompletedFromHandbook,
+                    onUpdateTargetNote = viewModel::updateTargetItemNote,
+                    onUpdateTargetDeadline = viewModel::updateTargetItemDeadline,
+                    onOpenTargetDetail = { openedTargetDetail = it },
+                    handbookMode = handbookMode,
+                    onFlipNext = { goToFilteredPage(segmentPageIndex + 1) },
+                    onFlipPrevious = { goToFilteredPage(segmentPageIndex - 1) },
+                )
+            }
         }
         }
         val targetPage = currentPage as? TargetPage

@@ -329,7 +329,7 @@ internal fun TargetDetailReplicaPage(
             // 对照 item_target_detail.xml：SwipeRevealLayout 从右向左滑动露出删除按钮
             var swipeOffset by remember(item) { mutableStateOf(0f) }
             val density = LocalDensity.current
-            val revealWidth = with(density) { 66.7.dp.toPx() } // 50pt ≈ 66.7dp
+            val revealWidth = with(density) { 111.11.dp.toPx() } // 50pt=111.11dp（aapt2 验证：1pt=2.222dp）
             val clampedOffset = swipeOffset.coerceIn(-revealWidth, 0f)
 
             Box(

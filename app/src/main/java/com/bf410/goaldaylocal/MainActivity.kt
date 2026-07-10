@@ -8,6 +8,7 @@ import com.bf410.goaldaylocal.ui.GoaldayApp
 
 const val EXTRA_START_TARGET = "goalday_start_target"
 const val START_TARGET_DIARY = "diary"
+const val START_TARGET_HANDBOOK = "handbook"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

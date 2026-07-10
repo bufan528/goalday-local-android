@@ -412,76 +412,18 @@ fun ActivePageLayer(
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
             )
-            is PlanPage -> {
-                val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
-                val planContentShift = when (turnDirection) {
-                    TurnDirection.NEXT -> -(eased * 8f)
-                    TurnDirection.PREVIOUS -> eased * 8f
-                    null -> 0f
-                }
-                val planAlpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
-                Box(
-                    modifier = modifier
-                        .graphicsLayer {
-                            translationX = planContentShift
-                            this.alpha = planAlpha
-                        }
-                        .padding(GoaldayDesign.Space3),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .handbookPaperRuling(scrollState = null),
-                        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            SectionStamp("计划", GoaldayDesign.RouteSchedule)
-                            Text(
-                                "${pageIndex + 1} / $pageCount",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = GoaldayDesign.adaptiveInkMuted,
-                            )
-                        }
-                        Text(
-                            page.title,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = GoaldayDesign.adaptiveInkPrimary,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                        )
-                        EditableBulletPage(
-                            pageTitle = page.title,
-                            baseItems = page.items,
-                            customItems = customPageItems,
-                            tint = tint,
-                            inputLabel = BookStrings.addPlan,
-                            isSchedulePage = false,
-                            isChecked = isChecked,
-                            onToggleChecked = onToggleChecked,
-                            onAddCustomItem = onAddCustomItem,
-                            onAddCustomItemWithDeadline = onAddCustomItemWithDeadline,
-                            onRemoveCustomItem = onRemoveCustomItem,
-                            onRenameCustomItem = onRenameCustomItem,
-                            onAddToSchedule = onAddToSchedule,
-                            weeklyTheme = weeklyTheme,
-                            todayPlanItems = todayPlanItems,
-                            todayCompletedItems = todayCompletedItems,
-                            schedulePreviewEntries = schedulePreviewEntries,
-                            onWeeklyThemeChange = onWeeklyThemeChange,
-                            onMoveItemToToday = onMoveItemToToday,
-                            onMoveItemToCompleted = onMoveItemToCompleted,
-                            onRestoreItemFromToday = onRestoreItemFromToday,
-                            onRestoreItemFromCompleted = onRestoreItemFromCompleted,
-                            contentMode = contentMode,
-                            onContentModeChange = onContentModeChange,
-                        )
-                    }
-                }
-            }
+            is PlanPage -> InBookPlanPreview(
+                modifier = modifier,
+                page = page,
+                pageIndex = pageIndex,
+                pageCount = pageCount,
+                customPageItems = customPageItems,
+                isChecked = isChecked,
+                onToggleChecked = onToggleChecked,
+                tint = tint,
+                turnProgress = turnProgress,
+                turnDirection = turnDirection,
+            )
             is DiaryPage -> InBookDiaryPreview(
                 modifier = modifier,
                 page = page,
@@ -613,7 +555,7 @@ private fun HandbookDiaryReplicaPage(
             }
             .fillMaxSize(),
     ) {
-        // 日期标签行（对照 fl_date: visibility=2 GONE, paddingStart/End=7.5pt → 10dp）
+        // 日期标签行（对照 fl_date: visibility=2 GONE, paddingStart/End=7.5pt=16.67dp）
         // 逆向资源中默认隐藏,日期信息已在 DiaryInBookHeader 中显示
         // Row(
         //     modifier = Modifier
@@ -689,26 +631,26 @@ private fun HandbookDiaryReplicaPage(
                 }
             }
         }
-        // 底部图片按钮栏（对照 fl_bottom_bar: 23pt → 30.7dp 白底，fl_select_pic 23pt → 30.7dp）
+        // 底部图片按钮栏（对照 fl_bottom_bar: 23pt=51.11dp 白底，fl_select_pic 23pt=51.11dp，aapt2 验证为 pt）
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(30.7.dp)
+                .height(51.11.dp)
                 .background(GoaldayDesign.adaptiveSurface),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .padding(start = 5.dp)  // 3.75pt → 5dp
-                    .size(30.7.dp)
+                    .padding(start = 8.33.dp)  // 3.75pt=8.33dp（aapt2 验证为 pt）
+                    .size(51.11.dp)
                     .clickable { onContentModeChange(PageContentMode.EditingDiary(title)) },
                 contentAlignment = Alignment.Center,
             ) {
-                // 对照 ic_select_pic：图片选择图标 12.5pt → 16.7dp
+                // 对照 ic_select_pic：图片选择图标 12.5pt=27.78dp（aapt2 验证为 pt）
                 Image(
                     painter = painterResource(R.drawable.ic_select_pic),
                     contentDescription = "插入图片",
-                    modifier = Modifier.size(16.7.dp),
+                    modifier = Modifier.size(27.78.dp),
                 )
             }
         }
@@ -2739,7 +2681,7 @@ private fun DiaryLinkedTargetStrip(
     }
 }
 
-// 对照逆向 item_diary_target_child.xml：5pt 圆点 + 内容文本，可点击
+// 对照逆向 item_diary_target_child.xml（aapt2 验证）：5pt=11.11dp 圆点, paddingStart=10pt=22.22dp, marginStart/End=8dp
 @Composable
 private fun DiaryLinkedTargetChildRow(
     text: String,
@@ -2754,11 +2696,11 @@ private fun DiaryLinkedTargetChildRow(
             .fillMaxWidth()
             .height(24.dp)
             .clickable { onClick() }
-            .padding(start = GoaldayDesign.Space3),
+            .padding(start = 22.22.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(5.dp)
+                .size(11.11.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(color),
         )
@@ -3104,7 +3046,7 @@ private fun DiaryTypedBlockPreview(
 }
 
 // 对照 item_diary_target_in_book.xml：bg_diary_target 背景，"今日完成"标签(9sp #503311) + 子目标列表
-// 单位转换：4.5pt≈6dp, 1.5pt≈2dp, 8.0pt≈10.7dp, marginBottom=5dp
+// aapt2 验证：paddingBottom=4.5pt=10dp, marginTop=4.5pt=10dp, marginBottom=1.5pt=3.33dp, marginStart=8.0pt=17.78dp, layout_marginBottom=5dp
 @Composable
 private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
     Column(
@@ -3114,10 +3056,10 @@ private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
             .clip(RoundedCornerShape(8.dp))
             .background(GoaldayDesign.DiaryTargetBackground)
             .border(0.5.dp, Color(0x4D000000), RoundedCornerShape(8.dp))
-            .padding(bottom = 6.dp),
+            .padding(bottom = 10.dp),
     ) {
         Row(
-            modifier = Modifier.padding(start = 10.7.dp, top = 6.dp, bottom = 2.dp),
+            modifier = Modifier.padding(start = 17.78.dp, top = 10.dp, bottom = 3.33.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
@@ -3152,21 +3094,21 @@ private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
     }
 }
 
-// 对照 item_diary_target_child_inbook.xml：12dp 高，2.5pt≈3.3dp 圆点 + 文字
-// 单位转换：5.0pt≈6.7dp, 4.0dip=4dp, 2.5pt≈3.3dp, 圆点 marginStart=4dp marginEnd=4dp
+// 对照 item_diary_target_child_inbook.xml：12dp 高，2.5pt=5.56dp 圆点 + 文字
+// aapt2 验证：paddingStart=5.0pt=11.11dp, dot=2.5pt=5.56dp, marginStart/End=4dp
 @Composable
 private fun DiaryTargetChildRow(text: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(12.dp)
-            .padding(start = 6.7.dp),
+            .padding(start = 11.11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
                 .padding(start = 4.dp, end = 4.dp)
-                .size(3.3.dp)
+                .size(5.56.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(GoaldayDesign.DiaryTargetChildDot),
         )
@@ -3180,7 +3122,7 @@ private fun DiaryTargetChildRow(text: String) {
 }
 
 // 对照 item_diary_topic_target_inbook.xml：bg_diary_topic_target 深色背景，8sp 白色标题 + 9sp 副标题
-// 单位转换：5.0pt≈6.7dp, 3.5pt≈4.7dp, marginBottom=5dp
+// aapt2 验证：paddingStart/End=5.0pt=11.11dp, marginTop=5.0pt=11.11dp, marginBottom=3.5pt=7.78dp, layout_marginBottom=5dp
 @Composable
 private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
     Column(
@@ -3189,8 +3131,8 @@ private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
             .padding(bottom = 5.dp)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.adaptiveInkSecondary)
-            .padding(horizontal = 6.7.dp)
-            .padding(bottom = 6.7.dp),
+            .padding(horizontal = 11.11.dp)
+            .padding(bottom = 11.11.dp),
     ) {
         Text(
             block.mainText.ifBlank { "专题目标" },
@@ -3198,7 +3140,7 @@ private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
             fontWeight = FontWeight.SemiBold,
             color = GoaldayDesign.adaptivePaper,
             maxLines = 2,
-            modifier = Modifier.padding(top = 6.7.dp, bottom = 4.7.dp),
+            modifier = Modifier.padding(top = 11.11.dp, bottom = 7.78.dp),
         )
         if (block.childLines.isNotEmpty()) {
             Text(
@@ -3207,7 +3149,7 @@ private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
                 fontWeight = FontWeight.SemiBold,
                 color = GoaldayDesign.adaptivePaper.copy(alpha = 0.61f),
                 maxLines = 1,
-                modifier = Modifier.padding(bottom = 4.7.dp),
+                modifier = Modifier.padding(bottom = 7.78.dp),
             )
         }
     }
@@ -3301,7 +3243,7 @@ internal fun DiaryImageStrip(
     }
 }
 
-// 对照逆向 item_diary_img.xml：图片块水平内边距 5pt（≈7dp），高度自适应保持比例
+// 对照逆向 item_diary_img.xml（aapt2 验证）：图片块水平内边距 paddingStart/End=5pt=11.11dp，高度自适应保持比例
 @Composable
 internal fun DiaryImageTile(
     uri: String,
@@ -3326,7 +3268,7 @@ internal fun DiaryImageTile(
     }
     Box(
         modifier = modifier
-            .then(if (fixedHeight) Modifier.height(76.dp) else Modifier.padding(horizontal = 7.dp))
+            .then(if (fixedHeight) Modifier.height(76.dp) else Modifier.padding(horizontal = 11.11.dp))
             .then(if (!fixedHeight && bitmap != null) Modifier.aspectRatio(aspectRatio) else Modifier)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.adaptiveSurfaceSoft)

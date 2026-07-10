@@ -78,7 +78,7 @@ fun BookReader(
         val raw = MMKV.defaultMMKV().decodeString("page_turn_style", "COVER")
         runCatching { PageTurnStyle.valueOf((raw ?: "COVER").uppercase()) }.getOrDefault(PageTurnStyle.COVER)
     }
-    val turnStyle = if (turnProfile == TurnProfile.HANDBOOK) PageTurnStyle.SIMULATION else storedTurnStyle
+    val turnStyle = if (turnProfile == TurnProfile.HANDBOOK) PageTurnStyle.COVER else storedTurnStyle
 
     @Composable
     fun renderActivePage(modifier: Modifier, progress: Float, direction: TurnDirection?) {
