@@ -50,8 +50,8 @@ import kotlin.math.abs
 
 // DEFAULT 模式：边缘热区略窄，减少与内容横向滚动的冲突
 private const val DEFAULT_EDGE_GESTURE_RATIO = 0.11f
-// HANDBOOK 模式：书页边缘应更宽，方便单手持书时拇指翻页
-private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.14f
+// HANDBOOK 模式：全宽翻页，原版 App 支持任意位置水平滑动翻页
+private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.5f
 // HANDBOOK 拖动阈值：约 10px（按 360px 宽度计），翻页更跟手
 private const val HANDBOOK_DRAG_START_RATIO = 0.028f
 
@@ -290,6 +290,24 @@ fun PageTurnEngine(
                                 ),
                             ),
                     )
+                    // 翻页页缘卷曲高光/阴影：模拟纸张弯折时外侧受光、内侧背光的圆柱体感
+                    val curlEdgeWidth = (18f + visualProgress * 64f).dp
+                    Box(
+                        modifier = Modifier
+                            .align(if (draggingToNext) Alignment.CenterEnd else Alignment.CenterStart)
+                            .width(curlEdgeWidth)
+                            .fillMaxHeight()
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = (0.06f + visualProgress * 0.18f).coerceAtMost(0.26f)),
+                                        Color.White.copy(alpha = (0.04f + visualProgress * 0.16f).coerceAtMost(0.22f)),
+                                        Color.Transparent,
+                                    ),
+                                ),
+                            ),
+                    )
                 }
                 Box(
                     modifier = Modifier
@@ -336,8 +354,9 @@ fun PageTurnEngine(
 }
 
 /**
- * 只在屏幕左右边缘拦截水平拖动手势。
- * 非边缘按下时不消费事件，内部滚动/WebView 等内容优先响应，避免翻页手势抢占内容滚动。
+ * 翻页手势检测。
+ * edgeRatio >= 0.5f 时为全宽模式（HANDBOOK）：任意位置按下，根据拖动方向决定翻页方向。
+ * edgeRatio < 0.5f 时为边缘模式（DEFAULT）：只在左右边缘按下才拦截，避免抢占内容滚动。
  */
 private suspend fun PointerInputScope.detectEdgePageTurnGestures(
     canTurnNext: Boolean,
@@ -348,60 +367,103 @@ private suspend fun PointerInputScope.detectEdgePageTurnGestures(
     onEnd: (Float) -> Unit,
     onCancel: () -> Unit,
 ) {
+    val fullWidth = edgeRatio >= 0.5f
     awaitPointerEventScope {
         while (true) {
             val down = awaitFirstDown()
             val width = size.width.toFloat().coerceAtLeast(1f)
-            val edgePx = width * edgeRatio.coerceIn(0.05f, 0.45f)
-            val x = down.position.x
-            val startDirection = when {
-                canTurnPrevious && x <= edgePx -> TurnDirection.PREVIOUS
-                canTurnNext && x >= width - edgePx -> TurnDirection.NEXT
-                else -> null
-            }
-            if (startDirection == null) {
-                // 非边缘区域：不拦截，交给子组件处理
-                continue
-            }
 
-            // 等待水平 touch slop，只接受“向书内”拖动（右边缘向左滑、左边缘向右滑）
-            var inward = false
-            val drag = awaitHorizontalTouchSlopOrCancellation(down.id) { change, overSlop ->
-                inward = when (startDirection) {
-                    TurnDirection.NEXT -> overSlop < 0
-                    TurnDirection.PREVIOUS -> overSlop > 0
+            if (fullWidth) {
+                // 全宽模式：根据拖动方向决定翻页方向
+                var startDirection: TurnDirection? = null
+                val drag = awaitHorizontalTouchSlopOrCancellation(down.id) { change, overSlop ->
+                    startDirection = when {
+                        overSlop < 0 && canTurnNext -> TurnDirection.NEXT
+                        overSlop > 0 && canTurnPrevious -> TurnDirection.PREVIOUS
+                        else -> null
+                    }
+                    if (startDirection != null) change.consume()
                 }
-                if (inward) change.consume()
-            }
-            if (drag == null || !inward) {
-                // 不是有效翻页拖动，不消费按下事件，交给点击热区/子组件处理
-                continue
-            }
+                if (drag == null || startDirection == null) {
+                    continue
+                }
+                onStart(down.position, startDirection!!)
 
-            onStart(down.position, startDirection)
+                val velocityTracker = VelocityTracker()
+                velocityTracker.addPointerInputChange(drag)
 
-            val velocityTracker = VelocityTracker()
-            velocityTracker.addPointerInputChange(drag)
-
-            var previousX = down.position.x
-            var currentX = drag.position.x
-            onDrag(drag, currentX - previousX)
-            previousX = currentX
-
-            val success = horizontalDrag(drag.id) { change ->
-                velocityTracker.addPointerInputChange(change)
-                currentX = change.position.x
-                val deltaX = currentX - previousX
+                var previousX = down.position.x
+                var currentX = drag.position.x
+                onDrag(drag, currentX - previousX)
                 previousX = currentX
-                onDrag(change, deltaX)
-                true
-            }
 
-            val velocity = velocityTracker.calculateVelocity().x
-            if (success) {
-                onEnd(velocity)
+                val success = horizontalDrag(drag.id) { change ->
+                    velocityTracker.addPointerInputChange(change)
+                    change.consume()
+                    currentX = change.position.x
+                    val deltaX = currentX - previousX
+                    previousX = currentX
+                    onDrag(change, deltaX)
+                    true
+                }
+
+                val velocity = velocityTracker.calculateVelocity().x
+                if (success) {
+                    onEnd(velocity)
+                } else {
+                    onCancel()
+                }
             } else {
-                onCancel()
+                // 边缘模式：只在左右边缘按下才拦截
+                val edgePx = width * edgeRatio.coerceIn(0.05f, 0.45f)
+                val x = down.position.x
+                val startDirection = when {
+                    canTurnPrevious && x <= edgePx -> TurnDirection.PREVIOUS
+                    canTurnNext && x >= width - edgePx -> TurnDirection.NEXT
+                    else -> null
+                }
+                if (startDirection == null) {
+                    continue
+                }
+
+                var inward = false
+                val drag = awaitHorizontalTouchSlopOrCancellation(down.id) { change, overSlop ->
+                    inward = when (startDirection) {
+                        TurnDirection.NEXT -> overSlop < 0
+                        TurnDirection.PREVIOUS -> overSlop > 0
+                    }
+                    if (inward) change.consume()
+                }
+                if (drag == null || !inward) {
+                    continue
+                }
+
+                onStart(down.position, startDirection)
+
+                val velocityTracker = VelocityTracker()
+                velocityTracker.addPointerInputChange(drag)
+
+                var previousX = down.position.x
+                var currentX = drag.position.x
+                onDrag(drag, currentX - previousX)
+                previousX = currentX
+
+                val success = horizontalDrag(drag.id) { change ->
+                    velocityTracker.addPointerInputChange(change)
+                    change.consume()
+                    currentX = change.position.x
+                    val deltaX = currentX - previousX
+                    previousX = currentX
+                    onDrag(change, deltaX)
+                    true
+                }
+
+                val velocity = velocityTracker.calculateVelocity().x
+                if (success) {
+                    onEnd(velocity)
+                } else {
+                    onCancel()
+                }
             }
         }
     }
@@ -417,28 +479,32 @@ fun Modifier.turningPageTransform(
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     transformOrigin = TransformOrigin(turnTransformOriginX(profile, direction), 0.5f)
     // 仿真翻页：HANDBOOK 模拟真实书页翻越，DEFAULT 保持 118°
-    val progressCurve = (visualProgress * 0.28f) + (visualProgress * visualProgress * 0.72f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 92f else 118f
+    // curlBoost：前 40% 进度加大旋转，让纸张“先翘起来”再翻过，更像真实书页
+    val curlBoost = if (profile == TurnProfile.HANDBOOK) {
+        (1f - visualProgress).coerceIn(0f, 1f) * 0.18f
+    } else 0f
+    val progressCurve = (visualProgress * 0.28f) + (visualProgress * visualProgress * 0.72f) + curlBoost
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 100f else 118f
     rotationY = when (direction) {
-        TurnDirection.NEXT -> -maxRotation * progressCurve
-        TurnDirection.PREVIOUS -> maxRotation * progressCurve
+        TurnDirection.NEXT -> -maxRotation * progressCurve.coerceIn(0f, 1f)
+        TurnDirection.PREVIOUS -> maxRotation * progressCurve.coerceIn(0f, 1f)
         null -> 0f
     }
     val tailRetract = if (profile == TurnProfile.HANDBOOK) {
-        val tail = ((visualProgress - 0.84f) / 0.16f).coerceIn(0f, 1f)
-        tail * 8f
+        val tail = ((visualProgress - 0.80f) / 0.20f).coerceIn(0f, 1f)
+        tail * 12f
     } else {
         0f
     }
     // HANDBOOK translationX 从 ~20px 提升到 ~60px 量级，让水平扫过明显可见
     translationX = when {
         draggingToNext -> if (profile == TurnProfile.HANDBOOK) {
-            -(visualProgress * 14f + progressCurve * 72f - tailRetract * 0.45f)
+            -(visualProgress * 18f + progressCurve * 76f - tailRetract * 0.50f)
         } else {
             -(visualProgress * 14f + progressCurve * 68f - tailRetract)
         }
         draggingToPrevious -> if (profile == TurnProfile.HANDBOOK) {
-            visualProgress * 14f + progressCurve * 72f - tailRetract * 0.45f
+            visualProgress * 18f + progressCurve * 76f - tailRetract * 0.50f
         } else {
             visualProgress * 14f + progressCurve * 68f - tailRetract
         }
@@ -456,9 +522,13 @@ fun Modifier.turningPageTransform(
     } else {
         subtleDepthScale.coerceIn(0.965f, 1f)
     }
-    // HANDBOOK alpha 从 0.78-1.0，让翻页中后段明显变暗，模拟纸张透视
+    // HANDBOOK：翻页末段把正面淡出到 0，避免 content 翻到新页时残留一帧变形残影
     alpha = if (profile == TurnProfile.HANDBOOK) {
-        (1f - visualProgress * 0.22f).coerceIn(0.78f, 1f)
+        if (visualProgress < 0.9f) {
+            (1f - visualProgress * 0.22f).coerceIn(0.78f, 1f)
+        } else {
+            ((1f - visualProgress) / 0.1f).coerceIn(0f, 1f) * 0.78f
+        }
     } else {
         (1f - visualProgress * 0.08f).coerceIn(0.9f, 1f)
     }
@@ -474,22 +544,25 @@ fun Modifier.pageBackTransform(
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     transformOrigin = TransformOrigin(turnTransformOriginX(profile, direction), 0.5f)
     // 背面角度与正面同步，HANDBOOK 模拟真实书页翻越
-    val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
-        val tail = ((visualProgress - 0.82f) / 0.18f).coerceIn(0f, 1f)
-        tail * 9f
-    } else {
-        0f
-    }
-    val progressCurve = (visualProgress * 0.28f) + (visualProgress * visualProgress * 0.72f)
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 92f else 118f
+    val curlBoost = if (profile == TurnProfile.HANDBOOK) {
+        (1f - visualProgress).coerceIn(0f, 1f) * 0.18f
+    } else 0f
+    val progressCurve = (visualProgress * 0.28f) + (visualProgress * visualProgress * 0.72f) + curlBoost
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 100f else 118f
     rotationY = when (direction) {
-        TurnDirection.NEXT -> -maxRotation * progressCurve * 0.92f
-        TurnDirection.PREVIOUS -> maxRotation * progressCurve * 0.92f
+        TurnDirection.NEXT -> -maxRotation * progressCurve.coerceIn(0f, 1f) * 0.92f
+        TurnDirection.PREVIOUS -> maxRotation * progressCurve.coerceIn(0f, 1f) * 0.92f
         null -> 0f
     }
     // 背面 translationX 与正面镜像，避免“贴在原地旋转”
+    val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
+        val tail = ((visualProgress - 0.80f) / 0.20f).coerceIn(0f, 1f)
+        tail * 11f
+    } else {
+        0f
+    }
     val backShift = if (profile == TurnProfile.HANDBOOK) {
-        visualProgress * 8f + progressCurve * 42f
+        visualProgress * 10f + progressCurve * 46f - handbookTailBoost * 0.45f
     } else {
         visualProgress * 12f + progressCurve * 58f
     }
@@ -509,9 +582,13 @@ fun Modifier.pageBackTransform(
     } else {
         subtleBackScale.coerceIn(0.972f, 1f)
     }
-    // 背面在中后段渐显（模拟纸张背面从暗到亮）
+    // 背面在中后段渐显，HANDBOOK 末段淡出避免切页残影
     alpha = if (profile == TurnProfile.HANDBOOK) {
-        (0.70f + visualProgress * 0.28f).coerceIn(0.70f, 0.98f)
+        if (visualProgress < 0.88f) {
+            (0.70f + visualProgress * 0.28f).coerceIn(0.70f, 0.98f)
+        } else {
+            ((1f - visualProgress) / 0.12f).coerceIn(0f, 1f) * 0.98f
+        }
     } else {
         (0.85f + visualProgress * 0.13f).coerceIn(0.85f, 0.98f)
     }
