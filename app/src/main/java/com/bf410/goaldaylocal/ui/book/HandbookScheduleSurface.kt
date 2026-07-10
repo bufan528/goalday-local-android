@@ -278,7 +278,7 @@ internal fun HandbookReplicaPage(
             )
         }
         // 对照逆向 fragment_schedule_inbook.xml + item_schedule_item_in_book.xml：
-        // 简单垂直列表，每行一天：12.25dip 日期列 + 2 列 x3 行目标槽
+        // 简单垂直列表，每行一天：24.5dp 日期列 + 2 列 x3 行目标槽
         // 对照逆向 fragment_schedule_inbook.xml: marginBottom=30dp
         val scheduleScrollState = rememberScrollState()
         Column(
@@ -298,11 +298,11 @@ internal fun HandbookReplicaPage(
                     onAddSchedule = { title -> onAddSchedule(title, anchorMonth, block.day, "", 1); saveHint = "已加入${block.day}日" },
                 )
             }
-            // 快速添加行（对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=12.25dip，aapt2 验证）
+            // 快速添加行（对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=24.5dp，aapt2 验证）
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 12.25.dp, top = 4.dp, end = 4.dp),
+                    .padding(start = 24.5.dp, top = 4.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 BasicTextField(
@@ -1055,16 +1055,16 @@ private fun DaySpreadEditableSection(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(88.dp)
+            .height(86.dp)
             .background(if (activeDrop) GoaldayDesign.PinkSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
             .border(if (activeDrop) 0.9.dp else 0.dp, if (activeDrop) GoaldayDesign.Pink else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
             .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=12.25dip（aapt2 验证为 dip）
+        // 对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=24.5dp（aapt2 验证为 dp 非 pt）
         Column(
             modifier = Modifier
-                .width(12.25.dp)
+                .width(24.5.dp)
                 .fillMaxHeight(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -1088,7 +1088,7 @@ private fun DaySpreadEditableSection(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                .padding(vertical = 3.89.dp),
+                .padding(vertical = 7.78.dp),
         ) {
             repeat(2) { columnIndex ->
                 Column(

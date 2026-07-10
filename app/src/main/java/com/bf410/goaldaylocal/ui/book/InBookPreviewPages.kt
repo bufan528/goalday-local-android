@@ -229,8 +229,8 @@ internal fun InBookSchedulePreview(
 
 // 对照 item_schedule_item_in_book.xml
 // 结构：横向 LinearLayout
-//   - FrameLayout(12.25dip) 日期列
-//   - 2个 LinearLayout(weight=1, paddingVertical=1.75pt)，各含3行(12pt高)
+//   - FrameLayout(24.5dp) 日期列
+//   - 2个 LinearLayout(weight=1, paddingVertical=3.5dp)，各含3行(12dp高)
 @Composable
 private fun InBookScheduleDayRow(
     day: Int,
@@ -242,12 +242,12 @@ private fun InBookScheduleDayRow(
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
-        // 左侧日期列：12.25dip 宽（aapt2 验证为 dip）
+        // 左侧日期列：24.5dp 宽（aapt2 验证为 dp）
         // tv_day_1: textSize=9dp, marginBottom=2dp, 上半区
         // divider_line: textSize=9dp "—", color_tab_divider(#C5BBB6), 居中
         // tv_day_2: textSize=6dp, marginTop=2dp, 下半区
         Box(
-            modifier = Modifier.width(12.25.dp),
+            modifier = Modifier.width(24.5.dp),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -273,7 +273,7 @@ private fun InBookScheduleDayRow(
             }
         }
         // 右侧 2 列 × 3 行目标槽
-        // 对照：2个 LinearLayout(weight=1), paddingVertical=1.75pt=3.89dp（aapt2 验证为 pt）
+        // 对照：2个 LinearLayout(weight=1), paddingVertical=3.5pt=7.78dp（aapt2 验证为 pt）
         val leftEntries = entries.filterIndexed { i, _ -> i % 2 == 0 }.take(3)
         val rightEntries = entries.filterIndexed { i, _ -> i % 2 == 1 }.take(3)
         InBookScheduleTargetColumn(
@@ -298,9 +298,9 @@ private fun InBookScheduleTargetColumn(
     isChecked: (String, String) -> Boolean,
     modifier: Modifier = Modifier,
 ) {
-    // 对照：paddingVertical=1.75pt=3.89dp（aapt2 验证为 pt）
+    // 对照：paddingVertical=3.5pt=7.78dp（aapt2 验证为 pt）
     Column(
-        modifier = modifier.padding(vertical = 3.89.dp),
+        modifier = modifier.padding(vertical = 7.78.dp),
     ) {
         for (i in 0 until 3) {
             val entry = entries.getOrNull(i)
