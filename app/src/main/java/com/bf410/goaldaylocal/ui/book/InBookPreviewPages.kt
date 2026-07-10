@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -114,6 +115,9 @@ internal fun InBookSchedulePreview(
             .toList()
     }
 
+    val monthLabel = remember(page.title) {
+        Regex("(\\d+)月").find(page.title)?.groupValues?.get(0) ?: page.title
+    }
     Column(
         modifier = modifier
             .graphicsLayer {
@@ -123,12 +127,40 @@ internal fun InBookSchedulePreview(
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
+        // 书页页眉：月份标题 + 页码，模仿真实手账页眉
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, top = 8.dp, bottom = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "$monthLabel 计划",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = GoaldayDesign.adaptiveInkPrimary,
+            )
+            Text(
+                text = "${pageIndex + 1}/$pageCount",
+                fontSize = 10.sp,
+                color = GoaldayDesign.adaptiveInkMuted,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
+                .height(0.7.dp)
+                .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
+        )
+        Spacer(Modifier.height(6.dp))
         if (groupedByDay.isNotEmpty()) {
             // 有实际日程数据时，按天显示
             groupedByDay.forEach { (dayMonth, entries) ->
                 val (day, month) = dayMonth
                 val date = LocalDate.of(today.year, month, day)
-                val weekdayNames = listOf("一", "二", "三", "四", "五", "六", "日")
+                val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
                 val weekday = weekdayNames.getOrElse(date.dayOfWeek.value - 1) { "" }
                 InBookScheduleDayRow(
                     day = day,
@@ -146,7 +178,7 @@ internal fun InBookSchedulePreview(
             val monthNum = Regex("(\\d+)月").find(page.title)?.groupValues?.get(1)?.toIntOrNull()
             val scheduleMonth = monthNum ?: today.monthValue
             val yearMonth = YearMonth.of(today.year, scheduleMonth)
-            val weekdayNames = listOf("一", "二", "三", "四", "五", "六", "日")
+            val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
             val days = (1..yearMonth.lengthOfMonth()).map { day ->
                 val date = LocalDate.of(today.year, scheduleMonth, day)
                 val weekday = weekdayNames.getOrElse(date.dayOfWeek.value - 1) { "" }
@@ -418,14 +450,15 @@ internal fun InBookDiaryPreview(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(5.dp),
             ) {
-                // 对照 item_diary_text.xml：16sp #2C2C2C, lineHeight=18sp
+                // 对照 item_diary_text.xml：16sp #2C2C2C, lineSpacingExtra=2dp
+                // 16sp 字体默认行高约 19.2sp + 2dp 间距 ≈ 21sp
                 val plainText = diaryDraft.ifBlank { page.prompt }
                 plainText.split("\n").filter { it.isNotBlank() }.forEach { line ->
                     Text(
                         line,
                         fontSize = 16.sp,
                         color = GoaldayDesign.DiarySectionInk,
-                        lineHeight = 18.sp,
+                        lineHeight = 21.sp,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
