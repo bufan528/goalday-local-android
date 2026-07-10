@@ -1562,7 +1562,8 @@ private fun ScheduleDayRow(
     onAddSchedule: (String) -> Unit,
 ) {
     val dayDate = try { LocalDate.of(year, month, day) } catch (_: Exception) { null }
-    val weekdayLabel = dayDate?.dayOfWeek?.value?.let { "周$it" } ?: ""
+    val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
+    val weekdayLabel = dayDate?.dayOfWeek?.value?.let { weekdayNames.getOrNull(it - 1) } ?: ""
     val dayStr = day.toString().padStart(2, '0')
     // 分成2列，每列最多3条
     val leftEntries = entries.take(3)

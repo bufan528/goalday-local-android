@@ -10,23 +10,35 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -96,6 +108,7 @@ internal fun InBookSchedulePreview(
     tint: Color,
     turnProgress: Float,
     turnDirection: TurnDirection?,
+    handbookMode: Boolean = false,
 ) {
     val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
     val shift = when (turnDirection) {
@@ -118,77 +131,28 @@ internal fun InBookSchedulePreview(
     val monthLabel = remember(page.title) {
         Regex("(\\d+)月").find(page.title)?.groupValues?.get(0) ?: page.title
     }
-    Column(
-        modifier = modifier
-            .graphicsLayer {
-                translationX = shift
-                this.alpha = alpha
-            }
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-    ) {
-        // 书页页眉：月份标题 + 页码，模仿真实手账页眉
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, top = 8.dp, bottom = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "$monthLabel 计划",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = GoaldayDesign.adaptiveInkPrimary,
-            )
-            Text(
-                text = "${pageIndex + 1}/$pageCount",
-                fontSize = 10.sp,
-                color = GoaldayDesign.adaptiveInkMuted,
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp)
-                .height(0.7.dp)
-                .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
-        )
-        Spacer(Modifier.height(6.dp))
+    // 预计算所有天数据，避免在 LazyColumn item 中重复计算
+    val allDays = remember(groupedByDay, page.title, page.items, today) {
         if (groupedByDay.isNotEmpty()) {
-            // 有实际日程数据时，按天显示
-            groupedByDay.forEach { (dayMonth, entries) ->
+            groupedByDay.map { (dayMonth, entries) ->
                 val (day, month) = dayMonth
                 val date = LocalDate.of(today.year, month, day)
                 val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
                 val weekday = weekdayNames.getOrElse(date.dayOfWeek.value - 1) { "" }
-                InBookScheduleDayRow(
-                    day = day,
-                    weekday = weekday,
-                    entries = entries,
-                    pageTitle = page.title,
-                    isChecked = isChecked,
-                )
+                day to weekday to entries
             }
         } else {
-            // 无日程数据时，显示整月网格，用 page.items 轮填目标槽
-            // 对照原版 fragment_schedule_inbook.xml: RecyclerView 显示整月日程
-            // 每天有 2列×3行 = 6个目标槽
             val items = page.items
             val monthNum = Regex("(\\d+)月").find(page.title)?.groupValues?.get(1)?.toIntOrNull()
             val scheduleMonth = monthNum ?: today.monthValue
             val yearMonth = YearMonth.of(today.year, scheduleMonth)
             val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
-            val days = (1..yearMonth.lengthOfMonth()).map { day ->
+            (1..yearMonth.lengthOfMonth()).map { day ->
                 val date = LocalDate.of(today.year, scheduleMonth, day)
                 val weekday = weekdayNames.getOrElse(date.dayOfWeek.value - 1) { "" }
-                day to weekday
-            }
-            days.forEachIndexed { index, (day, weekday) ->
-                // 每天生成6个目标槽条目，轮换填充 page.items
                 val dayEntries = (0 until 6).mapNotNull { slot ->
                     if (items.isEmpty()) return@mapNotNull null
-                    val itemIndex = (index * 6 + slot) % items.size
+                    val itemIndex = ((day - 1) * 6 + slot) % items.size
                     val title = items.getOrNull(itemIndex) ?: ""
                     if (title.isBlank()) return@mapNotNull null
                     ScheduleEntry(
@@ -201,17 +165,65 @@ internal fun InBookSchedulePreview(
                         completed = false,
                     )
                 }
-                InBookScheduleDayRow(
-                    day = day,
-                    weekday = weekday,
-                    entries = dayEntries,
-                    pageTitle = page.title,
-                    isChecked = isChecked,
-                )
+                (day to weekday) to dayEntries
             }
         }
-        // 底部留白
-        Box(modifier = Modifier.height(20.dp))
+    }
+    val baseModifier = modifier
+        .graphicsLayer {
+            translationX = shift
+            this.alpha = alpha
+        }
+        .fillMaxSize()
+
+    // 书页模式保留 LazyColumn 避免一次性渲染 31 天导致 ANR，但禁用用户滚动，让翻页手势优先。
+    LazyColumn(
+        modifier = baseModifier,
+        userScrollEnabled = !handbookMode,
+    ) {
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "${page.title} 计划 (${pageIndex + 1}/$pageCount)",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                )
+                Text(
+                    text = "${pageIndex + 1}/$pageCount",
+                    fontSize = 10.sp,
+                    color = GoaldayDesign.adaptiveInkMuted,
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .height(0.7.dp)
+                    .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
+            )
+            Spacer(Modifier.height(6.dp))
+        }
+        items(allDays, key = { it.first.first }) { pair ->
+            val (day, weekday) = pair.first
+            val entries = pair.second
+            InBookScheduleDayRow(
+                day = day,
+                weekday = weekday,
+                entries = entries,
+                pageTitle = page.title,
+                isChecked = isChecked,
+            )
+        }
+        item {
+            Box(modifier = Modifier.height(20.dp))
+        }
     }
 }
 
@@ -320,7 +332,8 @@ private fun InBookScheduleTargetColumn(
 
 // region 计划页 (fragment_plan.xml + item_plan_item.xml)
 // 结构：RecyclerView(paddingTop=11dp, paddingStart/End=20dp) + 浮动按钮(GONE)
-// 每项：黑色圆点(10dp) + 内容文字(16sp)，最小高度 49dp
+// 每项：黑色圆点(10pt) + 内容文字(16pt) + 右侧时间文字(14pt)，最小高度 49pt
+// 滑动删除：对照 item_plan_item.xml 使用 SwipeRevealLayout，右侧滑出编辑(黑色)+删除(#ed8888)
 @Composable
 internal fun InBookPlanPreview(
     modifier: Modifier,
@@ -330,9 +343,11 @@ internal fun InBookPlanPreview(
     customPageItems: List<String>,
     isChecked: (String, String) -> Boolean,
     onToggleChecked: (String, String) -> Unit,
+    onDeleteItem: (String) -> Unit = {},
     tint: Color,
     turnProgress: Float,
     turnDirection: TurnDirection?,
+    handbookMode: Boolean = false,
 ) {
     val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
     val shift = when (turnDirection) {
@@ -342,26 +357,26 @@ internal fun InBookPlanPreview(
     }
     val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
 
-    val items = remember(page.items, customPageItems) {
+    val planItems = remember(page.items, customPageItems) {
         (page.items + customPageItems).distinct()
     }
 
-    Column(
+    LazyColumn(
         modifier = modifier
             .graphicsLayer {
                 translationX = shift
                 this.alpha = alpha
             }
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             // 对照 fragment_plan.xml: RecyclerView paddingTop=11dp, paddingStart/End=20dp
             .padding(top = 11.dp, start = 20.dp, end = 20.dp),
     ) {
-        items.forEach { item ->
+        items(planItems, key = { it }) { item ->
             InBookPlanRow(
                 item = item,
                 checked = isChecked(page.title, item),
                 onToggleChecked = { onToggleChecked(page.title, item) },
+                onDelete = { onDeleteItem(item) },
             )
         }
     }
@@ -372,38 +387,115 @@ private fun InBookPlanRow(
     item: String,
     checked: Boolean,
     onToggleChecked: () -> Unit,
+    onDelete: () -> Unit = {},
 ) {
     // 对照 item_plan_item.xml（aapt2 验证：全部值为 pt，1pt=2.222dp）:
     // SwipeRevealLayout marginBottom=2pt=4.44dp
     // cl_content minHeight=49pt=108.89dp, white background
-    Row(
+    // 右侧滑出：fl_info(黑色编辑) + fl_delete(#ed8888删除)，各50pt=111.11dp宽
+    val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    var swipeRevealed by remember { mutableStateOf(false) }
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 108.89.dp)
             .padding(bottom = 4.44.dp),
-        verticalAlignment = Alignment.Top,
     ) {
-        // 对照 v_dot: 10pt=22.22dp, marginTop=19.5pt=43.33dp, marginStart=15pt=33.33dp
-        // bg_toolbar_plan_dot: 黑色圆形(radius=90dp) when not selected
-        Box(
+        // 右侧滑动操作按钮（编辑+删除）
+        if (swipeRevealed) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight(),
+            ) {
+                // 编辑按钮：黑色背景
+                Box(
+                    modifier = Modifier
+                        .width(111.11.dp)
+                        .fillMaxHeight()
+                        .background(Color.Black)
+                        .clickable { /* 编辑暂不实现 */ },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("编辑", color = Color.White, fontSize = 14.sp)
+                }
+                // 删除按钮：#ed8888 红色背景
+                Box(
+                    modifier = Modifier
+                        .width(111.11.dp)
+                        .fillMaxHeight()
+                        .background(Color(0xFFed8888))
+                        .clickable {
+                            onDelete()
+                            swipeRevealed = false
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("删除", color = Color.White, fontSize = 14.sp)
+                }
+            }
+        }
+
+        // 内容层：可滑动
+        Row(
             modifier = Modifier
-                .padding(start = 33.33.dp, top = 43.33.dp)
-                .size(22.22.dp)
-                .background(GoaldayDesign.InkPrimary, shape = RoundedCornerShape(90.dp))
-                .clickable { onToggleChecked() },
-        )
-        // 对照 tv_content: textSize=16pt=35.56sp, width=266pt=591.11dp, paddingTop/Bottom=14pt=31.11dp, marginStart=16pt=35.56dp
-        Text(
-            item,
-            fontSize = 35.56.sp,
-            color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
-            textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
-            modifier = Modifier
-                .padding(start = 35.56.dp, top = 31.11.dp, bottom = 31.11.dp)
-                .weight(1f),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
+                .fillMaxWidth()
+                .heightIn(min = 108.89.dp)
+                .graphicsLayer {
+                    translationX = swipeOffset.value
+                }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onHorizontalDrag = { _, dragAmount ->
+                            val newX = (swipeOffset.value + dragAmount).coerceIn(-222.22f, 0f)
+                            scope.launch { swipeOffset.snapTo(newX) }
+                        },
+                        onDragEnd = {
+                            if (swipeOffset.value < -111.11f) {
+                                // 滑出超过一半，保持展开
+                                scope.launch { swipeOffset.animateTo(-222.22f) }
+                                swipeRevealed = true
+                            } else {
+                                // 回弹
+                                scope.launch { swipeOffset.animateTo(0f) }
+                                swipeRevealed = false
+                            }
+                        },
+                        onDragCancel = {
+                            scope.launch { swipeOffset.animateTo(0f) }
+                            swipeRevealed = false
+                        },
+                    )
+                },
+            verticalAlignment = Alignment.Top,
+        ) {
+            // 对照 v_dot: 10pt=22.22dp, marginTop=19.5pt=43.33dp, marginStart=15pt=33.33dp
+            // bg_toolbar_plan_dot: 黑色圆形(radius=90dp) when not selected
+            Box(
+                modifier = Modifier
+                    .padding(start = 33.33.dp, top = 43.33.dp)
+                    .size(22.22.dp)
+                    .background(GoaldayDesign.InkPrimary, shape = RoundedCornerShape(90.dp))
+                    .clickable { onToggleChecked() },
+            )
+            // 对照 tv_content: textSize=16pt=35.56sp, width=266pt=591.11dp, paddingTop/Bottom=14pt=31.11dp, marginStart=16pt=35.56dp
+            Text(
+                item,
+                fontSize = 35.56.sp,
+                color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
+                textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
+                modifier = Modifier
+                    .padding(start = 35.56.dp, top = 31.11.dp, bottom = 31.11.dp)
+                    .weight(1f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            // 对照 tv_count: textSize=14pt=31.11sp, paddingTop=14pt=31.11dp, marginEnd=14pt=31.11dp
+            // TimeTextView 显示次数/时间，预览暂留空占位
+            Spacer(Modifier.width(31.11.dp))
+        }
     }
 }
 // endregion
@@ -420,6 +512,7 @@ internal fun InBookDiaryPreview(
     tint: Color,
     turnProgress: Float,
     turnDirection: TurnDirection?,
+    handbookMode: Boolean = false,
 ) {
     val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
     val shift = when (turnDirection) {
@@ -444,10 +537,11 @@ internal fun InBookDiaryPreview(
                 .weight(1f)
                 .padding(top = 5.dp, bottom = 30.dp, start = 16.67.dp, end = 16.67.dp),
         ) {
+            val contentScroll = if (handbookMode) Modifier else Modifier.verticalScroll(rememberScrollState())
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
+                    .then(contentScroll),
                 verticalArrangement = Arrangement.spacedBy(5.dp),
             ) {
                 // 对照 item_diary_text.xml：16sp #2C2C2C, lineSpacingExtra=2dp
@@ -507,6 +601,7 @@ internal fun InBookTargetPreview(
     tint: Color,
     turnProgress: Float,
     turnDirection: TurnDirection?,
+    handbookMode: Boolean = false,
 ) {
     val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
     val shift = when (turnDirection) {
@@ -516,20 +611,20 @@ internal fun InBookTargetPreview(
     }
     val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
 
-    val items = remember(page.items, customPageItems) {
+    val targetItems = remember(page.items, customPageItems) {
         (page.items + customPageItems).distinct()
     }
 
-    Column(
+    LazyColumn(
         modifier = modifier
             .graphicsLayer {
                 translationX = shift
                 this.alpha = alpha
             }
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .fillMaxSize(),
+        userScrollEnabled = !handbookMode,
     ) {
-        items.forEach { item ->
+        items(targetItems, key = { it }) { item ->
             val checked = isChecked(page.title, item)
             InBookTargetRow(
                 item = item,
@@ -587,12 +682,24 @@ private fun InBookTargetRow(
             )
         }
         // 底部分隔线：对照 view2 bg_topic_detail_dot(虚线2dp), height=4dp, translationY=3dp
+        // bg_topic_detail_dot.xml: stroke 2dp, color=#ffdfdfdf, dashWidth=2dp, dashGap=2dp
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)
                 .graphicsLayer { translationY = 3f }
-                .background(GoaldayDesign.DividerMuted),
+                .drawWithContent {
+                    val dashWidth = 2.dp.toPx()
+                    val dashGap = 2.dp.toPx()
+                    val pathEffect = PathEffect.dashPathEffect(floatArrayOf(dashWidth, dashGap), 0f)
+                    drawLine(
+                        color = Color(0xFFDFDFDF),
+                        start = androidx.compose.ui.geometry.Offset(0f, size.height / 2),
+                        end = androidx.compose.ui.geometry.Offset(size.width, size.height / 2),
+                        strokeWidth = 2.dp.toPx(),
+                        pathEffect = pathEffect,
+                    )
+                },
         )
     }
 }

@@ -68,17 +68,19 @@ fun BookReader(
     var contentMode by remember(pageIndex, bookId) { mutableStateOf<PageContentMode>(PageContentMode.Browsing) }
     val turnEnabled = canTurnPage(contentMode)
     val turnProfile = if (handbookMode || page is DiaryPage) TurnProfile.HANDBOOK else TurnProfile.DEFAULT
-    // 书页内边距：HANDBOOK 模式给足留白，让内容像真正的书页
-    val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 16.dp else 28.dp
-    val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 12.dp else 26.dp
+    // 书页内边距：HANDBOOK 模式下 BookShell 已提供书页边距，这里不再额外留白，
+    // 避免版心过窄；非 HANDBOOK 模式保留原卡片式边距。
+    val pagePaddingH = if (turnProfile == TurnProfile.HANDBOOK) 0.dp else 28.dp
+    val pagePaddingV = if (turnProfile == TurnProfile.HANDBOOK) 0.dp else 26.dp
 
-    // 默认使用 COVER 翻页：水平覆盖切换比仿真翻页更稳定，内容复杂时不易掉帧/误触。
-    // HANDBOOK 模式（手账页内容密集）强制使用 COVER，避免仿真翻页与内部滚动/拖拽冲突。
+    // 手账页默认使用 SIMULATION 仿真翻页，还原真实书本翻页效果；
+    // 非手账模块保留 COVER，兼顾性能。
     val storedTurnStyle = remember {
-        val raw = MMKV.defaultMMKV().decodeString("page_turn_style", "COVER")
-        runCatching { PageTurnStyle.valueOf((raw ?: "COVER").uppercase()) }.getOrDefault(PageTurnStyle.COVER)
+        val default = if (turnProfile == TurnProfile.HANDBOOK) "SIMULATION" else "COVER"
+        val raw = MMKV.defaultMMKV().decodeString("page_turn_style", default)
+        runCatching { PageTurnStyle.valueOf((raw ?: default).uppercase()) }.getOrDefault(PageTurnStyle.valueOf(default))
     }
-    val turnStyle = if (turnProfile == TurnProfile.HANDBOOK) PageTurnStyle.COVER else storedTurnStyle
+    val turnStyle = storedTurnStyle
 
     @Composable
     fun renderActivePage(modifier: Modifier, progress: Float, direction: TurnDirection?) {
