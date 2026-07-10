@@ -401,17 +401,24 @@ fun ActivePageLayer(
 ) {
     if (handbookMode) {
         when (page) {
-            is SchedulePage -> InBookSchedulePreview(
+            is SchedulePage -> HandbookReplicaPage(
                 modifier = modifier,
                 page = page,
                 pageIndex = pageIndex,
                 pageCount = pageCount,
+                todayPlanItems = todayPlanItems,
+                todayCompletedItems = todayCompletedItems,
                 schedulePreviewEntries = schedulePreviewEntries,
-                isChecked = isChecked,
-                tint = tint,
+                weeklyTheme = weeklyTheme,
+                onAddPoolItem = onAddHandbookPoolItem,
+                onRemovePoolItem = onRemoveHandbookPoolItem,
+                onAddSchedule = onAddScheduleFromHandbook,
+                onWeeklyThemeChange = onWeeklyThemeChange,
+                onUpdateScheduleTitle = onUpdateScheduleTitle,
+                onMoveScheduleDay = onMoveScheduleDay,
+                onToggleScheduleCompleted = onToggleScheduleCompleted,
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
-                handbookMode = true,
             )
             is PlanPage -> InBookPlanPreview(
                 modifier = modifier,
