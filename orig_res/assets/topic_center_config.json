@@ -1,0 +1,253 @@
+{
+  "en": [
+    {
+      "id": 1,
+      "name": "Harvard Book Store Top 100 Books",
+      "color": "9EAADB",
+      "cover": "harvard_books",
+      "target": "harvard_books_target",
+      "linkToSchedule": true,
+      "targets": [
+        "Read Pride and Prejudice",
+        "Read 1984",
+        "Read To Kill a Mockingbird"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Good Habits",
+      "color": "F8D58A",
+      "cover": "good_habits",
+      "target": "good_habits_target",
+      "linkToSchedule": false,
+      "targets": [
+        "Wake up early",
+        "Exercise daily",
+        "Read for 30 minutes"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Fun Things To Do By Yourself",
+      "color": "BBD1AD",
+      "cover": "fun_things",
+      "target": "fun_things_target",
+      "linkToSchedule": true,
+      "targets": [
+        "Learn a new hobby",
+        "Start a journal",
+        "Try meditation"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "IMDb Top100 Movies",
+      "color": "334F46",
+      "cover": "imdb_movies",
+      "target": "imdb_movies_target",
+      "linkToSchedule": true,
+      "targets": [
+        "Watch The Shawshank Redemption",
+        "Watch The Godfather",
+        "Watch The Dark Knight"
+      ]
+    }
+  ],
+  "cn": [
+    {
+      "id": 23,
+      "name": "2026年愿望清单",
+      "color": "F2C0A5",
+      "cover": "2026",
+      "target": "2026",
+      "linkToSchedule": true,
+      "targets": [
+        "写一封感谢信",
+        "整理房间",
+        "尝试新食谱"
+      ]
+    },
+    {
+      "id": 30,
+      "name": "5月｜每天一件幸福小事",
+      "color": "A1B774",
+      "cover": "may",
+      "target": "may",
+      "linkToSchedule": true,
+      "targets": [
+        "写一封感谢信",
+        "整理房间",
+        "尝试新食谱"
+      ]
+    },
+    {
+      "id": 30,
+      "name": "人生体验清单",
+      "color": "FFAA5F",
+      "cover": "life",
+      "target": "life",
+      "linkToSchedule": true,
+      "targets": [
+        "写一封感谢信",
+        "整理房间",
+        "尝试新食谱"
+      ]
+    },
+    {
+      "id": 31,
+      "name": "主题周计划",
+      "color": "C9D6C1",
+      "cover": "topicweek",
+      "target": "topicweek",
+      "linkToSchedule": true,
+      "targets": [
+        "写一封感谢信",
+        "整理房间",
+        "尝试新食谱"
+      ]
+    },
+    {
+      "id": 25,
+      "name": "100种解压治愈小手工",
+      "color": "F1A5B6",
+      "cover": "healing_crafts",
+      "target": "healing_crafts_target",
+      "linkToSchedule": true,
+      "targets": [
+        "制作手工香皂",
+        "编织小饰品",
+        "折纸艺术"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "五年日记｜100个一日一问",
+      "color": "F1A5B6",
+      "cover": "five_year_diary",
+      "target": "five_year_diary_target",
+      "linkToSchedule": true,
+      "targets": [
+        "今天最开心的事是什么？",
+        "学到了什么新东西？",
+        "对明天有什么期待？"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "缓解焦虑，治愈自己的小事",
+      "color": "9EAADB",
+      "cover": "anxiety_relief",
+      "target": "anxiety_relief_target",
+      "linkToSchedule": true,
+      "targets": [
+        "深呼吸练习",
+        "写日记",
+        "散步15分钟"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "周复盘：极简3步骤",
+      "color": "F1A5B6",
+      "cover": "weekly_review",
+      "target": "weekly_review_target",
+      "linkToSchedule": false,
+      "targets": [
+        "回顾本周目标完成情况",
+        "总结经验教训",
+        "规划下周目标"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "日复盘：12个问题回顾一天",
+      "color": "F1A5B6",
+      "cover": "daily_review",
+      "target": "daily_review_target",
+      "linkToSchedule": false,
+      "targets": [
+        "今天完成了什么？",
+        "遇到了什么困难？",
+        "明天要重点关注什么？"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "每周一次断舍离",
+      "color": "F8D58A",
+      "cover": "weekly_cleanup",
+      "target": "weekly_cleanup_target",
+      "linkToSchedule": false,
+      "targets": [
+        "整理衣柜",
+        "清理数码设备",
+        "处理过期物品"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "独处时可以做的100件事",
+      "color": "BBD1AD",
+      "cover": "solo_activities",
+      "target": "solo_activities_target",
+      "linkToSchedule": true,
+      "targets": [
+        "学习一项新技能",
+        "制作手工艺品",
+        "写一篇博客"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "100本高质量书籍",
+      "color": "334F46",
+      "cover": "quality_books",
+      "target": "quality_books_target",
+      "linkToSchedule": true,
+      "targets": [
+        "读《百年孤独》",
+        "读《三体》",
+        "读《人类简史》"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "出行行李清单",
+      "color": "F8D58A",
+      "cover": "travel_checklist",
+      "target": "travel_checklist_target",
+      "linkToSchedule": true,
+      "targets": [
+        "准备必要证件",
+        "收纳衣物用品",
+        "检查电子设备"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "豆瓣电影Top100",
+      "color": "334F46",
+      "cover": "douban_movies",
+      "target": "douban_movies_target",
+      "linkToSchedule": true,
+      "targets": [
+        "看《肖申克的救赎》",
+        "看《霸王别姬》",
+        "看《阿甘正传》"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "情侣必做的88件浪漫小事",
+      "color": "F1A5B6",
+      "cover": "couple_activities",
+      "target": "couple_activities_target",
+      "linkToSchedule": true,
+      "targets": [
+        "一起看日出",
+        "制作相册",
+        "学习做对方最爱的菜"
+      ]
+    }
+  ]
+} 

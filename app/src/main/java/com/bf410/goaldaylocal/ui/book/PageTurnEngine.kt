@@ -184,6 +184,43 @@ fun PageTurnEngine(
         )
     }
 
+    fun startDragTurn(startOffset: Offset, startDirection: TurnDirection) {
+        if (phase != TurnPhase.Idle) return
+        direction = startDirection
+        turnAnchorY = (startOffset.y / pageHeightPx.coerceAtLeast(1f)).coerceIn(0f, 1f)
+        phase = if (startDirection == TurnDirection.NEXT) TurnPhase.DraggingNext else TurnPhase.DraggingPrevious
+        scope.launch { progress.snapTo(0f) }
+    }
+
+    fun updateDragTurn(deltaX: Float) {
+        val currentDirection = direction ?: return
+        val canTurn = when (currentDirection) {
+            TurnDirection.NEXT -> canTurnNext
+            TurnDirection.PREVIOUS -> canTurnPrevious
+        }
+        val newProgress = updatedTurnProgress(
+            currentProgress = progress.value,
+            direction = currentDirection,
+            dragAmountPx = deltaX,
+            pageWidthPx = pageWidthPx,
+            canTurn = canTurn,
+        )
+        scope.launch { progress.snapTo(newProgress) }
+    }
+
+    fun releaseDragTurn(velocity: Float) {
+        val currentDirection = direction ?: return
+        val result = resolvePageTurnRelease(
+            direction = currentDirection,
+            progress = progress.value,
+            velocity = velocity,
+            hasPreviousPage = canTurnPrevious,
+            hasNextPage = canTurnNext,
+            profile = profile,
+        )
+        settle(result)
+    }
+
     shell(
         canTurnPrevious,
         canTurnNext,
@@ -197,6 +234,30 @@ fun PageTurnEngine(
                 .onSizeChanged {
                     pageWidthPx = it.width.toFloat().coerceAtLeast(1f)
                     pageHeightPx = it.height.toFloat().coerceAtLeast(1f)
+                }
+                .pointerInput(turnEnabled, canTurnPrevious, canTurnNext, profile) {
+                    if (!turnEnabled) return@pointerInput
+                    val edgeRatio = if (profile == TurnProfile.HANDBOOK) {
+                        HANDBOOK_EDGE_GESTURE_RATIO
+                    } else {
+                        DEFAULT_EDGE_GESTURE_RATIO
+                    }
+                    detectEdgePageTurnGestures(
+                        canTurnNext = canTurnNext,
+                        canTurnPrevious = canTurnPrevious,
+                        edgeRatio = edgeRatio,
+                        onStart = { offset, dir -> startDragTurn(offset, dir) },
+                        onDrag = { _, deltaX -> updateDragTurn(deltaX) },
+                        onEnd = { velocity -> releaseDragTurn(velocity) },
+                        onCancel = {
+                            if (progress.value > 0.01f) {
+                                settle(TurnReleaseResult.SnapBack)
+                            } else {
+                                clearState()
+                                scope.launch { progress.snapTo(0f) }
+                            }
+                        },
+                    )
                 },
         ) {
             spine(visualProgress, direction != null)
@@ -302,8 +363,6 @@ private suspend fun PointerInputScope.detectEdgePageTurnGestures(
                 // 非边缘区域：不拦截，交给子组件处理
                 continue
             }
-            down.consume()
-            onStart(down.position, startDirection)
 
             // 等待水平 touch slop，只接受“向书内”拖动（右边缘向左滑、左边缘向右滑）
             var inward = false
@@ -315,9 +374,11 @@ private suspend fun PointerInputScope.detectEdgePageTurnGestures(
                 if (inward) change.consume()
             }
             if (drag == null || !inward) {
-                onCancel()
+                // 不是有效翻页拖动，不消费按下事件，交给点击热区/子组件处理
                 continue
             }
+
+            onStart(down.position, startDirection)
 
             val velocityTracker = VelocityTracker()
             velocityTracker.addPointerInputChange(drag)

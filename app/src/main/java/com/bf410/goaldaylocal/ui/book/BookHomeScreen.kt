@@ -69,6 +69,7 @@ import com.bf410.goaldaylocal.data.SchedulePage
 import com.bf410.goaldaylocal.data.TargetItemMeta
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
+import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
@@ -229,26 +230,33 @@ fun BookHomeScreen(
             val currentPage = book.pages[clampedPageIndex]
             val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
             val nextPage = book.pages.getOrNull(clampedPageIndex + 1)
-            BookDetailView(
-                viewModel = viewModel,
-                book = book,
-                currentPage = currentPage,
-                previousPage = previousPage,
-                nextPage = nextPage,
-                uiState = uiState.copy(selectedBookIndex = safeBookIndex),
-                onBackToLibrary = onBack,
-                onShowAddPage = {
-                    pageDialogPreset = PageDialogPreset(type = "schedule", title = "日程页")
-                    showPageDialog = true
-                },
-                onShowRenamePage = { showRenamePageDialog = true },
-                onShowEditBook = { showEditBookDialog = true },
-                onToggleManagePanel = { showManagePanel = !showManagePanel },
-                showManagePanel = showManagePanel,
-                forcedSegment = null,
-                bookOnlyMode = true,
-                onShowInspiration = { },
-            )
+            if (showInspiration) {
+                InspirationScreen(
+                    viewModel = viewModel,
+                    onOpenHandbook = { showInspiration = false },
+                )
+            } else {
+                BookDetailView(
+                    viewModel = viewModel,
+                    book = book,
+                    currentPage = currentPage,
+                    previousPage = previousPage,
+                    nextPage = nextPage,
+                    uiState = uiState.copy(selectedBookIndex = safeBookIndex),
+                    onBackToLibrary = onBack,
+                    onShowAddPage = {
+                        pageDialogPreset = PageDialogPreset(type = "schedule", title = "日程页")
+                        showPageDialog = true
+                    },
+                    onShowRenamePage = { showRenamePageDialog = true },
+                    onShowEditBook = { showEditBookDialog = true },
+                    onToggleManagePanel = { showManagePanel = !showManagePanel },
+                    showManagePanel = showManagePanel,
+                    forcedSegment = null,
+                    bookOnlyMode = true,
+                    onShowInspiration = { showInspiration = true },
+                )
+            }
         }
 
         BookEntryMode.DIARY -> {
@@ -285,26 +293,33 @@ fun BookHomeScreen(
             val currentPage = book.pages[clampedPageIndex]
             val previousPage = book.pages.getOrNull(clampedPageIndex - 1)
             val nextPage = book.pages.getOrNull(clampedPageIndex + 1)
-            BookDetailView(
-                viewModel = viewModel,
-                book = book,
-                currentPage = currentPage,
-                previousPage = previousPage,
-                nextPage = nextPage,
-                uiState = uiState.copy(selectedBookIndex = safeBookIndex),
-                onBackToLibrary = onBack,
-                onShowAddPage = {
-                    pageDialogPreset = PageDialogPreset(type = "diary", title = "日记页")
-                    showPageDialog = true
-                },
-                onShowRenamePage = { showRenamePageDialog = true },
-                onShowEditBook = { showEditBookDialog = true },
-                onToggleManagePanel = { showManagePanel = !showManagePanel },
-                showManagePanel = showManagePanel,
-                forcedSegment = BookSegment.DIARY,
-                bookOnlyMode = false,
-                onShowInspiration = { },
-            )
+            if (showInspiration) {
+                InspirationScreen(
+                    viewModel = viewModel,
+                    onOpenHandbook = { showInspiration = false },
+                )
+            } else {
+                BookDetailView(
+                    viewModel = viewModel,
+                    book = book,
+                    currentPage = currentPage,
+                    previousPage = previousPage,
+                    nextPage = nextPage,
+                    uiState = uiState.copy(selectedBookIndex = safeBookIndex),
+                    onBackToLibrary = onBack,
+                    onShowAddPage = {
+                        pageDialogPreset = PageDialogPreset(type = "diary", title = "日记页")
+                        showPageDialog = true
+                    },
+                    onShowRenamePage = { showRenamePageDialog = true },
+                    onShowEditBook = { showEditBookDialog = true },
+                    onToggleManagePanel = { showManagePanel = !showManagePanel },
+                    showManagePanel = showManagePanel,
+                    forcedSegment = BookSegment.DIARY,
+                    bookOnlyMode = false,
+                    onShowInspiration = { showInspiration = true },
+                )
+            }
         }
 
         BookEntryMode.PLANNER -> {
@@ -1079,6 +1094,18 @@ private fun BookDetailView(
                                     .clickable { switchSegment(seg) }
                                     .padding(horizontal = 14.dp, vertical = 8.dp),
                             )
+                        }
+                        // 右侧灵感按钮
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            modifier = Modifier
+                                .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp)
+                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                                .clickable(onClick = onShowInspiration),
+                        ) {
+                            Icon(Icons.Filled.Lightbulb, contentDescription = "灵感", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
+                            Text("灵感", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
