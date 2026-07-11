@@ -42,6 +42,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1358,6 +1359,7 @@ private fun BookDetailView(
         val targetItems = targetPage?.let { (it.items + uiState.customPageItems).distinct() }.orEmpty()
         val targetItem = openedTargetDetail?.takeIf { it in targetItems }
         if (targetPage != null && targetItem != null) {
+            val isCustomTarget = targetItem in uiState.customPageItems
             TargetDetailRouteOverlay(
                 pageTitle = targetPage.title,
                 item = targetItem,
@@ -1375,6 +1377,12 @@ private fun BookDetailView(
                 onAddToSchedule = { day -> viewModel.addItemToSchedule(targetItem, day) },
                 onSaveAsOwnTarget = { viewModel.addCustomPageItem(targetItem) },
                 onAddToDiary = { done -> viewModel.addTargetDetailToDiary(targetItem, completed = done) },
+                onDelete = {
+                    if (isCustomTarget) {
+                        viewModel.removeCustomPageItem(targetItem)
+                    }
+                    openedTargetDetail = null
+                },
             )
         }
         if (confirmDeletePage) {
@@ -1471,12 +1479,15 @@ private fun TargetDetailRouteOverlay(
     onAddToSchedule: (Int) -> Unit,
     onSaveAsOwnTarget: () -> Unit,
     onAddToDiary: (Boolean) -> Unit,
+    onDelete: () -> Unit,
 ) {
     val dateShortcuts = remember { targetDateShortcuts() }
     val deadlineLabel = meta.deadlineDay?.let { "${it}日" } ?: "未设置"
     val scheduleLabel = if (scheduledEntries.isEmpty()) "未排期" else "${scheduledEntries.size}条"
     var noteDraft by remember(item, meta.note) { mutableStateOf(meta.note) }
     var actionHint by remember(item) { mutableStateOf("") }
+    val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
     fun appendDetailNote(line: String) {
         val next = buildList {
             noteDraft.lines().map(String::trim).filter(String::isNotBlank).forEach(::add)
@@ -1533,8 +1544,8 @@ private fun TargetDetailRouteOverlay(
         }
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .weight(1f)
+                .verticalScroll(scrollState)
                 .padding(horizontal = GoaldayDesign.Space4 - 2.dp, vertical = GoaldayDesign.Space3),
             verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
         ) {
@@ -1686,6 +1697,53 @@ private fun TargetDetailRouteOverlay(
                     }
                 }
             }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(46.dp)
+                .background(Color.White),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "${LocalDate.now().monthValue}月${LocalDate.now().dayOfMonth}日",
+                fontSize = 20.sp,
+                color = Color.Black,
+                modifier = Modifier
+                    .background(Color(0xCFF6F6F6))
+                    .padding(horizontal = 10.dp),
+            )
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(22.dp)
+                    .background(GoaldayDesign.ScheduleDateColumnSeparator),
+            )
+            Icon(
+                imageVector = Icons.Default.VerticalAlignTop,
+                contentDescription = "置顶",
+                tint = GoaldayDesign.adaptiveInkPrimary,
+                modifier = Modifier
+                    .padding(13.dp)
+                    .clickable { scope.launch { scrollState.animateScrollTo(0) } },
+            )
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = "完成",
+                tint = GoaldayDesign.adaptiveInkPrimary,
+                modifier = Modifier
+                    .padding(13.dp)
+                    .clickable { onToggleChecked() },
+            )
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "删除",
+                tint = GoaldayDesign.adaptiveInkPrimary,
+                modifier = Modifier
+                    .padding(13.dp)
+                    .padding(end = 13.dp)
+                    .clickable { onDelete() },
+            )
         }
     }
 }

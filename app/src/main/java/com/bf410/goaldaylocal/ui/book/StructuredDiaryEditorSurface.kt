@@ -40,10 +40,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.bf410.goaldaylocal.R
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 
 @Composable
@@ -74,18 +76,20 @@ internal fun StructuredDiaryEditor(
     val normalizedFocusIndex = focusedBlockIndex.coerceIn(0, (state.blocks.size - 1).coerceAtLeast(0))
     val focusedBlock = state.blocks.getOrNull(normalizedFocusIndex)
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        DiaryEditorToolbar(
+        DiaryEditorHeader(
             dateLabel = dateLabel,
+            onPickDate = onPickDate,
+            onDone = onDone,
+        )
+        DiaryEditorToolbar(
             textCount = editorTextCount,
             imageCount = editorImageCount,
             targetCount = editorTargetCount,
-            onPickDate = onPickDate,
             onAddImage = onAddImage,
             onAddTextBlock = onAddTextBlock,
             onAddTopicTargetBlock = onAddTopicTargetBlock,
             onAddTargetChildBlock = { onStateChange(state.withTargetChildBlock()) },
             onCommand = onCommand,
-            onDone = onDone,
             onShowPrompts = {
                 promptGridVisible = true
                 richEditorExpanded = true
@@ -218,18 +222,50 @@ internal fun StructuredDiaryEditor(
 }
 
 @Composable
-private fun DiaryEditorToolbar(
+private fun DiaryEditorHeader(
     dateLabel: String,
+    onPickDate: () -> Unit,
+    onDone: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .padding(horizontal = 33.33.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = dateLabel,
+            fontSize = 24.sp,
+            color = Color(0xFF000000),
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.clickable { onPickDate() },
+        )
+        Text(
+            text = "完成",
+            color = Color.White,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                .background(GoaldayDesign.PrimaryAction)
+                .clickable { onDone() }
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+        )
+    }
+}
+
+@Composable
+private fun DiaryEditorToolbar(
     textCount: Int,
     imageCount: Int,
     targetCount: Int,
-    onPickDate: () -> Unit,
     onAddImage: () -> Unit,
     onAddTextBlock: () -> Unit,
     onAddTopicTargetBlock: () -> Unit,
     onAddTargetChildBlock: () -> Unit,
     onCommand: (RichEditorCommand) -> Unit,
-    onDone: () -> Unit,
     onShowPrompts: () -> Unit,
 ) {
     Column(
@@ -241,23 +277,6 @@ private fun DiaryEditorToolbar(
                 .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1 + 2.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.clickable { onPickDate() }) {
-                Text("日记编辑", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.adaptiveInkSecondary, fontWeight = FontWeight.SemiBold)
-                Text(dateLabel, style = MaterialTheme.typography.labelLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.SemiBold)
-            }
-            Text(
-                "完成",
-                color = Color.White,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                    .background(GoaldayDesign.PrimaryAction)
-                    .clickable { onDone() }
-                    .padding(horizontal = GoaldayDesign.Space2 + 1.dp, vertical = GoaldayDesign.Space1),
-            )
-        }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             DiaryEditorCountPill("文本", textCount, GoaldayDesign.adaptiveInkSecondary, Modifier.weight(1f))
             DiaryEditorCountPill("图片", imageCount, GoaldayDesign.AccentMauve, Modifier.weight(1f))
@@ -739,6 +758,9 @@ private fun DiaryPromptCell(
 /**
  * 日记编辑器底栏，对齐原 APK fragment_diary.xml / fragment_diary_inbook.xml。
  * - 独立页高度 102.22dp（46pt），书内页高度 51.11dp（23pt）
+ * - 按钮容器：独立页 55.56dp（25pt），书内页 51.11dp（23pt）
+ * - 图标大小：独立页 24.dp，书内页 13.89.dp（6.25pt）
+ * - 书内页图片按钮使用原版图标 ic_select_pic
  * - 背景 #E5DAD4（TabBarBg）
  * - 左侧图片 + 键盘按钮
  */
@@ -749,7 +771,8 @@ private fun DiaryEditorBottomBar(
     modifier: Modifier = Modifier,
 ) {
     val height = if (isInBook) 51.11.dp else 102.22.dp
-    val buttonSize = if (isInBook) 36.dp else 55.56.dp
+    val buttonSize = if (isInBook) 51.11.dp else 55.56.dp
+    val iconSize = if (isInBook) 13.89.dp else 24.dp
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     Box(
@@ -768,15 +791,24 @@ private fun DiaryEditorBottomBar(
                 modifier = Modifier
                     .size(buttonSize)
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-                    .clickable { onAddImage() }
-                    .padding(8.dp),
+                    .clickable { onAddImage() },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = Icons.Default.Image,
-                    contentDescription = "插入图片",
-                    tint = GoaldayDesign.adaptiveInkPrimary,
-                )
+                if (isInBook) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_select_pic),
+                        contentDescription = "插入图片",
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(iconSize),
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Image,
+                        contentDescription = "插入图片",
+                        tint = GoaldayDesign.adaptiveInkPrimary,
+                        modifier = Modifier.size(iconSize),
+                    )
+                }
             }
             Box(
                 modifier = Modifier
@@ -785,14 +817,14 @@ private fun DiaryEditorBottomBar(
                     .clickable {
                         keyboardController?.hide()
                         focusManager.clearFocus()
-                    }
-                    .padding(8.dp),
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.KeyboardHide,
                     contentDescription = "收起键盘",
                     tint = GoaldayDesign.adaptiveInkPrimary,
+                    modifier = Modifier.size(iconSize),
                 )
             }
         }

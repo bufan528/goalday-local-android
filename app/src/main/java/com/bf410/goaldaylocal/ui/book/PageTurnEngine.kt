@@ -284,9 +284,9 @@ fun PageTurnEngine(
                             .background(
                                 Brush.horizontalGradient(
                                     listOf(
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.04f + latePhase * 0.14f).coerceAtMost(0.20f)),
-                                        Color.White.copy(alpha = (0.02f + latePhase * 0.10f).coerceAtMost(0.14f)),
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.04f + latePhase * 0.14f).coerceAtMost(0.20f)),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.032f + latePhase * 0.112f).coerceAtMost(0.16f)),
+                                        Color.White.copy(alpha = (0.016f + latePhase * 0.08f).coerceAtMost(0.112f)),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.032f + latePhase * 0.112f).coerceAtMost(0.16f)),
                                     ),
                                 ),
                             ),
@@ -298,8 +298,8 @@ fun PageTurnEngine(
                         // 右页外翻：左边界是页缘（亮），向右逐渐变暗
                         Brush.horizontalGradient(
                             listOf(
-                                Color.White.copy(alpha = (0.04f + visualProgress * 0.16f).coerceAtMost(0.22f)),
-                                Color.Black.copy(alpha = (0.06f + visualProgress * 0.18f).coerceAtMost(0.26f)),
+                                Color.White.copy(alpha = (0.032f + visualProgress * 0.128f).coerceAtMost(0.176f)),
+                                Color.Black.copy(alpha = (0.048f + visualProgress * 0.144f).coerceAtMost(0.208f)),
                                 Color.Transparent,
                             ),
                         )
@@ -308,8 +308,8 @@ fun PageTurnEngine(
                         Brush.horizontalGradient(
                             listOf(
                                 Color.Transparent,
-                                Color.Black.copy(alpha = (0.06f + visualProgress * 0.18f).coerceAtMost(0.26f)),
-                                Color.White.copy(alpha = (0.04f + visualProgress * 0.16f).coerceAtMost(0.22f)),
+                                Color.Black.copy(alpha = (0.048f + visualProgress * 0.144f).coerceAtMost(0.208f)),
+                                Color.White.copy(alpha = (0.032f + visualProgress * 0.128f).coerceAtMost(0.176f)),
                             ),
                         )
                     }
@@ -335,6 +335,10 @@ fun PageTurnEngine(
                         ),
                 )
 
+                val turnShadowStartAlpha = if (profile == TurnProfile.HANDBOOK) 0.048f else 0.06f
+                val turnShadowRate = if (profile == TurnProfile.HANDBOOK) 0.272f else 0.34f
+                val turnShadowMaxAlpha = if (profile == TurnProfile.HANDBOOK) 0.336f else 0.42f
+                val turnShadowMidAlpha = if (profile == TurnProfile.HANDBOOK) 0.08f else 0.10f
                 Box(
                     modifier = Modifier
                         .align(if (draggingToNext) Alignment.CenterStart else Alignment.CenterEnd)
@@ -344,8 +348,8 @@ fun PageTurnEngine(
                             if (draggingToNext) {
                                 Brush.horizontalGradient(
                                     listOf(
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.06f + latePhase * 0.34f).coerceAtMost(0.42f)),
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = 0.10f),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (turnShadowStartAlpha + latePhase * turnShadowRate).coerceAtMost(turnShadowMaxAlpha)),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = turnShadowMidAlpha),
                                         Color.Transparent,
                                     ),
                                 )
@@ -353,8 +357,8 @@ fun PageTurnEngine(
                                 Brush.horizontalGradient(
                                     listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = 0.10f),
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.06f + latePhase * 0.34f).coerceAtMost(0.42f)),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = turnShadowMidAlpha),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (turnShadowStartAlpha + latePhase * turnShadowRate).coerceAtMost(turnShadowMaxAlpha)),
                                     ),
                                 )
                             },
@@ -520,29 +524,23 @@ fun Modifier.turningPageTransform(
     } else 0f
     val progressCurve = (visualProgress * 0.22f) + (visualProgress * visualProgress * 0.78f) + curlBoost
     // HANDBOOK 最大旋转略降，避免页面翻转过度、露出过多背面空白
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 102f else 118f
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 96f else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve.coerceIn(0f, 1f)
         TurnDirection.PREVIOUS -> maxRotation * progressCurve.coerceIn(0f, 1f)
         null -> 0f
     }
-    val tailRetract = if (profile == TurnProfile.HANDBOOK) {
-        val tail = ((visualProgress - 0.80f) / 0.20f).coerceIn(0f, 1f)
-        tail * 12f
-    } else {
-        0f
-    }
     // HANDBOOK 绕书脊旋转，水平位移尽量小，避免页面“滑出”书壳；主要依靠 rotationY 制造翻越感
     translationX = when {
         draggingToNext -> if (profile == TurnProfile.HANDBOOK) {
-            -(progressCurve * 28f - tailRetract * 0.55f)
+            -(progressCurve * 12f)
         } else {
-            -(visualProgress * 14f + progressCurve * 68f - tailRetract)
+            -(visualProgress * 14f + progressCurve * 68f)
         }
         draggingToPrevious -> if (profile == TurnProfile.HANDBOOK) {
-            progressCurve * 28f - tailRetract * 0.55f
+            progressCurve * 12f
         } else {
-            visualProgress * 14f + progressCurve * 68f - tailRetract
+            visualProgress * 14f + progressCurve * 68f
         }
         else -> 0f
     }
@@ -585,7 +583,7 @@ fun Modifier.pageBackTransform(
         early * 0.18f
     } else 0f
     val progressCurve = (visualProgress * 0.22f) + (visualProgress * visualProgress * 0.78f) + curlBoost
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 102f else 118f
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 96f else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve.coerceIn(0f, 1f) * 0.92f
         TurnDirection.PREVIOUS -> maxRotation * progressCurve.coerceIn(0f, 1f) * 0.92f
