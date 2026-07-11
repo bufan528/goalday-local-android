@@ -703,12 +703,12 @@ internal fun InBookDiaryPreview(
         )
         Spacer(Modifier.height(6.dp))
         // 内容区：对照 fragment_diary_inbook.xml RecyclerView
-        // marginTop=5dp, marginBottom=30dp, marginStart/End=7.5pt=16.67dp
+        // marginTop=5dp, marginBottom=30dp, marginStart/End=7.5dp
         // 添加纸张横线效果，模拟真实笔记本（横线固定在背景上，内容在上面滚动）
         Box(
             modifier = Modifier
                 .weight(1f)
-                .padding(top = 5.dp, bottom = 30.dp, start = 16.67.dp, end = 16.67.dp)
+                .padding(top = 5.dp, bottom = 30.dp, start = 7.5.dp, end = 7.5.dp)
                 .handbookPaperRuling(null),
         ) {
             val contentScroll = if (handbookMode) Modifier else Modifier.verticalScroll(rememberScrollState())
@@ -799,27 +799,27 @@ internal fun InBookDiaryPreview(
                 }
             }
         }
-        // 底部图片栏：对照 fragment_diary_inbook.xml fl_bottom_bar: 23pt=51.11dp 高, 白色背景
+        // 底部图片栏：对照 fragment_diary_inbook.xml fl_bottom_bar: 23dp 高, 白色背景
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(51.11.dp)
+                .height(23.dp)
                 .background(GoaldayDesign.Surface),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // fl_select_pic: 23pt=51.11dp × 23pt=51.11dp, marginStart=3.75pt=8.33dp
+            // fl_select_pic: 23dp × 23dp, marginStart=3.75dp
             Box(
                 modifier = Modifier
-                    .padding(start = 8.33.dp)
-                    .size(51.11.dp)
+                    .padding(start = 3.75.dp)
+                    .size(23.dp)
                     .clickable { onAddImage() },
                 contentAlignment = Alignment.Center,
             ) {
-                // ic_select_pic: 12.5pt=27.78dp × 12.5pt=27.78dp (参考APK)
+                // ic_select_pic: 12.5dp × 12.5dp (参考APK)
                 Image(
                     painter = painterResource(R.drawable.ic_select_pic),
                     contentDescription = "插入图片",
-                    modifier = Modifier.size(27.78.dp),
+                    modifier = Modifier.size(12.5.dp),
                 )
             }
         }
