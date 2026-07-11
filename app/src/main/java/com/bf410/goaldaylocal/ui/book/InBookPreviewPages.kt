@@ -178,6 +178,7 @@ internal fun InBookSchedulePreview(
             this.alpha = alpha
         }
         .fillMaxSize()
+        .handbookPaperRuling(null)
 
     // 书页模式保留 LazyColumn 避免一次性渲染 31 天导致 ANR，但禁用用户滚动，让翻页手势优先。
     LazyColumn(
@@ -260,18 +261,18 @@ private fun InBookScheduleDayRow(
                 Text(
                     day.toString(),
                     fontSize = 9.sp,
-                    color = GoaldayDesign.InkPrimary,
+                    color = GoaldayDesign.adaptiveInkPrimary,
                     modifier = Modifier.padding(bottom = 2.dp),
                 )
                 Text(
                     "—",
                     fontSize = 9.sp,
-                    color = GoaldayDesign.MorandiDivider,
+                    color = GoaldayDesign.adaptiveInkMuted,
                 )
                 Text(
                     weekday,
                     fontSize = 6.sp,
-                    color = GoaldayDesign.InkMuted,
+                    color = GoaldayDesign.adaptiveInkMuted,
                     modifier = Modifier.padding(top = 2.dp),
                 )
             }
@@ -374,7 +375,8 @@ internal fun InBookPlanPreview(
                 translationX = shift
                 this.alpha = alpha
             }
-            .fillMaxSize(),
+            .fillMaxSize()
+            .handbookPaperRuling(null),
     ) {
         // 页眉：标题 + 页码（与目标页、日程页保持一致）
         item {
@@ -465,7 +467,7 @@ private fun InBookPlanRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 108.89.dp)
+            .heightIn(min = 52.dp)
             .padding(bottom = 4.44.dp),
     ) {
         // 右侧滑动操作按钮（编辑+删除）
@@ -508,10 +510,11 @@ private fun InBookPlanRow(
         }
 
         // 内容层：可滑动
+        // 修正：行高 108.89dp → 52dp，字体 35.56sp → 16sp，间距按比例缩小
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 108.89.dp)
+                .heightIn(min = 52.dp)
                 .graphicsLayer {
                     translationX = swipeOffset.value
                 }
@@ -539,32 +542,30 @@ private fun InBookPlanRow(
                         },
                     )
                 },
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            // 对照 v_dot: 10pt=22.22dp, marginTop=19.5pt=43.33dp, marginStart=15pt=33.33dp
-            // bg_toolbar_plan_dot: 黑色圆形(radius=90dp) when not selected
+            // 黑色圆点：10pt=22.22dp，垂直居中
             Box(
                 modifier = Modifier
-                    .padding(start = 33.33.dp, top = 43.33.dp)
-                    .size(22.22.dp)
-                    .background(GoaldayDesign.InkPrimary, shape = RoundedCornerShape(90.dp))
+                    .padding(start = 20.dp)
+                    .size(10.dp)
+                    .background(GoaldayDesign.adaptiveInkPrimary, shape = RoundedCornerShape(90.dp))
                     .clickable { onToggleChecked() },
             )
-            // 对照 tv_content: textSize=16pt=35.56sp, width=266pt=591.11dp, paddingTop/Bottom=14pt=31.11dp, marginStart=16pt=35.56dp
+            // 内容文字：16sp，padding 16dp
             Text(
                 item,
-                fontSize = 35.56.sp,
-                color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
+                fontSize = 16.sp,
+                color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                 textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                 modifier = Modifier
-                    .padding(start = 35.56.dp, top = 31.11.dp, bottom = 31.11.dp)
+                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
                     .weight(1f),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            // 对照 tv_count: textSize=14pt=31.11sp, paddingTop=14pt=31.11dp, marginEnd=14pt=31.11dp
-            // TimeTextView 显示次数/时间，预览暂留空占位
-            Spacer(Modifier.width(31.11.dp))
+            // 右侧时间占位
+            Spacer(Modifier.width(16.dp))
         }
     }
 }
@@ -633,10 +634,12 @@ internal fun InBookDiaryPreview(
         Spacer(Modifier.height(6.dp))
         // 内容区：对照 fragment_diary_inbook.xml RecyclerView（aapt2 验证：marginStart/End 为 pt）
         // marginTop=5dp, marginBottom=30dp, marginStart/End=7.5pt=16.67dp
+        // 添加纸张横线效果，模拟真实笔记本（横线固定在背景上，内容在上面滚动）
         Box(
             modifier = Modifier
                 .weight(1f)
-                .padding(top = 5.dp, bottom = 30.dp, start = 16.67.dp, end = 16.67.dp),
+                .padding(top = 5.dp, bottom = 30.dp, start = 16.67.dp, end = 16.67.dp)
+                .handbookPaperRuling(null),
         ) {
             val contentScroll = if (handbookMode) Modifier else Modifier.verticalScroll(rememberScrollState())
             // 复用外部解析的 diary，避免重复解析
@@ -752,7 +755,8 @@ internal fun InBookTargetPreview(
                 translationX = shift
                 this.alpha = alpha
             }
-            .fillMaxSize(),
+            .fillMaxSize()
+            .handbookPaperRuling(null),
         userScrollEnabled = !handbookMode,
     ) {
         // 页眉：标题 + 页码（与计划页、日程页、日记页保持一致）
@@ -921,11 +925,13 @@ private fun InBookTargetRow(
                 }
                 .clickable { onOpenDetail() },
         ) {
-            // 内容区：对照 fl_check paddingTop=21dp, paddingBottom=20dp, paddingStart/End=27dp
+            // 内容区：优化间距以匹配参考 APK 的视觉密度
+            // 原版 padding 过大（top=21dp, bottom=20dp），导致行高超出 80dp
+            // 调整为更紧凑的间距，保持与计划页一致的视觉密度
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 27.dp, top = 21.dp, end = 27.dp, bottom = 20.dp),
+                    .padding(start = 27.dp, top = 12.dp, end = 27.dp, bottom = 12.dp),
                 verticalAlignment = Alignment.Top,
             ) {
                 // 勾选框：原版 wrap_content (ic_box_full + ic_box_select)，约20dp
@@ -935,15 +941,16 @@ private fun InBookTargetRow(
                     modifier = Modifier.padding(top = 2.dp),
                     size = 20,
                 )
-                // 目标文字：对照 tv_content textSize=20dip=20sp, marginStart=10dp, paddingBottom=12dp
+                // 目标文字：对照 tv_content textSize=20dip=20sp, marginStart=10dp
+                // 优化：减少 bottom padding 以控制行高
                 Text(
                     item,
                     fontSize = 20.sp,
-                    color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
+                    color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                     textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier
-                        .padding(start = 10.dp, bottom = 12.dp)
+                        .padding(start = 10.dp, bottom = 8.dp)
                         .weight(1f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
