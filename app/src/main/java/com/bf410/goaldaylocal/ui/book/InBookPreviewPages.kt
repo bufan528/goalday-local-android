@@ -669,7 +669,8 @@ internal fun InBookDiaryPreview(
                     // 渲染所有非图片块（图片已在上方渲染）：TARGET/TOPIC_TARGET/TARGET_CHILD/TEXT
                     val nonImageBlocks = diary.blocks.filter { it.type != DiaryBlockType.IMAGE }
                     DiaryTypedBlockPreview(nonImageBlocks)
-                    // 渲染摘要文本（今日完成/工作任务/小幸福/可改进），添加分区标题
+                    // 渲染摘要文本（今日完成/工作任务/小幸福/可改进），使用卡片式布局
+                    // 对照 item_diary_target_in_book.xml：白色背景+0.5pt边框+8pt圆角
                     val sections = listOf(
                         "今日完成" to diary.todayDone,
                         "工作任务" to diary.workTasks,
@@ -678,25 +679,50 @@ internal fun InBookDiaryPreview(
                     )
                     sections.forEach { (title, content) ->
                         if (content.isNotBlank()) {
-                            // 分区标题
-                            Text(
-                                title,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = GoaldayDesign.adaptiveInkPrimary.copy(alpha = 0.7f),
+                            // 卡片容器：白色背景+边框+圆角
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 8.dp, bottom = 4.dp),
-                            )
-                            // 分区内容
-                            content.split("\n").filter { it.isNotBlank() }.forEach { line ->
-                                Text(
-                                    line,
-                                    fontSize = 16.sp,
-                                    color = GoaldayDesign.DiarySectionInk,
-                                    lineHeight = 21.sp,
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
+                                    .padding(vertical = 4.dp)
+                                    .clip(RoundedCornerShape(17.78.dp)) // 8pt = 17.78dp
+                                    .background(Color.White)
+                                    .border(
+                                        width = 1.11.dp, // 0.5pt = 1.11dp
+                                        color = Color.Black.copy(alpha = 0.3f),
+                                        shape = RoundedCornerShape(17.78.dp)
+                                    )
+                                    .padding(16.dp),
+                            ) {
+                                Column {
+                                    // 分区标题：带 ic_reward 图标
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(bottom = 8.dp)
+                                    ) {
+                                        Image(
+                                            painter = painterResource(R.drawable.ic_reward),
+                                            contentDescription = title,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            title,
+                                            fontSize = 20.sp, // 9dp = 20sp
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF503311),
+                                        )
+                                    }
+                                    // 分区内容
+                                    content.split("\n").filter { it.isNotBlank() }.forEach { line ->
+                                        Text(
+                                            line,
+                                            fontSize = 16.sp,
+                                            color = GoaldayDesign.DiarySectionInk,
+                                            lineHeight = 21.sp,
+                                            modifier = Modifier.fillMaxWidth(),
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

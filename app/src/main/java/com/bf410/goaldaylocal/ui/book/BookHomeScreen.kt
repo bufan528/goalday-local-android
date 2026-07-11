@@ -85,13 +85,6 @@ private enum class BookSegment(val label: String) {
     DIARY("记录"),
 }
 
-private enum class HandbookSection(val label: String) {
-    OVERVIEW("总览"),
-    SCHEDULE("日程"),
-    DIARY("日记"),
-    TARGET("目标"),
-}
-
 private data class PageDialogPreset(
     val type: String = "schedule",
     val title: String = "",
@@ -689,7 +682,7 @@ private fun FeaturedHandbookCover(
                     book.pages.take(3).forEach { page ->
                         Text(
                             pageRouteLabel(page),
-                            color = routeColor(resolveHandbookSection(page)),
+                            color = routeColor(resolveSegment(page)),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier
@@ -833,7 +826,7 @@ private fun ShelfBookCover(
                                 .width(10.dp)
                                 .height(4.dp)
                                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                                .background(routeColor(resolveHandbookSection(page)).copy(alpha = 0.76f)),
+                                .background(routeColor(resolveSegment(page)).copy(alpha = 0.76f)),
                         )
                     }
                 }
@@ -880,7 +873,7 @@ private fun HandbookReadingDeskHeader(
     selectedRealPageIndex: Int,
     onOpenPage: (BookPage) -> Unit,
 ) {
-    val route = resolveHandbookSection(currentPage)
+    val route = resolveSegment(currentPage)
     val routeMetrics = metricsForPages(filteredPages)
     Column(
         modifier = Modifier
@@ -971,12 +964,11 @@ private fun HandbookDeskMetric(
 }
 
 @Composable
-private fun routeColor(route: HandbookSection): Color =
+private fun routeColor(route: BookSegment): Color =
     when (route) {
-        HandbookSection.OVERVIEW -> GoaldayDesign.adaptiveInkSecondary
-        HandbookSection.SCHEDULE -> GoaldayDesign.RouteSchedule
-        HandbookSection.DIARY -> GoaldayDesign.adaptiveInkSecondary
-        HandbookSection.TARGET -> GoaldayDesign.RouteTarget
+        BookSegment.LIST -> GoaldayDesign.RouteTarget
+        BookSegment.WEEK, BookSegment.MONTH -> GoaldayDesign.RouteSchedule
+        BookSegment.DIARY -> GoaldayDesign.RouteDiary
     }
 
 @Composable
@@ -999,16 +991,9 @@ private fun BookDetailView(
 ) {
     val handbookMode = bookOnlyMode || forcedSegment == BookSegment.DIARY
     var segment by remember(book.id) { mutableStateOf(resolveSegment(currentPage)) }
-    // HANDBOOK 阅读模式下，顶部 tab 对应原 APK 的 HandbookSection（总览/日程/日记/目标），
-    // 与外层清单/周/月/记录（BookSegment）区分。
-    var handbookSection by remember(book.id) { mutableStateOf(resolveHandbookSection(currentPage)) }
     LaunchedEffect(forcedSegment, book.id) {
         val desired = forcedSegment ?: return@LaunchedEffect
         segment = desired
-        handbookSection = when (desired) {
-            BookSegment.DIARY -> HandbookSection.DIARY
-            else -> HandbookSection.SCHEDULE
-        }
         // 切换入口模式时，如果当前页已经符合目标 segment，优先保留当前页
         val targetIndex = if (matchesSegment(currentPage, desired)) {
             uiState.selectedPageIndex
@@ -1020,7 +1005,7 @@ private fun BookDetailView(
         }
     }
     LaunchedEffect(currentPage, book.id) {
-        handbookSection = resolveHandbookSection(currentPage)
+        segment = resolveSegment(currentPage)
     }
     val filteredPages = remember(book.pages, segment, bookOnlyMode) {
         // HANDBOOK 入口（bookOnlyMode=true）：显示全部页面，允许翻到日记页
@@ -1062,19 +1047,6 @@ private fun BookDetailView(
         }
     }
 
-    fun switchHandbookSection(next: HandbookSection) {
-        handbookSection = next
-        // 总览保留当前页；其他按类型跳转到第一本对应页面
-        val targetIndex = if (matchesHandbookSection(currentPage, next)) {
-            uiState.selectedPageIndex
-        } else {
-            book.pages.indexOfFirst { page -> matchesHandbookSection(page, next) }
-        }
-        if (targetIndex >= 0 && uiState.selectedPageIndex != targetIndex) {
-            viewModel.setPage(targetIndex)
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1087,7 +1059,7 @@ private fun BookDetailView(
                 // Tab 文字 18sp bold，选中黑色，未选中 #36000000
                 // 对照 fragment_main_page.xml / toolbar_normal.xml：
                 // 顶部 Toolbar 为左右结构，左侧返回、中间标题/tab、右侧“完成”按钮。
-                // HANDBOOK 模式下 tab 对应原 APK 的 总览/日程/日记/目标。
+                // 顶部 tab 回退到原版 BookSegment（清单/周/月/记录）。
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1113,15 +1085,15 @@ private fun BookDetailView(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        HandbookSection.entries.forEachIndexed { idx, sec ->
-                            val isSelected = HandbookSection.entries.indexOf(handbookSection) == idx
+                        BookSegment.entries.forEachIndexed { idx, seg ->
+                            val isSelected = BookSegment.entries.indexOf(segment) == idx
                             Text(
-                                text = sec.label,
+                                text = seg.label,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isSelected) Color.Black else Color(0x36000000),
                                 modifier = Modifier
-                                    .clickable { switchHandbookSection(sec) }
+                                    .clickable { switchSegment(seg) }
                                     .padding(horizontal = 12.dp, vertical = 8.dp),
                             )
                         }
@@ -1477,21 +1449,6 @@ private fun monthLabelForPage(title: String, fallback: String): String {
     val regex = Regex("(\\d{1,2}月)")
     return regex.find(title)?.value ?: fallback
 }
-
-private fun matchesHandbookSection(page: BookPage, section: HandbookSection): Boolean =
-    when (section) {
-        HandbookSection.OVERVIEW -> true
-        HandbookSection.SCHEDULE -> page is SchedulePage || page is PlanPage
-        HandbookSection.DIARY -> page is DiaryPage
-        HandbookSection.TARGET -> page is TargetPage
-    }
-
-private fun resolveHandbookSection(page: BookPage): HandbookSection =
-    when (page) {
-        is DiaryPage -> HandbookSection.DIARY
-        is TargetPage -> HandbookSection.TARGET
-        is SchedulePage, is PlanPage -> HandbookSection.SCHEDULE
-    }
 
 @Composable
 private fun TargetDetailRouteOverlay(
