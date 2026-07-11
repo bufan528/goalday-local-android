@@ -323,7 +323,7 @@ private fun InBookScheduleTargetColumn(
                     Text(
                         entry.title,
                         fontSize = 10.sp,
-                        color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
+                        color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                         textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -931,18 +931,16 @@ private fun InBookTargetRow(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 27.dp, top = 12.dp, end = 27.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.Top,
+                    .padding(start = 27.dp, top = 14.dp, end = 27.dp, bottom = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 // 勾选框：原版 wrap_content (ic_box_full + ic_box_select)，约20dp
                 InBookCheckbox(
                     checked = checked,
                     onToggle = onToggleChecked,
-                    modifier = Modifier.padding(top = 2.dp),
                     size = 20,
                 )
                 // 目标文字：对照 tv_content textSize=20dip=20sp, marginStart=10dp
-                // 优化：减少 bottom padding 以控制行高
                 Text(
                     item,
                     fontSize = 20.sp,
@@ -950,7 +948,7 @@ private fun InBookTargetRow(
                     textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier
-                        .padding(start = 10.dp, bottom = 8.dp)
+                        .padding(start = 10.dp)
                         .weight(1f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
