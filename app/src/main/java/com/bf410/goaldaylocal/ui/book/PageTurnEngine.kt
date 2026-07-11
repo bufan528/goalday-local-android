@@ -513,56 +513,57 @@ fun Modifier.turningPageTransform(
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
     transformOrigin = TransformOrigin(turnTransformOriginX(profile, direction), 0.5f)
     // 仿真翻页：HANDBOOK 模拟真实书页绕书脊翻越，DEFAULT 保持 118°
-    // curlBoost：前 50% 进度加大旋转，让纸张“先翘起来”再翻过，更像真实书页
+    // curlBoost：前 45% 进度加大旋转，让纸张“先翘起来”再翻过，更像真实书页
     val curlBoost = if (profile == TurnProfile.HANDBOOK) {
-        val early = 1f - visualProgress.coerceIn(0f, 0.5f) * 2f
-        early * 0.22f
+        val early = 1f - visualProgress.coerceIn(0f, 0.45f) / 0.45f
+        early * 0.18f
     } else 0f
     val progressCurve = (visualProgress * 0.22f) + (visualProgress * visualProgress * 0.78f) + curlBoost
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 108f else 118f
+    // HANDBOOK 最大旋转略降，避免页面翻转过度、露出过多背面空白
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 102f else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve.coerceIn(0f, 1f)
         TurnDirection.PREVIOUS -> maxRotation * progressCurve.coerceIn(0f, 1f)
         null -> 0f
     }
     val tailRetract = if (profile == TurnProfile.HANDBOOK) {
-        val tail = ((visualProgress - 0.78f) / 0.22f).coerceIn(0f, 1f)
-        tail * 10f
+        val tail = ((visualProgress - 0.80f) / 0.20f).coerceIn(0f, 1f)
+        tail * 12f
     } else {
         0f
     }
     // HANDBOOK 绕书脊旋转，水平位移尽量小，避免页面“滑出”书壳；主要依靠 rotationY 制造翻越感
     translationX = when {
         draggingToNext -> if (profile == TurnProfile.HANDBOOK) {
-            -(progressCurve * 32f - tailRetract * 0.45f)
+            -(progressCurve * 28f - tailRetract * 0.55f)
         } else {
             -(visualProgress * 14f + progressCurve * 68f - tailRetract)
         }
         draggingToPrevious -> if (profile == TurnProfile.HANDBOOK) {
-            progressCurve * 32f - tailRetract * 0.45f
+            progressCurve * 28f - tailRetract * 0.55f
         } else {
             visualProgress * 14f + progressCurve * 68f - tailRetract
         }
         else -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
-    translationY = yOffsetFactor * visualProgress * if (profile == TurnProfile.HANDBOOK) 4.8f else 12f
-    rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 2.6f else 9.2f
+    translationY = yOffsetFactor * visualProgress * if (profile == TurnProfile.HANDBOOK) 4.2f else 12f
+    rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 2.2f else 9.2f
     // HANDBOOK 用更大 cameraDistance 减少 3D 畸变，翻页更干净
-    cameraDistance = if (profile == TurnProfile.HANDBOOK) 52f * density else 34f * density
-    shadowElevation = if (profile == TurnProfile.HANDBOOK) 16f else 28f
-    val subtleDepthScale = if (profile == TurnProfile.HANDBOOK) 1f - visualProgress * 0.018f else 1f - visualProgress * 0.015f
+    cameraDistance = if (profile == TurnProfile.HANDBOOK) 56f * density else 34f * density
+    shadowElevation = if (profile == TurnProfile.HANDBOOK) 14f else 28f
+    val subtleDepthScale = if (profile == TurnProfile.HANDBOOK) 1f - visualProgress * 0.015f else 1f - visualProgress * 0.015f
     scaleY = if (profile == TurnProfile.HANDBOOK) {
-        subtleDepthScale.coerceIn(0.982f, 1f)
+        subtleDepthScale.coerceIn(0.985f, 1f)
     } else {
         subtleDepthScale.coerceIn(0.965f, 1f)
     }
     // HANDBOOK：翻页末段把正面淡出，避免 content 翻到新页时残留变形残影
     alpha = if (profile == TurnProfile.HANDBOOK) {
-        if (visualProgress < 0.88f) {
-            (1f - visualProgress * 0.18f).coerceIn(0.82f, 1f)
+        if (visualProgress < 0.85f) {
+            (1f - visualProgress * 0.16f).coerceIn(0.84f, 1f)
         } else {
-            ((1f - visualProgress) / 0.12f).coerceIn(0f, 1f) * 0.82f
+            ((1f - visualProgress) / 0.15f).coerceIn(0f, 1f) * 0.84f
         }
     } else {
         (1f - visualProgress * 0.08f).coerceIn(0.9f, 1f)
@@ -580,11 +581,11 @@ fun Modifier.pageBackTransform(
     transformOrigin = TransformOrigin(turnTransformOriginX(profile, direction), 0.5f)
     // 背面角度与正面同步，HANDBOOK 模拟真实书页翻越
     val curlBoost = if (profile == TurnProfile.HANDBOOK) {
-        val early = 1f - visualProgress.coerceIn(0f, 0.5f) * 2f
-        early * 0.22f
+        val early = 1f - visualProgress.coerceIn(0f, 0.45f) / 0.45f
+        early * 0.18f
     } else 0f
     val progressCurve = (visualProgress * 0.22f) + (visualProgress * visualProgress * 0.78f) + curlBoost
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 108f else 118f
+    val maxRotation = if (profile == TurnProfile.HANDBOOK) 102f else 118f
     rotationY = when (direction) {
         TurnDirection.NEXT -> -maxRotation * progressCurve.coerceIn(0f, 1f) * 0.92f
         TurnDirection.PREVIOUS -> maxRotation * progressCurve.coerceIn(0f, 1f) * 0.92f
@@ -592,13 +593,13 @@ fun Modifier.pageBackTransform(
     }
     // 背面 translationX 与正面镜像，避免“贴在原地旋转”
     val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
-        val tail = ((visualProgress - 0.78f) / 0.22f).coerceIn(0f, 1f)
-        tail * 10f
+        val tail = ((visualProgress - 0.80f) / 0.20f).coerceIn(0f, 1f)
+        tail * 12f
     } else {
         0f
     }
     val backShift = if (profile == TurnProfile.HANDBOOK) {
-        progressCurve * 38f - handbookTailBoost * 0.50f
+        progressCurve * 34f - handbookTailBoost * 0.60f
     } else {
         visualProgress * 12f + progressCurve * 58f
     }
@@ -608,22 +609,22 @@ fun Modifier.pageBackTransform(
         else -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
-    translationY = yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 2.8f else 7.2f
-    rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 1.6f else 5.4f
+    translationY = yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 2.4f else 7.2f
+    rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 1.4f else 5.4f
     // HANDBOOK 背面用与正面一致的 cameraDistance
-    cameraDistance = if (profile == TurnProfile.HANDBOOK) 52f * density else 34f * density
-    val subtleBackScale = if (profile == TurnProfile.HANDBOOK) 1f - visualProgress * 0.016f else 1f - visualProgress * 0.012f
+    cameraDistance = if (profile == TurnProfile.HANDBOOK) 56f * density else 34f * density
+    val subtleBackScale = if (profile == TurnProfile.HANDBOOK) 1f - visualProgress * 0.014f else 1f - visualProgress * 0.012f
     scaleY = if (profile == TurnProfile.HANDBOOK) {
-        subtleBackScale.coerceIn(0.984f, 1f)
+        subtleBackScale.coerceIn(0.986f, 1f)
     } else {
         subtleBackScale.coerceIn(0.972f, 1f)
     }
     // 背面在中后段渐显，HANDBOOK 末段淡出避免切页残影
     alpha = if (profile == TurnProfile.HANDBOOK) {
-        if (visualProgress < 0.86f) {
-            (0.72f + visualProgress * 0.26f).coerceIn(0.72f, 0.98f)
+        if (visualProgress < 0.82f) {
+            (0.74f + visualProgress * 0.24f).coerceIn(0.74f, 0.98f)
         } else {
-            ((1f - visualProgress) / 0.14f).coerceIn(0f, 1f) * 0.98f
+            ((1f - visualProgress) / 0.18f).coerceIn(0f, 1f) * 0.98f
         }
     } else {
         (0.85f + visualProgress * 0.13f).coerceIn(0.85f, 0.98f)

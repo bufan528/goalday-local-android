@@ -1129,6 +1129,7 @@ private fun DiarySection(
                     onDiaryChange(structured.toRaw())
                     onContentModeChange(PageContentMode.Browsing)
                 },
+                isInBook = true,
             )
         } else {
             val previewState = currentDiaryState()

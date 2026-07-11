@@ -52,3 +52,9 @@ debug.keystore
 
 # Docs (reference materials)
 docs/superpowers/plans/
+
+# Test screenshots / UI dumps / screen recordings (root only)
+/*.png
+/*.mp4
+/*.xml
+/4

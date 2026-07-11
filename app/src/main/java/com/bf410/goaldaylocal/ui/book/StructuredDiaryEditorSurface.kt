@@ -8,6 +8,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -19,6 +20,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.KeyboardHide
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -34,6 +38,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -52,6 +58,7 @@ internal fun StructuredDiaryEditor(
     pendingCommand: RichEditorCommand?,
     onCommand: (RichEditorCommand) -> Unit,
     onDone: () -> Unit,
+    isInBook: Boolean = false,
 ) {
     val dateLabel = remember(state.dateIso) { diaryDateLabel(state.date) }
     var richEditorExpanded by remember(state.dateIso) { mutableStateOf(false) }
@@ -202,6 +209,11 @@ internal fun StructuredDiaryEditor(
                 },
             )
         }
+        DiaryEditorBottomBar(
+            isInBook = isInBook,
+            onAddImage = onAddImage,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -721,5 +733,68 @@ private fun DiaryPromptCell(
             maxLines = 2,
             textAlign = TextAlign.Center,
         )
+    }
+}
+
+/**
+ * 日记编辑器底栏，对齐原 APK fragment_diary.xml / fragment_diary_inbook.xml。
+ * - 独立页高度 102.22dp（46pt），书内页高度 51.11dp（23pt）
+ * - 背景 #E5DAD4（TabBarBg）
+ * - 左侧图片 + 键盘按钮
+ */
+@Composable
+private fun DiaryEditorBottomBar(
+    isInBook: Boolean,
+    onAddImage: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val height = if (isInBook) 51.11.dp else 102.22.dp
+    val buttonSize = if (isInBook) 36.dp else 55.56.dp
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .background(GoaldayDesign.TabBarBg)
+            .padding(horizontal = 8.33.dp),
+    ) {
+        Row(
+            modifier = Modifier.align(Alignment.CenterStart),
+            horizontalArrangement = Arrangement.spacedBy(8.33.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(buttonSize)
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .clickable { onAddImage() }
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Image,
+                    contentDescription = "插入图片",
+                    tint = GoaldayDesign.adaptiveInkPrimary,
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(buttonSize)
+                    .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
+                    .clickable {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                    }
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardHide,
+                    contentDescription = "收起键盘",
+                    tint = GoaldayDesign.adaptiveInkPrimary,
+                )
+            }
+        }
     }
 }

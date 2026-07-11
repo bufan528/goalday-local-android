@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,32 +14,45 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Typography
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -111,6 +125,11 @@ private enum class RootTab(val label: String, val icon: ImageVector) {
     SETTINGS("设置", Icons.Filled.Settings),
 }
 
+private data class TabConfig(
+    val tab: RootTab,
+    val visible: Boolean = true,
+)
+
 private enum class BookRootSurface {
     HOME,
     BOOK,
@@ -123,6 +142,7 @@ private data class AppRoute(
     val bookEntryMode: BookEntryMode,
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GoaldayApp(startTarget: String? = null) {
     var tab by rememberSaveable(startTarget) {
@@ -151,6 +171,27 @@ fun GoaldayApp(startTarget: String? = null) {
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()
     val mmkv = remember { MMKV.defaultMMKV() }
+    // Tab 管理：读取保存的顺序与显隐配置
+    val savedTabOrder = remember { mmkv.decodeString(KEY_TAB_ORDER, null) }
+    val savedTabVisible = remember { mmkv.decodeString(KEY_TAB_VISIBLE, null) }
+    var tabConfigs by remember {
+        val default = RootTab.entries.map { TabConfig(it, true) }
+        val order = savedTabOrder?.split(",")?.mapNotNull { name ->
+            RootTab.entries.find { it.name == name }
+        }
+        val visible = savedTabVisible?.split(",")?.map { it.toBooleanStrictOrNull() }
+        val configs = if (order != null && order.size == RootTab.entries.size) {
+            order.mapIndexed { index, tab ->
+                TabConfig(tab, visible?.getOrNull(index) ?: true)
+            }
+        } else default
+        mutableStateOf(configs)
+    }
+    LaunchedEffect(tabConfigs) {
+        mmkv.encode(KEY_TAB_ORDER, tabConfigs.joinToString(",") { it.tab.name })
+        mmkv.encode(KEY_TAB_VISIBLE, tabConfigs.joinToString(",") { it.visible.toString() })
+    }
+    var showTabManager by remember { mutableStateOf(false) }
     var darkModePref by remember { mutableStateOf(mmkv.decodeString("dark_mode", "AUTO") ?: "AUTO") }
     val systemDark = isSystemInDarkTheme()
     val isDark = when (darkModePref) {
@@ -276,8 +317,10 @@ fun GoaldayApp(startTarget: String? = null) {
                 // P1-1：导航改为顶部文字 Tab（对照原版 FlexibleTabLayout：minHeight=49dp, 纯文字 18sp bold）
                 val immersiveBook = tab == RootTab.BOOK && bookSurface == BookRootSurface.BOOK && bookEntryMode != BookEntryMode.PLANNER
                 if (!immersiveBook) {
+                    val visibleTabs = tabConfigs.filter { it.visible }.map { it.tab }
                     GoaldayTopTabBar(
                         selectedTab = tab,
+                        tabs = visibleTabs,
                         onSelect = { item ->
                             if (tab != item) {
                                 tab = item
@@ -290,6 +333,7 @@ fun GoaldayApp(startTarget: String? = null) {
                                 }
                             }
                         },
+                        onManage = { showTabManager = true },
                     )
                 }
             },
@@ -402,6 +446,13 @@ fun GoaldayApp(startTarget: String? = null) {
                     GuideOverlay(
                         onClose = ::closeGuide,
                         onOpenTarget = ::openGuideTarget,
+                    )
+                }
+                if (showTabManager) {
+                    TabManagementSheet(
+                        configs = tabConfigs,
+                        onConfigsChange = { tabConfigs = it },
+                        onDismiss = { showTabManager = false },
                     )
                 }
             }
@@ -558,27 +609,185 @@ private fun BookRootSegmentChip(
 @Composable
 private fun GoaldayTopTabBar(
     selectedTab: RootTab,
+    tabs: List<RootTab>,
     onSelect: (RootTab) -> Unit,
+    onManage: () -> Unit,
 ) {
     val isDark = LocalGoaldayDarkMode.current
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(49.dp)
             .background(if (isDark) GoaldayDesign.DarkTabBarBg else GoaldayDesign.TabBarBg)
             .padding(bottom = 5.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        RootTab.entries.forEach { tab ->
-            Text(
-                text = tab.label,
-                fontSize = 18.sp,
-                fontWeight = if (selectedTab == tab) FontWeight.Bold else FontWeight.Normal,
-                color = if (selectedTab == tab) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
-                maxLines = 1,
-                modifier = Modifier.clickable { onSelect(tab) },
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = GoaldayDesign.Space3)
+                .align(Alignment.Center),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            tabs.forEach { tab ->
+                Text(
+                    text = tab.label,
+                    fontSize = 18.sp,
+                    fontWeight = if (selectedTab == tab) FontWeight.Bold else FontWeight.Normal,
+                    color = if (selectedTab == tab) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
+                    maxLines = 1,
+                    modifier = Modifier.clickable { onSelect(tab) },
+                )
+            }
+        }
+        Text(
+            text = "管理",
+            fontSize = 12.sp,
+            color = GoaldayDesign.adaptiveInkMuted,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = GoaldayDesign.Space2)
+                .clickable { onManage() },
+        )
+    }
+}
+
+private const val KEY_TAB_ORDER = "tab_order_v1"
+private const val KEY_TAB_VISIBLE = "tab_visible_v1"
+
+/**
+ * Tab 管理底部弹窗：支持拖拽排序与显隐切换。
+ * 对齐原版首页顶部 Tab 长按/管理入口。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TabManagementSheet(
+    configs: List<TabConfig>,
+    onConfigsChange: (List<TabConfig>) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var localConfigs by remember(configs) { mutableStateOf(configs) }
+    var draggedIndex by remember { mutableStateOf<Int?>(null) }
+    var draggedOffset by remember { mutableStateOf(0f) }
+    val itemHeightPx = with(LocalDensity.current) { 52.dp.toPx() }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = GoaldayDesign.Space3)
+                .padding(bottom = GoaldayDesign.Space4),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "标签管理",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                )
+                TextButton(
+                    onClick = {
+                        onConfigsChange(localConfigs)
+                        onDismiss()
+                    },
+                ) {
+                    Text("完成", color = GoaldayDesign.PrimaryAction)
+                }
+            }
+            Spacer(Modifier.height(GoaldayDesign.Space2))
+            localConfigs.forEachIndexed { index, config ->
+                val isDragging = draggedIndex == index
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .graphicsLayer {
+                            translationY = if (isDragging) draggedOffset else 0f
+                        }
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
+                        .background(if (isDragging) GoaldayDesign.SurfaceSoft else GoaldayDesign.adaptiveSurface)
+                        .border(
+                            GoaldayDesign.Hairline,
+                            GoaldayDesign.BorderColor.copy(alpha = 0.1f),
+                            RoundedCornerShape(GoaldayDesign.RadiusM),
+                        )
+                        .padding(horizontal = GoaldayDesign.Space3),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DragHandle,
+                            contentDescription = "拖动排序",
+                            tint = GoaldayDesign.adaptiveInkMuted,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .pointerInput(Unit) {
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = { draggedIndex = index },
+                                        onDragEnd = {
+                                            draggedIndex = null
+                                            draggedOffset = 0f
+                                        },
+                                        onDragCancel = {
+                                            draggedIndex = null
+                                            draggedOffset = 0f
+                                        },
+                                        onDrag = { change, dragAmount ->
+                                            change.consume()
+                                            draggedOffset += dragAmount.y
+                                            val current = draggedIndex ?: return@detectDragGesturesAfterLongPress
+                                            val moveItems = (draggedOffset / itemHeightPx).toInt()
+                                            val target = (current + moveItems)
+                                                .coerceIn(0, localConfigs.lastIndex)
+                                            if (target != current) {
+                                                localConfigs = localConfigs.toMutableList().apply {
+                                                    val item = removeAt(current)
+                                                    add(target, item)
+                                                }
+                                                draggedIndex = target
+                                                draggedOffset -= moveItems * itemHeightPx
+                                            }
+                                        },
+                                    )
+                                },
+                        )
+                        Icon(config.tab.icon, contentDescription = null, tint = GoaldayDesign.adaptiveInkPrimary)
+                        Text(
+                            config.tab.label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = GoaldayDesign.adaptiveInkPrimary,
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            localConfigs = localConfigs.mapIndexed { i, c ->
+                                if (i == index) c.copy(visible = !c.visible) else c
+                            }
+                        },
+                    ) {
+                        Icon(
+                            imageVector = if (config.visible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (config.visible) "隐藏" else "显示",
+                            tint = if (config.visible) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
+                        )
+                    }
+                }
+                if (index < localConfigs.lastIndex) {
+                    Spacer(Modifier.height(GoaldayDesign.Space1))
+                }
+            }
         }
     }
 }
