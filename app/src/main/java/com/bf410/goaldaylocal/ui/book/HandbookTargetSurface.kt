@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.Checkbox
@@ -41,16 +42,18 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.animation.core.animate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -71,6 +74,7 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -326,11 +330,13 @@ internal fun TargetDetailReplicaPage(
             val meta = targetItemMeta[item] ?: TargetItemMeta()
             var noteDraft by remember(item, meta.note) { mutableStateOf(meta.note) }
             val isSelected = selectedItem == item
-            // 对照 item_target_detail.xml：SwipeRevealLayout 从右向左滑动露出删除按钮
-            var swipeOffset by remember(item) { mutableStateOf(0f) }
+            // 对照 item_target_detail.xml：SwipeRevealLayout 从右向左滑动露出编辑(黑)+删除(#ED8888)
+            val scope = rememberCoroutineScope()
+            var swipeOffset by remember(item) { mutableFloatStateOf(0f) }
             val density = LocalDensity.current
-            val revealWidth = with(density) { 111.11.dp.toPx() } // 50pt=111.11dp（aapt2 验证：1pt=2.222dp）
-            val clampedOffset = swipeOffset.coerceIn(-revealWidth, 0f)
+            val buttonWidth = with(density) { 111.11.dp.toPx() } // 50pt = 111.11dp
+            val maxOffset = -buttonWidth * 2f // 编辑 + 删除两格
+            val clampedOffset = swipeOffset.coerceIn(maxOffset, 0f)
 
             Box(
                 modifier = Modifier
@@ -338,27 +344,52 @@ internal fun TargetDetailReplicaPage(
                     .height(IntrinsicSize.Min)
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusM)),
             ) {
-                // 底层：删除按钮（右侧，对照逆向 #ed8888 背景）
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(GoaldayDesign.Danger),
-                    contentAlignment = Alignment.CenterEnd,
+                // 底层：编辑（黑）+ 删除（#ED8888）两格，总宽 100pt = 222.22dp
+                Row(
+                    modifier = Modifier.matchParentSize(),
+                    horizontalArrangement = Arrangement.End,
                 ) {
-                    Icon(
-                        Icons.Filled.Delete,
-                        contentDescription = "删除",
-                        tint = Color.White,
+                    Box(
                         modifier = Modifier
-                            .size(24.dp)
-                            .padding(end = 26.dp)  // 对照 activity_target_detail.xml: padding=13dp + marginEnd=13dp = 26dp
+                            .fillMaxHeight()
+                            .width(111.11.dp)
+                            .background(Color.Black)
+                            .clickable {
+                                swipeOffset = 0f
+                                if (item in customItems) {
+                                    editingItem = item
+                                    editingText = item
+                                }
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Filled.Edit,
+                            contentDescription = "编辑",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(111.11.dp)
+                            .background(GoaldayDesign.Danger)
                             .clickable {
                                 swipeOffset = 0f
                                 if (item in customItems) onRemoveCustomItem(item)
                             },
-                    )
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = "删除",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
                 }
-                // 上层：内容卡片，可拖动
+                // 上层：内容卡片，可拖动；拖动停止后吸附到最近锚点
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -369,14 +400,25 @@ internal fun TargetDetailReplicaPage(
                             if (isSelected) tint.copy(alpha = 0.55f) else if (checked) GoaldayDesign.Positive.copy(alpha = 0.35f) else GoaldayDesign.adaptiveDivider,
                             RoundedCornerShape(GoaldayDesign.RadiusM),
                         )
-                        .clickable { selectedItem = if (isSelected) null else item }
+                        .clickable {
+                            selectedItem = if (isSelected) null else item
+                            swipeOffset = 0f
+                        }
                         .draggable(
                             orientation = Orientation.Horizontal,
                             state = rememberDraggableState { delta ->
-                                swipeOffset = (swipeOffset + delta).coerceIn(-revealWidth, 0f)
+                                swipeOffset = (swipeOffset + delta).coerceIn(maxOffset, 0f)
                             },
-                            onDragStopped = {
-                                swipeOffset = if (swipeOffset < -revealWidth / 2) -revealWidth else 0f
+                            onDragStopped = { _ ->
+                                val target = when {
+                                    swipeOffset < -buttonWidth * 1.5f -> maxOffset
+                                    swipeOffset < -buttonWidth * 0.5f -> -buttonWidth
+                                    else -> 0f
+                                }
+                                scope.launch {
+                                    val start = swipeOffset
+                                    animate(start, target) { value, _ -> swipeOffset = value }
+                                }
                             },
                         )
                         .padding(start = 27.dp, top = 21.dp, end = 27.dp, bottom = 20.dp),
@@ -605,7 +647,8 @@ internal fun TargetDetailReplicaPage(
     }
 }
 
-// 对照逆向 activity_target_detail.xml cl_bottom_board：46dp 白底，日期标签 + 1dp 分隔线 + 删除/置顶/完成
+// 对照逆向 activity_target_detail.xml cl_bottom_board：46dip 白底，
+// 左侧日期标签（bg_target_detail_date, bgTint=#CFF6F6F6）+ 1dp 分隔线 + 置顶/完成/删除
 @Composable
 private fun TargetBottomActionBar(
     selectedItem: String,
@@ -616,7 +659,6 @@ private fun TargetBottomActionBar(
     onDelete: () -> Unit,
     onDatePick: () -> Unit,
 ) {
-    val context = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -625,18 +667,18 @@ private fun TargetBottomActionBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 左侧：日期标签（对照 tv_date: 20sp, bg_target_detail_date, bgTint=#F6F6F6）
+        // 左侧：日期标签（tv_date: 20sp, bgTint=#CFF6F6F6, paddingHorizontal=10dip）
         Text(
             text = "日期",
             fontSize = 20.sp,
             color = GoaldayDesign.adaptiveInkPrimary,
             modifier = Modifier
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                .background(GoaldayDesign.adaptiveSurface)
+                .background(Color(0xCFF6F6F6))
                 .clickable { onDatePick() }
                 .padding(horizontal = 10.dp),
         )
-        // 右侧图标组：分隔线(1dp/22dp 自适应色) + 删除 + 置顶 + 完成（各 padding=13dp）
+        // 右侧图标组：分隔线(1dp×22dp #D3CDC6) + 置顶 + 完成 + 删除（marginEnd=13dp）
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(0.dp),
@@ -645,16 +687,7 @@ private fun TargetBottomActionBar(
                 modifier = Modifier
                     .width(1.dp)
                     .height(22.dp)
-                    .background(GoaldayDesign.adaptiveDivider),
-            )
-            Icon(
-                Icons.Filled.Delete,
-                contentDescription = "删除",
-                modifier = Modifier
-                    .size(22.dp)
-                    .padding(start = 13.dp, top = 13.dp, bottom = 13.dp, end = 26.dp)  // 对照 activity_target_detail.xml 删除图标 marginEnd=13dp
-                    .clickable { onDelete() },
-                tint = GoaldayDesign.Danger,
+                    .background(GoaldayDesign.ScheduleDateColumnSeparator),
             )
             Icon(
                 Icons.Filled.VerticalAlignTop,
@@ -673,6 +706,17 @@ private fun TargetBottomActionBar(
                     .padding(13.dp)
                     .clickable { onComplete() },
                 tint = GoaldayDesign.Positive,
+            )
+            Icon(
+                Icons.Filled.Delete,
+                contentDescription = "删除",
+                modifier = Modifier
+                    .size(22.dp)
+                    // padding=13dp + marginEnd=13dp
+                    .padding(13.dp)
+                    .padding(end = 13.dp)
+                    .clickable { onDelete() },
+                tint = GoaldayDesign.Danger,
             )
         }
     }

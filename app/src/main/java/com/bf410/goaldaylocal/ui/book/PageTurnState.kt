@@ -122,9 +122,8 @@ fun updatedTurnProgress(
 }
 
 fun turnTransformOriginX(profile: TurnProfile, direction: TurnDirection?): Float {
-    if (profile == TurnProfile.HANDBOOK && direction != null) {
-        return 0.5f
-    }
+    // HANDBOOK 也围绕书脊（内页边缘）旋转，才像真实书页翻越；
+    // 绕中心旋转会变成“卡片翻转”，不像书本。
     return if (direction == TurnDirection.NEXT) 0f else 1f
 }
 

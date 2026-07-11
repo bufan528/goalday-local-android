@@ -242,12 +242,12 @@ private fun InBookScheduleDayRow(
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
-        // 左侧日期列：24.5dp 宽（aapt2 验证为 dp）
+        // 左侧日期列：12.25dip = 12.25dp（aapt2 验证）
         // tv_day_1: textSize=9dp, marginBottom=2dp, 上半区
         // divider_line: textSize=9dp "—", color_tab_divider(#C5BBB6), 居中
         // tv_day_2: textSize=6dp, marginTop=2dp, 下半区
         Box(
-            modifier = Modifier.width(24.5.dp),
+            modifier = Modifier.width(12.25.dp),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -273,7 +273,7 @@ private fun InBookScheduleDayRow(
             }
         }
         // 右侧 2 列 × 3 行目标槽
-        // 对照：2个 LinearLayout(weight=1), paddingVertical=3.5pt=7.78dp（aapt2 验证为 pt）
+        // 对照：2个 LinearLayout(weight=1), paddingVertical=1.75pt=3.89dp（aapt2 验证为 pt）
         val leftEntries = entries.filterIndexed { i, _ -> i % 2 == 0 }.take(3)
         val rightEntries = entries.filterIndexed { i, _ -> i % 2 == 1 }.take(3)
         InBookScheduleTargetColumn(
@@ -298,9 +298,9 @@ private fun InBookScheduleTargetColumn(
     isChecked: (String, String) -> Boolean,
     modifier: Modifier = Modifier,
 ) {
-    // 对照：paddingVertical=3.5pt=7.78dp（aapt2 验证为 pt）
+    // 对照：paddingVertical=1.75pt=3.89dp（aapt2 验证为 pt）
     Column(
-        modifier = modifier.padding(vertical = 7.78.dp),
+        modifier = modifier.padding(vertical = 3.89.dp),
     ) {
         for (i in 0 until 3) {
             val entry = entries.getOrNull(i)
@@ -513,6 +513,7 @@ internal fun InBookDiaryPreview(
     turnProgress: Float,
     turnDirection: TurnDirection?,
     handbookMode: Boolean = false,
+    onAddImage: () -> Unit = {},
 ) {
     val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
     val shift = when (turnDirection) {
@@ -538,18 +539,53 @@ internal fun InBookDiaryPreview(
                 .padding(top = 5.dp, bottom = 30.dp, start = 16.67.dp, end = 16.67.dp),
         ) {
             val contentScroll = if (handbookMode) Modifier else Modifier.verticalScroll(rememberScrollState())
+            // 解析日记数据，正确渲染图片和文本块
+            val diary = remember(diaryDraft) { StructuredDiary.fromRaw(diaryDraft) }
+            val imageUris = remember(diary) { (diary.imageBlockUris + diary.legacyImageUris).distinct() }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .then(contentScroll),
                 verticalArrangement = Arrangement.spacedBy(5.dp),
             ) {
+                // 图片区：对照 item_diary_img.xml
+                if (imageUris.isNotEmpty()) {
+                    DiaryImageStrip(imageUris = imageUris, onRemoveImage = null)
+                }
                 // 对照 item_diary_text.xml：16sp #2C2C2C, lineSpacingExtra=2dp
                 // 16sp 字体默认行高约 19.2sp + 2dp 间距 ≈ 21sp
-                val plainText = diaryDraft.ifBlank { page.prompt }
-                plainText.split("\n").filter { it.isNotBlank() }.forEach { line ->
+                if (diary.hasUserContent) {
+                    // 渲染文本块（跳过图片块，图片已在上方渲染）
+                    diary.blocks.filter { it.type != DiaryBlockType.IMAGE }.forEach { block ->
+                        val text = block.text
+                        if (text.isNotBlank()) {
+                            Text(
+                                text,
+                                fontSize = 16.sp,
+                                color = GoaldayDesign.DiarySectionInk,
+                                lineHeight = 21.sp,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                    // 渲染摘要文本（今日完成/工作任务/小幸福/可改进）
+                    listOf(diary.todayDone, diary.workTasks, diary.smallJoy, diary.canImprove)
+                        .filter { it.isNotBlank() }
+                        .forEach { section ->
+                            section.split("\n").filter { it.isNotBlank() }.forEach { line ->
+                                Text(
+                                    line,
+                                    fontSize = 16.sp,
+                                    color = GoaldayDesign.DiarySectionInk,
+                                    lineHeight = 21.sp,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        }
+                } else {
+                    // 空日记显示提示语
                     Text(
-                        line,
+                        page.prompt,
                         fontSize = 16.sp,
                         color = GoaldayDesign.DiarySectionInk,
                         lineHeight = 21.sp,
@@ -570,14 +606,15 @@ internal fun InBookDiaryPreview(
             Box(
                 modifier = Modifier
                     .padding(start = 8.33.dp)
-                    .size(51.11.dp),
+                    .size(51.11.dp)
+                    .clickable { onAddImage() },
                 contentAlignment = Alignment.Center,
             ) {
-                // ic_select_pic: 12.5pt=27.78dp × 27.78dp（aapt2 验证为 pt）
+                // ic_select_pic: 6.25pt=13.89dp × 13.89dp（aapt2 验证为 pt）
                 Image(
                     painter = painterResource(R.drawable.ic_select_pic),
                     contentDescription = "插入图片",
-                    modifier = Modifier.size(27.78.dp),
+                    modifier = Modifier.size(13.89.dp),
                 )
             }
         }
