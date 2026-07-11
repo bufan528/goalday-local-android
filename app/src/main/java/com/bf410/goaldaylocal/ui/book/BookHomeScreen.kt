@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -998,9 +999,16 @@ private fun BookDetailView(
 ) {
     val handbookMode = bookOnlyMode || forcedSegment == BookSegment.DIARY
     var segment by remember(book.id) { mutableStateOf(resolveSegment(currentPage)) }
+    // HANDBOOK 阅读模式下，顶部 tab 对应原 APK 的 HandbookSection（总览/日程/日记/目标），
+    // 与外层清单/周/月/记录（BookSegment）区分。
+    var handbookSection by remember(book.id) { mutableStateOf(resolveHandbookSection(currentPage)) }
     LaunchedEffect(forcedSegment, book.id) {
         val desired = forcedSegment ?: return@LaunchedEffect
         segment = desired
+        handbookSection = when (desired) {
+            BookSegment.DIARY -> HandbookSection.DIARY
+            else -> HandbookSection.SCHEDULE
+        }
         // 切换入口模式时，如果当前页已经符合目标 segment，优先保留当前页
         val targetIndex = if (matchesSegment(currentPage, desired)) {
             uiState.selectedPageIndex
@@ -1010,6 +1018,9 @@ private fun BookDetailView(
         if (targetIndex >= 0 && uiState.selectedPageIndex != targetIndex) {
             viewModel.setPage(targetIndex)
         }
+    }
+    LaunchedEffect(currentPage, book.id) {
+        handbookSection = resolveHandbookSection(currentPage)
     }
     val filteredPages = remember(book.pages, segment, bookOnlyMode) {
         // HANDBOOK 入口（bookOnlyMode=true）：显示全部页面，允许翻到日记页
@@ -1051,6 +1062,19 @@ private fun BookDetailView(
         }
     }
 
+    fun switchHandbookSection(next: HandbookSection) {
+        handbookSection = next
+        // 总览保留当前页；其他按类型跳转到第一本对应页面
+        val targetIndex = if (matchesHandbookSection(currentPage, next)) {
+            uiState.selectedPageIndex
+        } else {
+            book.pages.indexOfFirst { page -> matchesHandbookSection(page, next) }
+        }
+        if (targetIndex >= 0 && uiState.selectedPageIndex != targetIndex) {
+            viewModel.setPage(targetIndex)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1062,11 +1086,12 @@ private fun BookDetailView(
                 // 背景色 #E5DAD4，minHeight=49dp，paddingBottom=5dp
                 // Tab 文字 18sp bold，选中黑色，未选中 #36000000
                 // 对照 fragment_main_page.xml / toolbar_normal.xml：
-                // 顶部 Toolbar 为左右结构，左侧返回、中间标题/tab、右侧操作按钮，
-                // 避免全部居中导致 tab 被两侧按钮挤偏。
+                // 顶部 Toolbar 为左右结构，左侧返回、中间标题/tab、右侧“完成”按钮。
+                // HANDBOOK 模式下 tab 对应原 APK 的 总览/日程/日记/目标。
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = 49.dp)
                         .background(Color(0xFFE5DAD4))
                         .padding(bottom = 5.dp),
                 ) {
@@ -1088,33 +1113,32 @@ private fun BookDetailView(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BookSegment.entries.forEachIndexed { idx, seg ->
-                            val isSelected = BookSegment.entries.indexOf(segment) == idx
+                        HandbookSection.entries.forEachIndexed { idx, sec ->
+                            val isSelected = HandbookSection.entries.indexOf(handbookSection) == idx
                             Text(
-                                text = seg.label,
+                                text = sec.label,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isSelected) Color.Black else Color(0x36000000),
                                 modifier = Modifier
-                                    .clickable { switchSegment(seg) }
-                                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                                    .clickable { switchHandbookSection(sec) }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
                             )
                         }
                     }
-                    // 右侧灵感按钮
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    // 右侧“完成”按钮（对齐原 APK toolbar_normal.xml 右上角）
+                    Text(
+                        text = "完成",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = GoaldayDesign.adaptiveInkSecondary,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
-                            .padding(end = GoaldayDesign.Space2, top = 6.dp, bottom = 6.dp)
+                            .padding(end = GoaldayDesign.Space2, top = 8.dp, bottom = 8.dp)
                             .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .clickable(onClick = onShowInspiration)
-                            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
-                    ) {
-                        Icon(Icons.Filled.Lightbulb, contentDescription = "灵感", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
-                        Text("灵感", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
-                    }
+                            .clickable { onBackToLibrary() }
+                            .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space1 + 2.dp),
+                    )
                 }
             } else {
                 GoaldayTopBar(

@@ -247,12 +247,12 @@ private fun InBookScheduleDayRow(
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
-        // 左侧日期列：12.25dip = 12.25dp（aapt2 验证）
+        // 左侧日期列：24.5dp（aapt2 验证 item_schedule_item_in_book.xml）
         // tv_day_1: textSize=9dp, marginBottom=2dp, 上半区
         // divider_line: textSize=9dp "—", color_tab_divider(#C5BBB6), 居中
         // tv_day_2: textSize=6dp, marginTop=2dp, 下半区
         Box(
-            modifier = Modifier.width(12.25.dp),
+            modifier = Modifier.width(24.5.dp),
             contentAlignment = Alignment.Center,
         ) {
             Column(
