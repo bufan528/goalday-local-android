@@ -22,7 +22,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -344,6 +347,7 @@ internal fun InBookPlanPreview(
     isChecked: (String, String) -> Boolean,
     onToggleChecked: (String, String) -> Unit,
     onDeleteItem: (String) -> Unit = {},
+    onEditItem: (String, String) -> Unit = { _, _ -> },
     tint: Color,
     turnProgress: Float,
     turnDirection: TurnDirection?,
@@ -361,6 +365,8 @@ internal fun InBookPlanPreview(
         (page.items + customPageItems).distinct()
     }
 
+    var editingItem by remember { mutableStateOf<String?>(null) }
+
     LazyColumn(
         modifier = modifier
             .graphicsLayer {
@@ -377,8 +383,37 @@ internal fun InBookPlanPreview(
                 checked = isChecked(page.title, item),
                 onToggleChecked = { onToggleChecked(page.title, item) },
                 onDelete = { onDeleteItem(item) },
+                onEdit = { editingItem = item },
             )
         }
+    }
+
+    // 编辑对话框
+    editingItem?.let { currentItem ->
+        var editText by remember(currentItem) { mutableStateOf(currentItem) }
+        AlertDialog(
+            onDismissRequest = { editingItem = null },
+            title = { Text("编辑计划") },
+            text = {
+                OutlinedTextField(
+                    value = editText,
+                    onValueChange = { editText = it },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (editText.isNotBlank() && editText != currentItem) {
+                        onEditItem(currentItem, editText)
+                    }
+                    editingItem = null
+                }) { Text("确定") }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingItem = null }) { Text("取消") }
+            },
+        )
     }
 }
 
@@ -388,6 +423,7 @@ private fun InBookPlanRow(
     checked: Boolean,
     onToggleChecked: () -> Unit,
     onDelete: () -> Unit = {},
+    onEdit: () -> Unit = {},
 ) {
     // 对照 item_plan_item.xml（aapt2 验证：全部值为 pt，1pt=2.222dp）:
     // SwipeRevealLayout marginBottom=2pt=4.44dp
@@ -416,7 +452,11 @@ private fun InBookPlanRow(
                         .width(111.11.dp)
                         .fillMaxHeight()
                         .background(Color.Black)
-                        .clickable { /* 编辑暂不实现 */ },
+                        .clickable {
+                            onEdit()
+                            swipeRevealed = false
+                            scope.launch { swipeOffset.animateTo(0f) }
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text("编辑", color = Color.White, fontSize = 14.sp)
@@ -555,19 +595,9 @@ internal fun InBookDiaryPreview(
                 // 对照 item_diary_text.xml：16sp #2C2C2C, lineSpacingExtra=2dp
                 // 16sp 字体默认行高约 19.2sp + 2dp 间距 ≈ 21sp
                 if (diary.hasUserContent) {
-                    // 渲染文本块（跳过图片块，图片已在上方渲染）
-                    diary.blocks.filter { it.type != DiaryBlockType.IMAGE }.forEach { block ->
-                        val text = block.text
-                        if (text.isNotBlank()) {
-                            Text(
-                                text,
-                                fontSize = 16.sp,
-                                color = GoaldayDesign.DiarySectionInk,
-                                lineHeight = 21.sp,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
-                    }
+                    // 渲染所有非图片块（图片已在上方渲染）：TARGET/TOPIC_TARGET/TARGET_CHILD/TEXT
+                    val nonImageBlocks = diary.blocks.filter { it.type != DiaryBlockType.IMAGE }
+                    DiaryTypedBlockPreview(nonImageBlocks)
                     // 渲染摘要文本（今日完成/工作任务/小幸福/可改进）
                     listOf(diary.todayDone, diary.workTasks, diary.smallJoy, diary.canImprove)
                         .filter { it.isNotBlank() }
@@ -622,8 +652,9 @@ internal fun InBookDiaryPreview(
 }
 // endregion
 
-// region 目标页 (item_target_detail.xml 简化版, 无滑动删除)
+// region 目标页 (item_target_detail.xml 简化版, 支持滑动删除)
 // 结构：列表，每项 → 勾选框(20dp) + 目标文字(20sp) + 底部分隔线(4dp)
+// 滑动操作：对照 item_target_detail.xml 使用 SwipeRevealLayout，右侧滑出编辑(黑色)+删除(#ed8888)
 @Composable
 internal fun InBookTargetPreview(
     modifier: Modifier,
@@ -635,6 +666,8 @@ internal fun InBookTargetPreview(
     isChecked: (String, String) -> Boolean,
     onToggleChecked: (String, String) -> Unit,
     onOpenTargetDetail: (String) -> Unit,
+    onDeleteItem: (String) -> Unit = {},
+    onEditItem: (String, String) -> Unit = { _, _ -> },
     tint: Color,
     turnProgress: Float,
     turnDirection: TurnDirection?,
@@ -652,6 +685,8 @@ internal fun InBookTargetPreview(
         (page.items + customPageItems).distinct()
     }
 
+    var editingItem by remember { mutableStateOf<String?>(null) }
+
     LazyColumn(
         modifier = modifier
             .graphicsLayer {
@@ -668,12 +703,43 @@ internal fun InBookTargetPreview(
                 checked = checked,
                 onToggleChecked = { onToggleChecked(page.title, item) },
                 onOpenDetail = { onOpenTargetDetail(item) },
+                onDelete = { onDeleteItem(item) },
+                onEdit = { editingItem = item },
             )
         }
+    }
+
+    // 编辑对话框
+    editingItem?.let { currentItem ->
+        var editText by remember(currentItem) { mutableStateOf(currentItem) }
+        AlertDialog(
+            onDismissRequest = { editingItem = null },
+            title = { Text("编辑目标") },
+            text = {
+                OutlinedTextField(
+                    value = editText,
+                    onValueChange = { editText = it },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (editText.isNotBlank() && editText != currentItem) {
+                        onEditItem(currentItem, editText)
+                    }
+                    editingItem = null
+                }) { Text("确定") }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingItem = null }) { Text("取消") }
+            },
+        )
     }
 }
 
 // 对照 item_target_detail.xml
+// SwipeRevealLayout dragEdge=right，右侧滑出编辑(黑色)+删除(#ed8888)
 // fl_check: paddingTop=21dp, paddingBottom=20dp, paddingStart/End=27dp
 // iv_check: wrap_content (ic_box_full 背景 + ic_box_select 前景, 约20dp)
 // tv_content: textSize=20dip=20sp, marginStart=10dp, marginEnd=27dp, paddingBottom=12dp
@@ -684,60 +750,136 @@ private fun InBookTargetRow(
     checked: Boolean,
     onToggleChecked: () -> Unit,
     onOpenDetail: () -> Unit,
+    onDelete: () -> Unit = {},
+    onEdit: () -> Unit = {},
 ) {
-    Column(
+    val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    var swipeRevealed by remember { mutableStateOf(false) }
+    val revealWidth = 222.22.dp  // 与计划页一致：编辑+删除各 111.11dp
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onOpenDetail() },
+            .heightIn(min = 80.dp),
     ) {
-        // 内容区：对照 fl_check paddingTop=21dp, paddingBottom=20dp, paddingStart/End=27dp
-        Row(
+        // 右侧滑动操作按钮（编辑+删除）
+        if (swipeRevealed) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight(),
+            ) {
+                // 编辑按钮：黑色背景
+                Box(
+                    modifier = Modifier
+                        .width(111.11.dp)
+                        .fillMaxHeight()
+                        .background(Color.Black)
+                        .clickable {
+                            onEdit()
+                            swipeRevealed = false
+                            scope.launch { swipeOffset.animateTo(0f) }
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("编辑", color = Color.White, fontSize = 14.sp)
+                }
+                // 删除按钮：#ed8888 红色背景
+                Box(
+                    modifier = Modifier
+                        .width(111.11.dp)
+                        .fillMaxHeight()
+                        .background(Color(0xFFed8888))
+                        .clickable {
+                            onDelete()
+                            swipeRevealed = false
+                            scope.launch { swipeOffset.animateTo(0f) }
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("删除", color = Color.White, fontSize = 14.sp)
+                }
+            }
+        }
+
+        // 内容层：可滑动
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 27.dp, top = 21.dp, end = 27.dp, bottom = 20.dp),
-            verticalAlignment = Alignment.Top,
+                .graphicsLayer { translationX = swipeOffset.value }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onHorizontalDrag = { _, dragAmount ->
+                            val newX = (swipeOffset.value + dragAmount).coerceIn(-revealWidth.value, 0f)
+                            scope.launch { swipeOffset.snapTo(newX) }
+                        },
+                        onDragEnd = {
+                            if (swipeOffset.value < -revealWidth.value / 2) {
+                                scope.launch { swipeOffset.animateTo(-revealWidth.value) }
+                                swipeRevealed = true
+                            } else {
+                                scope.launch { swipeOffset.animateTo(0f) }
+                                swipeRevealed = false
+                            }
+                        },
+                        onDragCancel = {
+                            scope.launch { swipeOffset.animateTo(0f) }
+                            swipeRevealed = false
+                        },
+                    )
+                }
+                .clickable { onOpenDetail() },
         ) {
-            // 勾选框：原版 wrap_content (ic_box_full + ic_box_select)，约20dp
-            InBookCheckbox(
-                checked = checked,
-                onToggle = onToggleChecked,
-                modifier = Modifier.padding(top = 2.dp),
-                size = 20,
-            )
-            // 目标文字：对照 tv_content textSize=20dip=20sp, marginStart=10dp, paddingBottom=12dp
-            Text(
-                item,
-                fontSize = 20.sp,
-                color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
-                textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
-                fontWeight = FontWeight.Medium,
+            // 内容区：对照 fl_check paddingTop=21dp, paddingBottom=20dp, paddingStart/End=27dp
+            Row(
                 modifier = Modifier
-                    .padding(start = 10.dp, bottom = 12.dp)
-                    .weight(1f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+                    .fillMaxWidth()
+                    .padding(start = 27.dp, top = 21.dp, end = 27.dp, bottom = 20.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                // 勾选框：原版 wrap_content (ic_box_full + ic_box_select)，约20dp
+                InBookCheckbox(
+                    checked = checked,
+                    onToggle = onToggleChecked,
+                    modifier = Modifier.padding(top = 2.dp),
+                    size = 20,
+                )
+                // 目标文字：对照 tv_content textSize=20dip=20sp, marginStart=10dp, paddingBottom=12dp
+                Text(
+                    item,
+                    fontSize = 20.sp,
+                    color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
+                    textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .padding(start = 10.dp, bottom = 12.dp)
+                        .weight(1f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            // 底部分隔线：对照 view2 bg_topic_detail_dot(虚线2dp), height=4dp, translationY=3dp
+            // bg_topic_detail_dot.xml: stroke 2dp, color=#ffdfdfdf, dashWidth=2dp, dashGap=2dp
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .graphicsLayer { translationY = 3f }
+                    .drawWithContent {
+                        val dashWidth = 2.dp.toPx()
+                        val dashGap = 2.dp.toPx()
+                        val pathEffect = PathEffect.dashPathEffect(floatArrayOf(dashWidth, dashGap), 0f)
+                        drawLine(
+                            color = Color(0xFFDFDFDF),
+                            start = androidx.compose.ui.geometry.Offset(0f, size.height / 2),
+                            end = androidx.compose.ui.geometry.Offset(size.width, size.height / 2),
+                            strokeWidth = 2.dp.toPx(),
+                            pathEffect = pathEffect,
+                        )
+                    },
             )
         }
-        // 底部分隔线：对照 view2 bg_topic_detail_dot(虚线2dp), height=4dp, translationY=3dp
-        // bg_topic_detail_dot.xml: stroke 2dp, color=#ffdfdfdf, dashWidth=2dp, dashGap=2dp
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .graphicsLayer { translationY = 3f }
-                .drawWithContent {
-                    val dashWidth = 2.dp.toPx()
-                    val dashGap = 2.dp.toPx()
-                    val pathEffect = PathEffect.dashPathEffect(floatArrayOf(dashWidth, dashGap), 0f)
-                    drawLine(
-                        color = Color(0xFFDFDFDF),
-                        start = androidx.compose.ui.geometry.Offset(0f, size.height / 2),
-                        end = androidx.compose.ui.geometry.Offset(size.width, size.height / 2),
-                        strokeWidth = 2.dp.toPx(),
-                        pathEffect = pathEffect,
-                    )
-                },
-        )
     }
 }
 // endregion
