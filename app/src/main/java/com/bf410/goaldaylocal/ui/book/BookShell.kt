@@ -122,10 +122,10 @@ fun BookShell(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        start = 8.dp,
-                        end = 8.dp,
-                        top = 6.dp,
-                        bottom = 8.dp,
+                        start = 5.dp,
+                        end = 5.dp,
+                        top = 4.dp,
+                        bottom = 5.dp,
                     )
                     .shadow(
                         elevation = 20.dp,
@@ -153,10 +153,10 @@ fun BookShell(
                         ),
                     )
                     .padding(
-                        start = 7.dp,
-                        end = 7.dp,
-                        top = 6.dp,
-                        bottom = 6.dp,
+                        start = 5.dp,
+                        end = 5.dp,
+                        top = 4.dp,
+                        bottom = 4.dp,
                     ),
             ) {
                 // 内层：纸张页面
@@ -214,20 +214,19 @@ fun BookShell(
                                 size = Size(24f, height),
                             )
 
-                            // 2. 中央书脊/装订沟：书页弯入沟槽的立体感
-                            // 加宽沟槽、增强圆柱高光，贴近原 APK 明显的书脊圆柱
-                            val gutterWidth = 48f
+                            // 2. 中央书脊/装订沟：收窄沟槽、降低高光，避免与 SpineLayer 叠加成粗亮柱子
+                            val gutterWidth = 28f
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.10f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.20f),
-                                        GoaldayDesign.BookSpineLight.copy(alpha = 0.38f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.32f),
-                                        GoaldayDesign.BookSpineLight.copy(alpha = 0.38f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.20f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.10f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.08f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.14f),
+                                        GoaldayDesign.BookSpineLight.copy(alpha = 0.22f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.18f),
+                                        GoaldayDesign.BookSpineLight.copy(alpha = 0.22f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.14f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.08f),
                                         Color.Transparent,
                                     ),
                                     startX = centerX - gutterWidth / 2f,
@@ -396,10 +395,10 @@ fun BookShell(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(
-                                    start = 10.dp,
-                                    end = 10.dp,
-                                    top = 6.dp,
-                                    bottom = 6.dp,
+                                    start = 6.dp,
+                                    end = 6.dp,
+                                    top = 4.dp,
+                                    bottom = 4.dp,
                                 ),
                         ) {
                             content()

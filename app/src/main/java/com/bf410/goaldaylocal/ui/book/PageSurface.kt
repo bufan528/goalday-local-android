@@ -136,9 +136,8 @@ fun BoxScope.SpineLayer(
     active: Boolean,
     profile: TurnProfile = TurnProfile.DEFAULT,
 ) {
-    // spine：颜色 token 化，与暖灰书皮（BookSpine）统一
-    // 加宽书脊，模拟原 APK 明显的圆柱状书脊
-    val baseWidth = if (profile == TurnProfile.HANDBOOK) 28.dp else 22.dp
+    // spine：减细并柔化，避免与 BookShell 中央沟槽叠加后形成粗亮柱子
+    val baseWidth = if (profile == TurnProfile.HANDBOOK) 16.dp else 14.dp
     Box(
         modifier = Modifier
             .align(Alignment.Center)
@@ -147,43 +146,45 @@ fun BoxScope.SpineLayer(
             .background(
                 Brush.horizontalGradient(
                     listOf(
-                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.88f else 0.72f),
-                        GoaldayDesign.BookSpineLight,
-                        GoaldayDesign.PaperWarm,
-                        GoaldayDesign.BookSpineLight,
-                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.88f else 0.72f),
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.55f else 0.42f),
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.75f else 0.58f),
+                        GoaldayDesign.BookSpineLight.copy(alpha = if (active) 0.85f else 0.68f),
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.75f else 0.58f),
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.55f else 0.42f),
                     ),
                 ),
             ),
     )
 
     if (active) {
+        // 两侧阴影：模拟书页弯入书脊的暗部，范围收窄
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width((if (profile == TurnProfile.HANDBOOK) 24f else 18f + visualProgress * 8f).dp)
+                .width((if (profile == TurnProfile.HANDBOOK) 18f else 14f + visualProgress * 4f).dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            Color.Black.copy(alpha = (0.08f + visualProgress * 0.18f).coerceAtMost(0.26f)),
+                            Color.Black.copy(alpha = (0.06f + visualProgress * 0.10f).coerceAtMost(0.18f)),
                             Color.Transparent,
-                            Color.Black.copy(alpha = (0.08f + visualProgress * 0.18f).coerceAtMost(0.26f)),
+                            Color.Black.copy(alpha = (0.06f + visualProgress * 0.10f).coerceAtMost(0.18f)),
                         ),
                     ),
                 ),
         )
+        // 中央极细高光：仅保留微弱圆柱感，不再使用 PaperWarm 强高光
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width((4f + visualProgress * if (profile == TurnProfile.HANDBOOK) 11f else 7f).dp)
+                .width((2.5f + visualProgress * if (profile == TurnProfile.HANDBOOK) 5f else 3.5f).dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            GoaldayDesign.PaperWarm.copy(alpha = (0.22f + visualProgress * 0.22f).coerceAtMost(0.44f)),
-                            GoaldayDesign.BookSpineLight,
-                            GoaldayDesign.PaperWarm.copy(alpha = (0.22f + visualProgress * 0.22f).coerceAtMost(0.44f)),
+                            GoaldayDesign.BookSpineLight.copy(alpha = (0.20f + visualProgress * 0.18f).coerceAtMost(0.40f)),
+                            GoaldayDesign.Paper.copy(alpha = (0.28f + visualProgress * 0.22f).coerceAtMost(0.52f)),
+                            GoaldayDesign.BookSpineLight.copy(alpha = (0.20f + visualProgress * 0.18f).coerceAtMost(0.40f)),
                         ),
                     ),
                 ),
@@ -443,6 +444,7 @@ fun ActivePageLayer(
                 isChecked = isChecked,
                 onToggleChecked = onToggleChecked,
                 onDeleteItem = { item -> onRemoveCustomItem(item) },
+                onEditItem = { oldItem, newItem -> onRenameCustomItem(oldItem, newItem) },
                 tint = tint,
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
@@ -472,6 +474,8 @@ fun ActivePageLayer(
                 isChecked = isChecked,
                 onToggleChecked = onToggleChecked,
                 onOpenTargetDetail = onOpenTargetDetail,
+                onDeleteItem = { item -> onRemoveCustomItem(item) },
+                onEditItem = { oldItem, newItem -> onRenameCustomItem(oldItem, newItem) },
                 tint = tint,
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
@@ -3063,7 +3067,7 @@ private fun DiaryInBookRow(
 
 // 对照逆向 item_diary_target_in_book.xml / item_diary_topic_target_inbook.xml / item_diary_text.xml
 @Composable
-private fun DiaryTypedBlockPreview(
+internal fun DiaryTypedBlockPreview(
     blocks: List<DiaryEntryBlock>,
 ) {
     if (blocks.isEmpty()) return
