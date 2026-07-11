@@ -660,11 +660,27 @@ internal fun InBookDiaryPreview(
                     // 渲染所有非图片块（图片已在上方渲染）：TARGET/TOPIC_TARGET/TARGET_CHILD/TEXT
                     val nonImageBlocks = diary.blocks.filter { it.type != DiaryBlockType.IMAGE }
                     DiaryTypedBlockPreview(nonImageBlocks)
-                    // 渲染摘要文本（今日完成/工作任务/小幸福/可改进）
-                    listOf(diary.todayDone, diary.workTasks, diary.smallJoy, diary.canImprove)
-                        .filter { it.isNotBlank() }
-                        .forEach { section ->
-                            section.split("\n").filter { it.isNotBlank() }.forEach { line ->
+                    // 渲染摘要文本（今日完成/工作任务/小幸福/可改进），添加分区标题
+                    val sections = listOf(
+                        "今日完成" to diary.todayDone,
+                        "工作任务" to diary.workTasks,
+                        "小幸福" to diary.smallJoy,
+                        "可改进" to diary.canImprove,
+                    )
+                    sections.forEach { (title, content) ->
+                        if (content.isNotBlank()) {
+                            // 分区标题
+                            Text(
+                                title,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = GoaldayDesign.adaptiveInkPrimary.copy(alpha = 0.7f),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, bottom = 4.dp),
+                            )
+                            // 分区内容
+                            content.split("\n").filter { it.isNotBlank() }.forEach { line ->
                                 Text(
                                     line,
                                     fontSize = 16.sp,
@@ -674,6 +690,7 @@ internal fun InBookDiaryPreview(
                                 )
                             }
                         }
+                    }
                 } else {
                     // 空日记显示提示语
                     Text(
@@ -749,55 +766,113 @@ internal fun InBookTargetPreview(
 
     var editingItem by remember { mutableStateOf<String?>(null) }
 
-    LazyColumn(
+    // 计算完成进度 — 不能用 remember 包 isChecked，lambda 引用不变但底层状态会变
+    val completedCount = targetItems.count { isChecked(page.title, it) }
+    val totalCount = targetItems.size
+    val progress = if (totalCount > 0) completedCount.toFloat() / totalCount else 0f
+
+    Column(
         modifier = modifier
             .graphicsLayer {
                 translationX = shift
                 this.alpha = alpha
             }
-            .fillMaxSize()
-            .handbookPaperRuling(null),
-        userScrollEnabled = !handbookMode,
+            .fillMaxSize(),
     ) {
-        // 页眉：标题 + 页码（与计划页、日程页、日记页保持一致）
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 11.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = page.title,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = GoaldayDesign.adaptiveInkPrimary,
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .handbookPaperRuling(null),
+            userScrollEnabled = !handbookMode,
+        ) {
+            // 页眉：标题 + 页码（与计划页、日程页、日记页保持一致）
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 20.dp, top = 11.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = page.title,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                    )
+                    Text(
+                        text = "${pageIndex + 1}/$pageCount",
+                        fontSize = 10.sp,
+                        color = GoaldayDesign.adaptiveInkMuted,
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .height(0.7.dp)
+                        .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
                 )
-                Text(
-                    text = "${pageIndex + 1}/$pageCount",
-                    fontSize = 10.sp,
-                    color = GoaldayDesign.adaptiveInkMuted,
+                Spacer(Modifier.height(6.dp))
+            }
+            items(targetItems, key = { it }) { item ->
+                val checked = isChecked(page.title, item)
+                InBookTargetRow(
+                    item = item,
+                    checked = checked,
+                    onToggleChecked = { onToggleChecked(page.title, item) },
+                    onOpenDetail = { onOpenTargetDetail(item) },
+                    onDelete = { onDeleteItem(item) },
+                    onEdit = { editingItem = item },
                 )
             }
+        }
+        // 底部栏：完成数 + 进度条 + 编辑按钮（对照原版目标详情页底部）
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .background(GoaldayDesign.adaptiveSurface)
+                .padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // 完成数
+            Text(
+                text = "$completedCount/$totalCount",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = GoaldayDesign.adaptiveInkSecondary,
+            )
+            Spacer(Modifier.width(12.dp))
+            // 进度条
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .height(0.7.dp)
-                    .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
-            )
-            Spacer(Modifier.height(6.dp))
-        }
-        items(targetItems, key = { it }) { item ->
-            val checked = isChecked(page.title, item)
-            InBookTargetRow(
-                item = item,
-                checked = checked,
-                onToggleChecked = { onToggleChecked(page.title, item) },
-                onOpenDetail = { onOpenTargetDetail(item) },
-                onDelete = { onDeleteItem(item) },
-                onEdit = { editingItem = item },
+                    .weight(1f)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(GoaldayDesign.adaptiveDivider),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(progress)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(GoaldayDesign.Pink),
+                )
+            }
+            Spacer(Modifier.width(16.dp))
+            // 编辑按钮
+            Text(
+                text = "编辑",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = GoaldayDesign.Pink,
+                modifier = Modifier.clickable {
+                    if (targetItems.isNotEmpty()) {
+                        onOpenTargetDetail(targetItems.first())
+                    }
+                },
             )
         }
     }

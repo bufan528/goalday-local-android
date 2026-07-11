@@ -126,9 +126,9 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            // HANDBOOK 提高刚度，让翻页收尾更利落、减少卡顿感
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.78f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 180f else Spring.StiffnessLow,
+                            // HANDBOOK 对齐原版：更柔和的纸张翻页感，略带弹性
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.85f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 150f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipNext()
@@ -144,8 +144,9 @@ fun PageTurnEngine(
                     progress.animateTo(
                         1f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.78f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 180f else Spring.StiffnessLow,
+                            // HANDBOOK 对齐原版：更柔和的纸张翻页感，略带弹性
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.85f else 0.9f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 150f else Spring.StiffnessLow,
                         ),
                     )
                     onFlipPrevious()
@@ -160,8 +161,9 @@ fun PageTurnEngine(
                     progress.animateTo(
                         0f,
                         animationSpec = spring(
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.92f else 0.84f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) 300f else Spring.StiffnessMediumLow,
+                            // HANDBOOK 对齐原版：回弹更柔和，模拟纸张自然回落
+                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.88f else 0.84f,
+                            stiffness = if (profile == TurnProfile.HANDBOOK) 250f else Spring.StiffnessMediumLow,
                         ),
                     )
                 }

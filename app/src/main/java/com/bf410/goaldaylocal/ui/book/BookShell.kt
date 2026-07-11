@@ -140,15 +140,15 @@ fun BookShell(
                         painter = painterResource(R.drawable.book_cover_fabric),
                         contentScale = ContentScale.Crop,
                     )
-                    // 叠加暖灰米色，让封面颜色贴近原版精装布面
+                    // 叠加暖灰米色，让封面颜色贴近原版精装布面（降低透明度让布纹更明显）
                     .background(
                         Brush.horizontalGradient(
                             listOf(
-                                GoaldayDesign.BookBoardDark.copy(alpha = 0.11f),
-                                GoaldayDesign.BookBoard.copy(alpha = 0.07f),
-                                GoaldayDesign.BookBoardLight.copy(alpha = 0.04f),
-                                GoaldayDesign.BookBoard.copy(alpha = 0.07f),
-                                GoaldayDesign.BookBoardDark.copy(alpha = 0.11f),
+                                GoaldayDesign.BookBoardDark.copy(alpha = 0.06f),
+                                GoaldayDesign.BookBoard.copy(alpha = 0.04f),
+                                GoaldayDesign.BookBoardLight.copy(alpha = 0.02f),
+                                GoaldayDesign.BookBoard.copy(alpha = 0.04f),
+                                GoaldayDesign.BookBoardDark.copy(alpha = 0.06f),
                             ),
                         ),
                     )
@@ -166,8 +166,8 @@ fun BookShell(
                         .clip(pageShape)
                         .background(BookPagePaper)
                         // 纸张横线：模拟真实笔记本 ruled page
-                        .handbookPaperRuling(lineSpacingDp = 26.dp, lineColor = GoaldayDesign.InkMuted.copy(alpha = 0.10f))
-                        .handbookPaperTexture(alpha = 0.08f)
+                        .handbookPaperRuling(lineSpacingDp = 26.dp, lineColor = GoaldayDesign.InkMuted.copy(alpha = 0.12f))
+                        .handbookPaperTexture(alpha = 0.10f)
                         .drawBehind {
                             val width = size.width
                             val height = size.height
