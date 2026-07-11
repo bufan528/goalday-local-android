@@ -6,9 +6,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.graphicsLayer
 import com.bf410.goaldaylocal.data.BookPage
@@ -242,10 +246,45 @@ fun BookReader(
             )
         },
         activePage = { progress, direction, anchorY ->
+            val draggingToNext = direction == TurnDirection.NEXT
+            val draggingToPrevious = direction == TurnDirection.PREVIOUS
             renderActivePage(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = pagePaddingH, vertical = pagePaddingV)
+                    // 页缘卷曲光影：画在 active page 上，随页面一起转动
+.drawBehind {
+                        if (direction == null || progress <= 0.01f) return@drawBehind
+                        val edgeWidth = (16f + progress * 42f).coerceAtMost(80f)
+                        // 外侧受光、内侧背光：页缘边界高亮，向页面内部渐变为阴影
+                        if (draggingToNext) {
+                            // 右页外翻：左边界是页缘（亮）→ 向右变暗
+                            drawRect(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = (0.04f + progress * 0.14f).coerceAtMost(0.20f)),
+                                        Color.Black.copy(alpha = (0.06f + progress * 0.16f).coerceAtMost(0.22f)),
+                                        Color.Transparent,
+                                    ),
+                                ),
+                                topLeft = Offset(size.width - edgeWidth, 0f),
+                                size = Size(edgeWidth, size.height),
+                            )
+                        } else if (draggingToPrevious) {
+                            // 左页外翻：右边界是页缘（亮）→ 向左变暗
+                            drawRect(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = (0.06f + progress * 0.16f).coerceAtMost(0.22f)),
+                                        Color.White.copy(alpha = (0.04f + progress * 0.14f).coerceAtMost(0.20f)),
+                                    ),
+                                ),
+                                topLeft = Offset(0f, 0f),
+                                size = Size(edgeWidth, size.height),
+                            )
+                        }
+                    }
                     .turningPageTransform(direction, progress, anchorY, turnProfile),
                 progress = progress,
                 direction = direction,

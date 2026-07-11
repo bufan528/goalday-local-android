@@ -136,8 +136,9 @@ fun BoxScope.SpineLayer(
     active: Boolean,
     profile: TurnProfile = TurnProfile.DEFAULT,
 ) {
-    // spine：颜色 token 化，与深棕书皮（BookSpine）统一，原硬编码 0xFF6E4229/0xFFF8E8D5 收敛
-    val baseWidth = if (profile == TurnProfile.HANDBOOK) 28.dp else 20.dp
+    // spine：颜色 token 化，与暖灰书皮（BookSpine）统一
+    // 加宽书脊，模拟原 APK 明显的圆柱状书脊
+    val baseWidth = if (profile == TurnProfile.HANDBOOK) 28.dp else 22.dp
     Box(
         modifier = Modifier
             .align(Alignment.Center)
@@ -146,9 +147,11 @@ fun BoxScope.SpineLayer(
             .background(
                 Brush.horizontalGradient(
                     listOf(
-                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.92f else 0.78f),
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.88f else 0.72f),
+                        GoaldayDesign.BookSpineLight,
                         GoaldayDesign.PaperWarm,
-                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.92f else 0.78f),
+                        GoaldayDesign.BookSpineLight,
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.88f else 0.72f),
                     ),
                 ),
             ),
@@ -158,14 +161,14 @@ fun BoxScope.SpineLayer(
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width((if (profile == TurnProfile.HANDBOOK) 22f else 16f + visualProgress * 10f).dp)
+                .width((if (profile == TurnProfile.HANDBOOK) 24f else 18f + visualProgress * 8f).dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            Color.Black.copy(alpha = (0.10f + visualProgress * 0.22f).coerceAtMost(0.3f)),
+                            Color.Black.copy(alpha = (0.08f + visualProgress * 0.18f).coerceAtMost(0.26f)),
                             Color.Transparent,
-                            Color.Black.copy(alpha = (0.10f + visualProgress * 0.22f).coerceAtMost(0.3f)),
+                            Color.Black.copy(alpha = (0.08f + visualProgress * 0.18f).coerceAtMost(0.26f)),
                         ),
                     ),
                 ),
@@ -178,9 +181,9 @@ fun BoxScope.SpineLayer(
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            GoaldayDesign.PaperWarm.copy(alpha = (0.24f + visualProgress * 0.24f).coerceAtMost(0.46f)),
-                            GoaldayDesign.adaptiveDivider,
-                            GoaldayDesign.PaperWarm.copy(alpha = (0.24f + visualProgress * 0.24f).coerceAtMost(0.46f)),
+                            GoaldayDesign.PaperWarm.copy(alpha = (0.22f + visualProgress * 0.22f).coerceAtMost(0.44f)),
+                            GoaldayDesign.BookSpineLight,
+                            GoaldayDesign.PaperWarm.copy(alpha = (0.22f + visualProgress * 0.22f).coerceAtMost(0.44f)),
                         ),
                     ),
                 ),
@@ -399,6 +402,17 @@ fun ActivePageLayer(
     turnProgress: Float = 0f,
     turnDirection: TurnDirection? = null,
 ) {
+    // 日记图片选择器：对齐参考APK底部图片栏的"插入图片"按钮
+    val diaryContext = LocalContext.current
+    val diaryImagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        if (uri != null) {
+            runCatching {
+                diaryContext.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val updated = StructuredDiary.fromRaw(diaryDraft).withImageUri(uri.toString())
+            onDiaryChange(updated.toRaw())
+        }
+    }
     if (handbookMode) {
         when (page) {
             is SchedulePage -> HandbookReplicaPage(
@@ -444,6 +458,9 @@ fun ActivePageLayer(
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
                 handbookMode = true,
+                onAddImage = {
+                    diaryImagePicker.launch(arrayOf("image/*"))
+                },
             )
             is TargetPage -> InBookTargetPreview(
                 modifier = modifier,
@@ -643,7 +660,8 @@ private fun HandbookDiaryReplicaPage(
                 }
             }
         }
-        // 底部图片按钮栏（对照 fl_bottom_bar: 23pt=51.11dp 白底，fl_select_pic 23pt=51.11dp，aapt2 验证为 pt）
+        // 底部图片按钮栏（对照 fragment_diary_inbook.xml：fl_bottom_bar 23pt=51.11dp 白底，
+        // fl_select_pic 23pt=51.11dp，ic_select_pic 6.25pt=13.89dp，marginStart 1.875pt=4.17dp）
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -653,16 +671,16 @@ private fun HandbookDiaryReplicaPage(
         ) {
             Box(
                 modifier = Modifier
-                    .padding(start = 8.33.dp)  // 3.75pt=8.33dp（aapt2 验证为 pt）
+                    .padding(start = 4.17.dp)  // 1.875pt=4.17dp
                     .size(51.11.dp)
                     .clickable { onContentModeChange(PageContentMode.EditingDiary(title)) },
                 contentAlignment = Alignment.Center,
             ) {
-                // 对照 ic_select_pic：图片选择图标 12.5pt=27.78dp（aapt2 验证为 pt）
+                // 对照 ic_select_pic：图片选择图标 6.25pt=13.89dp（aapt2 验证为 pt）
                 Image(
                     painter = painterResource(R.drawable.ic_select_pic),
                     contentDescription = "插入图片",
-                    modifier = Modifier.size(27.78.dp),
+                    modifier = Modifier.size(13.89.dp),
                 )
             }
         }

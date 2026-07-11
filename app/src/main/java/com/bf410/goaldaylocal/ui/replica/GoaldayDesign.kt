@@ -46,11 +46,13 @@ object GoaldayDesign {
     val PaperWarm = Color(0xFFFFF6E8)
     val PaperAged = Color(0xFFF3E1CD)
     val PaperLine = Color(0x33B99A7D)
-    val BookBoard = Color(0xFFE0B895)
-    val BookBoardLight = Color(0xFFEBD0AC)
-    val BookBoardDark = Color(0xFF6C4A39)
-    val BookSpine = Color(0xFF5A3B2E)
-    val BookSpineLight = Color(0xFFB47C62)
+    // 对齐原 APK 手账书壳：暖灰米色硬壳，带一点褐/黄，让书壳更像真实布面精装本
+    val BookBoard = Color(0xFFD9CFC2)
+    val BookBoardLight = Color(0xFFE9E2D8)
+    val BookBoardDark = Color(0xFF7D7369)
+    // 书脊：原 APK 为暖米色圆柱，保留适度红/黄分量模拟光照
+    val BookSpine = Color(0xFFBCB4AB)
+    val BookSpineLight = Color(0xFFDED7CC)
     // DeskTop 与 AppBg 对齐原版 #FDFAF6，桌面渐变从主背景色平滑过渡到深木色
     val DeskTop = Color(0xFFFDFAF6)
     val DeskMid = Color(0xFFF5E4D2)

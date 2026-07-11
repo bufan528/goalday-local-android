@@ -117,22 +117,22 @@ fun BookShell(
             },
     ) {
         if (isBookStyle) {
-            // 外层：硬壳书皮，留出明显的封面边距
+            // 外层：硬壳书皮，留出明显的封面边距，模拟真实精装书的硬壳边框
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        start = 10.dp,
-                        end = 10.dp,
-                        top = 8.dp,
-                        bottom = 10.dp,
+                        start = 8.dp,
+                        end = 8.dp,
+                        top = 6.dp,
+                        bottom = 8.dp,
                     )
                     .shadow(
-                        elevation = 26.dp,
+                        elevation = 20.dp,
                         shape = coverShape,
                         clip = false,
-                        ambientColor = Color.Black.copy(alpha = 0.26f),
-                        spotColor = Color.Black.copy(alpha = 0.36f),
+                        ambientColor = Color.Black.copy(alpha = 0.16f),
+                        spotColor = Color.Black.copy(alpha = 0.24f),
                     )
                     .clip(coverShape)
                     // 布纹封面贴图：保留原版米白布纹质感
@@ -140,22 +140,21 @@ fun BookShell(
                         painter = painterResource(R.drawable.book_cover_fabric),
                         contentScale = ContentScale.Crop,
                     )
-                    // 叠加柔和暖色，让封面像真实布面硬壳但不掩盖纹理
+                    // 叠加暖灰米色，让封面颜色贴近原版精装布面
                     .background(
-                        // 模拟硬壳封面受光：中间亮、两侧暗，外缘加一道深色勾边
                         Brush.horizontalGradient(
                             listOf(
-                                GoaldayDesign.BookBoardDark.copy(alpha = 0.42f),
-                                GoaldayDesign.BookBoard.copy(alpha = 0.18f),
-                                GoaldayDesign.BookBoardLight.copy(alpha = 0.10f),
-                                GoaldayDesign.BookBoard.copy(alpha = 0.18f),
-                                GoaldayDesign.BookBoardDark.copy(alpha = 0.42f),
+                                GoaldayDesign.BookBoardDark.copy(alpha = 0.18f),
+                                GoaldayDesign.BookBoard.copy(alpha = 0.12f),
+                                GoaldayDesign.BookBoardLight.copy(alpha = 0.08f),
+                                GoaldayDesign.BookBoard.copy(alpha = 0.12f),
+                                GoaldayDesign.BookBoardDark.copy(alpha = 0.18f),
                             ),
                         ),
                     )
                     .padding(
-                        start = 8.dp,
-                        end = 8.dp,
+                        start = 7.dp,
+                        end = 7.dp,
                         top = 6.dp,
                         bottom = 6.dp,
                     ),
@@ -175,58 +174,60 @@ fun BookShell(
                             val centerX = width / 2f
 
                             // 1. 封面内边压影：让纸张像嵌入硬壳（更深的压槽）
+                            // 配合暖灰米色书壳，压影更自然
                             drawRect(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.32f),
+                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.26f),
                                         Color.Transparent,
                                     ),
                                 ),
-                                size = Size(width, 22f),
+                                size = Size(width, 26f),
                             )
                             drawRect(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.36f),
+                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.28f),
                                     ),
                                 ),
-                                topLeft = Offset(0f, height - 24f),
-                                size = Size(width, 24f),
+                                topLeft = Offset(0f, height - 28f),
+                                size = Size(width, 28f),
                             )
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
-                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.34f),
+                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.28f),
                                         Color.Transparent,
                                     ),
                                 ),
-                                size = Size(20f, height),
+                                size = Size(24f, height),
                             )
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.34f),
+                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.28f),
                                     ),
                                 ),
-                                topLeft = Offset(width - 20f, 0f),
-                                size = Size(20f, height),
+                                topLeft = Offset(width - 24f, 0f),
+                                size = Size(24f, height),
                             )
 
                             // 2. 中央书脊/装订沟：书页弯入沟槽的立体感
-                            val gutterWidth = 84f
+                            // 加宽沟槽、增强圆柱高光，贴近原 APK 明显的书脊圆柱
+                            val gutterWidth = 48f
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.14f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.10f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.20f),
+                                        GoaldayDesign.BookSpineLight.copy(alpha = 0.38f),
                                         GoaldayDesign.BookSpine.copy(alpha = 0.32f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.48f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.26f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.48f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.32f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.14f),
+                                        GoaldayDesign.BookSpineLight.copy(alpha = 0.38f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.20f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.10f),
                                         Color.Transparent,
                                     ),
                                     startX = centerX - gutterWidth / 2f,
@@ -237,34 +238,34 @@ fun BookShell(
                             )
 
                             // 中央装订沟深缝（双缝 + 两侧压痕，更像真实书脊折痕）
-                            listOf(-1.2f, -0.5f, 0.5f, 1.2f).forEachIndexed { index, dx ->
-                                val alpha = if (index == 1 || index == 2) 0.22f else 0.12f
+                            listOf(-1.0f, -0.45f, 0.45f, 1.0f).forEachIndexed { index, dx ->
+                                val alpha = if (index == 1 || index == 2) 0.14f else 0.08f
                                 drawLine(
                                     color = GoaldayDesign.BookSpine.copy(alpha = alpha),
                                     start = Offset(centerX + dx, 0f),
                                     end = Offset(centerX + dx, height),
-                                    strokeWidth = if (index == 1 || index == 2) 1.1f else 0.8f,
+                                    strokeWidth = if (index == 1 || index == 2) 1.0f else 0.7f,
                                 )
                             }
 
                             // 装订线：沿书脊上下分布的虚线孔迹，模拟线装/胶装笔记本
                             val stitchCount = 7
                             val stitchGap = height / (stitchCount + 1)
-                            val stitchRadius = 1.6f
-                            val stitchAlpha = 0.14f
+                            val stitchRadius = 1.4f
+                            val stitchAlpha = 0.10f
                             for (i in 1..stitchCount) {
                                 val y = i * stitchGap
                                 // 左页装订孔
                                 drawCircle(
                                     color = GoaldayDesign.BookSpine.copy(alpha = stitchAlpha),
                                     radius = stitchRadius,
-                                    center = Offset(centerX - 5f, y),
+                                    center = Offset(centerX - 4f, y),
                                 )
                                 // 右页装订孔
                                 drawCircle(
                                     color = GoaldayDesign.BookSpine.copy(alpha = stitchAlpha),
                                     radius = stitchRadius,
-                                    center = Offset(centerX + 5f, y),
+                                    center = Offset(centerX + 4f, y),
                                 )
                             }
 
@@ -272,27 +273,27 @@ fun BookShell(
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.34f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.14f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.24f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.10f),
                                         Color.Transparent,
                                     ),
                                     startX = 0f,
-                                    endX = 54f,
+                                    endX = 46f,
                                 ),
-                                size = Size(54f, height),
+                                size = Size(46f, height),
                             )
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.14f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.34f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.10f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.24f),
                                     ),
-                                    startX = width - 54f,
+                                    startX = width - 46f,
                                     endX = width,
                                 ),
-                                topLeft = Offset(width - 54f, 0f),
-                                size = Size(54f, height),
+                                topLeft = Offset(width - 46f, 0f),
+                                size = Size(46f, height),
                             )
 
                             // 4. 书页外缘厚度：右侧（书口）多层纸页
@@ -371,24 +372,7 @@ fun BookShell(
                             )
                         },
                 ) {
-                    // 内容限定在纸面版心内，保留书页边距
-                    // 书内页强制使用浅色主题：纸张已经是米白色，文字保持深色墨水，避免暗色模式下对比度不足
-                    CompositionLocalProvider(LocalGoaldayDarkMode provides false) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(
-                                    start = 12.dp,
-                                    end = 12.dp,
-                                    top = 6.dp,
-                                    bottom = 6.dp,
-                                ),
-                        ) {
-                            content()
-                        }
-                    }
-
-                    // 左右翻页点击热区
+                    // 左右翻页点击热区（先绘制，位于底层，避免遮挡内容按钮）
                     Box(
                         modifier = Modifier
                             .align(Alignment.CenterStart)
@@ -403,6 +387,24 @@ fun BookShell(
                             .fillMaxHeight()
                             .clickable(enabled = canTurnNext && turnEnabled, onClick = onTapNext),
                     )
+
+                    // 内容限定在纸面版心内，保留书页边距
+                    // 书内页强制使用浅色主题：纸张已经是米白色，文字保持深色墨水，避免暗色模式下对比度不足
+                    // 内容放在热区之上，确保按钮等可点击元素优先接收点击事件
+                    CompositionLocalProvider(LocalGoaldayDarkMode provides false) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(
+                                    start = 10.dp,
+                                    end = 10.dp,
+                                    top = 6.dp,
+                                    bottom = 6.dp,
+                                ),
+                        ) {
+                            content()
+                        }
+                    }
                 }
             }
         } else {
