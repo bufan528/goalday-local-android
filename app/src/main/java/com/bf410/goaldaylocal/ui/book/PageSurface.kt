@@ -1259,11 +1259,11 @@ private fun DiaryBottomToolbar(
     onDismissKeyboard: () -> Unit,
     inBook: Boolean = false,
 ) {
-    // 对照 fragment_diary.xml：底栏 bg=#E5DAD4，高 46pt=102.22dp
-    // 书内日记页 fragment_diary_inbook.xml：底栏 23pt=51.11dp，仅 ic_select_pic 6.25pt=13.89dp
-    val toolbarHeight = if (inBook) 51.11.dp else 102.22.dp
-    val iconSize = if (inBook) 13.89.dp else 55.56.dp
-    val contentPadding = if (inBook) 4.17.dp else 8.33.dp
+    // 对照 fragment_diary.xml：底栏 bg=#E5DAD4，高 46dp
+    // 书内日记页 fragment_diary_inbook.xml：底栏 23dp，仅 ic_select_pic 12.5dp
+    val toolbarHeight = if (inBook) 23.dp else 46.dp
+    val iconSize = if (inBook) 12.5.dp else 25.dp
+    val contentPadding = if (inBook) 3.75.dp else 7.5.dp
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -3100,16 +3100,16 @@ internal fun DiaryTypedBlockPreview(
 }
 
 // 对照 item_diary_target_in_book.xml：bg_diary_target 背景，"今日完成"标签(9sp #503311) + 子目标列表
-// aapt2 验证：paddingBottom=4.5pt=10dp, marginTop=4.5pt=10dp, marginBottom=1.5pt=3.33dp, marginStart=8.0pt=17.78dp, layout_marginBottom=5dp
+// pt单位换算：paddingBottom=4.5pt=10dp, marginTop=4.5pt=10dp, marginBottom=1.5pt=3.33dp, marginStart=8pt=17.78dp, layout_marginBottom=5pt=11.11dp, 圆角8pt=17.78dp
 @Composable
 private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 5.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .padding(bottom = 11.11.dp)
+            .clip(RoundedCornerShape(17.78.dp))
             .background(GoaldayDesign.DiaryTargetBackground)
-            .border(0.5.dp, Color(0x4D000000), RoundedCornerShape(8.dp))
+            .border(0.5.dp, Color(0x4D000000), RoundedCornerShape(17.78.dp))
             .padding(bottom = 10.dp),
     ) {
         Row(
@@ -3148,20 +3148,20 @@ private fun DiaryTargetBlockPreview(block: DiaryEntryBlock) {
     }
 }
 
-// 对照 item_diary_target_child_inbook.xml：12dp 高，2.5pt=5.56dp 圆点 + 文字
-// aapt2 验证：paddingStart=5.0pt=11.11dp, dot=2.5pt=5.56dp, marginStart/End=4dp
+// 对照 item_diary_target_child_inbook.xml：12pt=26.67dp 高，2.5pt=5.56dp 圆点 + 文字
+// paddingStart=5pt=11.11dp, dot marginStart/End=4pt=8.89dp
 @Composable
 private fun DiaryTargetChildRow(text: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(12.dp)
+            .height(26.67.dp)
             .padding(start = 11.11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .padding(start = 4.dp, end = 4.dp)
+                .padding(start = 8.89.dp, end = 8.89.dp)
                 .size(5.56.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(GoaldayDesign.DiaryTargetChildDot),
@@ -3176,17 +3176,17 @@ private fun DiaryTargetChildRow(text: String) {
 }
 
 // 对照 item_diary_topic_target_inbook.xml：bg_diary_topic_target 黑色背景，8sp 白色标题 + 9sp 副标题
-// aapt2 验证：paddingStart/End=5.0pt=11.11dp, marginTop=5.0pt=11.11dp, marginBottom=3.5pt=7.78dp, layout_marginBottom=5dp
+// pt单位换算：paddingStart/End=5pt=11.11dp, marginTop=5pt=11.11dp, marginBottom=3.5pt=7.78dp, layout_marginBottom=5pt=11.11dp, 圆角8pt=17.78dp
 @Composable
 private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 5.dp)
-            .clip(RoundedCornerShape(17.78.dp)) // 8dp = 17.78dp
+            .padding(bottom = 11.11.dp)
+            .clip(RoundedCornerShape(17.78.dp))
             .background(Color.Black)
             .padding(horizontal = 11.11.dp)
-            .padding(bottom = 11.11.dp),
+            .padding(bottom = 7.78.dp),
     ) {
         Text(
             block.mainText.ifBlank { "专题目标" },

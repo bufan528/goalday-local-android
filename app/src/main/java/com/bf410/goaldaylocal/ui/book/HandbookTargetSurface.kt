@@ -345,7 +345,7 @@ internal fun TargetDetailReplicaPage(
             val scope = rememberCoroutineScope()
             var swipeOffset by remember(item) { mutableFloatStateOf(0f) }
             val density = LocalDensity.current
-            val buttonWidth = with(density) { 111.11.dp.toPx() } // 50pt = 111.11dp
+            val buttonWidth = with(density) { 50.dp.toPx() } // 50dp
             val maxOffset = -buttonWidth * 2f // 编辑 + 删除两格
             val clampedOffset = swipeOffset.coerceIn(maxOffset, 0f)
 
@@ -355,7 +355,7 @@ internal fun TargetDetailReplicaPage(
                     .height(IntrinsicSize.Min)
                     .clip(RoundedCornerShape(GoaldayDesign.RadiusM)),
             ) {
-                // 底层：编辑（黑）+ 删除（#ED8888）两格，总宽 100pt = 222.22dp
+                // 底层：编辑（黑）+ 删除（#ED8888）两格，总宽 100dp
                 Row(
                     modifier = Modifier.matchParentSize(),
                     horizontalArrangement = Arrangement.End,
@@ -363,7 +363,7 @@ internal fun TargetDetailReplicaPage(
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .width(111.11.dp)
+                            .width(50.dp)
                             .background(Color.Black)
                             .clickable {
                                 swipeOffset = 0f
@@ -384,7 +384,7 @@ internal fun TargetDetailReplicaPage(
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .width(111.11.dp)
+                            .width(50.dp)
                             .background(GoaldayDesign.Danger)
                             .clickable {
                                 swipeOffset = 0f
