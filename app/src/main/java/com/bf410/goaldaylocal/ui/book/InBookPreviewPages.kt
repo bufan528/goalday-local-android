@@ -184,16 +184,17 @@ internal fun InBookSchedulePreview(
         modifier = baseModifier,
         userScrollEnabled = !handbookMode,
     ) {
+        // 页眉：标题 + 页码（与计划页、目标页、日记页保持一致）
         item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 6.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 11.dp, bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "${page.title} 计划 (${pageIndex + 1}/$pageCount)",
+                    text = page.title,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = GoaldayDesign.adaptiveInkPrimary,
@@ -207,7 +208,7 @@ internal fun InBookSchedulePreview(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
+                    .padding(horizontal = 20.dp)
                     .height(0.7.dp)
                     .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
             )
@@ -373,10 +374,38 @@ internal fun InBookPlanPreview(
                 translationX = shift
                 this.alpha = alpha
             }
-            .fillMaxSize()
-            // 对照 fragment_plan.xml: RecyclerView paddingTop=11dp, paddingStart/End=20dp
-            .padding(top = 11.dp, start = 20.dp, end = 20.dp),
+            .fillMaxSize(),
     ) {
+        // 页眉：标题 + 页码（与目标页、日程页保持一致）
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, end = 20.dp, top = 11.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = page.title,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                )
+                Text(
+                    text = "${pageIndex + 1}/$pageCount",
+                    fontSize = 10.sp,
+                    color = GoaldayDesign.adaptiveInkMuted,
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .height(0.7.dp)
+                    .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
+            )
+            Spacer(Modifier.height(6.dp))
+        }
         items(planItems, key = { it }) { item ->
             InBookPlanRow(
                 item = item,
@@ -488,7 +517,8 @@ private fun InBookPlanRow(
                 }
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
-                        onHorizontalDrag = { _, dragAmount ->
+                        onHorizontalDrag = { change, dragAmount ->
+                            change.consume()
                             val newX = (swipeOffset.value + dragAmount).coerceIn(-222.22f, 0f)
                             scope.launch { swipeOffset.snapTo(newX) }
                         },
@@ -563,6 +593,8 @@ internal fun InBookDiaryPreview(
     }
     val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
 
+    val diary = remember(diaryDraft) { StructuredDiary.fromRaw(diaryDraft) }
+
     Column(
         modifier = modifier
             .graphicsLayer {
@@ -571,6 +603,34 @@ internal fun InBookDiaryPreview(
             }
             .fillMaxSize(),
     ) {
+        // 页眉：日期 + 页码（日记页使用日期标题，对齐原版 fragment_diary_inbook.xml）
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 20.dp, end = 20.dp, top = 11.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = diaryDateLabel(diary.date),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = GoaldayDesign.adaptiveInkPrimary,
+            )
+            Text(
+                text = "${pageIndex + 1}/$pageCount",
+                fontSize = 10.sp,
+                color = GoaldayDesign.adaptiveInkMuted,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .height(0.7.dp)
+                .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
+        )
+        Spacer(Modifier.height(6.dp))
         // 内容区：对照 fragment_diary_inbook.xml RecyclerView（aapt2 验证：marginStart/End 为 pt）
         // marginTop=5dp, marginBottom=30dp, marginStart/End=7.5pt=16.67dp
         Box(
@@ -579,8 +639,7 @@ internal fun InBookDiaryPreview(
                 .padding(top = 5.dp, bottom = 30.dp, start = 16.67.dp, end = 16.67.dp),
         ) {
             val contentScroll = if (handbookMode) Modifier else Modifier.verticalScroll(rememberScrollState())
-            // 解析日记数据，正确渲染图片和文本块
-            val diary = remember(diaryDraft) { StructuredDiary.fromRaw(diaryDraft) }
+            // 复用外部解析的 diary，避免重复解析
             val imageUris = remember(diary) { (diary.imageBlockUris + diary.legacyImageUris).distinct() }
             Column(
                 modifier = Modifier
@@ -696,6 +755,36 @@ internal fun InBookTargetPreview(
             .fillMaxSize(),
         userScrollEnabled = !handbookMode,
     ) {
+        // 页眉：标题 + 页码（与计划页、日程页、日记页保持一致）
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, end = 20.dp, top = 11.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = page.title,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                )
+                Text(
+                    text = "${pageIndex + 1}/$pageCount",
+                    fontSize = 10.sp,
+                    color = GoaldayDesign.adaptiveInkMuted,
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .height(0.7.dp)
+                    .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
+            )
+            Spacer(Modifier.height(6.dp))
+        }
         items(targetItems, key = { it }) { item ->
             val checked = isChecked(page.title, item)
             InBookTargetRow(
@@ -810,7 +899,8 @@ private fun InBookTargetRow(
                 .graphicsLayer { translationX = swipeOffset.value }
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
-                        onHorizontalDrag = { _, dragAmount ->
+                        onHorizontalDrag = { change, dragAmount ->
+                            change.consume()
                             val newX = (swipeOffset.value + dragAmount).coerceIn(-revealWidth.value, 0f)
                             scope.launch { swipeOffset.snapTo(newX) }
                         },

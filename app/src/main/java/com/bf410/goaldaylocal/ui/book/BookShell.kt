@@ -122,17 +122,17 @@ fun BookShell(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        start = 5.dp,
-                        end = 5.dp,
-                        top = 4.dp,
-                        bottom = 5.dp,
+                        start = 6.dp,
+                        end = 6.dp,
+                        top = 5.dp,
+                        bottom = 6.dp,
                     )
                     .shadow(
-                        elevation = 20.dp,
+                        elevation = 22.dp,
                         shape = coverShape,
                         clip = false,
-                        ambientColor = Color.Black.copy(alpha = 0.16f),
-                        spotColor = Color.Black.copy(alpha = 0.24f),
+                        ambientColor = Color.Black.copy(alpha = 0.14f),
+                        spotColor = Color.Black.copy(alpha = 0.22f),
                     )
                     .clip(coverShape)
                     // 布纹封面贴图：保留原版米白布纹质感
@@ -144,19 +144,19 @@ fun BookShell(
                     .background(
                         Brush.horizontalGradient(
                             listOf(
-                                GoaldayDesign.BookBoardDark.copy(alpha = 0.18f),
-                                GoaldayDesign.BookBoard.copy(alpha = 0.12f),
-                                GoaldayDesign.BookBoardLight.copy(alpha = 0.08f),
-                                GoaldayDesign.BookBoard.copy(alpha = 0.12f),
-                                GoaldayDesign.BookBoardDark.copy(alpha = 0.18f),
+                                GoaldayDesign.BookBoardDark.copy(alpha = 0.16f),
+                                GoaldayDesign.BookBoard.copy(alpha = 0.10f),
+                                GoaldayDesign.BookBoardLight.copy(alpha = 0.06f),
+                                GoaldayDesign.BookBoard.copy(alpha = 0.10f),
+                                GoaldayDesign.BookBoardDark.copy(alpha = 0.16f),
                             ),
                         ),
                     )
                     .padding(
-                        start = 5.dp,
-                        end = 5.dp,
-                        top = 4.dp,
-                        bottom = 4.dp,
+                        start = 6.dp,
+                        end = 6.dp,
+                        top = 5.dp,
+                        bottom = 5.dp,
                     ),
             ) {
                 // 内层：纸张页面
@@ -174,59 +174,59 @@ fun BookShell(
                             val centerX = width / 2f
 
                             // 1. 封面内边压影：让纸张像嵌入硬壳（更深的压槽）
-                            // 配合暖灰米色书壳，压影更自然
+                            // 配合暖灰米色书壳，压影更自然；alpha 降低避免压影过重
                             drawRect(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.26f),
+                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.18f),
                                         Color.Transparent,
                                     ),
                                 ),
-                                size = Size(width, 26f),
+                                size = Size(width, 22f),
                             )
                             drawRect(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.28f),
+                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.20f),
                                     ),
                                 ),
-                                topLeft = Offset(0f, height - 28f),
-                                size = Size(width, 28f),
+                                topLeft = Offset(0f, height - 24f),
+                                size = Size(width, 24f),
                             )
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
-                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.28f),
+                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.20f),
                                         Color.Transparent,
                                     ),
                                 ),
-                                size = Size(24f, height),
+                                size = Size(20f, height),
                             )
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.28f),
+                                        GoaldayDesign.BookBoardDark.copy(alpha = 0.20f),
                                     ),
                                 ),
-                                topLeft = Offset(width - 24f, 0f),
-                                size = Size(24f, height),
+                                topLeft = Offset(width - 20f, 0f),
+                                size = Size(20f, height),
                             )
 
                             // 2. 中央书脊/装订沟：收窄沟槽、降低高光，避免与 SpineLayer 叠加成粗亮柱子
-                            val gutterWidth = 28f
+                            val gutterWidth = 24f
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.08f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.14f),
-                                        GoaldayDesign.BookSpineLight.copy(alpha = 0.22f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.18f),
-                                        GoaldayDesign.BookSpineLight.copy(alpha = 0.22f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.14f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.08f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.06f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.10f),
+                                        GoaldayDesign.BookSpineLight.copy(alpha = 0.14f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.12f),
+                                        GoaldayDesign.BookSpineLight.copy(alpha = 0.14f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.10f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.06f),
                                         Color.Transparent,
                                     ),
                                     startX = centerX - gutterWidth / 2f,
@@ -238,20 +238,20 @@ fun BookShell(
 
                             // 中央装订沟深缝（双缝 + 两侧压痕，更像真实书脊折痕）
                             listOf(-1.0f, -0.45f, 0.45f, 1.0f).forEachIndexed { index, dx ->
-                                val alpha = if (index == 1 || index == 2) 0.14f else 0.08f
+                                val alpha = if (index == 1 || index == 2) 0.10f else 0.06f
                                 drawLine(
                                     color = GoaldayDesign.BookSpine.copy(alpha = alpha),
                                     start = Offset(centerX + dx, 0f),
                                     end = Offset(centerX + dx, height),
-                                    strokeWidth = if (index == 1 || index == 2) 1.0f else 0.7f,
+                                    strokeWidth = if (index == 1 || index == 2) 0.9f else 0.6f,
                                 )
                             }
 
                             // 装订线：沿书脊上下分布的虚线孔迹，模拟线装/胶装笔记本
                             val stitchCount = 7
                             val stitchGap = height / (stitchCount + 1)
-                            val stitchRadius = 1.4f
-                            val stitchAlpha = 0.10f
+                            val stitchRadius = 1.2f
+                            val stitchAlpha = 0.07f
                             for (i in 1..stitchCount) {
                                 val y = i * stitchGap
                                 // 左页装订孔
@@ -272,52 +272,52 @@ fun BookShell(
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.24f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.10f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.18f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.07f),
                                         Color.Transparent,
                                     ),
                                     startX = 0f,
-                                    endX = 46f,
+                                    endX = 42f,
                                 ),
-                                size = Size(46f, height),
+                                size = Size(42f, height),
                             )
                             drawRect(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.10f),
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.24f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.07f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.18f),
                                     ),
-                                    startX = width - 46f,
+                                    startX = width - 42f,
                                     endX = width,
                                 ),
-                                topLeft = Offset(width - 46f, 0f),
-                                size = Size(46f, height),
+                                topLeft = Offset(width - 42f, 0f),
+                                size = Size(42f, height),
                             )
 
                             // 4. 书页外缘厚度：右侧（书口）多层纸页
-                            val edgeBase = GoaldayDesign.BookSpine.copy(alpha = 0.22f)
+                            val edgeBase = GoaldayDesign.BookSpine.copy(alpha = 0.18f)
                             listOf(12f, 9f, 6f, 3f, 1f).forEachIndexed { index, offset ->
                                 drawLine(
-                                    color = edgeBase.copy(alpha = 0.20f - index * 0.03f),
+                                    color = edgeBase.copy(alpha = 0.16f - index * 0.025f),
                                     start = Offset(width - offset, 0f),
                                     end = Offset(width - offset, height),
-                                    strokeWidth = 1.1f,
+                                    strokeWidth = 1.0f,
                                 )
                             }
 
                             // 5. 书页外缘厚度：底部（书脚）多层纸页
                             listOf(14f, 10f, 7f, 4f, 1.5f).forEachIndexed { index, offset ->
                                 drawLine(
-                                    color = edgeBase.copy(alpha = 0.20f - index * 0.03f),
+                                    color = edgeBase.copy(alpha = 0.16f - index * 0.025f),
                                     start = Offset(0f, height - offset),
                                     end = Offset(width, height - offset),
-                                    strokeWidth = 1.1f,
+                                    strokeWidth = 1.0f,
                                 )
                             }
 
                             // 6. 右下角微微卷起：三角阴影 + 边缘高光
-                            val curlSize = 56f
+                            val curlSize = 44f
                             val curlPath = Path().apply {
                                 moveTo(width, height - curlSize)
                                 lineTo(width, height)
@@ -329,7 +329,7 @@ fun BookShell(
                                 brush = Brush.linearGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BookSpine.copy(alpha = 0.26f),
+                                        GoaldayDesign.BookSpine.copy(alpha = 0.18f),
                                     ),
                                     start = Offset(width - curlSize, height - curlSize),
                                     end = Offset(width, height),
@@ -337,20 +337,20 @@ fun BookShell(
                             )
                             // 卷曲后的背面亮边
                             drawLine(
-                                color = Color.White.copy(alpha = 0.28f),
-                                start = Offset(width - curlSize * 0.85f, height - 1.4f),
-                                end = Offset(width - 1.4f, height - curlSize * 0.85f),
-                                strokeWidth = 1.4f,
+                                color = Color.White.copy(alpha = 0.22f),
+                                start = Offset(width - curlSize * 0.85f, height - 1.2f),
+                                end = Offset(width - 1.2f, height - curlSize * 0.85f),
+                                strokeWidth = 1.2f,
                             )
 
                             // 7. 纸张整体光泽与旧纸感
                             drawRect(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-                                        Color.White.copy(alpha = 0.16f),
+                                        Color.White.copy(alpha = 0.12f),
                                         Color.Transparent,
                                         Color.Transparent,
-                                        GoaldayDesign.PaperAged.copy(alpha = 0.14f),
+                                        GoaldayDesign.PaperAged.copy(alpha = 0.10f),
                                     ),
                                 ),
                                 size = Size(width, height),
@@ -361,11 +361,11 @@ fun BookShell(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
                                         Color.Transparent,
-                                        Color.White.copy(alpha = 0.07f),
+                                        Color.White.copy(alpha = 0.05f),
                                         Color.Transparent,
                                     ),
-                                    startX = centerX - width * 0.32f,
-                                    endX = centerX + width * 0.32f,
+                                    startX = centerX - width * 0.30f,
+                                    endX = centerX + width * 0.30f,
                                 ),
                                 size = Size(width, height),
                             )
@@ -395,10 +395,10 @@ fun BookShell(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(
-                                    start = 6.dp,
-                                    end = 6.dp,
-                                    top = 4.dp,
-                                    bottom = 4.dp,
+                                    start = 8.dp,
+                                    end = 8.dp,
+                                    top = 6.dp,
+                                    bottom = 6.dp,
                                 ),
                         ) {
                             content()
