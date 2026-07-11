@@ -460,6 +460,7 @@ fun ActivePageLayer(
                 onToggleChecked = onToggleChecked,
                 onDeleteItem = { item -> onRemoveCustomItem(item) },
                 onEditItem = { oldItem, newItem -> onRenameCustomItem(oldItem, newItem) },
+                onAddItem = { text -> onAddCustomItem(text) },
                 tint = tint,
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
@@ -491,6 +492,7 @@ fun ActivePageLayer(
                 onOpenTargetDetail = onOpenTargetDetail,
                 onDeleteItem = { item -> onRemoveCustomItem(item) },
                 onEditItem = { oldItem, newItem -> onRenameCustomItem(oldItem, newItem) },
+                onAddItem = { text -> onAddCustomItem(text) },
                 tint = tint,
                 turnProgress = turnProgress,
                 turnDirection = turnDirection,
@@ -679,27 +681,27 @@ private fun HandbookDiaryReplicaPage(
                 }
             }
         }
-        // 底部图片按钮栏（对照 fragment_diary_inbook.xml：fl_bottom_bar 23pt=51.11dp 白底，
-        // fl_select_pic 23pt=51.11dp，ic_select_pic 6.25pt=13.89dp，marginStart 1.875pt=4.17dp）
+        // 底部图片按钮栏（对照 fragment_diary_inbook.xml：fl_bottom_bar 23dip白底，
+        // fl_select_pic 23dip，ic_select_pic 12.5dip，marginStart 3.75dip）
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(51.11.dp)
-                .background(GoaldayDesign.adaptiveSurface),
+                .height(23.dp)
+                .background(Color.White),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .padding(start = 4.17.dp)  // 1.875pt=4.17dp
-                    .size(51.11.dp)
+                    .padding(start = 3.75.dp)
+                    .size(23.dp)
                     .clickable { onContentModeChange(PageContentMode.EditingDiary(title)) },
                 contentAlignment = Alignment.Center,
             ) {
-                // 对照 ic_select_pic：图片选择图标 6.25pt=13.89dp（aapt2 验证为 pt）
+                // 对照 ic_select_pic：图片选择图标 12.5dip
                 Image(
                     painter = painterResource(R.drawable.ic_select_pic),
                     contentDescription = "插入图片",
-                    modifier = Modifier.size(13.89.dp),
+                    modifier = Modifier.size(12.5.dp),
                 )
             }
         }
@@ -2735,7 +2737,7 @@ private fun DiaryLinkedTargetStrip(
     }
 }
 
-// 对照逆向 item_diary_target_child.xml（aapt2 验证）：5pt=11.11dp 圆点, paddingStart=10pt=22.22dp, marginStart/End=8dp
+// 对照逆向 item_diary_target_child.xml：5dip圆点, paddingStart=10dip, marginStart/End=8dip
 @Composable
 private fun DiaryLinkedTargetChildRow(
     text: String,
@@ -2750,11 +2752,11 @@ private fun DiaryLinkedTargetChildRow(
             .fillMaxWidth()
             .height(24.dp)
             .clickable { onClick() }
-            .padding(start = 22.22.dp),
+            .padding(start = 10.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(11.11.dp)
+                .size(5.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
                 .background(color),
         )
@@ -3294,7 +3296,7 @@ internal fun DiaryImageStrip(
     }
 }
 
-// 对照逆向 item_diary_img.xml（aapt2 验证）：图片块水平内边距 paddingStart/End=5pt=11.11dp，高度自适应保持比例
+// 对照逆向 item_diary_img.xml：图片块水平内边距 paddingStart/End=5dip，高度自适应保持比例
 @Composable
 internal fun DiaryImageTile(
     uri: String,
@@ -3319,7 +3321,7 @@ internal fun DiaryImageTile(
     }
     Box(
         modifier = modifier
-            .then(if (fixedHeight) Modifier.height(76.dp) else Modifier.padding(horizontal = 11.11.dp))
+            .then(if (fixedHeight) Modifier.height(76.dp) else Modifier.padding(horizontal = 5.dp))
             .then(if (!fixedHeight && bitmap != null) Modifier.aspectRatio(aspectRatio) else Modifier)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
             .background(GoaldayDesign.adaptiveSurfaceSoft)

@@ -30,10 +30,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -278,13 +280,13 @@ internal fun HandbookReplicaPage(
             )
         }
         // 对照逆向 fragment_schedule_inbook.xml + item_schedule_item_in_book.xml：
-        // 简单垂直列表，每行一天：12.25dp 日期列 + 2 列 x3 行目标槽
-        // 对照逆向 fragment_schedule_inbook.xml: marginBottom=30dp
+        // 简单垂直列表，每行一天：24.5dp 日期列 + 2 列 x3 行目标槽
+        // 对照逆向 fragment_schedule_inbook.xml: RecyclerView 无水平 margin（start/end to parent）
         val scheduleScrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 52.dp, bottom = 24.dp)
+                .padding(start = 0.dp, end = 0.dp, top = 52.dp, bottom = 24.dp)
                 .verticalScroll(scheduleScrollState)
                 .handbookPaperRuling(scheduleScrollState),
         ) {
@@ -298,11 +300,11 @@ internal fun HandbookReplicaPage(
                     onAddSchedule = { title -> onAddSchedule(title, anchorMonth, block.day, "", 1); saveHint = "已加入${block.day}日" },
                 )
             }
-            // 快速添加行（对照逆向 item_schedule_item_in_book.xml: 日期列 12.25dip）
+            // 快速添加行（对照逆向 item_schedule_item_in_book.xml: 日期列 24.5dip）
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 12.25.dp, top = 4.dp, end = 4.dp),
+                    .padding(start = 24.5.dp, top = 4.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 BasicTextField(
@@ -575,6 +577,8 @@ private fun BoxScope.HandbookMonthHeader(
 ) {
     // P2-1 简化：对齐原版 fragment_schedule_inbook.xml 顶部，仅保留标题行+分隔线
     // 去掉 GOALDAY 标签、月计划大标题、橙色日历条、本月重点输入框，减少视觉噪音
+    var showEditDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .align(Alignment.TopCenter)
@@ -598,11 +602,80 @@ private fun BoxScope.HandbookMonthHeader(
                 color = GoaldayDesign.adaptiveInkMuted,
             )
         }
+        // 周计划显示和编辑
+        if (weeklyTheme.isNotBlank()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showEditDialog = true }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "本周主题：",
+                    fontSize = 11.sp,
+                    color = GoaldayDesign.adaptiveInkMuted,
+                )
+                Text(
+                    weeklyTheme,
+                    fontSize = 11.sp,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "编辑",
+                    modifier = Modifier.size(14.dp),
+                    tint = GoaldayDesign.adaptiveInkMuted,
+                )
+            }
+        } else {
+            Text(
+                "点击设置本周主题",
+                fontSize = 11.sp,
+                color = GoaldayDesign.adaptiveInkMuted,
+                modifier = Modifier
+                    .clickable { showEditDialog = true }
+                    .padding(vertical = 4.dp),
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(0.7.dp)
                 .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
+        )
+    }
+
+    if (showEditDialog) {
+        var editText by remember { mutableStateOf(weeklyTheme) }
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text("本周主题") },
+            text = {
+                OutlinedTextField(
+                    value = editText,
+                    onValueChange = { editText = it },
+                    label = { Text("输入本周主题") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onWeeklyThemeChange(editText.trim())
+                        showEditDialog = false
+                    }
+                ) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text("取消")
+                }
+            },
         )
     }
 }
@@ -962,16 +1035,16 @@ private fun DaySpreadEditableSection(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(86.dp)
+            .height(95.6.dp)
             .background(if (activeDrop) GoaldayDesign.PinkSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
             .border(if (activeDrop) 0.9.dp else 0.dp, if (activeDrop) GoaldayDesign.Pink else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
             .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=12.25dip = 12.25dp
+        // 对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=24.5dip = 24.5dp
         Column(
             modifier = Modifier
-                .width(12.25.dp)
+                .width(24.5.dp)
                 .fillMaxHeight(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -995,8 +1068,8 @@ private fun DaySpreadEditableSection(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                // 对照 item_schedule_item_in_book.xml: paddingVertical=1.75pt = 3.89dp
-                .padding(vertical = 3.89.dp),
+                // 对照 item_schedule_item_in_book.xml: paddingVertical=3.5pt = 7.78dp
+                .padding(vertical = 7.78.dp),
         ) {
             repeat(2) { columnIndex ->
                 Column(
@@ -1459,7 +1532,7 @@ private fun RepeatModePickerDialog(
 }
 
 // 对照逆向 item_schedule_item_in_book.xml：
-// 24.5dp 日期列 + 2列(weight=1) x 3行(12dp) 目标槽
+// 24.5dp 日期列 + 2列(weight=1) x 3行(26.67dp) 目标槽
 @Composable
 private fun ScheduleDayRow(
     day: Int,
@@ -1482,10 +1555,10 @@ private fun ScheduleDayRow(
             .fillMaxWidth()
             .height(IntrinsicSize.Min),
     ) {
-        // 左侧日期列（对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=12.25dip = 12.25dp）：
+        // 左侧日期列（对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=24.5dip = 24.5dp）：
         // 日期 9sp 在上半区底部（marginBottom=2dp），"—" 9sp 垂直居中，周几 6sp 在下半区顶部（marginTop=2dp）
         Box(
-            modifier = Modifier.width(12.25.dp).fillMaxHeight(),
+            modifier = Modifier.width(24.5.dp).fillMaxHeight(),
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -1523,13 +1596,13 @@ private fun ScheduleDayRow(
                 }
             }
         }
-        // 第一列（weight=1, paddingVertical=3.5dp）
+        // 第一列（weight=1, paddingVertical=3.5pt=7.78dp）
         ScheduleTargetColumn(
             entries = leftEntries,
             onToggleCompleted = onToggleCompleted,
             modifier = Modifier.weight(1f),
         )
-        // 第二列（weight=1, paddingVertical=3.5dp）
+        // 第二列（weight=1, paddingVertical=3.5pt=7.78dp）
         ScheduleTargetColumn(
             entries = rightEntries,
             onToggleCompleted = onToggleCompleted,
@@ -1544,13 +1617,13 @@ private fun ScheduleTargetColumn(
     onToggleCompleted: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 对照 item_schedule_item_in_book.xml: paddingVertical=1.75pt = 3.89dp (1pt=2.222dp, aapt2 验证)
+    // 对照 item_schedule_item_in_book.xml: paddingVertical=3.5pt = 7.78dp（1pt = 2.222dp）
     Column(
-        modifier = modifier.padding(vertical = 3.89.dp),
+        modifier = modifier.padding(vertical = 7.78.dp),
     ) {
         for (i in 0 until 3) {
             val entry = entries.getOrNull(i)
-            // 对照逆向 item_schedule_item_in_book.xml: layout_height=12.0pt = 26.67dp (aapt2 验证)
+            // 对照逆向 item_schedule_item_in_book.xml: layout_height=12.0pt = 26.67dp（1pt = 2.222dp）
             ScheduleTargetSlot(
                 entry = entry,
                 onToggleCompleted = onToggleCompleted,
@@ -1590,10 +1663,10 @@ private fun ScheduleTargetSlot(
                 )
             }
         }
-        // 对照 et_target: style_schedule_day_form（文字内容）
+        // 对照 et_target: style_schedule_day_form textSize=20dip
         Text(
             text = entry?.title ?: "",
-            fontSize = 12.sp,
+            fontSize = 20.sp,
             color = if (entry?.completed == true) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
             textDecoration = if (entry?.completed == true) TextDecoration.LineThrough else TextDecoration.None,
             maxLines = 1,
