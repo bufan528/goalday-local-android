@@ -300,11 +300,11 @@ internal fun HandbookReplicaPage(
                     onAddSchedule = { title -> onAddSchedule(title, anchorMonth, block.day, "", 1); saveHint = "已加入${block.day}日" },
                 )
             }
-            // 快速添加行（对照逆向 item_schedule_item_in_book.xml: 日期列 24.5dip）
+            // 快速添加行（对照逆向 item_schedule_item_in_book.xml: 日期列 12.25dip）
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 24.5.dp, top = 4.dp, end = 4.dp),
+                    .padding(start = 12.25.dp, top = 4.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 BasicTextField(
@@ -1041,10 +1041,10 @@ private fun DaySpreadEditableSection(
             .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=24.5dip = 24.5dp
+        // 对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=12.25dip = 12.25dp
         Column(
             modifier = Modifier
-                .width(24.5.dp)
+                .width(12.25.dp)
                 .fillMaxHeight(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -1068,8 +1068,8 @@ private fun DaySpreadEditableSection(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                // 对照 item_schedule_item_in_book.xml: paddingVertical=3.5pt = 7.78dp
-                .padding(vertical = 7.78.dp),
+                // 对照 item_schedule_item_in_book.xml: paddingVertical=1.75dip=1.75dp
+                .padding(vertical = 1.75.dp),
         ) {
             repeat(2) { columnIndex ->
                 Column(
@@ -1125,7 +1125,7 @@ private fun ReferenceScheduleTargetSlot(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(26.67.dp)
+                .height(12.dp)
                 .padding(horizontal = 2.dp),
             contentAlignment = Alignment.CenterStart,
         ) {
@@ -1148,7 +1148,7 @@ private fun ReferenceScheduleTargetSlot(
             keyboardActions = KeyboardActions(onDone = { onCommit(entry) }),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(26.67.dp)
+                .height(12.dp)
                 .padding(horizontal = 2.dp)
                 .border(0.7.dp, GoaldayDesign.Pink.copy(alpha = 0.45f), RoundedCornerShape(GoaldayDesign.RadiusS))
                 .padding(horizontal = 3.dp, vertical = 1.dp),
@@ -1158,7 +1158,7 @@ private fun ReferenceScheduleTargetSlot(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(26.67.dp)
+                .height(12.dp)
                 .padding(horizontal = 2.dp)
                 .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
                 .background(if (entry.completed) GoaldayDesign.Positive.copy(alpha = 0.07f) else Color.Transparent)
@@ -1532,7 +1532,7 @@ private fun RepeatModePickerDialog(
 }
 
 // 对照逆向 item_schedule_item_in_book.xml：
-// 24.5dp 日期列 + 2列(weight=1) x 3行(26.67dp) 目标槽
+// 12.25dp 日期列 + 2列(weight=1) x 3行(12dp) 目标槽
 @Composable
 private fun ScheduleDayRow(
     day: Int,
@@ -1555,10 +1555,10 @@ private fun ScheduleDayRow(
             .fillMaxWidth()
             .height(IntrinsicSize.Min),
     ) {
-        // 左侧日期列（对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=24.5dip = 24.5dp）：
+        // 左侧日期列（对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=12.25dip = 12.25dp）：
         // 日期 9sp 在上半区底部（marginBottom=2dp），"—" 9sp 垂直居中，周几 6sp 在下半区顶部（marginTop=2dp）
         Box(
-            modifier = Modifier.width(24.5.dp).fillMaxHeight(),
+            modifier = Modifier.width(12.25.dp).fillMaxHeight(),
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -1596,13 +1596,13 @@ private fun ScheduleDayRow(
                 }
             }
         }
-        // 第一列（weight=1, paddingVertical=3.5pt=7.78dp）
+        // 第一列（weight=1, paddingVertical=1.75dip=1.75dp）
         ScheduleTargetColumn(
             entries = leftEntries,
             onToggleCompleted = onToggleCompleted,
             modifier = Modifier.weight(1f),
         )
-        // 第二列（weight=1, paddingVertical=3.5pt=7.78dp）
+        // 第二列（weight=1, paddingVertical=1.75dip=1.75dp）
         ScheduleTargetColumn(
             entries = rightEntries,
             onToggleCompleted = onToggleCompleted,
@@ -1617,17 +1617,17 @@ private fun ScheduleTargetColumn(
     onToggleCompleted: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 对照 item_schedule_item_in_book.xml: paddingVertical=3.5pt = 7.78dp（1pt = 2.222dp）
+    // 对照 item_schedule_item_in_book.xml: paddingVertical=1.75dip=1.75dp
     Column(
-        modifier = modifier.padding(vertical = 7.78.dp),
+        modifier = modifier.padding(vertical = 1.75.dp),
     ) {
         for (i in 0 until 3) {
             val entry = entries.getOrNull(i)
-            // 对照逆向 item_schedule_item_in_book.xml: layout_height=12.0pt = 26.67dp（1pt = 2.222dp）
+            // 对照逆向 item_schedule_item_in_book.xml: layout_height=12.0dip = 12dp
             ScheduleTargetSlot(
                 entry = entry,
                 onToggleCompleted = onToggleCompleted,
-                modifier = Modifier.height(26.67.dp),
+                modifier = Modifier.height(12.dp),
             )
         }
     }

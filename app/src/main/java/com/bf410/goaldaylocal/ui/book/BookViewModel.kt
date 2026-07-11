@@ -168,6 +168,9 @@ class BookViewModel(
         val updated = (_uiState.value.customPageItems + trimmed).distinct()
         store.saveCustomPageItems(currentBook().id, currentPage().title, updated)
         _uiState.update { it.copy(customPageItems = updated) }
+        // 同步到日程，默认截止日期为当天，确保月视图能看到
+        val today = LocalDate.now()
+        addItemToSchedule(trimmed, today.dayOfMonth)
     }
 
     fun addCustomPageItemWithDeadline(text: String, day: Int?) {

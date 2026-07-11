@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,6 +34,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -83,6 +85,15 @@ fun BookShell(
     val view = LocalView.current
     var bookBounds by remember { mutableStateOf<Rect?>(null) }
 
+    // 对照原版 BaseBookViewKt：
+    // AnimationBookWidth = screenWidth × 0.47
+    // AnimationBookHeight = AnimationBookWidth × 1.85
+    // 手账模式（BOOK）下书本是窄长形，居中显示
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val bookWidth = screenWidthDp * 0.47f
+    val bookHeight = bookWidth * 1.85f
+
     // 把当前书壳区域（左右翻页热区）排除在系统边缘返回手势之外
     DisposableEffect(isBookStyle, turnEnabled, bookBounds) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || !isBookStyle || !turnEnabled) {
@@ -118,9 +129,13 @@ fun BookShell(
     ) {
         if (isBookStyle) {
             // 外层：硬壳书皮
+            // 对照原版 BaseBookViewKt：AnimationBookWidth=screenWidth×0.47, height=width×1.85
+            // 书本窄长形居中显示，还原原版手账尺寸
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .align(Alignment.Center)
+                    .width(bookWidth)
+                    .height(bookHeight)
                     .padding(
                         start = 5.dp,
                         end = 5.dp,

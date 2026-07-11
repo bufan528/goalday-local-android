@@ -59,10 +59,9 @@ object GoaldayDesign {
     val DeskBottom = Color(0xFFE4C7AE)
     val ShelfWood = Color(0xFFD3A681)
     val ShelfWoodDark = Color(0xFF8F6042)
-    val RouteSchedule = Pink
-    val RouteDiary = Color(0xFFB07A8F)
-    val RouteTarget = Color(0xFF6F8E68)
-    val RouteOverview = Color(0xFF8F684F)
+    // 对照原版 GoalDayColors：5 个主题色 #334F46 #9EAADB #BBD1AD #F1A5B6 #F8D58A
+    // 路由色对齐原版主题色，让手账各入口与原版视觉一致
+    // Route变量定义移至 Topic变量之后（见下方），避免前向引用
 
     // 语义强调色（仿 Things 3：颜色仅承担语义，95% 中性 + 5% 语义）
     // today=今日暖琥珀 / deadline=截止柔和红 / evening=晚间靛 / someday=某天中性灰 / habit=习惯柔和绿
@@ -184,6 +183,12 @@ object GoaldayDesign {
     val TopicSlate = Color(0xFFA9B6C8)
     val TopicPine = Color(0xFF6D8B7E)
     val TopicSpruce = Color(0xFF51675F)
+
+    // 路由色（在 Topic 变量之后定义，避免前向引用）
+    val RouteSchedule = TopicForest      // 森林绿
+    val RouteDiary = TopicRose           // 玫瑰粉
+    val RouteTarget = TopicMoss          // 苔藓绿
+    val RouteOverview = TopicPeriwinkle  // 长春花蓝
 
     // 专题分类封面色板 mid/deep/ink（TopicCoverArt 按分类固定渐变与文字色）
     val TopicPeachMid = Color(0xFFD88F74)
