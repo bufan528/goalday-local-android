@@ -408,9 +408,10 @@ internal fun InBookPlanPreview(
             )
             Spacer(Modifier.height(6.dp))
         }
-        items(planItems, key = { it }) { item ->
+        items(planItems.withIndex().toList(), key = { it.value }) { (index, item) ->
             InBookPlanRow(
                 item = item,
+                index = index,
                 checked = isChecked(page.title, item),
                 onToggleChecked = { onToggleChecked(page.title, item) },
                 onDelete = { onDeleteItem(item) },
@@ -451,6 +452,7 @@ internal fun InBookPlanPreview(
 @Composable
 private fun InBookPlanRow(
     item: String,
+    index: Int,
     checked: Boolean,
     onToggleChecked: () -> Unit,
     onDelete: () -> Unit = {},
@@ -564,8 +566,15 @@ private fun InBookPlanRow(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            // 右侧时间占位
-            Spacer(Modifier.width(16.dp))
+            // 右侧时间文字：对照 tv_count textSize=14pt=31.11dp, paddingTop=14pt=31.11dp, marginEnd=14pt=31.11dp
+            // 由于 PlanPage 数据模型无时间信息，显示序号作为占位
+            Text(
+                text = "${index + 1}",
+                fontSize = 14.sp,
+                color = GoaldayDesign.adaptiveInkMuted,
+                modifier = Modifier
+                    .padding(end = 14.dp, top = 14.dp, bottom = 14.dp),
+            )
         }
     }
 }
@@ -816,15 +825,18 @@ internal fun InBookTargetPreview(
                 )
                 Spacer(Modifier.height(6.dp))
             }
-            items(targetItems, key = { it }) { item ->
+            items(targetItems.withIndex().toList(), key = { it.value }) { (index, item) ->
                 val checked = isChecked(page.title, item)
+                val meta = targetItemMeta[item]
                 InBookTargetRow(
                     item = item,
+                    index = index,
                     checked = checked,
                     onToggleChecked = { onToggleChecked(page.title, item) },
                     onOpenDetail = { onOpenTargetDetail(item) },
                     onDelete = { onDeleteItem(item) },
                     onEdit = { editingItem = item },
+                    meta = meta,
                 )
             }
         }
@@ -910,16 +922,20 @@ internal fun InBookTargetPreview(
 // SwipeRevealLayout dragEdge=right，右侧滑出编辑(黑色)+删除(#ed8888)
 // fl_check: paddingTop=21dp, paddingBottom=20dp, paddingStart/End=27dp
 // iv_check: wrap_content (ic_box_full 背景 + ic_box_select 前景, 约20dp)
+// tv_no: textSize=20dp, marginStart=56dp, 序号（TimeTextView）
 // tv_content: textSize=20dip=20sp, marginStart=10dp, marginEnd=27dp, paddingBottom=12dp
+// tv_date: bg_target_detail_date, paddingStart/End=10dp, marginBottom=13dp, 日期标签
 // view2: bg_topic_detail_dot(虚线), height=4dp, translationY=3dp
 @Composable
 private fun InBookTargetRow(
     item: String,
+    index: Int,
     checked: Boolean,
     onToggleChecked: () -> Unit,
     onOpenDetail: () -> Unit,
     onDelete: () -> Unit = {},
     onEdit: () -> Unit = {},
+    meta: TargetItemMeta? = null,
 ) {
     val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
     val scope = rememberCoroutineScope()
@@ -1015,6 +1031,14 @@ private fun InBookTargetRow(
                     onToggle = onToggleChecked,
                     size = 20,
                 )
+                // 序号：对照 tv_no textSize=20dp, marginStart=56dp
+                // 由于原版使用 TimeTextView 显示序号，这里用 index+1 模拟
+                Text(
+                    text = "${index + 1}",
+                    fontSize = 20.sp,
+                    color = GoaldayDesign.adaptiveInkMuted,
+                    modifier = Modifier.padding(start = 10.dp),
+                )
                 // 目标文字：对照 tv_content textSize=20dip=20sp, marginStart=10dp
                 Text(
                     item,
@@ -1028,6 +1052,23 @@ private fun InBookTargetRow(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
+            }
+            // 日期标签：对照 tv_date bg_target_detail_date, paddingStart/End=10dp, marginBottom=13dp
+            // 如果有 deadlineDay，显示日期标签
+            if (meta?.deadlineDay != null) {
+                Box(
+                    modifier = Modifier
+                        .padding(start = 57.dp, bottom = 13.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(GoaldayDesign.Pink.copy(alpha = 0.1f))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        text = "${meta.deadlineDay}日",
+                        fontSize = 12.sp,
+                        color = GoaldayDesign.Pink,
+                    )
+                }
             }
             // 底部分隔线：对照 view2 bg_topic_detail_dot(虚线2dp), height=4dp, translationY=3dp
             // bg_topic_detail_dot.xml: stroke 2dp, color=#ffdfdfdf, dashWidth=2dp, dashGap=2dp
