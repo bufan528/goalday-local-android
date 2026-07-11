@@ -1061,29 +1061,33 @@ private fun BookDetailView(
                 // 对照 fragment_main_page.xml: 顶部 Tab 导航栏
                 // 背景色 #E5DAD4，minHeight=49dp，paddingBottom=5dp
                 // Tab 文字 18sp bold，选中黑色，未选中 #36000000
+                // 对照 fragment_main_page.xml / toolbar_normal.xml：
+                // 顶部 Toolbar 为左右结构，左侧返回、中间标题/tab、右侧操作按钮，
+                // 避免全部居中导致 tab 被两侧按钮挤偏。
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFFE5DAD4))
                         .padding(bottom = 5.dp),
                 ) {
+                    // 左侧返回按钮
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "返回",
+                        tint = Color(0x36000000),
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(start = GoaldayDesign.Space2, top = 8.dp, bottom = 8.dp)
+                            .size(22.dp)
+                            .clickable { onBackToLibrary() }
+                            .padding(2.dp),
+                    )
+                    // 中间 Tab 文字：对照 tab_main.xml textSize=18dip bold，严格居中
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        // 左侧返回按钮
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回",
-                            tint = Color(0x36000000),
-                            modifier = Modifier
-                                .size(22.dp)
-                                .clickable { onBackToLibrary() }
-                                .padding(2.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        // Tab 文字：对照 tab_main.xml textSize=18dip bold
                         BookSegment.entries.forEachIndexed { idx, seg ->
                             val isSelected = BookSegment.entries.indexOf(segment) == idx
                             Text(
@@ -1096,18 +1100,20 @@ private fun BookDetailView(
                                     .padding(horizontal = 14.dp, vertical = 8.dp),
                             )
                         }
-                        // 右侧灵感按钮
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp),
-                            modifier = Modifier
-                                .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp)
-                                .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                                .clickable(onClick = onShowInspiration),
-                        ) {
-                            Icon(Icons.Filled.Lightbulb, contentDescription = "灵感", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
-                            Text("灵感", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
-                        }
+                    }
+                    // 右侧灵感按钮
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(end = GoaldayDesign.Space2, top = 6.dp, bottom = 6.dp)
+                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                            .clickable(onClick = onShowInspiration)
+                            .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
+                    ) {
+                        Icon(Icons.Filled.Lightbulb, contentDescription = "灵感", tint = GoaldayDesign.adaptiveInkMuted, modifier = Modifier.size(14.dp))
+                        Text("灵感", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
                     }
                 }
             } else {
