@@ -13,7 +13,10 @@ object SampleLibrary {
             title = "$currentYear GOALDAY",
             subtitle = "月度日程与日记手账",
             color = GoaldayDesign.TopicMoss,
-            pages = (1..12).flatMap { month ->
+            pages = listOf(
+                TargetPage("年度目标", listOf("坚持每日手账记录", "完成一次半程马拉松", "读完 12 本书", "学完一门在线课程")),
+                PlanPage("年度计划", listOf("每月第一天复盘上月完成情况", "每周日晚上规划下周日程", "每季度更新目标进度")),
+            ) + (1..12).flatMap { month ->
                 listOf(
                     SchedulePage(
                         title = "${month}月日程",

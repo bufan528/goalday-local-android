@@ -524,8 +524,8 @@ private fun InBookPlanRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 108.89.dp)
-            .padding(bottom = 4.44.dp),
+            .heightIn(min = 49.dp)
+            .padding(bottom = 2.dp),
     ) {
         // 右侧滑动操作按钮（编辑+删除）仅在非 HANDBOOK 模式显示
         if (!handbookMode && swipeRevealed) {
@@ -609,7 +609,7 @@ private fun InBookPlanRow(
             // 黑色圆点：10dp，垂直居中
             Box(
                 modifier = Modifier
-                    .padding(start = 20.dp)
+                    .padding(start = 15.dp)
                     .size(10.dp)
                     .background(GoaldayDesign.adaptiveInkPrimary, shape = RoundedCornerShape(90.dp))
                     .clickable { onToggleChecked() },
