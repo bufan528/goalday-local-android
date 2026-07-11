@@ -13,10 +13,9 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitHorizontalTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.horizontalDrag
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.awaitPointerEvent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -391,11 +390,8 @@ private suspend fun PointerInputScope.detectEdgePageTurnGestures(
     val fullWidth = edgeRatio >= 0.5f
     awaitPointerEventScope {
         while (true) {
-            // 在 Initial pass 观察 down，先不消费；只在确认要翻页时才消费，
-            // 避免中间区域（滑动删除/内容点击）的触摸被父组件吞掉。
-            val down = awaitPointerEvent(PointerEventPass.Initial).changes
-                .firstOrNull { !it.previousPressed && it.pressed }
-                ?: continue
+            // 等待手指按下
+            val down = awaitFirstDown(requireUnconsumed = false)
             val width = size.width.toFloat().coerceAtLeast(1f)
 
             if (fullWidth) {
