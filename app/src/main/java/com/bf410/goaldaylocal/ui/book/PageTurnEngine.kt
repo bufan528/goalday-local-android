@@ -127,11 +127,15 @@ fun PageTurnEngine(
                     phase = TurnPhase.SettlingForward
                     progress.animateTo(
                         1f,
-                        animationSpec = spring(
-                            // HANDBOOK：纸张翻页应利落，略带阻尼，避免拖沓
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.85f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) Spring.StiffnessMedium else Spring.StiffnessLow,
-                        ),
+                        animationSpec = if (profile == TurnProfile.HANDBOOK) {
+                            // 对照原版 BaseBookViewKt：animationTotalDuration = 250ms
+                            tween(durationMillis = 250)
+                        } else {
+                            spring(
+                                dampingRatio = 0.9f,
+                                stiffness = Spring.StiffnessLow,
+                            )
+                        },
                     )
                     onFlipNext()
                     if (profile == TurnProfile.HANDBOOK) {
@@ -145,11 +149,15 @@ fun PageTurnEngine(
                     phase = TurnPhase.SettlingForward
                     progress.animateTo(
                         1f,
-                        animationSpec = spring(
-                            // HANDBOOK：纸张翻页应利落，略带阻尼
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.85f else 0.9f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) Spring.StiffnessMedium else Spring.StiffnessLow,
-                        ),
+                        animationSpec = if (profile == TurnProfile.HANDBOOK) {
+                            // 对照原版 BaseBookViewKt：animationTotalDuration = 250ms
+                            tween(durationMillis = 250)
+                        } else {
+                            spring(
+                                dampingRatio = 0.9f,
+                                stiffness = Spring.StiffnessLow,
+                            )
+                        },
                     )
                     onFlipPrevious()
                     if (profile == TurnProfile.HANDBOOK) {
@@ -162,11 +170,15 @@ fun PageTurnEngine(
                     phase = TurnPhase.SettlingBack
                     progress.animateTo(
                         0f,
-                        animationSpec = spring(
-                            // HANDBOOK：回弹利落，像纸张自然回落
-                            dampingRatio = if (profile == TurnProfile.HANDBOOK) 0.82f else 0.84f,
-                            stiffness = if (profile == TurnProfile.HANDBOOK) Spring.StiffnessMedium else Spring.StiffnessMediumLow,
-                        ),
+                        animationSpec = if (profile == TurnProfile.HANDBOOK) {
+                            // 对照原版：回弹也用 250ms tween
+                            tween(durationMillis = 250)
+                        } else {
+                            spring(
+                                dampingRatio = 0.84f,
+                                stiffness = Spring.StiffnessMediumLow,
+                            )
+                        },
                     )
                 }
             }
@@ -558,8 +570,8 @@ fun Modifier.turningPageTransform(
     val yOffsetFactor = (anchorY - 0.5f) * 2f
     translationY = yOffsetFactor * visualProgress * if (profile == TurnProfile.HANDBOOK) 3.6f else 12f
     rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 1.8f else 9.2f
-    // HANDBOOK 用更大 cameraDistance 减少 3D 畸变，翻页更干净
-    cameraDistance = if (profile == TurnProfile.HANDBOOK) 64f * density else 34f * density
+    // 对照原版 BaseBookViewKt：cameraDistance = 40 × density
+    cameraDistance = if (profile == TurnProfile.HANDBOOK) 40f * density else 34f * density
     shadowElevation = if (profile == TurnProfile.HANDBOOK) 10f else 28f
     // 模拟纸张翻起时近大远小的轻微透视压缩
     val subtleDepthScale = 1f - visualProgress * 0.012f
@@ -626,8 +638,8 @@ fun Modifier.pageBackTransform(
     val yOffsetFactor = (anchorY - 0.5f) * 2f
     translationY = yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 1.4f else 7.2f
     rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 0.9f else 5.4f
-    // HANDBOOK 背面用与正面一致的 cameraDistance
-    cameraDistance = if (profile == TurnProfile.HANDBOOK) 64f * density else 34f * density
+    // HANDBOOK 背面用与正面一致的 cameraDistance（对照原版 40 × density）
+    cameraDistance = if (profile == TurnProfile.HANDBOOK) 40f * density else 34f * density
     val subtleBackScale = 1f - visualProgress * 0.012f
     scaleY = if (profile == TurnProfile.HANDBOOK) {
         subtleBackScale.coerceIn(0.988f, 1f)

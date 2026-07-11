@@ -1469,6 +1469,7 @@ private fun TargetDetailRouteOverlay(
     onSaveAsOwnTarget: () -> Unit,
     onAddToDiary: (Boolean) -> Unit,
     onDelete: () -> Unit,
+    onPinToTop: () -> Unit = {},
 ) {
     val dateShortcuts = remember { targetDateShortcuts() }
     val deadlineLabel = meta.deadlineDay?.let { "${it}日" } ?: "未设置"
@@ -1682,7 +1683,10 @@ private fun TargetDetailRouteOverlay(
                     Text("还没有排入日程", color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.bodySmall)
                 } else {
                     scheduledEntries.take(10).forEach { entry ->
-                        TargetScheduledEntryRow(entry = entry)
+                        TargetScheduledEntryRow(
+                            entry = entry,
+                            onPinToTop = onPinToTop,
+                        )
                     }
                 }
             }
@@ -1714,7 +1718,7 @@ private fun TargetDetailRouteOverlay(
                 tint = GoaldayDesign.adaptiveInkPrimary,
                 modifier = Modifier
                     .padding(13.dp)
-                    .clickable { /* TODO: 置顶功能 */ },
+                    .clickable { onPinToTop() },
             )
             Icon(
                 imageVector = Icons.Default.Check,
@@ -1825,7 +1829,10 @@ private fun TargetDetailMetric(
 }
 
 @Composable
-private fun TargetScheduledEntryRow(entry: ScheduleEntry) {
+private fun TargetScheduledEntryRow(
+    entry: ScheduleEntry,
+    onPinToTop: () -> Unit = {},
+) {
     val color = if (entry.completed) GoaldayDesign.RouteTarget else GoaldayDesign.Pink
     Row(
         modifier = Modifier
