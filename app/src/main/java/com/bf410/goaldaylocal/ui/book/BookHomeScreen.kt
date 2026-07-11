@@ -1239,7 +1239,7 @@ private fun BookDetailView(
         } else if (handbookMode) {
             // 原版书页阅读没有顶部月份条，翻页靠左右滑动/点击热区，保持页面沉浸
         }
-        if (handbookMode) {
+        if (handbookMode && segment != BookSegment.MONTH) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -255,7 +255,7 @@ private fun InBookScheduleDayRow(
         // divider_line: textSize=9dp "—", color_tab_divider(#C5BBB6), 居中
         // tv_day_2: textSize=6dp, marginTop=2dp, 下半区
         Box(
-            modifier = Modifier.width(12.25.dp),
+            modifier = Modifier.width(24.5.dp),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -306,13 +306,13 @@ private fun InBookScheduleTargetColumn(
     isChecked: (String, String) -> Boolean,
     modifier: Modifier = Modifier,
 ) {
-    // 对照：paddingVertical=1.75pt=3.89dp（aapt2 验证为 pt）
+    // 对照：paddingVertical=3.5pt=7.78dp（1pt=2.222dp）
     Column(
-        modifier = modifier.padding(vertical = 3.89.dp),
+        modifier = modifier.padding(vertical = 7.78.dp),
     ) {
         for (i in 0 until 3) {
             val entry = entries.getOrNull(i)
-            // 对照 item_schedule_item_in_book.xml: layout_height=12.0pt=26.67dp（aapt2 验证为 pt）
+            // 对照 item_schedule_item_in_book.xml: layout_height=12.0pt=26.67dp
             // cb_target visibility=gone → 不渲染勾选框
             // et_target: style_schedule_day_form textSize=20dip，预览用10sp
             Box(
@@ -432,19 +432,19 @@ internal fun InBookPlanPreview(
 
         // 浮动按钮：对照 fragment_plan.xml 的 iv_add 和 iv_tip
         // iv_add: bg_plan_menu(白色圆角90dp, 43dp) + plan_add图标, marginEnd=20dp, marginBottom=93dp
-        // iv_tip: bg_plan_menu + plan_tip图标, marginEnd=20dp, marginBottom=32dp
+        // iv_tip: bg_plan_menu(黑色圆角90dp, 43dp) + plan_tip图标(白色), marginEnd=20dp, marginBottom=32dp
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 20.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            // 提示按钮
+            // 提示按钮（黑色背景，白色图标）
             Box(
                 modifier = Modifier
                     .size(43.dp)
                     .clip(RoundedCornerShape(90.dp))
-                    .background(Color.White)
+                    .background(Color.Black)
                     .clickable { /* TODO: 提示功能 */ },
                 contentAlignment = Alignment.Center,
             ) {
@@ -452,9 +452,10 @@ internal fun InBookPlanPreview(
                     painter = painterResource(R.drawable.plan_tip),
                     contentDescription = "提示",
                     modifier = Modifier.size(24.dp),
+                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White),
                 )
             }
-            // 添加按钮
+            // 添加按钮（白色背景）
             Box(
                 modifier = Modifier
                     .size(43.dp)
@@ -511,10 +512,10 @@ private fun InBookPlanRow(
     onEdit: () -> Unit = {},
     handbookMode: Boolean = false,
 ) {
-    // 对照 item_plan_item.xml（aapt2 验证：全部值为 pt，1pt=2.222dp）:
+    // 对照 item_plan_item.xml:
     // SwipeRevealLayout marginBottom=2pt=4.44dp
     // cl_content minHeight=49pt=108.89dp, white background
-    // 右侧滑出：fl_info(黑色编辑) + fl_delete(#ed8888删除)，各50pt=111.11dp宽
+    // 右侧滑出：fl_info(黑色编辑) + fl_delete(#ed8888删除)，各50pt=111.1dp宽
     // HANDBOOK 模式下对齐原版 NoTouch 书页，禁用滑动删除，避免与全宽翻页手势冲突。
     val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
     val scope = rememberCoroutineScope()
@@ -536,7 +537,7 @@ private fun InBookPlanRow(
                 // 编辑按钮：黑色背景
                 Box(
                     modifier = Modifier
-                        .width(111.11.dp)
+                        .width(50.dp)
                         .fillMaxHeight()
                         .background(Color.Black)
                         .clickable {
@@ -551,7 +552,7 @@ private fun InBookPlanRow(
                 // 删除按钮：#ed8888 红色背景
                 Box(
                     modifier = Modifier
-                        .width(111.11.dp)
+                        .width(50.dp)
                         .fillMaxHeight()
                         .background(Color(0xFFed8888))
                         .clickable {
@@ -568,10 +569,11 @@ private fun InBookPlanRow(
         // 内容层：HANDBOOK 模式下禁止滑动，仅显示内容
         val rowModifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 108.89.dp)
+            .heightIn(min = 49.dp)
             .graphicsLayer {
                 translationX = if (handbookMode) 0f else swipeOffset.value
             }
+            .background(Color.White)
         val gestureModifier = if (handbookMode) {
             Modifier
         } else {
@@ -579,13 +581,13 @@ private fun InBookPlanRow(
                 detectHorizontalDragGestures(
                     onHorizontalDrag = { change, dragAmount ->
                         change.consume()
-                        val newX = (swipeOffset.value + dragAmount).coerceIn(-222.22f, 0f)
+                        val newX = (swipeOffset.value + dragAmount).coerceIn(-100f, 0f)
                         scope.launch { swipeOffset.snapTo(newX) }
                     },
                     onDragEnd = {
-                        if (swipeOffset.value < -111.11f) {
+                        if (swipeOffset.value < -50f) {
                             // 滑出超过一半，保持展开
-                            scope.launch { swipeOffset.animateTo(-222.22f) }
+                            scope.launch { swipeOffset.animateTo(-100f) }
                             swipeRevealed = true
                         } else {
                             // 回弹
@@ -604,34 +606,34 @@ private fun InBookPlanRow(
             modifier = rowModifier.then(gestureModifier),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // 黑色圆点：10pt=22.22dp，垂直居中
+            // 黑色圆点：10dp，垂直居中
             Box(
                 modifier = Modifier
                     .padding(start = 20.dp)
-                    .size(22.22.dp)
+                    .size(10.dp)
                     .background(GoaldayDesign.adaptiveInkPrimary, shape = RoundedCornerShape(90.dp))
                     .clickable { onToggleChecked() },
             )
-            // 内容文字：16pt=35.56sp，padding 14pt=31.11dp v
+            // 内容文字：16sp，padding 14dp v
             Text(
                 item,
-                fontSize = 35.56.sp,
+                fontSize = 16.sp,
                 color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                 textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                 modifier = Modifier
-                    .padding(start = 16.dp, top = 31.11.dp, bottom = 31.11.dp)
+                    .padding(start = 16.dp, top = 14.dp, bottom = 14.dp)
                     .weight(1f),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            // 右侧时间文字：对照 tv_count textSize=14pt=31.11sp, paddingTop=14pt=31.11dp, marginEnd=14pt=31.11dp
+            // 右侧时间文字：对照 tv_count textSize=14sp, paddingTop=14dp, marginEnd=14dp
             // 由于 PlanPage 数据模型无时间信息，显示序号作为占位
             Text(
                 text = "${index + 1}",
-                fontSize = 31.11.sp,
+                fontSize = 14.sp,
                 color = GoaldayDesign.adaptiveInkMuted,
                 modifier = Modifier
-                    .padding(end = 31.11.dp, top = 31.11.dp, bottom = 31.11.dp),
+                    .padding(end = 14.dp, top = 14.dp, bottom = 14.dp),
             )
         }
     }
@@ -700,7 +702,7 @@ internal fun InBookDiaryPreview(
                 .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
         )
         Spacer(Modifier.height(6.dp))
-        // 内容区：对照 fragment_diary_inbook.xml RecyclerView（aapt2 验证：marginStart/End 为 pt）
+        // 内容区：对照 fragment_diary_inbook.xml RecyclerView
         // marginTop=5dp, marginBottom=30dp, marginStart/End=7.5pt=16.67dp
         // 添加纸张横线效果，模拟真实笔记本（横线固定在背景上，内容在上面滚动）
         Box(
@@ -743,12 +745,12 @@ internal fun InBookDiaryPreview(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
-                                    .clip(RoundedCornerShape(17.78.dp)) // 8pt = 17.78dp
+                                    .clip(RoundedCornerShape(8.dp))
                                     .background(Color.White)
                                     .border(
-                                        width = 1.11.dp, // 0.5pt = 1.11dp
+                                        width = 0.5.dp,
                                         color = Color.Black.copy(alpha = 0.3f),
-                                        shape = RoundedCornerShape(17.78.dp)
+                                        shape = RoundedCornerShape(8.dp)
                                     )
                                     .padding(16.dp),
                             ) {
@@ -766,7 +768,7 @@ internal fun InBookDiaryPreview(
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             title,
-                                            fontSize = 20.sp, // 9dp = 20sp
+                                            fontSize = 9.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = Color(0xFF503311),
                                         )
@@ -797,7 +799,7 @@ internal fun InBookDiaryPreview(
                 }
             }
         }
-        // 底部图片栏：对照 fl_bottom_bar: 23pt=51.11dp 高（aapt2 验证为 pt）, 白色背景
+        // 底部图片栏：对照 fragment_diary_inbook.xml fl_bottom_bar: 23pt=51.11dp 高, 白色背景
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -805,7 +807,7 @@ internal fun InBookDiaryPreview(
                 .background(GoaldayDesign.Surface),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // fl_select_pic: 23pt=51.11dp × 51.11dp, marginStart=3.75pt=8.33dp（aapt2 验证为 pt）
+            // fl_select_pic: 23pt=51.11dp × 23pt=51.11dp, marginStart=3.75pt=8.33dp
             Box(
                 modifier = Modifier
                     .padding(start = 8.33.dp)
@@ -813,11 +815,11 @@ internal fun InBookDiaryPreview(
                     .clickable { onAddImage() },
                 contentAlignment = Alignment.Center,
             ) {
-                // ic_select_pic: 6.25pt=13.89dp × 13.89dp（aapt2 验证为 pt）
+                // ic_select_pic: 12.5pt=27.78dp × 12.5pt=27.78dp (参考APK)
                 Image(
                     painter = painterResource(R.drawable.ic_select_pic),
                     contentDescription = "插入图片",
-                    modifier = Modifier.size(13.89.dp),
+                    modifier = Modifier.size(27.78.dp),
                 )
             }
         }
@@ -1029,12 +1031,12 @@ private fun InBookTargetRow(
     val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
     val scope = rememberCoroutineScope()
     var swipeRevealed by remember { mutableStateOf(false) }
-    val revealWidth = 222.22.dp  // 与计划页一致：编辑+删除各 111.11dp
+    val revealWidth = 100.dp  // 编辑+删除各 50dp
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 108.89.dp),
+            .heightIn(min = 49.dp),
     ) {
         // 右侧滑动操作按钮（编辑+删除）仅在非 HANDBOOK 模式显示
         if (!handbookMode && swipeRevealed) {
@@ -1046,7 +1048,7 @@ private fun InBookTargetRow(
                 // 编辑按钮：黑色背景
                 Box(
                     modifier = Modifier
-                        .width(111.11.dp)
+                        .width(50.dp)
                         .fillMaxHeight()
                         .background(Color.Black)
                         .clickable {
@@ -1061,7 +1063,7 @@ private fun InBookTargetRow(
                 // 删除按钮：#ed8888 红色背景
                 Box(
                     modifier = Modifier
-                        .width(111.11.dp)
+                        .width(50.dp)
                         .fillMaxHeight()
                         .background(Color(0xFFed8888))
                         .clickable {
@@ -1111,11 +1113,11 @@ private fun InBookTargetRow(
                 .clickable { onOpenDetail() },
         ) {
             // 内容区：对照 item_target_detail.xml
-            // cl_content minHeight=49pt=108.89dp, paddingTop=21dp, paddingBottom=20dp, paddingStart/End=27dp
+            // cl_content minHeight=49dp, paddingTop=12dp, paddingBottom=12dp, paddingStart/End=12dp
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 27.dp, top = 21.dp, end = 27.dp, bottom = 20.dp),
+                    .padding(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // 勾选框：原版 wrap_content (ic_box_full + ic_box_select)，约20dp
@@ -1124,15 +1126,15 @@ private fun InBookTargetRow(
                     onToggle = onToggleChecked,
                     size = 20,
                 )
-                // 序号：对照 tv_no textSize=20dip=20sp, marginStart=56dp
+                // 序号：对照 tv_no textSize=20sp, marginStart=12dp
                 // 由于原版使用 TimeTextView 显示序号，这里用 index+1 模拟
                 Text(
                     text = "${index + 1}",
                     fontSize = 20.sp,
                     color = GoaldayDesign.adaptiveInkMuted,
-                    modifier = Modifier.padding(start = 10.dp),
+                    modifier = Modifier.padding(start = 12.dp),
                 )
-                // 目标文字：对照 tv_content textSize=20dip=20sp, marginStart=10dp
+                // 目标文字：对照 tv_content textSize=20sp, marginStart=12dp
                 Text(
                     item,
                     fontSize = 20.sp,
@@ -1140,7 +1142,7 @@ private fun InBookTargetRow(
                     textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier
-                        .padding(start = 10.dp)
+                        .padding(start = 12.dp)
                         .weight(1f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -1151,7 +1153,7 @@ private fun InBookTargetRow(
             if (meta?.deadlineDay != null) {
                 Box(
                     modifier = Modifier
-                        .padding(start = 57.dp, bottom = 13.dp)
+                        .padding(start = 44.dp, bottom = 13.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .background(GoaldayDesign.Pink.copy(alpha = 0.1f))
                         .padding(horizontal = 10.dp, vertical = 4.dp),
