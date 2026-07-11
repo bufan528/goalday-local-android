@@ -758,9 +758,9 @@ private fun DiaryPromptCell(
 
 /**
  * 日记编辑器底栏，对齐原 APK fragment_diary.xml / fragment_diary_inbook.xml。
- * - 独立页高度 102.22dp（46pt），书内页高度 51.11dp（23pt）
- * - 按钮容器：独立页 55.56dp（25pt），书内页 51.11dp（23pt）
- * - 图标大小：独立页 24.dp，书内页 13.89.dp（6.25pt）
+ * - 独立页高度 46dp（fragment_diary.xml fl_bottom_bar=46dip），书内页高度 23dp（fragment_diary_inbook.xml fl_bottom_bar=23dip）
+ * - 按钮容器：独立页 25dp，书内页 23dp（apktool误显示为pt，实际为dip）
+ * - 图标大小：独立页 24dp，书内页 12.5dp
  * - 书内页图片按钮使用原版图标 ic_select_pic
  * - 背景 #E5DAD4（TabBarBg）
  * - 左侧图片 + 键盘按钮
@@ -771,9 +771,9 @@ private fun DiaryEditorBottomBar(
     onAddImage: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val height = if (isInBook) 51.11.dp else 102.22.dp
-    val buttonSize = if (isInBook) 51.11.dp else 55.56.dp
-    val iconSize = if (isInBook) 13.89.dp else 24.dp
+    val height = if (isInBook) 23.dp else 46.dp
+    val buttonSize = if (isInBook) 23.dp else 25.dp
+    val iconSize = if (isInBook) 12.5.dp else 24.dp
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     Box(
@@ -781,11 +781,11 @@ private fun DiaryEditorBottomBar(
             .fillMaxWidth()
             .height(height)
             .background(GoaldayDesign.TabBarBg)
-            .padding(horizontal = 8.33.dp),
+            .padding(horizontal = 3.75.dp),
     ) {
         Row(
             modifier = Modifier.align(Alignment.CenterStart),
-            horizontalArrangement = Arrangement.spacedBy(8.33.dp),
+            horizontalArrangement = Arrangement.spacedBy(3.75.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
