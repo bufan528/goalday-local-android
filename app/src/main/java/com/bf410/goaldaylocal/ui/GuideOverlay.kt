@@ -129,14 +129,19 @@ internal fun GuideOverlay(
     var index by remember { mutableIntStateOf(0) }
     val page = pages[index.coerceIn(0, pages.lastIndex)]
     val context = LocalContext.current
-    val hasLocalGuideAssets = remember {
-        runCatching {
+    var hasLocalGuideAssets by remember { mutableStateOf(false) }
+    var lottieMeta by remember { mutableStateOf<GuideLottieMeta?>(null) }
+
+    // 异步加载资源，避免阻塞主线程
+    LaunchedEffect(Unit) {
+        hasLocalGuideAssets = runCatching {
             context.assets.open("lottie/goalday.json").use { }
             context.assets.open("lottie/coupon.json").use { }
             true
         }.getOrDefault(false)
+
+        lottieMeta = loadGuideLottieMeta(context)
     }
-    val lottieMeta = remember { loadGuideLottieMeta(context) }
 
     Box(
         modifier = Modifier

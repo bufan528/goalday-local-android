@@ -587,7 +587,7 @@ private fun BoxScope.HandbookMonthHeader(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "${month}月日程 计划 (${pageIndex + 1}/$pageCount)",
+                "${month}月日程",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = GoaldayDesign.adaptiveInkPrimary,
