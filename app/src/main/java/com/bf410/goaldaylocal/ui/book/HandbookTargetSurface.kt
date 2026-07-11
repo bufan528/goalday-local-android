@@ -32,7 +32,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.VerticalAlignTop
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -307,7 +307,18 @@ internal fun TargetDetailReplicaPage(
                 modifier = Modifier.align(Alignment.BottomStart),
                 verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1),
             ) {
-                Text(pageTitle, style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.Medium)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // 圆点装饰
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(tint, shape = androidx.compose.foundation.shape.CircleShape)
+                    )
+                    Text(pageTitle, style = MaterialTheme.typography.titleLarge, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.Medium)
+                }
                 // Header 只显示总数，细分统计（已完成/已排期/待整理/自定义）由下方 TargetLedgerSummary 承担，避免信息重复
                 Text("目标档案 · 共 ${items.size} 项", style = MaterialTheme.typography.bodySmall, color = GoaldayDesign.adaptiveInkSecondary)
                 TargetProgressBar(
@@ -690,7 +701,7 @@ private fun TargetBottomActionBar(
                     .background(GoaldayDesign.ScheduleDateColumnSeparator),
             )
             Icon(
-                Icons.Filled.VerticalAlignTop,
+                Icons.Filled.ArrowUpward,
                 contentDescription = "置顶",
                 modifier = Modifier
                     .size(22.dp)

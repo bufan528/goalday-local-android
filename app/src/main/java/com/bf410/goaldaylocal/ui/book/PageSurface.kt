@@ -136,8 +136,8 @@ fun BoxScope.SpineLayer(
     active: Boolean,
     profile: TurnProfile = TurnProfile.DEFAULT,
 ) {
-    // spine：减细并柔化，避免与 BookShell 中央沟槽叠加后形成粗亮柱子
-    val baseWidth = if (profile == TurnProfile.HANDBOOK) 16.dp else 14.dp
+    // spine：极细并极淡，避免与 BookShell 中央沟槽叠加后形成粗亮柱子
+    val baseWidth = if (profile == TurnProfile.HANDBOOK) 12.dp else 14.dp
     Box(
         modifier = Modifier
             .align(Alignment.Center)
@@ -146,45 +146,45 @@ fun BoxScope.SpineLayer(
             .background(
                 Brush.horizontalGradient(
                     listOf(
-                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.55f else 0.42f),
-                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.75f else 0.58f),
-                        GoaldayDesign.BookSpineLight.copy(alpha = if (active) 0.85f else 0.68f),
-                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.75f else 0.58f),
-                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.55f else 0.42f),
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.38f else 0.28f),
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.52f else 0.38f),
+                        GoaldayDesign.BookSpineLight.copy(alpha = if (active) 0.58f else 0.44f),
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.52f else 0.38f),
+                        GoaldayDesign.BookSpine.copy(alpha = if (active) 0.38f else 0.28f),
                     ),
                 ),
             ),
     )
 
     if (active) {
-        // 两侧阴影：模拟书页弯入书脊的暗部，范围收窄
+        // 两侧阴影：模拟书页弯入书脊的暗部，范围收窄且很淡
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width((if (profile == TurnProfile.HANDBOOK) 18f else 14f + visualProgress * 4f).dp)
+                .width((if (profile == TurnProfile.HANDBOOK) 14f else 14f + visualProgress * 4f).dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            Color.Black.copy(alpha = (0.06f + visualProgress * 0.10f).coerceAtMost(0.18f)),
+                            Color.Black.copy(alpha = (0.04f + visualProgress * 0.08f).coerceAtMost(0.14f)),
                             Color.Transparent,
-                            Color.Black.copy(alpha = (0.06f + visualProgress * 0.10f).coerceAtMost(0.18f)),
+                            Color.Black.copy(alpha = (0.04f + visualProgress * 0.08f).coerceAtMost(0.14f)),
                         ),
                     ),
                 ),
         )
-        // 中央极细高光：仅保留微弱圆柱感，不再使用 PaperWarm 强高光
+        // 中央极细高光：仅保留微弱圆柱感
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .width((2.5f + visualProgress * if (profile == TurnProfile.HANDBOOK) 5f else 3.5f).dp)
+                .width((2f + visualProgress * if (profile == TurnProfile.HANDBOOK) 3.5f else 3.5f).dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            GoaldayDesign.BookSpineLight.copy(alpha = (0.20f + visualProgress * 0.18f).coerceAtMost(0.40f)),
-                            GoaldayDesign.Paper.copy(alpha = (0.28f + visualProgress * 0.22f).coerceAtMost(0.52f)),
-                            GoaldayDesign.BookSpineLight.copy(alpha = (0.20f + visualProgress * 0.18f).coerceAtMost(0.40f)),
+                            GoaldayDesign.BookSpineLight.copy(alpha = (0.14f + visualProgress * 0.12f).coerceAtMost(0.28f)),
+                            GoaldayDesign.Paper.copy(alpha = (0.18f + visualProgress * 0.16f).coerceAtMost(0.36f)),
+                            GoaldayDesign.BookSpineLight.copy(alpha = (0.14f + visualProgress * 0.12f).coerceAtMost(0.28f)),
                         ),
                     ),
                 ),
@@ -275,21 +275,20 @@ fun PageBackLayer(
     direction: TurnDirection?,
     anchorY: Float = 0.5f,
 ) {
-    // P1-6 大修：原 8 层装饰 Box（边缘高光、角部 radial、linear 高光等）造成"花斑纸"视觉过载
-    // 精简为 3 层核心：基底纸渐变 + 中央折痕阴影 + 单一角部柔和阴影
+    // 背面纸张：比正面稍深、稍黄，模拟纸张背面与厚度；颜色过渡更柔和
     val curlAlignTop = anchorY < 0.46f
     val easedCurl = progress * progress * (3f - 2f * progress)
-    val curlStrength = (0.12f + easedCurl * 0.76f).coerceIn(0f, 0.88f)
-    val stackShadow = (0.07f + progress * 0.18f).coerceAtMost(0.30f)
+    val curlStrength = (0.12f + easedCurl * 0.88f).coerceIn(0f, 1.0f)
+    val stackShadow = (0.08f + progress * 0.18f).coerceAtMost(0.26f)
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(GoaldayDesign.Radius2XL, GoaldayDesign.Radius2XL, GoaldayDesign.Radius3XL, GoaldayDesign.Radius3XL))
             .background(
                 Brush.horizontalGradient(
                     if (direction == TurnDirection.NEXT) {
-                        listOf(GoaldayDesign.PageTurnEdgeStart, GoaldayDesign.PageTurnEdgeMid, GoaldayDesign.adaptiveSurface)
+                        listOf(GoaldayDesign.PageTurnEdgeStart, GoaldayDesign.PaperWarm, GoaldayDesign.ExportPaperWarm)
                     } else {
-                        listOf(GoaldayDesign.adaptiveSurface, GoaldayDesign.PageTurnEdgeMid, GoaldayDesign.PageTurnEdgeStart)
+                        listOf(GoaldayDesign.ExportPaperWarm, GoaldayDesign.PaperWarm, GoaldayDesign.PageTurnEdgeStart)
                     },
                 ),
             )
@@ -299,27 +298,27 @@ fun PageBackLayer(
         Box(
             modifier = Modifier
                 .align(if (direction == TurnDirection.NEXT) Alignment.CenterStart else Alignment.CenterEnd)
-                .width((12f + progress * 24f).dp)
+                .width((14f + progress * 26f).dp)
                 .fillMaxHeight()
                 .background(
                     Brush.horizontalGradient(
                         if (direction == TurnDirection.NEXT) {
                             listOf(
                                 Color.Black.copy(alpha = stackShadow),
-                                Color.White.copy(alpha = (0.10f + progress * 0.14f).coerceAtMost(0.22f)),
+                                Color.White.copy(alpha = (0.08f + progress * 0.12f).coerceAtMost(0.18f)),
                                 Color.Transparent,
                             )
                         } else {
                             listOf(
                                 Color.Transparent,
-                                Color.White.copy(alpha = (0.10f + progress * 0.14f).coerceAtMost(0.22f)),
+                                Color.White.copy(alpha = (0.08f + progress * 0.12f).coerceAtMost(0.18f)),
                                 Color.Black.copy(alpha = stackShadow),
                             )
                         },
                     ),
                 ),
         )
-        // 层 2：单一角部柔和阴影（合并原 4 层角部装饰），模拟纸张翻起的背光
+        // 层 2：纸张翻起背面的角部阴影，强化圆柱体感
         Box(
             modifier = Modifier
                 .align(
@@ -335,10 +334,26 @@ fun PageBackLayer(
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            Color.Black.copy(alpha = (curlStrength * 0.20f).coerceAtMost(0.28f)),
+                            Color.Black.copy(alpha = (curlStrength * 0.18f).coerceAtMost(0.24f)),
                             Color.Transparent,
                         ),
-                        radius = 260f,
+                        radius = 280f,
+                    ),
+                ),
+        )
+        // 层 3：纸张厚度侧影——翻动页边缘露出下方纸张的层叠暗边
+        Box(
+            modifier = Modifier
+                .align(if (direction == TurnDirection.NEXT) Alignment.CenterEnd else Alignment.CenterStart)
+                .width((5f + progress * 10f).dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        if (direction == TurnDirection.NEXT) {
+                            listOf(Color.Transparent, Color.Black.copy(alpha = (0.08f + progress * 0.14f).coerceAtMost(0.20f)))
+                        } else {
+                            listOf(Color.Black.copy(alpha = (0.08f + progress * 0.14f).coerceAtMost(0.20f)), Color.Transparent)
+                        },
                     ),
                 ),
         )
@@ -347,7 +362,7 @@ fun PageBackLayer(
             PageHeaderLine(
                 bookTitle = BookStrings.pageBack,
                 subtitle = BookStrings.pageTurning,
-                tint = tint.copy(alpha = 0.56f),
+                tint = tint.copy(alpha = 0.50f),
                 savedText = BookStrings.turnProgress.format((progress * 100).toInt()),
             )
             Spacer(Modifier.weight(1f))
@@ -3160,7 +3175,7 @@ private fun DiaryTargetChildRow(text: String) {
     }
 }
 
-// 对照 item_diary_topic_target_inbook.xml：bg_diary_topic_target 深色背景，8sp 白色标题 + 9sp 副标题
+// 对照 item_diary_topic_target_inbook.xml：bg_diary_topic_target 黑色背景，8sp 白色标题 + 9sp 副标题
 // aapt2 验证：paddingStart/End=5.0pt=11.11dp, marginTop=5.0pt=11.11dp, marginBottom=3.5pt=7.78dp, layout_marginBottom=5dp
 @Composable
 private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
@@ -3168,8 +3183,8 @@ private fun DiaryTopicTargetBlockPreview(block: DiaryEntryBlock) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 5.dp)
-            .clip(RoundedCornerShape(GoaldayDesign.RadiusS))
-            .background(GoaldayDesign.adaptiveInkSecondary)
+            .clip(RoundedCornerShape(17.78.dp)) // 8dp = 17.78dp
+            .background(Color.Black)
             .padding(horizontal = 11.11.dp)
             .padding(bottom = 11.11.dp),
     ) {

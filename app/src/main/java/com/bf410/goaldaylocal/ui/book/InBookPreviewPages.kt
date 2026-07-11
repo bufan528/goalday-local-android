@@ -2,6 +2,7 @@ package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -97,7 +98,7 @@ private fun InBookCheckbox(
 
 // region 日程页 (fragment_schedule_inbook.xml + item_schedule_item_in_book.xml)
 // 结构：RecyclerView 垂直列表，每行一天
-// 每天结构：24.5dp日期列 + 2列×3行目标槽(paddingVertical=3.5dp)
+// 每天结构：12.25dp日期列 + 2列×3行目标槽(paddingVertical=3.89dp)
 // 日期列：9sp日期 + 9sp分隔线"—" + 6sp周几
 // 目标槽：9dp勾选框 + style_schedule_day_form文字
 @Composable
@@ -113,13 +114,15 @@ internal fun InBookSchedulePreview(
     turnDirection: TurnDirection?,
     handbookMode: Boolean = false,
 ) {
+    // HANDBOOK 模式下外部已应用 turningPageTransform 3D 翻页，内容应贴在页面上随页转动，
+    // 不再额外做水平视差，避免双重位移导致页面晃动/残影。
     val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
-    val shift = when (turnDirection) {
-        TurnDirection.NEXT -> -(eased * 8f)
-        TurnDirection.PREVIOUS -> eased * 8f
+    val shift = if (handbookMode) 0f else when (turnDirection) {
+        TurnDirection.NEXT -> -(eased * 4f)
+        TurnDirection.PREVIOUS -> eased * 4f
         null -> 0f
     }
-    val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
+    val alpha = if (handbookMode) 1f else (1f - eased * 0.04f).coerceIn(0.96f, 1f)
 
     // 按天分组日程数据
     val today = LocalDate.now()
@@ -247,12 +250,12 @@ private fun InBookScheduleDayRow(
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
-        // 左侧日期列：24.5dp（aapt2 验证 item_schedule_item_in_book.xml）
+        // 左侧日期列：12.25dip = 12.25dp（aapt2 验证 item_schedule_item_in_book.xml）
         // tv_day_1: textSize=9dp, marginBottom=2dp, 上半区
         // divider_line: textSize=9dp "—", color_tab_divider(#C5BBB6), 居中
         // tv_day_2: textSize=6dp, marginTop=2dp, 下半区
         Box(
-            modifier = Modifier.width(24.5.dp),
+            modifier = Modifier.width(12.25.dp),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -350,18 +353,20 @@ internal fun InBookPlanPreview(
     onToggleChecked: (String, String) -> Unit,
     onDeleteItem: (String) -> Unit = {},
     onEditItem: (String, String) -> Unit = { _, _ -> },
+    onAddItem: () -> Unit = {},
     tint: Color,
     turnProgress: Float,
     turnDirection: TurnDirection?,
     handbookMode: Boolean = false,
 ) {
+    // HANDBOOK 模式下外部已应用 turningPageTransform 3D 翻页，内容应贴在页面上随页转动。
     val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
-    val shift = when (turnDirection) {
+    val shift = if (handbookMode) 0f else when (turnDirection) {
         TurnDirection.NEXT -> -(eased * 8f)
         TurnDirection.PREVIOUS -> eased * 8f
         null -> 0f
     }
-    val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
+    val alpha = if (handbookMode) 1f else (1f - eased * 0.08f).coerceIn(0.92f, 1f)
 
     val planItems = remember(page.items, customPageItems) {
         (page.items + customPageItems).distinct()
@@ -369,54 +374,101 @@ internal fun InBookPlanPreview(
 
     var editingItem by remember { mutableStateOf<String?>(null) }
 
-    LazyColumn(
+    Box(
         modifier = modifier
             .graphicsLayer {
                 translationX = shift
                 this.alpha = alpha
             }
-            .fillMaxSize()
-            .handbookPaperRuling(null),
+            .fillMaxSize(),
     ) {
-        // 页眉：标题 + 页码（与目标页、日程页保持一致）
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 11.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = page.title,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = GoaldayDesign.adaptiveInkPrimary,
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .handbookPaperRuling(null),
+        ) {
+            // 页眉：标题 + 页码（与目标页、日程页保持一致）
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 20.dp, top = 11.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = page.title,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                    )
+                    Text(
+                        text = "${pageIndex + 1}/$pageCount",
+                        fontSize = 10.sp,
+                        color = GoaldayDesign.adaptiveInkMuted,
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .height(0.7.dp)
+                        .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
                 )
-                Text(
-                    text = "${pageIndex + 1}/$pageCount",
-                    fontSize = 10.sp,
-                    color = GoaldayDesign.adaptiveInkMuted,
+                Spacer(Modifier.height(6.dp))
+            }
+            items(planItems.withIndex().toList(), key = { it.value }) { (index, item) ->
+                InBookPlanRow(
+                    item = item,
+                    index = index,
+                    checked = isChecked(page.title, item),
+                    onToggleChecked = { onToggleChecked(page.title, item) },
+                    onDelete = { onDeleteItem(item) },
+                    onEdit = { editingItem = item },
+                    handbookMode = handbookMode,
                 )
             }
+        }
+
+        // 浮动按钮：对照 fragment_plan.xml 的 iv_add 和 iv_tip
+        // iv_add: bg_plan_menu(白色圆角90dp, 43dp) + plan_add图标, marginEnd=20dp, marginBottom=93dp
+        // iv_tip: bg_plan_menu + plan_tip图标, marginEnd=20dp, marginBottom=32dp
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 20.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            // 提示按钮
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .height(0.7.dp)
-                    .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
-            )
-            Spacer(Modifier.height(6.dp))
-        }
-        items(planItems.withIndex().toList(), key = { it.value }) { (index, item) ->
-            InBookPlanRow(
-                item = item,
-                index = index,
-                checked = isChecked(page.title, item),
-                onToggleChecked = { onToggleChecked(page.title, item) },
-                onDelete = { onDeleteItem(item) },
-                onEdit = { editingItem = item },
-            )
+                    .size(43.dp)
+                    .clip(RoundedCornerShape(90.dp))
+                    .background(Color.White)
+                    .clickable { /* TODO: 提示功能 */ },
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.plan_tip),
+                    contentDescription = "提示",
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+            // 添加按钮
+            Box(
+                modifier = Modifier
+                    .size(43.dp)
+                    .clip(RoundedCornerShape(90.dp))
+                    .background(Color.White)
+                    .clickable { onAddItem() },
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.plan_add),
+                    contentDescription = "添加计划",
+                    modifier = Modifier.size(24.dp),
+                )
+            }
         }
     }
 
@@ -457,11 +509,13 @@ private fun InBookPlanRow(
     onToggleChecked: () -> Unit,
     onDelete: () -> Unit = {},
     onEdit: () -> Unit = {},
+    handbookMode: Boolean = false,
 ) {
     // 对照 item_plan_item.xml（aapt2 验证：全部值为 pt，1pt=2.222dp）:
     // SwipeRevealLayout marginBottom=2pt=4.44dp
     // cl_content minHeight=49pt=108.89dp, white background
     // 右侧滑出：fl_info(黑色编辑) + fl_delete(#ed8888删除)，各50pt=111.11dp宽
+    // HANDBOOK 模式下对齐原版 NoTouch 书页，禁用滑动删除，避免与全宽翻页手势冲突。
     val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
     val scope = rememberCoroutineScope()
     var swipeRevealed by remember { mutableStateOf(false) }
@@ -469,11 +523,11 @@ private fun InBookPlanRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 52.dp)
+            .heightIn(min = 108.89.dp)
             .padding(bottom = 4.44.dp),
     ) {
-        // 右侧滑动操作按钮（编辑+删除）
-        if (swipeRevealed) {
+        // 右侧滑动操作按钮（编辑+删除）仅在非 HANDBOOK 模式显示
+        if (!handbookMode && swipeRevealed) {
             Row(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -511,69 +565,73 @@ private fun InBookPlanRow(
             }
         }
 
-        // 内容层：可滑动
-        // 修正：行高 108.89dp → 52dp，字体 35.56sp → 16sp，间距按比例缩小
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 52.dp)
-                .graphicsLayer {
-                    translationX = swipeOffset.value
-                }
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onHorizontalDrag = { change, dragAmount ->
-                            change.consume()
-                            val newX = (swipeOffset.value + dragAmount).coerceIn(-222.22f, 0f)
-                            scope.launch { swipeOffset.snapTo(newX) }
-                        },
-                        onDragEnd = {
-                            if (swipeOffset.value < -111.11f) {
-                                // 滑出超过一半，保持展开
-                                scope.launch { swipeOffset.animateTo(-222.22f) }
-                                swipeRevealed = true
-                            } else {
-                                // 回弹
-                                scope.launch { swipeOffset.animateTo(0f) }
-                                swipeRevealed = false
-                            }
-                        },
-                        onDragCancel = {
+        // 内容层：HANDBOOK 模式下禁止滑动，仅显示内容
+        val rowModifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 108.89.dp)
+            .graphicsLayer {
+                translationX = if (handbookMode) 0f else swipeOffset.value
+            }
+        val gestureModifier = if (handbookMode) {
+            Modifier
+        } else {
+            Modifier.pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onHorizontalDrag = { change, dragAmount ->
+                        change.consume()
+                        val newX = (swipeOffset.value + dragAmount).coerceIn(-222.22f, 0f)
+                        scope.launch { swipeOffset.snapTo(newX) }
+                    },
+                    onDragEnd = {
+                        if (swipeOffset.value < -111.11f) {
+                            // 滑出超过一半，保持展开
+                            scope.launch { swipeOffset.animateTo(-222.22f) }
+                            swipeRevealed = true
+                        } else {
+                            // 回弹
                             scope.launch { swipeOffset.animateTo(0f) }
                             swipeRevealed = false
-                        },
-                    )
-                },
+                        }
+                    },
+                    onDragCancel = {
+                        scope.launch { swipeOffset.animateTo(0f) }
+                        swipeRevealed = false
+                    },
+                )
+            }
+        }
+        Row(
+            modifier = rowModifier.then(gestureModifier),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // 黑色圆点：10pt=22.22dp，垂直居中
             Box(
                 modifier = Modifier
                     .padding(start = 20.dp)
-                    .size(10.dp)
+                    .size(22.22.dp)
                     .background(GoaldayDesign.adaptiveInkPrimary, shape = RoundedCornerShape(90.dp))
                     .clickable { onToggleChecked() },
             )
-            // 内容文字：16sp，padding 16dp
+            // 内容文字：16pt=35.56sp，padding 14pt=31.11dp v
             Text(
                 item,
-                fontSize = 16.sp,
+                fontSize = 35.56.sp,
                 color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                 textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                 modifier = Modifier
-                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+                    .padding(start = 16.dp, top = 31.11.dp, bottom = 31.11.dp)
                     .weight(1f),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            // 右侧时间文字：对照 tv_count textSize=14pt=31.11dp, paddingTop=14pt=31.11dp, marginEnd=14pt=31.11dp
+            // 右侧时间文字：对照 tv_count textSize=14pt=31.11sp, paddingTop=14pt=31.11dp, marginEnd=14pt=31.11dp
             // 由于 PlanPage 数据模型无时间信息，显示序号作为占位
             Text(
                 text = "${index + 1}",
-                fontSize = 14.sp,
+                fontSize = 31.11.sp,
                 color = GoaldayDesign.adaptiveInkMuted,
                 modifier = Modifier
-                    .padding(end = 14.dp, top = 14.dp, bottom = 14.dp),
+                    .padding(end = 31.11.dp, top = 31.11.dp, bottom = 31.11.dp),
             )
         }
     }
@@ -595,13 +653,14 @@ internal fun InBookDiaryPreview(
     handbookMode: Boolean = false,
     onAddImage: () -> Unit = {},
 ) {
+    // HANDBOOK 模式下外部已应用 turningPageTransform 3D 翻页，内容应贴在页面上随页转动。
     val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
-    val shift = when (turnDirection) {
+    val shift = if (handbookMode) 0f else when (turnDirection) {
         TurnDirection.NEXT -> -(eased * 8f)
         TurnDirection.PREVIOUS -> eased * 8f
         null -> 0f
     }
-    val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
+    val alpha = if (handbookMode) 1f else (1f - eased * 0.08f).coerceIn(0.92f, 1f)
 
     val diary = remember(diaryDraft) { StructuredDiary.fromRaw(diaryDraft) }
 
@@ -787,13 +846,14 @@ internal fun InBookTargetPreview(
     turnDirection: TurnDirection?,
     handbookMode: Boolean = false,
 ) {
+    // HANDBOOK 模式下外部已应用 turningPageTransform 3D 翻页，内容应贴在页面上随页转动。
     val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
-    val shift = when (turnDirection) {
+    val shift = if (handbookMode) 0f else when (turnDirection) {
         TurnDirection.NEXT -> -(eased * 8f)
         TurnDirection.PREVIOUS -> eased * 8f
         null -> 0f
     }
-    val alpha = (1f - eased * 0.08f).coerceIn(0.92f, 1f)
+    val alpha = if (handbookMode) 1f else (1f - eased * 0.08f).coerceIn(0.92f, 1f)
 
     val targetItems = remember(page.items, customPageItems) {
         (page.items + customPageItems).distinct()
@@ -863,6 +923,7 @@ internal fun InBookTargetPreview(
                     onDelete = { onDeleteItem(item) },
                     onEdit = { editingItem = item },
                     meta = meta,
+                    handbookMode = handbookMode,
                 )
             }
         }
@@ -962,7 +1023,9 @@ private fun InBookTargetRow(
     onDelete: () -> Unit = {},
     onEdit: () -> Unit = {},
     meta: TargetItemMeta? = null,
+    handbookMode: Boolean = false,
 ) {
+    // HANDBOOK 模式下对齐原版 NoTouch 书页，禁用滑动删除，避免与全宽翻页手势冲突。
     val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
     val scope = rememberCoroutineScope()
     var swipeRevealed by remember { mutableStateOf(false) }
@@ -971,10 +1034,10 @@ private fun InBookTargetRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 80.dp),
+            .heightIn(min = 108.89.dp),
     ) {
-        // 右侧滑动操作按钮（编辑+删除）
-        if (swipeRevealed) {
+        // 右侧滑动操作按钮（编辑+删除）仅在非 HANDBOOK 模式显示
+        if (!handbookMode && swipeRevealed) {
             Row(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -1013,42 +1076,46 @@ private fun InBookTargetRow(
             }
         }
 
-        // 内容层：可滑动
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .graphicsLayer { translationX = swipeOffset.value }
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onHorizontalDrag = { change, dragAmount ->
-                            change.consume()
-                            val newX = (swipeOffset.value + dragAmount).coerceIn(-revealWidth.value, 0f)
-                            scope.launch { swipeOffset.snapTo(newX) }
-                        },
-                        onDragEnd = {
-                            if (swipeOffset.value < -revealWidth.value / 2) {
-                                scope.launch { swipeOffset.animateTo(-revealWidth.value) }
-                                swipeRevealed = true
-                            } else {
-                                scope.launch { swipeOffset.animateTo(0f) }
-                                swipeRevealed = false
-                            }
-                        },
-                        onDragCancel = {
+        // 内容层：HANDBOOK 模式下禁止滑动，仅显示内容
+        val columnModifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer { translationX = if (handbookMode) 0f else swipeOffset.value }
+        val gestureModifier = if (handbookMode) {
+            Modifier
+        } else {
+            Modifier.pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onHorizontalDrag = { change, dragAmount ->
+                        change.consume()
+                        val newX = (swipeOffset.value + dragAmount).coerceIn(-revealWidth.value, 0f)
+                        scope.launch { swipeOffset.snapTo(newX) }
+                    },
+                    onDragEnd = {
+                        if (swipeOffset.value < -revealWidth.value / 2) {
+                            scope.launch { swipeOffset.animateTo(-revealWidth.value) }
+                            swipeRevealed = true
+                        } else {
                             scope.launch { swipeOffset.animateTo(0f) }
                             swipeRevealed = false
-                        },
-                    )
-                }
+                        }
+                    },
+                    onDragCancel = {
+                        scope.launch { swipeOffset.animateTo(0f) }
+                        swipeRevealed = false
+                    },
+                )
+            }
+        }
+        Column(
+            modifier = columnModifier.then(gestureModifier)
                 .clickable { onOpenDetail() },
         ) {
-            // 内容区：优化间距以匹配参考 APK 的视觉密度
-            // 原版 padding 过大（top=21dp, bottom=20dp），导致行高超出 80dp
-            // 调整为更紧凑的间距，保持与计划页一致的视觉密度
+            // 内容区：对照 item_target_detail.xml
+            // cl_content minHeight=49pt=108.89dp, paddingTop=21dp, paddingBottom=20dp, paddingStart/End=27dp
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 27.dp, top = 14.dp, end = 27.dp, bottom = 14.dp),
+                    .padding(start = 27.dp, top = 21.dp, end = 27.dp, bottom = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // 勾选框：原版 wrap_content (ic_box_full + ic_box_select)，约20dp
@@ -1057,7 +1124,7 @@ private fun InBookTargetRow(
                     onToggle = onToggleChecked,
                     size = 20,
                 )
-                // 序号：对照 tv_no textSize=20dp, marginStart=56dp
+                // 序号：对照 tv_no textSize=20dip=20sp, marginStart=56dp
                 // 由于原版使用 TimeTextView 显示序号，这里用 index+1 模拟
                 Text(
                     text = "${index + 1}",
