@@ -26,7 +26,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Settings
@@ -1707,12 +1709,12 @@ private fun TargetDetailRouteOverlay(
                     .background(GoaldayDesign.ScheduleDateColumnSeparator),
             )
             Icon(
-                imageVector = Icons.Default.VerticalAlignTop,
+                imageVector = Icons.Default.ArrowUpward,
                 contentDescription = "置顶",
                 tint = GoaldayDesign.adaptiveInkPrimary,
                 modifier = Modifier
                     .padding(13.dp)
-                    .clickable { scope.launch { scrollState.animateScrollTo(0) } },
+                    .clickable { /* TODO: 置顶功能 */ },
             )
             Icon(
                 imageVector = Icons.Default.Check,
