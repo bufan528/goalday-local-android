@@ -119,11 +119,8 @@ internal fun HandbookTargetReplicaPage(
             }
             .padding(GoaldayDesign.Space3),
     ) {
-        // P0-2 大修：HandbookPaperRuling 改为 Modifier 扩展，画在 Column 内部
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .handbookPaperRuling(scrollState = null),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
         ) {
             Row(

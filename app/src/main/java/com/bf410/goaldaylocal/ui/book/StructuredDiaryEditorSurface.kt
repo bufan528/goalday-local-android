@@ -72,7 +72,8 @@ internal fun StructuredDiaryEditor(
             .count { it.isNotBlank() }
     val editorImageCount = state.blocks.count { it.type == DiaryBlockType.IMAGE } + state.legacyImageUris.size
     val editorTargetCount = state.blocks.count {
-        it.type == DiaryBlockType.TARGET || it.type == DiaryBlockType.TARGET_CHILD || it.type == DiaryBlockType.TOPIC_TARGET
+        it.type == DiaryBlockType.TARGET || it.type == DiaryBlockType.TARGET_CHILD || it.type == DiaryBlockType.TOPIC_TARGET ||
+            it.type == DiaryBlockType.TARGET_IN_BOOK || it.type == DiaryBlockType.TARGET_CHILD_IN_BOOK || it.type == DiaryBlockType.TOPIC_TARGET_IN_BOOK
     }
     val normalizedFocusIndex = focusedBlockIndex.coerceIn(0, (state.blocks.size - 1).coerceAtLeast(0))
     val focusedBlock = state.blocks.getOrNull(normalizedFocusIndex)
@@ -351,7 +352,7 @@ private fun DiaryFocusedBlockToolbar(
                     maxLines = 1,
                 )
             }
-            if (block != null && block.type != DiaryBlockType.IMAGE && block.type != DiaryBlockType.TARGET_CHILD) {
+            if (block != null && block.type != DiaryBlockType.IMAGE && block.type != DiaryBlockType.TARGET_CHILD && block.type != DiaryBlockType.TARGET_CHILD_IN_BOOK) {
                 DiaryEditorToolChip("子项", color, onAddChild)
             }
         }
@@ -505,7 +506,7 @@ private fun DiaryTypedBlockEditRow(
             Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1), verticalAlignment = Alignment.CenterVertically) {
                 DiaryBlockActionChip("上移", color, enabled = canMoveUp, onClick = onMoveUp)
                 DiaryBlockActionChip("下移", color, enabled = canMoveDown, onClick = onMoveDown)
-                if (block.type != DiaryBlockType.IMAGE && block.type != DiaryBlockType.TARGET_CHILD) {
+                if (block.type != DiaryBlockType.IMAGE && block.type != DiaryBlockType.TARGET_CHILD && block.type != DiaryBlockType.TARGET_CHILD_IN_BOOK) {
                     DiaryBlockActionChip("子项", color, enabled = true, onClick = onAddChild)
                 }
                 DiaryBlockActionChip("删除", GoaldayDesign.adaptiveInkMuted, enabled = true, onClick = onRemove)

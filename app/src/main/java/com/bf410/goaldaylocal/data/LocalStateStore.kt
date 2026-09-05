@@ -373,6 +373,16 @@ class LocalStateStore(
                 }
                 is PlanPage -> {
                     json.put("type", "plan")
+                    val planArray = JSONArray()
+                    page.planItems.forEach { planItem ->
+                        planArray.put(
+                            JSONObject()
+                                .put("title", planItem.title)
+                                .put("timeText", planItem.timeText),
+                        )
+                    }
+                    json.put("planItems", planArray)
+                    // 保留旧 items 字段用于向下兼容
                     json.put("items", JSONArray(page.items))
                 }
                 is SchedulePage -> {
@@ -397,7 +407,25 @@ class LocalStateStore(
                     val title = item.optString("title").ifBlank { "未命名页面" }
                     when (item.optString("type")) {
                         "target" -> TargetPage(title, item.toStringList("items"))
-                        "plan" -> PlanPage(title, item.toStringList("items"))
+                        "plan" -> {
+                            val planArray = item.optJSONArray("planItems")
+                            val planItems = if (planArray != null) {
+                                buildList {
+                                    repeat(planArray.length()) { i ->
+                                        val planItem = planArray.getJSONObject(i)
+                                        add(
+                                            PlanItem(
+                                                title = planItem.optString("title"),
+                                                timeText = planItem.optString("timeText"),
+                                            ),
+                                        )
+                                    }
+                                }
+                            } else {
+                                item.toStringList("items").map { PlanItem(it) }
+                            }
+                            PlanPage(title, planItems.map { it.title }, planItems)
+                        }
                         "schedule" -> SchedulePage(title, item.toStringList("items"))
                         "diary" -> DiaryPage(title, item.optString("prompt", "写下这一页最重要的记录。"))
                         else -> DiaryPage(title, "写下这一页最重要的记录。")
