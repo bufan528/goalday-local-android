@@ -130,9 +130,16 @@ internal data class StructuredDiary(
 
     fun withBlockChild(index: Int): StructuredDiary {
         val parent = blocks.getOrNull(index) ?: return this
-        if (parent.type == DiaryBlockType.TARGET || parent.type == DiaryBlockType.TOPIC_TARGET) {
+        if (parent.type == DiaryBlockType.TARGET || parent.type == DiaryBlockType.TOPIC_TARGET ||
+            parent.type == DiaryBlockType.TARGET_IN_BOOK || parent.type == DiaryBlockType.TOPIC_TARGET_IN_BOOK
+        ) {
+            val childType = if (parent.type == DiaryBlockType.TARGET_IN_BOOK || parent.type == DiaryBlockType.TOPIC_TARGET_IN_BOOK) {
+                DiaryBlockType.TARGET_CHILD_IN_BOOK
+            } else {
+                DiaryBlockType.TARGET_CHILD
+            }
             val next = blocks.toMutableList().apply {
-                add(index + 1, DiaryEntryBlock(DiaryBlockType.TARGET_CHILD, "下一步行动", DiaryBlockStyle.CHECK))
+                add(index + 1, DiaryEntryBlock(childType, "下一步行动", DiaryBlockStyle.CHECK))
             }
             return withBlocks(next)
         }
@@ -220,6 +227,9 @@ internal enum class DiaryBlockType(val raw: String, val label: String) {
     TARGET("target", "目标"),
     TARGET_CHILD("target_child", "子目标"),
     TOPIC_TARGET("topic_target", "专题目标"),
+    TARGET_IN_BOOK("target_in_book", "书内目标"),
+    TARGET_CHILD_IN_BOOK("target_child_inbook", "书内子目标"),
+    TOPIC_TARGET_IN_BOOK("topic_target_inbook", "书内专题目标"),
 }
 
 internal enum class DiaryBlockStyle(val raw: String, val label: String) {
@@ -271,6 +281,9 @@ internal fun defaultDiaryBlock(type: DiaryBlockType): DiaryEntryBlock =
         DiaryBlockType.TARGET -> DiaryEntryBlock(DiaryBlockType.TARGET, "关联一个目标")
         DiaryBlockType.TARGET_CHILD -> DiaryEntryBlock(DiaryBlockType.TARGET_CHILD, "下一步行动", DiaryBlockStyle.CHECK)
         DiaryBlockType.TOPIC_TARGET -> DiaryEntryBlock(DiaryBlockType.TOPIC_TARGET, "专题目标 · 今天推进一步")
+        DiaryBlockType.TARGET_IN_BOOK -> DiaryEntryBlock(DiaryBlockType.TARGET_IN_BOOK, "今日完成", DiaryBlockStyle.CHECK)
+        DiaryBlockType.TARGET_CHILD_IN_BOOK -> DiaryEntryBlock(DiaryBlockType.TARGET_CHILD_IN_BOOK, "下一步行动", DiaryBlockStyle.CHECK)
+        DiaryBlockType.TOPIC_TARGET_IN_BOOK -> DiaryEntryBlock(DiaryBlockType.TOPIC_TARGET_IN_BOOK, "专题目标 · 今天推进一步")
     }
 
 internal fun escapeDiaryBlockText(text: String): String =

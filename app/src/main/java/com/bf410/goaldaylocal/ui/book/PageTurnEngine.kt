@@ -2,8 +2,6 @@ package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -46,140 +44,95 @@ import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
-// DEFAULT 模式：边缘热区略窄，减少与内容横向滚动的冲突
-private const val DEFAULT_EDGE_GESTURE_RATIO = 0.11f
-// HANDBOOK 模式：全宽翻页（任意位置水平滑动均可翻页）。
-// 原版 APK 书内页使用 NoTouchConstraintLayout(clickable=false)，翻页靠外层 ViewPager2，
-// 所以任意位置都能翻页。HANDBOOK 模式下子元素已禁用滑动删除，不存在手势冲突。
-private const val HANDBOOK_EDGE_GESTURE_RATIO = 0.5f
-// HANDBOOK 拖动阈值：约 14px（按 360px 宽度计），翻页更跟手且不易误触
-private const val HANDBOOK_DRAG_START_RATIO = 0.038f
-
-sealed interface TurnPhase {
-    data object Idle : TurnPhase
-    data object DraggingNext : TurnPhase
-    data object DraggingPrevious : TurnPhase
-    data object SettlingForward : TurnPhase
-    data object SettlingBack : TurnPhase
-}
-
-@Composable
-fun PageTurnEngine(
-    modifier: Modifier = Modifier,
-    canTurnPrevious: Boolean,
-    canTurnNext: Boolean,
-    turnEnabled: Boolean,
-    onFlipNext: () -> Unit,
-    onFlipPrevious: () -> Unit,
-    profile: TurnProfile = TurnProfile.DEFAULT,
-    shell: @Composable (
-        canTurnPrevious: Boolean,
-        canTurnNext: Boolean,
-        turnEnabled: Boolean,
-        onTapPrevious: () -> Unit,
-        onTapNext: () -> Unit,
-        content: @Composable BoxScope.() -> Unit,
-    ) -> Unit,
-    destination: @Composable BoxScope.(Float, TurnDirection?) -> Unit,
-    pageBack: @Composable BoxScope.(Float, TurnDirection?, Float) -> Unit,
-    activePage: @Composable BoxScope.(Float, TurnDirection?, Float) -> Unit,
-    spine: @Composable BoxScope.(Float, Boolean) -> Unit,
+/**
+ * 翻页状态控制器：把可变状态与翻页方法集中到一个类，
+ * 让 [PageTurnEngine] 只负责渲染、控制器负责逻辑。
+ *
+ * 对照原版 BaseBookViewKt 的 state 管理：
+ * - [progress]：0f..1f，0=未翻，1=翻完。
+ * - [direction]：null=空闲，NEXT/PREVIOUS=正在翻。
+ * - [pageWidthPx]/[pageHeightPx]：由 onSizeChanged 回写，用于计算拖动进度。
+ *
+ * 原先散落的 dragStartX / lastVelocityPxPerSecond / lastEventTimeMs 均为只写不读的死状态，已删除。
+ * 原先的 TurnPhase 枚举仅用于 Idle 判断，已简化为 [isTurning] 布尔。
+ */
+class TurnController(
+    val profile: TurnProfile,
+    private val scope: CoroutineScope,
 ) {
-    val scope = rememberCoroutineScope()
-    val progress = remember { Animatable(0f) }
-    var direction by remember { mutableStateOf<TurnDirection?>(null) }
-    var phase by remember { mutableStateOf<TurnPhase>(TurnPhase.Idle) }
-    var pageWidthPx by remember { mutableFloatStateOf(1f) }
-    var pageHeightPx by remember { mutableFloatStateOf(1f) }
-    var dragStartX by remember { mutableFloatStateOf(0f) }
-    var turnAnchorY by remember { mutableFloatStateOf(0.5f) }
-    var lastVelocityPxPerSecond by remember { mutableFloatStateOf(0f) }
-    var lastEventTimeMs by remember { mutableStateOf(0L) }
+    var canTurnPrevious: () -> Boolean = { false }
+    var canTurnNext: () -> Boolean = { false }
+    var onFlipNext: () -> Unit = {}
+    var onFlipPrevious: () -> Unit = {}
+    // 对照原版 BaseBookViewKt.java L232-253 的 bookIsOpened 状态：
+    // 手账首次进入时书闭合（false），翻过一次后置为 true，阈值由 0.5 降到 0.3。
+    // 非手账模式 useDualStateThreshold=false，此值被忽略。
+    var bookIsOpen: () -> Boolean = { false }
 
-    val dragProgress = progress.value.coerceIn(0f, 1f)
-    val visualProgress = visualTurnProgress(dragProgress, profile)
-    val commitProgress = ((visualProgress - 0.22f) / 0.78f).coerceIn(0f, 1f)
-    val latePhase = commitProgress * commitProgress
-    val earlyPhase = (1f - commitProgress).coerceIn(0f, 1f)
-    val draggingToNext = direction == TurnDirection.NEXT
-    val draggingToPrevious = direction == TurnDirection.PREVIOUS
-    val turnShadowWidth = if (profile == TurnProfile.HANDBOOK) {
-        (16f + latePhase * 120f).dp
-    } else {
-        (14f + latePhase * 104f).dp
-    }
+    val progress = Animatable(0f)
+    var direction by mutableStateOf<TurnDirection?>(null)
+        private set
+    var turnAnchorY by mutableFloatStateOf(0.5f)
+        private set
+    var pageWidthPx by mutableFloatStateOf(1f)
+    var pageHeightPx by mutableFloatStateOf(1f)
+
+    // 对照原版 BaseBookViewKt：6-page rotation 配置器，用于 HANDBOOK 模式翻页曲线。
+    val configurator = BookPageAnimationConfigurator()
+
+    private var isTurning = false
+
+    val dragProgress: Float get() = progress.value.coerceIn(0f, 1f)
+    val visualProgress: Float get() = profile.visualProgress(dragProgress)
 
     fun clearState() {
         direction = null
-        phase = TurnPhase.Idle
+        isTurning = false
         turnAnchorY = 0.5f
-        lastVelocityPxPerSecond = 0f
-        lastEventTimeMs = 0L
+        configurator.idle()
     }
 
     fun settle(result: TurnReleaseResult) {
         scope.launch {
+            // 对照原版 BaseBookViewKt$BaseBookView$4/5.java L64：
+            // 自适应时长需要在 animateTo 之前读取当前 progress
+            val currentProgress = progress.value
             when (result) {
                 TurnReleaseResult.CompleteNext -> {
-                    phase = TurnPhase.SettlingForward
-                    progress.animateTo(
-                        1f,
-                        animationSpec = if (profile == TurnProfile.HANDBOOK) {
-                            // 对照原版 BaseBookViewKt：animationTotalDuration = 250ms
-                            tween(durationMillis = 250)
-                        } else {
-                            spring(
-                                dampingRatio = 0.9f,
-                                stiffness = Spring.StiffnessLow,
-                            )
-                        },
-                    )
+                    isTurning = true
+                    progress.animateTo(1f, animationSpec = profile.forwardSettleSpec(currentProgress))
                     onFlipNext()
                     if (profile == TurnProfile.HANDBOOK) {
                         // 翻到位后直接归零并清理状态，避免“翻完又晃一下”
                         progress.snapTo(0f)
+                        // 对照原版：动画结束后延迟 10ms 再重新启用手势，避免动画结束瞬间触发新翻页
+                        delay(10)
                         clearState()
                         return@launch
                     }
                 }
                 TurnReleaseResult.CompletePrevious -> {
-                    phase = TurnPhase.SettlingForward
-                    progress.animateTo(
-                        1f,
-                        animationSpec = if (profile == TurnProfile.HANDBOOK) {
-                            // 对照原版 BaseBookViewKt：animationTotalDuration = 250ms
-                            tween(durationMillis = 250)
-                        } else {
-                            spring(
-                                dampingRatio = 0.9f,
-                                stiffness = Spring.StiffnessLow,
-                            )
-                        },
-                    )
+                    isTurning = true
+                    progress.animateTo(1f, animationSpec = profile.forwardSettleSpec(currentProgress))
                     onFlipPrevious()
                     if (profile == TurnProfile.HANDBOOK) {
                         progress.snapTo(0f)
+                        delay(10)
                         clearState()
                         return@launch
                     }
                 }
                 TurnReleaseResult.SnapBack -> {
-                    phase = TurnPhase.SettlingBack
-                    progress.animateTo(
-                        0f,
-                        animationSpec = if (profile == TurnProfile.HANDBOOK) {
-                            // 对照原版：回弹也用 250ms tween
-                            tween(durationMillis = 250)
-                        } else {
-                            spring(
-                                dampingRatio = 0.84f,
-                                stiffness = Spring.StiffnessMediumLow,
-                            )
-                        },
-                    )
+                    isTurning = true
+                    progress.animateTo(0f, animationSpec = profile.snapBackSettleSpec(currentProgress))
+                    if (profile == TurnProfile.HANDBOOK) {
+                        delay(10)
+                    }
                 }
             }
             progress.snapTo(0f)
@@ -190,7 +143,9 @@ fun PageTurnEngine(
     fun beginTapTurn(targetDirection: TurnDirection) {
         direction = targetDirection
         turnAnchorY = 0.5f
-        phase = if (targetDirection == TurnDirection.NEXT) TurnPhase.DraggingNext else TurnPhase.DraggingPrevious
+        isTurning = true
+        // 对照原版 BookPageAnimationConfigurator：进入拖动/动画态，不记录方向。
+        configurator.start()
         scope.launch { progress.snapTo(initialEdgeTapProgress(profile)) }
         settle(
             if (targetDirection == TurnDirection.NEXT) {
@@ -202,18 +157,20 @@ fun PageTurnEngine(
     }
 
     fun startDragTurn(startOffset: Offset, startDirection: TurnDirection) {
-        if (phase != TurnPhase.Idle) return
+        if (isTurning) return
         direction = startDirection
         turnAnchorY = (startOffset.y / pageHeightPx.coerceAtLeast(1f)).coerceIn(0f, 1f)
-        phase = if (startDirection == TurnDirection.NEXT) TurnPhase.DraggingNext else TurnPhase.DraggingPrevious
+        isTurning = true
+        // 对照原版 BookPageAnimationConfigurator：进入拖动/动画态，不记录方向。
+        configurator.start()
         scope.launch { progress.snapTo(0f) }
     }
 
     fun updateDragTurn(deltaX: Float) {
         val currentDirection = direction ?: return
         val canTurn = when (currentDirection) {
-            TurnDirection.NEXT -> canTurnNext
-            TurnDirection.PREVIOUS -> canTurnPrevious
+            TurnDirection.NEXT -> canTurnNext()
+            TurnDirection.PREVIOUS -> canTurnPrevious()
         }
         val newProgress = updatedTurnProgress(
             currentProgress = progress.value,
@@ -231,54 +188,105 @@ fun PageTurnEngine(
             direction = currentDirection,
             progress = progress.value,
             velocity = velocity,
-            hasPreviousPage = canTurnPrevious,
-            hasNextPage = canTurnNext,
+            hasPreviousPage = canTurnPrevious(),
+            hasNextPage = canTurnNext(),
             profile = profile,
+            bookIsOpen = bookIsOpen(),
         )
         settle(result)
     }
+
+    fun cancel() {
+        if (progress.value > 0.01f) {
+            settle(TurnReleaseResult.SnapBack)
+        } else {
+            clearState()
+            scope.launch { progress.snapTo(0f) }
+        }
+    }
+}
+
+@Composable
+fun PageTurnEngine(
+    modifier: Modifier = Modifier,
+    canTurnPrevious: Boolean,
+    canTurnNext: Boolean,
+    turnEnabled: Boolean,
+    onFlipNext: () -> Unit,
+    onFlipPrevious: () -> Unit,
+    profile: TurnProfile = TurnProfile.DEFAULT,
+    // 对照原版 BaseBookViewKt.java L232-253 的 bookIsOpened：
+    // 手账首次进入时 false（阈值0.5），翻过一次后 true（阈值0.3）。
+    // 非手账模式 useDualStateThreshold=false，此值被忽略。
+    bookIsOpen: Boolean = false,
+    // 可选引用，用于向调用方暴露 TurnController（含 6-page rotation configurator）。
+    controllerRef: androidx.compose.runtime.MutableState<TurnController?>? = null,
+    shell: @Composable (
+        canTurnPrevious: Boolean,
+        canTurnNext: Boolean,
+        turnEnabled: Boolean,
+        onTapPrevious: () -> Unit,
+        onTapNext: () -> Unit,
+        content: @Composable BoxScope.() -> Unit,
+    ) -> Unit,
+    destination: @Composable BoxScope.(Float, TurnDirection?) -> Unit,
+    pageBack: @Composable BoxScope.(Float, TurnDirection?, Float) -> Unit,
+    activePage: @Composable BoxScope.(Float, TurnDirection?, Float) -> Unit,
+    spine: @Composable BoxScope.(Float, Boolean) -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    val controller = remember(profile) { TurnController(profile = profile, scope = scope) }
+    controller.canTurnPrevious = { canTurnPrevious }
+    controller.canTurnNext = { canTurnNext }
+    controller.onFlipNext = onFlipNext
+    controller.onFlipPrevious = onFlipPrevious
+    controller.bookIsOpen = { bookIsOpen }
+    if (controllerRef != null) {
+        androidx.compose.runtime.SideEffect { controllerRef.value = controller }
+    }
+
+    val dragProgress = controller.dragProgress
+    val visualProgress = controller.visualProgress
+    val direction = controller.direction
+    val turnAnchorY = controller.turnAnchorY
+    val commitProgress = ((visualProgress - 0.22f) / 0.78f).coerceIn(0f, 1f)
+    val latePhase = commitProgress * commitProgress
+    val earlyPhase = (1f - commitProgress).coerceIn(0f, 1f)
+    val draggingToNext = direction == TurnDirection.NEXT
+    val draggingToPrevious = direction == TurnDirection.PREVIOUS
+    val turnShadowWidth = (profile.turnShadowWidthBase + latePhase * profile.turnShadowWidthStep).dp
 
     shell(
         canTurnPrevious,
         canTurnNext,
         turnEnabled,
-        { beginTapTurn(TurnDirection.PREVIOUS) },
-        { beginTapTurn(TurnDirection.NEXT) },
+        { controller.beginTapTurn(TurnDirection.PREVIOUS) },
+        { controller.beginTapTurn(TurnDirection.NEXT) },
     ) {
         Box(
             modifier = modifier
                 .fillMaxSize()
                 .onSizeChanged {
-                    pageWidthPx = it.width.toFloat().coerceAtLeast(1f)
-                    pageHeightPx = it.height.toFloat().coerceAtLeast(1f)
+                    controller.pageWidthPx = it.width.toFloat().coerceAtLeast(1f)
+                    controller.pageHeightPx = it.height.toFloat().coerceAtLeast(1f)
                 }
                 .pointerInput(turnEnabled, canTurnPrevious, canTurnNext, profile) {
                     if (!turnEnabled) return@pointerInput
-                    val edgeRatio = if (profile == TurnProfile.HANDBOOK) {
-                        HANDBOOK_EDGE_GESTURE_RATIO
-                    } else {
-                        DEFAULT_EDGE_GESTURE_RATIO
-                    }
                     detectEdgePageTurnGestures(
                         canTurnNext = canTurnNext,
                         canTurnPrevious = canTurnPrevious,
-                        edgeRatio = edgeRatio,
-                        onStart = { offset, dir -> startDragTurn(offset, dir) },
-                        onDrag = { _, deltaX -> updateDragTurn(deltaX) },
-                        onEnd = { velocity -> releaseDragTurn(velocity) },
-                        onCancel = {
-                            if (progress.value > 0.01f) {
-                                settle(TurnReleaseResult.SnapBack)
-                            } else {
-                                clearState()
-                                scope.launch { progress.snapTo(0f) }
-                            }
-                        },
+                        edgeRatio = profile.edgeGestureRatio,
+                        onStart = { offset, dir -> controller.startDragTurn(offset, dir) },
+                        onDrag = { _, deltaX -> controller.updateDragTurn(deltaX) },
+                        onEnd = { velocity -> controller.releaseDragTurn(velocity) },
+                        onCancel = { controller.cancel() },
                     )
                 },
         ) {
             spine(visualProgress, direction != null)
 
+            // 目标页/背面：所有模式都渲染，HANDBOOK 模式下由 BookReader 提供带真实内容的背面，
+            // 避免翻页过程中出现空白背景。
             if (direction != null) {
                 destination(dragProgress, direction)
             }
@@ -289,55 +297,8 @@ fun PageTurnEngine(
 
             activePage(visualProgress, direction, turnAnchorY)
 
-            if (direction != null && dragProgress > 0.01f) {
-                // 翻页过程中的核心阴影与暗角，营造 3D 卷曲感
-                if (profile == TurnProfile.HANDBOOK) {
-                    // 书脊处纸张弯折的圆柱体阴影：中间暗、两侧受光，但颜色很淡
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .width((12f + visualProgress * 18f).dp)
-                            .fillMaxHeight()
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.04f + latePhase * 0.12f).coerceAtMost(0.16f)),
-                                        Color.White.copy(alpha = (0.03f + latePhase * 0.08f).coerceAtMost(0.10f)),
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.04f + latePhase * 0.12f).coerceAtMost(0.16f)),
-                                    ),
-                                ),
-                            ),
-                    )
-                    // 翻页页缘卷曲高光/阴影：模拟纸张弯折时外侧受光、内侧背光的圆柱体感
-                    val curlEdgeWidth = (20f + visualProgress * 72f).dp
-                    // 页缘外侧（贴近页面边缘）受光高亮，向卷曲深处渐变为背光阴影
-                    val curlBrush = if (draggingToNext) {
-                        // 右页外翻：左边界是页缘（亮），向右逐渐变暗
-                        Brush.horizontalGradient(
-                            listOf(
-                                Color.White.copy(alpha = (0.05f + visualProgress * 0.14f).coerceAtMost(0.18f)),
-                                Color.Black.copy(alpha = (0.06f + visualProgress * 0.16f).coerceAtMost(0.22f)),
-                                Color.Transparent,
-                            ),
-                        )
-                    } else {
-                        // 左页外翻：右边界是页缘（亮），向左逐渐变暗
-                        Brush.horizontalGradient(
-                            listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = (0.06f + visualProgress * 0.16f).coerceAtMost(0.22f)),
-                                Color.White.copy(alpha = (0.05f + visualProgress * 0.14f).coerceAtMost(0.18f)),
-                            ),
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .align(if (draggingToNext) Alignment.CenterEnd else Alignment.CenterStart)
-                            .width(curlEdgeWidth)
-                            .fillMaxHeight()
-                            .background(curlBrush),
-                    )
-                }
+            if (direction != null && dragProgress > 0.01f && profile.renderTurnShadow) {
+                // 非手账模式：保留原来的仿真阴影与暗角
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -352,10 +313,6 @@ fun PageTurnEngine(
                         ),
                 )
 
-                val turnShadowStartAlpha = if (profile == TurnProfile.HANDBOOK) 0.05f else 0.06f
-                val turnShadowRate = if (profile == TurnProfile.HANDBOOK) 0.26f else 0.34f
-                val turnShadowMaxAlpha = if (profile == TurnProfile.HANDBOOK) 0.30f else 0.42f
-                val turnShadowMidAlpha = if (profile == TurnProfile.HANDBOOK) 0.07f else 0.10f
                 Box(
                     modifier = Modifier
                         .align(if (draggingToNext) Alignment.CenterStart else Alignment.CenterEnd)
@@ -365,8 +322,8 @@ fun PageTurnEngine(
                             if (draggingToNext) {
                                 Brush.horizontalGradient(
                                     listOf(
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (turnShadowStartAlpha + latePhase * turnShadowRate).coerceAtMost(turnShadowMaxAlpha)),
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = turnShadowMidAlpha),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.06f + latePhase * 0.34f).coerceAtMost(0.42f)),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = 0.10f),
                                         Color.Transparent,
                                     ),
                                 )
@@ -374,8 +331,8 @@ fun PageTurnEngine(
                                 Brush.horizontalGradient(
                                     listOf(
                                         Color.Transparent,
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = turnShadowMidAlpha),
-                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (turnShadowStartAlpha + latePhase * turnShadowRate).coerceAtMost(turnShadowMaxAlpha)),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = 0.10f),
+                                        GoaldayDesign.BlackOverlayMedium.copy(alpha = (0.06f + latePhase * 0.34f).coerceAtMost(0.42f)),
                                     ),
                                 )
                             },
@@ -390,7 +347,7 @@ fun PageTurnEngine(
  * 翻页手势检测。
  * edgeRatio >= 0.5f 时为全宽模式：任意位置按下，根据拖动方向决定翻页方向。
  * edgeRatio < 0.5f 时为边缘模式：只在左右边缘按下才拦截，避免抢占内容滚动。
- * HANDBOOK 使用 0.25f，在左右边缘保留较宽翻页热区，中间留给子元素滑动删除/点击。
+ * HANDBOOK 使用 0.5f，与原版 NoTouchConstraintLayout + 外层 ViewPager2 的全宽翻页行为一致。
  */
 private suspend fun PointerInputScope.detectEdgePageTurnGestures(
     canTurnNext: Boolean,
@@ -402,76 +359,79 @@ private suspend fun PointerInputScope.detectEdgePageTurnGestures(
     onCancel: () -> Unit,
 ) {
     val fullWidth = edgeRatio >= 0.5f
-    awaitPointerEventScope {
-        while (true) {
-            // 等待手指按下
-            val down = awaitFirstDown(requireUnconsumed = false)
-            val width = size.width.toFloat().coerceAtLeast(1f)
+    val width = size.width.toFloat().coerceAtLeast(1f)
 
-            if (fullWidth) {
-                // 全宽模式：手动处理事件流，不拦截子元素的点击
-                // 只在水平位移超过 touchSlop 时才消费事件，避免阻止按钮点击
-                val touchSlop = viewConfiguration.touchSlop
-                var startDirection: TurnDirection? = null
-                var lastX = down.position.x
+    if (fullWidth) {
+        // 全宽模式：任意位置按下均可翻页，但子元素（horizontalScroll / chip 行 / 横向列表）
+        // 优先消费。只有子节点未消费水平移动时，外层才接管翻页，避免抢占子元素滚动。
+        awaitPointerEventScope {
+            while (true) {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                // down 不消费，让子节点有机会处理（点击按钮、勾选框、滚动列表等）
+                var turnDirection: TurnDirection? = null
+                val startX = down.position.x
+                val startY = down.position.y
+                var lastX = startX
                 val velocityTracker = VelocityTracker()
+                velocityTracker.resetTracking()
                 velocityTracker.addPointerInputChange(down)
 
-                var settled = false
-                while (!settled) {
+                var finished = false
+                while (!finished) {
                     val event = awaitPointerEvent()
                     val change = event.changes.firstOrNull { it.id == down.id } ?: continue
 
                     if (change.changedToUp()) {
-                        // 指针抬起：如果没有触发翻页，让子元素处理点击
-                        if (startDirection != null) {
-                            velocityTracker.addPointerInputChange(change)
-                            val velocity = velocityTracker.calculateVelocity().x
-                            onEnd(velocity)
+                        if (turnDirection != null) {
+                            onEnd(velocityTracker.calculateVelocity().x)
                         }
-                        settled = true
+                        finished = true
                         break
                     }
 
-                    val totalDx = change.position.x - down.position.x
-                    val totalDy = change.position.y - down.position.y
+                    // 子节点已消费事件（如 horizontalScroll 正在滚动），外层放弃翻页
+                    if (change.isConsumed) {
+                        if (turnDirection != null) {
+                            onCancel()
+                        }
+                        finished = true
+                        break
+                    }
 
-                    if (startDirection == null) {
-                        // 还没确定翻页方向
-                        if (abs(totalDx) > touchSlop && abs(totalDx) > abs(totalDy)) {
-                            startDirection = when {
+                    val totalDx = change.position.x - startX
+                    val totalDy = change.position.y - startY
+                    val dx = change.position.x - lastX
+
+                    if (turnDirection == null) {
+                        // 判定方向：水平位移超过 touchSlop 且水平主导
+                        if (abs(totalDx) > viewConfiguration.touchSlop && abs(totalDx) > abs(totalDy)) {
+                            turnDirection = when {
                                 totalDx < 0 && canTurnNext -> TurnDirection.NEXT
                                 totalDx > 0 && canTurnPrevious -> TurnDirection.PREVIOUS
-                                else -> { settled = true; break }
+                                else -> null
                             }
-                            // 确认翻页：消费事件，开始拖动
-                            down.consume()
-                            change.consume()
-                            velocityTracker.addPointerInputChange(change)
-                            onStart(down.position, startDirection!!)
-                            val delta = change.position.x - lastX
-                            onDrag(change, delta)
-                            lastX = change.position.x
-                        } else if (abs(totalDy) > touchSlop) {
-                            // 垂直滑动：放弃翻页，让子元素处理滚动
-                            settled = true
-                            break
+                            if (turnDirection != null) {
+                                onStart(Offset(startX, change.position.y), turnDirection!!)
+                                change.consume()
+                            }
                         }
-                    } else {
-                        // 已确定翻页方向：跟踪拖动
-                        change.consume()
-                        velocityTracker.addPointerInputChange(change)
-                        val delta = change.position.x - lastX
-                        onDrag(change, delta)
-                        lastX = change.position.x
                     }
-                }
 
-                if (startDirection == null) {
-                    // 没有触发翻页，继续等待下一次手势
-                    continue
+                    if (turnDirection != null) {
+                        velocityTracker.addPointerInputChange(change)
+                        onDrag(change, dx)
+                        change.consume()
+                    }
+                    lastX = change.position.x
                 }
-            } else {
+            }
+        }
+    } else {
+        awaitPointerEventScope {
+            while (true) {
+                // 等待手指按下
+                val down = awaitFirstDown(requireUnconsumed = false)
+
                 // 边缘模式：只在左右边缘按下才拦截
                 val edgePx = width * edgeRatio.coerceIn(0.05f, 0.45f)
                 val x = down.position.x
@@ -535,66 +495,54 @@ fun Modifier.turningPageTransform(
     visualProgress: Float,
     anchorY: Float,
     profile: TurnProfile = TurnProfile.DEFAULT,
+    configurator: BookPageAnimationConfigurator? = null,
 ): Modifier = graphicsLayer {
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
-    transformOrigin = TransformOrigin(turnTransformOriginX(profile, direction), 0.5f)
-    // 仿真翻页：HANDBOOK 模拟真实书页绕书脊翻越。
-    // curlBoost：前 35% 进度加大旋转，让纸张先翘起再翻过，更像真实书页。
-    val curlBoost = if (profile == TurnProfile.HANDBOOK) {
-        val early = 1f - visualProgress.coerceIn(0f, 0.35f) / 0.35f
-        early * 0.22f
-    } else 0f
-    val progressCurve = (visualProgress * 0.22f) + (visualProgress * visualProgress * 0.78f) + curlBoost
-    // HANDBOOK 最大旋转 95°：书页沿书脊翻越，接近垂直时背面已可见，翻完自然
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 95f else 118f
+    transformOrigin = TransformOrigin(profile.transformOriginX(direction), 0.5f)
+    // 对照原版 BaseBookViewKt：
+    // - HANDBOOK 优先使用 6-page rotation 配置器曲线
+    // - DEFAULT 保留仿真曲线和 curlBoost
+    val rawRotation = if (profile.useSpineOnlyTransform && configurator != null) {
+        kotlin.math.abs(configurator.handbookPageRotationY(direction, visualProgress))
+    } else {
+        val curlBoost = if (profile.useSpineOnlyTransform) {
+            0f
+        } else {
+            val early = 1f - visualProgress.coerceIn(0f, 0.35f) / 0.35f
+            early * 0.22f
+        }
+        val progressCurve = if (profile.useSpineOnlyTransform) {
+            visualProgress
+        } else {
+            (visualProgress * 0.22f) + (visualProgress * visualProgress * 0.78f) + curlBoost
+        }
+        profile.maxRotation * progressCurve.coerceIn(0f, 1f)
+    }
     rotationY = when (direction) {
-        TurnDirection.NEXT -> -maxRotation * progressCurve.coerceIn(0f, 1f)
-        TurnDirection.PREVIOUS -> maxRotation * progressCurve.coerceIn(0f, 1f)
+        TurnDirection.NEXT -> -rawRotation
+        TurnDirection.PREVIOUS -> rawRotation
         null -> 0f
     }
-    // HANDBOOK 绕书脊旋转，水平位移尽量小，避免页面“滑出”书壳；只留极少量跟随位移
-    translationX = when {
-        draggingToNext -> if (profile == TurnProfile.HANDBOOK) {
-            -(progressCurve * 10f)
-        } else {
-            -(visualProgress * 14f + progressCurve * 68f)
-        }
-        draggingToPrevious -> if (profile == TurnProfile.HANDBOOK) {
-            progressCurve * 10f
-        } else {
-            visualProgress * 14f + progressCurve * 68f
-        }
+    // HANDBOOK 纯绕书脊 180° 翻转：移除额外位移/缩放/旋转，保持原版 APK 平面书页感
+    translationX = if (profile.useSpineOnlyTransform) 0f else when {
+        draggingToNext -> -(visualProgress * 14f + rawRotation / profile.maxRotation * 68f)
+        draggingToPrevious -> visualProgress * 14f + rawRotation / profile.maxRotation * 68f
         else -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
-    translationY = yOffsetFactor * visualProgress * if (profile == TurnProfile.HANDBOOK) 3.6f else 12f
-    rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 1.8f else 9.2f
+    translationY = if (profile.useSpineOnlyTransform) 0f else yOffsetFactor * visualProgress * 12f
+    rotationX = if (profile.useSpineOnlyTransform) 0f else -yOffsetFactor * (rawRotation / profile.maxRotation) * 9.2f
     // 对照原版 BaseBookViewKt：cameraDistance = 40 × density
-    cameraDistance = if (profile == TurnProfile.HANDBOOK) 40f * density else 34f * density
-    shadowElevation = if (profile == TurnProfile.HANDBOOK) 10f else 28f
+    cameraDistance = profile.cameraDistanceDensity * density
+    shadowElevation = profile.shadowElevation
     // 模拟纸张翻起时近大远小的轻微透视压缩
     val subtleDepthScale = 1f - visualProgress * 0.012f
-    scaleY = if (profile == TurnProfile.HANDBOOK) {
-        subtleDepthScale.coerceIn(0.988f, 1f)
-    } else {
-        subtleDepthScale.coerceIn(0.965f, 1f)
-    }
-    scaleX = if (profile == TurnProfile.HANDBOOK) {
-        (1f - visualProgress * 0.025f).coerceIn(0.975f, 1f)
-    } else {
-        (1f - visualProgress * 0.015f).coerceIn(0.985f, 1f)
-    }
-    // HANDBOOK：翻页末段把正面淡出，避免 content 翻到新页时残留变形残影
-    alpha = if (profile == TurnProfile.HANDBOOK) {
-        if (visualProgress < 0.80f) {
-            (1f - visualProgress * 0.10f).coerceIn(0.90f, 1f)
-        } else {
-            ((1f - visualProgress) / 0.20f).coerceIn(0f, 1f) * 0.90f
-        }
-    } else {
-        (1f - visualProgress * 0.08f).coerceIn(0.9f, 1f)
-    }
+    scaleY = if (profile.useSpineOnlyTransform) 1f else subtleDepthScale.coerceIn(0.965f, 1f)
+    scaleX = if (profile.useSpineOnlyTransform) 1f else (1f - visualProgress * 0.015f).coerceIn(0.985f, 1f)
+    // 对照原版 BaseBookViewKt：Alpha 硬切
+    // (-rotation) <= 90° → 正面可见(alpha=1)；(-rotation) > 90° → 正面不可见(alpha=0)
+    alpha = profile.frontAlpha(rawRotation, visualProgress)
 }
 
 fun Modifier.pageBackTransform(
@@ -602,65 +550,63 @@ fun Modifier.pageBackTransform(
     visualProgress: Float,
     anchorY: Float,
     profile: TurnProfile = TurnProfile.DEFAULT,
+    configurator: BookPageAnimationConfigurator? = null,
 ): Modifier = graphicsLayer {
     val draggingToNext = direction == TurnDirection.NEXT
     val draggingToPrevious = direction == TurnDirection.PREVIOUS
-    transformOrigin = TransformOrigin(turnTransformOriginX(profile, direction), 0.5f)
-    // 背面角度与正面同步，HANDBOOK 模拟真实书页翻越
-    val curlBoost = if (profile == TurnProfile.HANDBOOK) {
-        val early = 1f - visualProgress.coerceIn(0f, 0.35f) / 0.35f
-        early * 0.22f
-    } else 0f
-    val progressCurve = (visualProgress * 0.22f) + (visualProgress * visualProgress * 0.78f) + curlBoost
-    val maxRotation = if (profile == TurnProfile.HANDBOOK) 95f else 118f
-    rotationY = when (direction) {
-        TurnDirection.NEXT -> -maxRotation * progressCurve.coerceIn(0f, 1f) * 0.92f
-        TurnDirection.PREVIOUS -> maxRotation * progressCurve.coerceIn(0f, 1f) * 0.92f
-        null -> 0f
-    }
-    // 背面 translationX 与正面镜像，但 HANDBOOK 位移要很小，背面只是从书脊后露出一小部分
-    val handbookTailBoost = if (profile == TurnProfile.HANDBOOK) {
-        val tail = ((visualProgress - 0.75f) / 0.25f).coerceIn(0f, 1f)
-        tail * 8f
+    transformOrigin = TransformOrigin(profile.transformOriginX(direction), 0.5f)
+    // 对照原版 BaseBookViewKt：
+    // 背面有固定 180° 基础旋转（setRotationY(180)），再随正面一起旋转
+    // HANDBOOK：优先使用 6-page rotation 配置器曲线
+    // DEFAULT：保留原仿真曲线
+    val frontRotation = if (profile.useSpineOnlyTransform && configurator != null) {
+        kotlin.math.abs(configurator.handbookPageRotationY(direction, visualProgress))
     } else {
-        0f
+        val curlBoost = if (profile.useSpineOnlyTransform) {
+            0f
+        } else {
+            val early = 1f - visualProgress.coerceIn(0f, 0.35f) / 0.35f
+            early * 0.22f
+        }
+        val progressCurve = if (profile.useSpineOnlyTransform) {
+            visualProgress
+        } else {
+            (visualProgress * 0.22f) + (visualProgress * visualProgress * 0.78f) + curlBoost
+        }
+        profile.maxRotation * progressCurve.coerceIn(0f, 1f)
     }
-    val backShift = if (profile == TurnProfile.HANDBOOK) {
-        progressCurve * 22f - handbookTailBoost * 0.50f
+    // HANDBOOK：背面 = 180° - frontRotation（NEXT）/ -(180° - frontRotation)（PREVIOUS）
+    rotationY = if (profile.useSpineOnlyTransform) {
+        val backRotation = 180f - frontRotation
+        when (direction) {
+            TurnDirection.NEXT -> backRotation
+            TurnDirection.PREVIOUS -> -backRotation
+            null -> 0f
+        }
     } else {
-        visualProgress * 12f + progressCurve * 58f
+        when (direction) {
+            TurnDirection.NEXT -> -frontRotation * 0.92f
+            TurnDirection.PREVIOUS -> frontRotation * 0.92f
+            null -> 0f
+        }
     }
-    translationX = when {
-        draggingToNext -> -backShift
-        draggingToPrevious -> backShift
+    // HANDBOOK 背面同样纯绕书脊 180° 翻转：无额外位移/缩放/旋转
+    translationX = if (profile.useSpineOnlyTransform) 0f else when {
+        draggingToNext -> -(visualProgress * 12f + frontRotation / profile.maxRotation * 58f)
+        draggingToPrevious -> visualProgress * 12f + frontRotation / profile.maxRotation * 58f
         else -> 0f
     }
     val yOffsetFactor = (anchorY - 0.5f) * 2f
-    translationY = yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 1.4f else 7.2f
-    rotationX = -yOffsetFactor * progressCurve * if (profile == TurnProfile.HANDBOOK) 0.9f else 5.4f
+    translationY = if (profile.useSpineOnlyTransform) 0f else yOffsetFactor * (frontRotation / profile.maxRotation) * 7.2f
+    rotationX = if (profile.useSpineOnlyTransform) 0f else -yOffsetFactor * (frontRotation / profile.maxRotation) * 5.4f
     // HANDBOOK 背面用与正面一致的 cameraDistance（对照原版 40 × density）
-    cameraDistance = if (profile == TurnProfile.HANDBOOK) 40f * density else 34f * density
+    cameraDistance = profile.cameraDistanceDensity * density
     val subtleBackScale = 1f - visualProgress * 0.012f
-    scaleY = if (profile == TurnProfile.HANDBOOK) {
-        subtleBackScale.coerceIn(0.988f, 1f)
-    } else {
-        subtleBackScale.coerceIn(0.972f, 1f)
-    }
-    scaleX = if (profile == TurnProfile.HANDBOOK) {
-        (1f - visualProgress * 0.025f).coerceIn(0.975f, 1f)
-    } else {
-        (1f - visualProgress * 0.015f).coerceIn(0.985f, 1f)
-    }
-    // 背面在中后段渐显，HANDBOOK 末段淡出避免切页残影
-    alpha = if (profile == TurnProfile.HANDBOOK) {
-        if (visualProgress < 0.80f) {
-            (0.72f + visualProgress * 0.24f).coerceIn(0.72f, 0.96f)
-        } else {
-            ((1f - visualProgress) / 0.20f).coerceIn(0f, 1f) * 0.96f
-        }
-    } else {
-        (0.85f + visualProgress * 0.13f).coerceIn(0.85f, 0.98f)
-    }
+    scaleY = if (profile.useSpineOnlyTransform) 1f else subtleBackScale.coerceIn(0.972f, 1f)
+    scaleX = if (profile.useSpineOnlyTransform) 1f else (1f - visualProgress * 0.015f).coerceIn(0.985f, 1f)
+    // 对照原版 BaseBookViewKt：背面 Alpha 硬切
+    // (-rotation) > 90° → 背面可见(alpha=1)；(-rotation) <= 90° → 背面不可见(alpha=0)
+    alpha = profile.backAlpha(frontRotation, visualProgress)
 }
 
 // 翻页动画模式：SIMULATION=仿真翻页(默认) / COVER=水平覆盖 / SCROLL=垂直滚动 / NONE=无动画

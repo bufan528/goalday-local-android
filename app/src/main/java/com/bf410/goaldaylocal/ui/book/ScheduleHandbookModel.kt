@@ -42,30 +42,21 @@ internal fun buildScheduleHandbookModel(
     today: LocalDate = LocalDate.now(),
     monthOffset: Int = 0,
 ): ScheduleHandbookModel {
-    val pageMonth = page.title.extractMonthNumber()
-    val baseMonth = pageMonth ?: scheduleEntries.firstOrNull()?.month ?: today.monthValue
-    // 应用月份偏移（跨月导航），处理跨年
-    val baseYear = if (pageMonth != null) today.year else (
-        scheduleEntries.firstOrNull { it.year == today.year && it.month == baseMonth }?.year
-            ?: scheduleEntries.firstOrNull { it.month == baseMonth }?.year
-            ?: scheduleEntries.firstOrNull()?.year
-            ?: today.year
-    )
+    // P2-7 修复：书内日程页/月视图应始终基于当前实际月份，page.title 中的"X月日程"
+    // 只是页面模板名称，不代表要显示的具体月份。以 today 为锚点，配合 monthOffset 跨月导航。
+    val baseMonth = today.monthValue
+    val baseYear = today.year
     val adjusted = YearMonth.of(baseYear, baseMonth).plusMonths(monthOffset.toLong())
     val anchorMonth = adjusted.monthValue
     val anchorYear = adjusted.year
     val monthLength = adjusted.lengthOfMonth()
-    val defaultStart = if (anchorYear == today.year && anchorMonth == today.monthValue) {
-        (today.dayOfMonth - 1).coerceIn(0, monthLength - 1)
-    } else {
-        0
-    }
-    val maxStart = (monthLength - 3).coerceAtLeast(0)
-    val start = (requestedWindowStart ?: defaultStart).coerceIn(0, maxStart)
+    // 显示整月所有天：对照原版 RecyclerView 一次渲染整月日程列表
+    val maxStart = 0
+    val start = 0
     val sorted = scheduleEntries
         .filter { it.year == anchorYear && it.month == anchorMonth }
         .sortedWith(compareBy<ScheduleEntry>({ it.day }, { it.completed }))
-    val dayBlocks = List(3) { offset ->
+    val dayBlocks = List(monthLength) { offset ->
         val day = start + offset + 1
         val dayEntries = sorted.filter { it.day == day }
         val todo = dayEntries.filterNot { it.completed }

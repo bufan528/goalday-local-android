@@ -40,6 +40,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -77,6 +78,7 @@ import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.GoaldaySegmentBar
 import com.bf410.goaldaylocal.ui.replica.GoaldayTopBar
+import com.bf410.goaldaylocal.ui.replica.LocalGoaldayDarkMode
 
 private val bookPalette = GoaldayDesign.BookCoverPalette
 
@@ -778,7 +780,7 @@ private fun ShelfBookCover(
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .shadow(GoaldayDesign.Space2, shape, clip = false)
+            .shadow(6.dp, shape, clip = false)
             .clip(shape)
             .background(
                 Brush.linearGradient(
@@ -789,17 +791,17 @@ private fun ShelfBookCover(
             )
             .border(GoaldayDesign.Hairline + 0.1.dp, GoaldayDesign.CoverWhiteOverlayBorder, shape)
             .drawBehind {
-                // 书页厚度堆叠线：右侧 3 条递减细线，模拟内页层叠纹理
+                // 书页厚度堆叠线：弱化线条，避免封面装饰感过重
                 val w = size.width
                 val h = size.height
                 val top = 6.dp.toPx()
                 repeat(3) { i ->
                     val x = w - 4.dp.toPx() - i * 3.dp.toPx()
                     drawLine(
-                        color = lineColor.copy(alpha = 0.20f - i * 0.05f),
+                        color = lineColor.copy(alpha = 0.12f - i * 0.03f),
                         start = Offset(x, top),
                         end = Offset(x, h - top),
-                        strokeWidth = 0.6.dp.toPx(),
+                        strokeWidth = 0.5.dp.toPx(),
                     )
                 }
             }
@@ -1007,6 +1009,8 @@ private fun BookDetailView(
         }
     }
     LaunchedEffect(currentPage, book.id) {
+        // handbook/bookOnlyMode 下顶部 tab 由用户手动控制，不要随翻页自动重置
+        if (bookOnlyMode) return@LaunchedEffect
         segment = resolveSegment(currentPage)
     }
     val filteredPages = remember(book.pages, segment, bookOnlyMode) {
@@ -1052,69 +1056,20 @@ private fun BookDetailView(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(if (handbookMode) GoaldayDesign.MorandiOffWhite else Color.Transparent)
             .padding(top = if (handbookMode) 0.dp else GoaldayDesign.Space2),
     ) {
-        Column(Modifier.fillMaxSize()) {
-            if (handbookMode) {
-                // 对照 fragment_main_page.xml: 顶部 Tab 导航栏
-                // 背景色 #E5DAD4，minHeight=49dp，paddingBottom=5dp
-                // Tab 文字 18sp bold，选中黑色，未选中 #36000000
-                // 对照 fragment_main_page.xml / toolbar_normal.xml：
-                // 顶部 Toolbar 为左右结构，左侧返回、中间标题/tab、右侧“完成”按钮。
-                // 顶部 tab 回退到原版 BookSegment（清单/周/月/记录）。
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 49.dp)
-                        .background(Color(0xFFE5DAD4))
-                        .padding(bottom = 5.dp),
-                ) {
-                    // 左侧返回按钮
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
-                        tint = Color(0x36000000),
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(start = GoaldayDesign.Space2, top = 8.dp, bottom = 8.dp)
-                            .size(22.dp)
-                            .clickable { onBackToLibrary() }
-                            .padding(2.dp),
-                    )
-                    // 中间 Tab 文字：对照 tab_main.xml textSize=18dip bold，严格居中
-                    Row(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        BookSegment.entries.forEachIndexed { idx, seg ->
-                            val isSelected = BookSegment.entries.indexOf(segment) == idx
-                            Text(
-                                text = seg.label,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSelected) Color.Black else Color(0x36000000),
-                                modifier = Modifier
-                                    .clickable { switchSegment(seg) }
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                            )
-                        }
-                    }
-                    // 右侧“完成”按钮（对齐原 APK toolbar_normal.xml 右上角）
-                    Text(
-                        text = "完成",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = GoaldayDesign.adaptiveInkSecondary,
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .padding(end = GoaldayDesign.Space2, top = 8.dp, bottom = 8.dp)
-                            .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
-                            .clickable { onBackToLibrary() }
-                            .padding(horizontal = GoaldayDesign.Space2 + 2.dp, vertical = GoaldayDesign.Space1 + 2.dp),
-                    )
-                }
-            } else {
+        if (handbookMode) {
+            DualPageBookView(
+                book = book,
+                currentPage = currentPage,
+                uiState = uiState,
+                viewModel = viewModel,
+                onBack = onBackToLibrary,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            Column(Modifier.fillMaxSize()) {
                 GoaldayTopBar(
                 leftTitle = book.title,
                 rightPrimaryText = "完成",
@@ -1149,8 +1104,8 @@ private fun BookDetailView(
                     }
                 },
                 )
-            }
-        if (!handbookMode) {
+
+            if (!handbookMode) {
             GoaldaySegmentBar(
                 items = BookSegment.entries.map { it.label },
                 selectedIndex = BookSegment.entries.indexOf(segment).coerceAtLeast(0),
@@ -1236,63 +1191,8 @@ private fun BookDetailView(
                 }
             }
             Spacer(Modifier.height(GoaldayDesign.Space4))
-        } else if (handbookMode) {
-            // 原版书页阅读没有顶部月份条，翻页靠左右滑动/点击热区，保持页面沉浸
         }
-        if (handbookMode && segment != BookSegment.MONTH) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            ) {
-                BookReader(
-                    bookId = book.id,
-                    bookTitle = book.title,
-                    subtitle = book.subtitle,
-                    page = currentPage,
-                    previousPage = readerPreviousPage,
-                    nextPage = readerNextPage,
-                    pageIndex = segmentPageIndex,
-                    pageCount = filteredPages.size,
-                    tint = book.color,
-                    isSaved = book.id in uiState.savedBookIds,
-                    diaryDraft = uiState.diaryDraft,
-                    customPageItems = uiState.customPageItems,
-                    weeklyTheme = uiState.weeklyTheme,
-                    todayPlanItems = uiState.todayPlanItems,
-                    todayCompletedItems = uiState.todayCompletedItems,
-                    schedulePreviewEntries = uiState.schedulePreviewEntries,
-                    targetItemMeta = uiState.targetItemMeta,
-                    onToggleSaved = viewModel::toggleSavedCurrentBook,
-                    isChecked = { pageTitle, item -> viewModel.isChecked(pageTitle, item) },
-                    onToggleChecked = { pageTitle, item -> viewModel.toggleChecked(pageTitle, item) },
-                    onDiaryChange = viewModel::updateDiaryDraft,
-                    onAddCustomItem = viewModel::addCustomPageItem,
-                    onAddCustomItemWithDeadline = viewModel::addCustomPageItemWithDeadline,
-                    onRemoveCustomItem = viewModel::removeCustomPageItem,
-                    onRenameCustomItem = viewModel::renameCustomPageItem,
-                    onAddToSchedule = viewModel::addItemToSchedule,
-                    onAddHandbookPoolItem = viewModel::addHandbookPoolItem,
-                    onRemoveHandbookPoolItem = viewModel::removeHandbookPoolItem,
-                    onAddScheduleFromHandbook = viewModel::addScheduleFromHandbook,
-                    onWeeklyThemeChange = viewModel::updateWeeklyTheme,
-                    onMoveItemToToday = viewModel::moveItemToToday,
-                    onMoveItemToCompleted = viewModel::moveItemToCompleted,
-                    onRestoreItemFromToday = viewModel::restoreItemFromToday,
-                    onRestoreItemFromCompleted = viewModel::restoreItemFromCompleted,
-                    onUpdateScheduleTitle = viewModel::updateScheduleTitleFromHandbook,
-                    onMoveScheduleDay = viewModel::moveScheduleDayFromHandbook,
-                    onToggleScheduleCompleted = viewModel::toggleScheduleCompletedFromHandbook,
-                    onUpdateTargetNote = viewModel::updateTargetItemNote,
-                    onUpdateTargetDeadline = viewModel::updateTargetItemDeadline,
-                    onOpenTargetDetail = { openedTargetDetail = it },
-                    shellStyle = ShellStyle.BOOK,
-                    handbookMode = true,
-                    onFlipNext = { goToFilteredPage(segmentPageIndex + 1) },
-                    onFlipPrevious = { goToFilteredPage(segmentPageIndex - 1) },
-                )
-            }
-        } else if (segment == BookSegment.MONTH) {
+        if (segment == BookSegment.MONTH) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1358,7 +1258,6 @@ private fun BookDetailView(
                 )
             }
         }
-        }
         val targetPage = currentPage as? TargetPage
         val targetItems = targetPage?.let { (it.items + uiState.customPageItems).distinct() }.orEmpty()
         val targetItem = openedTargetDetail?.takeIf { it in targetItems }
@@ -1414,6 +1313,8 @@ private fun BookDetailView(
             )
         }
     }
+}
+}
 }
 
 @Composable
@@ -1980,81 +1881,84 @@ private fun MonthPageContent(
     onSwitchToWeek: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (page !is SchedulePage) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                "月视图需要日程页",
-                color = GoaldayDesign.adaptiveInkSecondary,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-            )
-        }
-        return
-    }
-    val today = LocalDate.now()
-    val pageMonth = page.title.extractMonthNumber()
-    val baseMonth = pageMonth ?: scheduleEntries.firstOrNull()?.month ?: today.monthValue
-    val baseYear = if (pageMonth != null) {
-        today.year
-    } else {
-        scheduleEntries.firstOrNull { it.year == today.year && it.month == baseMonth }?.year
-            ?: scheduleEntries.firstOrNull { it.month == baseMonth }?.year
-            ?: scheduleEntries.firstOrNull()?.year
-            ?: today.year
-    }
-    val yearMonth = YearMonth.of(baseYear, baseMonth)
-    val year = yearMonth.year
-    val month = yearMonth.monthValue
-    val monthLength = yearMonth.lengthOfMonth()
-    val entriesForMonth = scheduleEntries.filter { it.year == year && it.month == month }
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
-            .background(GoaldayDesign.adaptivePaperGradient)
-            .handbookPaperTexture(alpha = 0.10f)
-            .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
-        verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    // 对照原版 fragment_monthly_schedule.xml：月视图固定使用浅色主题（#FDFAF6 背景），
+    // 不跟随系统/应用暗色模式，避免在暗色设备上变成深棕/black 全屏。
+    CompositionLocalProvider(LocalGoaldayDarkMode provides false) {
+        if (page !is SchedulePage) {
+            Box(
+                modifier = modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
                 Text(
-                    "$year GOALDAY",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = GoaldayDesign.adaptiveInkMuted,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    "${month}月",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = GoaldayDesign.adaptiveInkPrimary,
-                    fontWeight = FontWeight.SemiBold,
+                    "月视图需要日程页",
+                    color = GoaldayDesign.InkSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
                 )
             }
-            Text(
-                page.title,
-                style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.adaptiveInkSecondary,
+            return@CompositionLocalProvider
+        }
+        val today = LocalDate.now()
+        val pageMonth = page.title.extractMonthNumber()
+        val baseMonth = pageMonth ?: scheduleEntries.firstOrNull()?.month ?: today.monthValue
+        val baseYear = if (pageMonth != null) {
+            today.year
+        } else {
+            scheduleEntries.firstOrNull { it.year == today.year && it.month == baseMonth }?.year
+                ?: scheduleEntries.firstOrNull { it.month == baseMonth }?.year
+                ?: scheduleEntries.firstOrNull()?.year
+                ?: today.year
+        }
+        val yearMonth = YearMonth.of(baseYear, baseMonth)
+        val year = yearMonth.year
+        val month = yearMonth.monthValue
+        val monthLength = yearMonth.lengthOfMonth()
+        val entriesForMonth = scheduleEntries.filter { it.year == year && it.month == month }
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusL))
+                .background(GoaldayDesign.PaperGradient)
+                .padding(horizontal = GoaldayDesign.Space3, vertical = GoaldayDesign.Space2),
+            verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        "$year GOALDAY",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = GoaldayDesign.InkMuted,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        "${month}月",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = GoaldayDesign.InkPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                Text(
+                    page.title,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GoaldayDesign.InkSecondary,
+                )
+            }
+            HandbookMonthBoard(
+                year = year,
+                month = month,
+                monthLength = monthLength,
+                entries = entriesForMonth,
+                selectedDays = emptyList(),
+                onSelectDay = { onSwitchToWeek() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
             )
         }
-        HandbookMonthBoard(
-            year = year,
-            month = month,
-            monthLength = monthLength,
-            entries = entriesForMonth,
-            selectedDays = emptyList(),
-            onSelectDay = { onSwitchToWeek() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-        )
     }
 }
 

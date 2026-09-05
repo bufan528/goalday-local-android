@@ -229,7 +229,7 @@ private fun BoardRow(
     // 对照逆向 item_plan_item.xml：SwipeRevealLayout 左滑露出编辑(黑底)+删除(#ED8888)按钮
     var swipeOffset by remember(task.id) { mutableStateOf(0f) }
     val density = LocalDensity.current
-    val revealWidth = with(density) { 222.22.dp.toPx() } // 2×50pt=222.22dp（aapt2 验证：1pt=2.222dp）
+    val revealWidth = with(density) { 100.dp.toPx() } // 2×50dip=100dp（pt 是解码器对 dip 的误标）
     val clampedOffset = swipeOffset.coerceIn(-revealWidth, 0f)
     Box(
         modifier = Modifier
@@ -237,7 +237,7 @@ private fun BoardRow(
             .height(IntrinsicSize.Min)
             .clip(RoundedCornerShape(GoaldayDesign.RadiusS)),
     ) {
-        // 底层：编辑 + 删除按钮（右对齐，左侧滑出，各 50pt=111.11dp 宽）
+        // 底层：编辑 + 删除按钮（右对齐，左侧滑出，各 50dip 宽）
         if (onEdit != null || onDelete != null) {
             Row(
                 modifier = Modifier

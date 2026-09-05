@@ -34,7 +34,13 @@ data class DiaryPage(
     val prompt: String,
 ) : BookPage
 
+data class PlanItem(
+    val title: String,
+    val timeText: String = "",
+)
+
 data class PlanPage(
     override val title: String,
     val items: List<String>,
+    val planItems: List<PlanItem> = items.map { PlanItem(it) },
 ) : BookPage

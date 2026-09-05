@@ -153,7 +153,7 @@ fun GoaldayApp(startTarget: String? = null) {
             if (startTarget == START_TARGET_DIARY || startTarget == START_TARGET_HANDBOOK) {
                 BookRootSurface.BOOK
             } else {
-                BookRootSurface.HOME
+                BookRootSurface.BOOK
             }
         )
     }
@@ -162,7 +162,7 @@ fun GoaldayApp(startTarget: String? = null) {
             when (startTarget) {
                 START_TARGET_DIARY -> BookEntryMode.DIARY
                 START_TARGET_HANDBOOK -> BookEntryMode.HANDBOOK
-                else -> BookEntryMode.PLANNER
+                else -> BookEntryMode.HANDBOOK
             }
         )
     }

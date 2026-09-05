@@ -3,12 +3,13 @@ package com.bf410.goaldaylocal.ui.book
 /**
  * 翻页配置类
  * 用于控制翻页动画的各种参数
+ * 对照原版 BookFlipConfig.java L196：cornerRadius 默认 10.0f
  */
 data class BookFlipConfig(
     val animationDuration: Long = 300L,
     val shadowEnabled: Boolean = true,
     val shadowAlpha: Float = 0.3f,
-    val cornerRadius: Float = 8f,
+    val cornerRadius: Float = 10f,
     val pageSpacing: Float = 2f,
     val enableHapticFeedback: Boolean = true,
     val flipSensitivity: Float = 1.0f

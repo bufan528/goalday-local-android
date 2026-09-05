@@ -59,7 +59,7 @@ private fun diarySection(raw: String, sectionName: String): String {
 private fun parseDiaryBlockForSchedule(line: String): Pair<String, Boolean>? {
     val parts = splitEscapedDiaryBlock(line)
     val type = parts.getOrNull(0).orEmpty()
-    if (type !in setOf("target", "target_child", "topic_target")) return null
+    if (type !in setOf("target", "target_child", "topic_target", "target_in_book", "target_child_inbook", "topic_target_inbook")) return null
     val style = parts.getOrNull(1).orEmpty()
     val text = unescapeDiaryScheduleBlockText(parts.getOrNull(2).orEmpty().ifBlank { parts.getOrNull(1).orEmpty() })
     val completed = style == "check" || text.trimStart().startsWith("✓")
