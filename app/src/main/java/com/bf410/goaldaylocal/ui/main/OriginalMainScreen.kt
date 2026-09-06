@@ -1,6 +1,7 @@
 package com.bf410.goaldaylocal.ui.main
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -59,6 +60,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -122,6 +124,7 @@ private val FabLight: Color @Composable get() =
 
 internal enum class MainSubTab(val label: String) {
     WEEK("周"),
+    MONTH("月"),
     RECORD("记录"),
     LIST("清单"),
 }
@@ -210,6 +213,16 @@ fun OriginalMainScreen(
     var editingDate by remember { mutableStateOf<LocalDate?>(null) }
     // 清单详情（提升到主界面层以便系统返回拦截）
     var expandedBookId by rememberSaveable { mutableStateOf<String?>(null) }
+    // Tab 显隐（对照原版长按顶栏的 dialog_tab_manage，月默认隐藏）
+    val mmkvStore = remember { MMKV.defaultMMKV() }
+    var tabVisibility by remember {
+        mutableStateOf(
+            MainSubTab.entries.associateWith {
+                mmkvStore.decodeBool("main_tab_visible_" + it.name, it != MainSubTab.MONTH)
+            },
+        )
+    }
+    var showTabManage by remember { mutableStateOf(false) }
 
     // 系统返回：清单详情/行内编辑优先返回上一级，其余交给应用级返回
     androidx.activity.compose.BackHandler(enabled = editingDate != null || expandedBookId != null) {
@@ -232,7 +245,11 @@ fun OriginalMainScreen(
         }
     }
 
-    val currentSubTab = MainSubTab.entries[subTabIndex.coerceIn(0, MainSubTab.entries.lastIndex)]
+    var currentSubTab = MainSubTab.entries[subTabIndex.coerceIn(0, MainSubTab.entries.lastIndex)]
+    if (tabVisibility[currentSubTab] == false) {
+        currentSubTab = MainSubTab.WEEK
+        subTabIndex = MainSubTab.WEEK.ordinal
+    }
 
     Column(Modifier.fillMaxSize().background(MainContentBg)) {
         OriginalTopTabBar(
@@ -245,6 +262,9 @@ fun OriginalMainScreen(
                 editingDate = null
                 subTabIndex = it.ordinal
             },
+            onManageTabs = { showTabManage = true },
+            onOpenSettings = onOpenSettings,
+            tabVisibility = tabVisibility,
         )
         Box(Modifier.fillMaxSize()) {
             when (currentSubTab) {
@@ -256,6 +276,11 @@ fun OriginalMainScreen(
                     onStartEdit = { editingDate = it },
                     onFinishEdit = { editingDate = null },
                     onSelectDate = { selectedDate = it },
+                )
+                MainSubTab.MONTH -> MonthScheduleView(
+                    uiState = uiState,
+                    viewModel = bookViewModel,
+                    selectedDate = selectedDate,
                 )
                 MainSubTab.RECORD -> RecordDiaryView(
                     selectedDate = selectedDate,
@@ -273,6 +298,16 @@ fun OriginalMainScreen(
         }
     }
 
+    if (showTabManage) {
+        TabManageSheet(
+            visibility = tabVisibility,
+            onToggle = { tab, visible ->
+                tabVisibility = tabVisibility.toMutableMap().apply { put(tab, visible) }
+                mmkvStore.encode("main_tab_visible_" + tab.name, visible)
+            },
+            onDismiss = { showTabManage = false },
+        )
+    }
     if (showWeekPicker) {
         WeekPickerSheet(
             selectedDate = selectedDate,
@@ -286,6 +321,7 @@ fun OriginalMainScreen(
 }
 
 /** 顶部文字 Tab：N周 ▼ | 记录 | 清单；行内编辑时只显示右上角「完成」 */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun OriginalTopTabBar(
     selected: MainSubTab,
@@ -294,13 +330,19 @@ private fun OriginalTopTabBar(
     onDone: () -> Unit,
     onWeekClick: () -> Unit,
     onSelect: (MainSubTab) -> Unit,
+    onManageTabs: () -> Unit,
+    onOpenSettings: () -> Unit,
+    tabVisibility: Map<MainSubTab, Boolean>,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(MainTabBarBg)
             .statusBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 12.dp),
+            .padding(horizontal = 24.dp, vertical = 12.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(onLongPress = { onManageTabs() })
+            },
         horizontalArrangement = Arrangement.spacedBy(20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -317,32 +359,47 @@ private fun OriginalTopTabBar(
             }
             return@Row
         }
-        val weekNum = selectedDate.get(WeekFields.ISO.weekOfWeekBasedYear())
-        Row(
-            modifier = Modifier.clickable { onWeekClick() },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                "${weekNum}周",
-                fontSize = 18.sp,
-                fontWeight = if (selected == MainSubTab.WEEK) FontWeight.Bold else FontWeight.Normal,
-                color = if (selected == MainSubTab.WEEK) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
-            )
-            Icon(
-                Icons.Filled.KeyboardArrowDown,
-                contentDescription = "选择周",
-                tint = GoaldayDesign.adaptiveInkPrimary,
-                modifier = Modifier.size(20.dp),
-            )
+        val visible = MainSubTab.entries.filter { tabVisibility[it] == true }
+        visible.forEachIndexed { index, tabItem ->
+            if (index > 0) TabDividerText()
+            when (tabItem) {
+                MainSubTab.WEEK -> Row(
+                    modifier = Modifier.clickable { onWeekClick() },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    val weekNum = selectedDate.get(WeekFields.ISO.weekOfWeekBasedYear())
+                    Text(
+                        "${weekNum}周",
+                        fontSize = 18.sp,
+                        fontWeight = if (selected == MainSubTab.WEEK) FontWeight.Bold else FontWeight.Normal,
+                        color = if (selected == MainSubTab.WEEK) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
+                    )
+                    Icon(
+                        Icons.Filled.KeyboardArrowDown,
+                        contentDescription = "选择周",
+                        tint = GoaldayDesign.adaptiveInkPrimary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                MainSubTab.MONTH -> TabLabel("月", selected == MainSubTab.MONTH) { onSelect(MainSubTab.MONTH) }
+                MainSubTab.RECORD -> TabLabel(
+                    text = if (selected == MainSubTab.RECORD) "${selectedDate.monthValue}月${selectedDate.dayOfMonth}日" else "记录",
+                    selected = selected == MainSubTab.RECORD,
+                ) { onSelect(MainSubTab.RECORD) }
+                MainSubTab.LIST -> TabLabel("清单", selected == MainSubTab.LIST) { onSelect(MainSubTab.LIST) }
+            }
         }
-        TabDividerText()
-        TabLabel(
-            text = if (selected == MainSubTab.RECORD) "${selectedDate.monthValue}月${selectedDate.dayOfMonth}日" else "记录",
-            selected = selected == MainSubTab.RECORD,
-        ) { onSelect(MainSubTab.RECORD) }
-        TabDividerText()
-        TabLabel("清单", selected == MainSubTab.LIST) { onSelect(MainSubTab.LIST) }
+        Spacer(Modifier.weight(1f))
+        // 右端设置齿轮（对照原版 TabInfo(ic_tab_setting) 常驻顶栏末端）
+        Icon(
+            Icons.Filled.Settings,
+            contentDescription = "设置",
+            tint = GoaldayDesign.adaptiveInkMuted,
+            modifier = Modifier
+                .size(21.dp)
+                .clickable { onOpenSettings() },
+        )
     }
 }
 
@@ -1159,6 +1216,168 @@ private fun TopicDetailSimple(
                             )
                         },
                 )
+            }
+        }
+    }
+}
+
+// endregion
+
+// region Tab 管理弹层（对照原版 dialog_tab_manage）
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TabManageSheet(
+    visibility: Map<MainSubTab, Boolean>,
+    onToggle: (MainSubTab, Boolean) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState()
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            Text(
+                "按住拖动调整页面顺序",
+                fontSize = 13.sp,
+                color = GoaldayDesign.adaptiveInkMuted,
+                modifier = Modifier.padding(vertical = 6.dp),
+            )
+            MainSubTab.entries.forEach { tab ->
+                val visible = visibility[tab] == true
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (LocalGoaldayDarkMode.current) Color(0xFF35312B) else Color(0xFFFBF7F1))
+                        .clickable { onToggle(tab, !visible) }
+                        .padding(horizontal = 16.dp, vertical = 15.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        tab.label,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        if (visible) "👁" else "🚫",
+                        fontSize = 15.sp,
+                    )
+                }
+            }
+            Spacer(Modifier.height(20.dp))
+        }
+    }
+}
+
+// endregion
+
+// region 月视图（原版月 Tab：整月日程滚动列表）
+
+@Composable
+private fun MonthScheduleView(
+    uiState: BookUiState,
+    viewModel: BookViewModel,
+    selectedDate: LocalDate,
+) {
+    val today = LocalDate.now()
+    val monthDays = remember(selectedDate.withDayOfMonth(1)) {
+        val first = selectedDate.withDayOfMonth(1)
+        val len = YearMonth.of(first.year, first.monthValue).lengthOfMonth()
+        (0 until len).map { first.plusDays(it.toLong()) }
+    }
+    val dividerColor = MainTabDivider
+    val listState = rememberLazyListState()
+    LaunchedEffect(selectedDate) {
+        runCatching { listState.animateScrollToItem((selectedDate.dayOfMonth - 1).coerceAtLeast(0)) }
+    }
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 90.dp),
+    ) {
+        items(monthDays, key = { it.toEpochDay() }) { date ->
+            val entries = uiState.schedulePreviewEntries
+                .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
+                .sortedWith(compareBy({ it.timeText }, { it.id }))
+            val isToday = date == today
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .drawBehind {
+                        val stroke = 0.6.dp.toPx()
+                        drawLine(
+                            color = dividerColor.copy(alpha = 0.4f),
+                            start = Offset(0f, size.height - stroke / 2),
+                            end = Offset(size.width, size.height - stroke / 2),
+                            strokeWidth = stroke,
+                        )
+                    }
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(
+                    modifier = if (isToday) {
+                        Modifier.width(52.dp).background(TodayBlack, RoundedCornerShape(8.dp)).padding(vertical = 5.dp)
+                    } else {
+                        Modifier.width(52.dp).padding(vertical = 5.dp)
+                    },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        date.dayOfMonth.toString(),
+                        fontSize = 15.sp,
+                        lineHeight = 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (isToday) Color.White else GoaldayDesign.adaptiveInkPrimary,
+                    )
+                    Text(
+                        weekdayName(date),
+                        fontSize = 9.sp,
+                        lineHeight = 10.sp,
+                        color = if (isToday) Color.White.copy(alpha = 0.85f) else GoaldayDesign.adaptiveInkMuted,
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    if (entries.isEmpty() && isToday) {
+                        Text(
+                            "今天还没有安排",
+                            fontSize = 13.sp,
+                            color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.7f),
+                        )
+                    }
+                    entries.forEach { entry ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.toggleScheduleCompletedFromHandbook(entry.id) }
+                                .padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(PoolBullet),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                (if (entry.timeText.isNotBlank()) entry.timeText + "  " else "") + entry.title,
+                                fontSize = 13.sp,
+                                lineHeight = 16.sp,
+                                color = GoaldayDesign.adaptiveInkPrimary,
+                                textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                                maxLines = 1,
+                            )
+                        }
+                    }
+                }
             }
         }
     }
