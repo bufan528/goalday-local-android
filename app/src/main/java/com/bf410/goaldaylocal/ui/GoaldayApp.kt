@@ -223,9 +223,8 @@ fun GoaldayApp(startTarget: String? = null) {
     // 通过 deep-link 入口（handbook/diary）启动时直接跳过引导，方便验证手账页
     var showGuide by remember(startTarget) { mutableStateOf(startTarget == null && !mmkv.decodeBool(KEY_GUIDE_SEEN, false)) }
 
-    val canGoBackInsideApp = tab != RootTab.BOOK ||
-        bookSurface != BookRootSurface.HOME ||
-        bookSurface == BookRootSurface.BOOK && bookEntryMode == BookEntryMode.PLANNER && !bookUiState.inLibraryMode
+    // 新 IA：主界面是唯一根。非主界面都允许返回（edge 手势同理）
+    val canGoBackInsideApp = tab != RootTab.MAIN
     val allowEdgeBackSwipe = canGoBackInsideApp
     val density = LocalDensity.current
     val edgeWidthPx = with(density) { 28.dp.toPx() }
@@ -263,22 +262,12 @@ fun GoaldayApp(startTarget: String? = null) {
     }
 
     fun navigateBackInsideApp() {
-        when {
-            tab == RootTab.BOOK &&
-                bookSurface == BookRootSurface.BOOK &&
-                bookEntryMode == BookEntryMode.PLANNER &&
-                !bookUiState.inLibraryMode -> {
-                bookViewModel.openLibrary()
-            }
-            tab == RootTab.BOOK && bookSurface != BookRootSurface.HOME -> {
-                bookSurface = BookRootSurface.HOME
-                bookEntryMode = BookEntryMode.PLANNER
-            }
-            tab != RootTab.BOOK -> {
-                tab = RootTab.BOOK
-                bookSurface = BookRootSurface.HOME
-                bookEntryMode = BookEntryMode.PLANNER
-            }
+        // 书内点页/返回按钮触发的桥接优先消费
+        com.bf410.goaldaylocal.ui.main.MainUiBridge.consume()
+        if (tab != RootTab.MAIN) {
+            tab = RootTab.MAIN
+            bookSurface = BookRootSurface.HOME
+            bookEntryMode = BookEntryMode.PLANNER
         }
     }
 

@@ -80,6 +80,7 @@ import com.bf410.goaldaylocal.data.TopicBook
 import com.bf410.goaldaylocal.ui.book.BookUiState
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+import com.bf410.goaldaylocal.ui.replica.LocalGoaldayDarkMode
 import com.tencent.mmkv.MMKV
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -99,14 +100,25 @@ import java.util.Locale
  *   内容以结构化格式存储，自动把当日已完成日程写入「今日完成」供书内渲染卡片
  * - 清单 Tab：专题卡片（色块 + 名称 + 进度 x/y）+ FAB（+ 与 💡 只在本 Tab，对照原版）
  */
-private val MainTabBarBg = Color(0xFFE5DAD4)
-private val MainContentBg = Color(0xFFFDFAF6)
-private val MainTabDivider = Color(0xFFC5BBB6)
-private val WeekBandBg = Color(0xFFFEECEC)
+// 深色自适应：主界面所有颜色接 LocalGoaldayDarkMode（修复硬编码浅色）
+private val MainTabBarBg: Color @Composable get() =
+    if (LocalGoaldayDarkMode.current) Color(0xFF35312B) else Color(0xFFE5DAD4)
+private val MainContentBg: Color @Composable get() =
+    if (LocalGoaldayDarkMode.current) Color(0xFF221E1A) else Color(0xFFFDFAF6)
+private val MainTabDivider: Color @Composable get() =
+    if (LocalGoaldayDarkMode.current) Color(0xFF4A443D) else Color(0xFFC5BBB6)
+private val WeekBandBg: Color @Composable get() =
+    if (LocalGoaldayDarkMode.current) Color(0xFF3A2C26) else Color(0xFFFEECEC)
 private val TodayCoral = Color(0xFFF66061)
-private val TodayBlack = Color(0xFF1E1E1E)
+private val TodayBlack: Color @Composable get() =
+    if (LocalGoaldayDarkMode.current) Color(0xFFF66061) else Color(0xFF1E1E1E)
 private val PoolBullet = Color(0xFFF2C0A5)
-private val EntryCircle = Color(0xFF3A3A3A)
+private val EntryCircle: Color @Composable get() =
+    if (LocalGoaldayDarkMode.current) Color(0xFFB9B1A7) else Color(0xFF3A3A3A)
+private val RowCardBg: Color @Composable get() =
+    if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color(0xFFFBF7F1)
+private val FabLight: Color @Composable get() =
+    if (LocalGoaldayDarkMode.current) Color(0xFF4A443C) else Color(0xFFEFE7DC)
 
 internal enum class MainSubTab(val label: String) {
     WEEK("周"),
@@ -196,6 +208,14 @@ fun OriginalMainScreen(
     var showWeekPicker by remember { mutableStateOf(false) }
     // 行内编辑中的日期（任意一天可编辑，对照原版）；非 null 时顶栏显示「完成」
     var editingDate by remember { mutableStateOf<LocalDate?>(null) }
+    // 清单详情（提升到主界面层以便系统返回拦截）
+    var expandedBookId by rememberSaveable { mutableStateOf<String?>(null) }
+
+    // 系统返回：清单详情/行内编辑优先返回上一级，其余交给应用级返回
+    androidx.activity.compose.BackHandler(enabled = editingDate != null || expandedBookId != null) {
+        editingDate = null
+        expandedBookId = null
+    }
 
     LaunchedEffect(Unit) { bookViewModel.refreshSchedulePreview() }
     LaunchedEffect(openWeekPickerTick) {
@@ -243,6 +263,8 @@ fun OriginalMainScreen(
                 )
                 MainSubTab.LIST -> TopicListView(
                     uiState = uiState,
+                    expandedBookId = expandedBookId,
+                    onExpandBook = { expandedBookId = it },
                     onOpenBookShelf = onOpenBook,
                     onOpenInspiration = onOpenInspiration,
                     onOpenSettings = onOpenSettings,
@@ -305,12 +327,12 @@ private fun OriginalTopTabBar(
                 "${weekNum}周",
                 fontSize = 18.sp,
                 fontWeight = if (selected == MainSubTab.WEEK) FontWeight.Bold else FontWeight.Normal,
-                color = if (selected == MainSubTab.WEEK) GoaldayDesign.InkPrimary else GoaldayDesign.InkMuted,
+                color = if (selected == MainSubTab.WEEK) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
             )
             Icon(
                 Icons.Filled.KeyboardArrowDown,
                 contentDescription = "选择周",
-                tint = GoaldayDesign.InkPrimary,
+                tint = GoaldayDesign.adaptiveInkPrimary,
                 modifier = Modifier.size(20.dp),
             )
         }
@@ -335,7 +357,7 @@ private fun TabLabel(text: String, selected: Boolean, onClick: () -> Unit) {
         text,
         fontSize = 18.sp,
         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-        color = if (selected) GoaldayDesign.InkPrimary else GoaldayDesign.InkMuted,
+        color = if (selected) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
         modifier = Modifier.clickable(onClick = onClick),
     )
 }
@@ -356,6 +378,8 @@ private fun WeekScheduleView(
     val monday = selectedDate.with(DayOfWeek.MONDAY)
     val weekDays = remember(monday) { (0..6).map { monday.plusDays(it.toLong()) } }
     var quickInput by remember(editingDate) { mutableStateOf("") }
+    val dividerColor = MainTabDivider
+    val diaryStore = remember { LocalStateStore(MMKV.defaultMMKV()) }
     // 长按拖拽：池条目 → 日期行排期
     var draggingItem by remember { mutableStateOf<String?>(null) }
     var dropTarget by remember { mutableStateOf<LocalDate?>(null) }
@@ -403,7 +427,7 @@ private fun WeekScheduleView(
                         .drawBehind {
                             val stroke = 0.6.dp.toPx()
                             drawLine(
-                                color = MainTabDivider.copy(alpha = 0.4f),
+                                color = dividerColor.copy(alpha = 0.4f),
                                 start = Offset(0f, size.height - stroke / 2),
                                 end = Offset(size.width, size.height - stroke / 2),
                                 strokeWidth = stroke,
@@ -428,7 +452,7 @@ private fun WeekScheduleView(
                                 fontSize = 20.sp,
                                 lineHeight = 22.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = if (isToday) Color.White else GoaldayDesign.InkPrimary,
+                                color = if (isToday) Color.White else GoaldayDesign.adaptiveInkPrimary,
                             )
                             Text(
                                 "—",
@@ -440,7 +464,7 @@ private fun WeekScheduleView(
                                 weekdayName(date),
                                 fontSize = 11.sp,
                                 lineHeight = 12.sp,
-                                color = if (isToday) Color.White.copy(alpha = 0.85f) else GoaldayDesign.InkMuted,
+                                color = if (isToday) Color.White.copy(alpha = 0.85f) else GoaldayDesign.adaptiveInkMuted,
                             )
                         }
                         Spacer(Modifier.width(12.dp))
@@ -467,6 +491,20 @@ private fun WeekScheduleView(
                                             )
                                             .clickable {
                                                 viewModel.toggleScheduleCompletedFromHandbook(entry.id)
+                                                // 同步记录 Tab 日记的「今日完成」段（对照原版自动记录完成事项）
+                                                val flipped = entries.map {
+                                                    if (it.id == entry.id) it.copy(completed = !it.completed) else it
+                                                }
+                                                diaryStore.setDiaryText(
+                                                    DIARY_BOOK_ID,
+                                                    date.toString(),
+                                                    buildStructuredDiary(
+                                                        date,
+                                                        flipped,
+                                                        diaryUserText(diaryStore, date),
+                                                        diaryImagePaths(diaryStore, date),
+                                                    ),
+                                                )
                                             },
                                         contentAlignment = Alignment.Center,
                                     ) {
@@ -479,7 +517,7 @@ private fun WeekScheduleView(
                                         entry.title,
                                         fontSize = 15.sp,
                                         lineHeight = 19.sp,
-                                        color = GoaldayDesign.InkPrimary,
+                                        color = GoaldayDesign.adaptiveInkPrimary,
                                         textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                                         maxLines = 2,
                                     )
@@ -490,7 +528,7 @@ private fun WeekScheduleView(
                                     value = quickInput,
                                     onValueChange = { quickInput = it },
                                     singleLine = true,
-                                    textStyle = TextStyle(fontSize = 15.sp, color = GoaldayDesign.InkPrimary),
+                                    textStyle = TextStyle(fontSize = 15.sp, color = GoaldayDesign.adaptiveInkPrimary),
                                     cursorBrush = SolidColor(TodayCoral),
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -522,7 +560,7 @@ private fun WeekScheduleView(
                                                     Text(
                                                         "写下你现在最想完成的",
                                                         fontSize = 15.sp,
-                                                        color = GoaldayDesign.InkMuted.copy(alpha = 0.75f),
+                                                        color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.75f),
                                                         maxLines = 1,
                                                     )
                                                 }
@@ -545,7 +583,7 @@ private fun WeekScheduleView(
             Modifier
                 .width(0.7.dp)
                 .fillMaxHeight()
-                .background(MainTabDivider.copy(alpha = 0.5f)),
+                .background(dividerColor.copy(alpha = 0.5f)),
         )
 
         // 右侧：任务池（专题 chip + 橙色方块条目）
@@ -562,7 +600,7 @@ private fun WeekScheduleView(
                     .padding(horizontal = 12.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color.White)
+                    .background(if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White)
                     .border(0.7.dp, MainTabDivider.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
                     .clickable {
                         val next = (uiState.selectedBookIndex + 1) % uiState.books.size.coerceAtLeast(1)
@@ -581,14 +619,14 @@ private fun WeekScheduleView(
                     currentBook?.title ?: "选择清单",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = GoaldayDesign.InkPrimary,
+                    color = GoaldayDesign.adaptiveInkPrimary,
                     maxLines = 1,
                     modifier = Modifier.weight(1f),
                 )
                 Icon(
                     Icons.Filled.ExpandMore,
                     contentDescription = "切换专题",
-                    tint = GoaldayDesign.InkMuted,
+                    tint = GoaldayDesign.adaptiveInkMuted,
                     modifier = Modifier.size(18.dp),
                 )
             }
@@ -648,7 +686,7 @@ private fun WeekScheduleView(
                             poolItem,
                             fontSize = 16.sp,
                             lineHeight = 20.sp,
-                            color = GoaldayDesign.InkPrimary,
+                            color = GoaldayDesign.adaptiveInkPrimary,
                         )
                     }
                 }
@@ -658,7 +696,7 @@ private fun WeekScheduleView(
                             "点击右上专题切换清单，点条目即可排入左侧选中日期",
                             fontSize = 13.sp,
                             lineHeight = 18.sp,
-                            color = GoaldayDesign.InkMuted,
+                            color = GoaldayDesign.adaptiveInkMuted,
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                         )
                     }
@@ -680,7 +718,7 @@ private fun WeekScheduleView(
                     Text(
                         if (poolCollapsed) "‹" else "›",
                         fontSize = 17.sp,
-                        color = GoaldayDesign.InkPrimary,
+                        color = GoaldayDesign.adaptiveInkPrimary,
                     )
                 }
             }
@@ -699,7 +737,7 @@ private fun WeekScheduleView(
                         .clickable { poolCollapsed = false },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("‹", fontSize = 17.sp, color = GoaldayDesign.InkPrimary)
+                    Text("‹", fontSize = 17.sp, color = GoaldayDesign.adaptiveInkPrimary)
                 }
             }
         }
@@ -773,7 +811,7 @@ private fun RecordDiaryView(
                     prompt,
                     fontSize = 16.sp,
                     lineHeight = 22.sp,
-                    color = GoaldayDesign.InkMuted,
+                    color = GoaldayDesign.adaptiveInkMuted,
                 )
                 Spacer(Modifier.height(14.dp))
             }
@@ -783,7 +821,7 @@ private fun RecordDiaryView(
                     text = it
                     saveAll()
                 },
-                textStyle = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, color = GoaldayDesign.InkPrimary),
+                textStyle = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, color = GoaldayDesign.adaptiveInkPrimary),
                 cursorBrush = SolidColor(TodayCoral),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -814,7 +852,7 @@ private fun RecordDiaryView(
             ) {
                 Text("🖼", fontSize = 15.sp)
                 Spacer(Modifier.width(8.dp))
-                Text("插入图片", fontSize = 14.sp, color = GoaldayDesign.InkSecondary)
+                Text("插入图片", fontSize = 14.sp, color = GoaldayDesign.adaptiveInkSecondary)
             }
             Spacer(Modifier.height(120.dp))
         }
@@ -917,12 +955,13 @@ private fun buildStructuredDiary(date: LocalDate, entries: List<ScheduleEntry>, 
 @Composable
 private fun TopicListView(
     uiState: BookUiState,
+    expandedBookId: String?,
+    onExpandBook: (String?) -> Unit,
     onOpenBookShelf: () -> Unit,
     onOpenInspiration: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     val store = remember { LocalStateStore(MMKV.defaultMMKV()) }
-    var expandedBookId by rememberSaveable { mutableStateOf<String?>(null) }
     var revision by remember { mutableIntStateOf(0) }
 
     Box(Modifier.fillMaxSize()) {
@@ -940,7 +979,7 @@ private fun TopicListView(
                         Icon(
                             Icons.Filled.Settings,
                             contentDescription = "设置",
-                            tint = GoaldayDesign.InkMuted,
+                            tint = GoaldayDesign.adaptiveInkMuted,
                             modifier = Modifier
                                 .size(22.dp)
                                 .clickable { onOpenSettings() },
@@ -955,8 +994,8 @@ private fun TopicListView(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0xFFFBF7F1))
-                            .clickable { expandedBookId = book.id }
+                            .background(RowCardBg)
+                            .clickable { onExpandBook(book.id) }
                             .padding(horizontal = 14.dp, vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -969,14 +1008,14 @@ private fun TopicListView(
                         Text(
                             book.title,
                             fontSize = 16.sp,
-                            color = GoaldayDesign.InkPrimary,
+                            color = GoaldayDesign.adaptiveInkPrimary,
                             modifier = Modifier.weight(1f),
                             maxLines = 1,
                         )
                         Text(
                             "$done/$total",
                             fontSize = 14.sp,
-                            color = GoaldayDesign.InkMuted,
+                            color = GoaldayDesign.adaptiveInkMuted,
                         )
                     }
                 }
@@ -984,14 +1023,14 @@ private fun TopicListView(
         } else {
             val book = uiState.books.firstOrNull { it.id == expandedBookId }
             if (book == null) {
-                expandedBookId = null
+                onExpandBook(null)
             } else {
                 TopicDetailSimple(
                     book = book,
                     store = store,
                     revision = revision,
                     onToggle = { revision++ },
-                    onBack = { expandedBookId = null },
+                    onBack = { onExpandBook(null) },
                 )
             }
         }
@@ -1008,11 +1047,11 @@ private fun TopicListView(
                 Box(
                     modifier = Modifier
                         .size(52.dp)
-                        .background(Color(0xFFEFE7DC), CircleShape)
+                        .background(FabLight, CircleShape)
                         .clickable { onOpenBookShelf() },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("+", fontSize = 26.sp, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.Light)
+                    Text("+", fontSize = 26.sp, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.Light)
                 }
                 Box(
                     modifier = Modifier
@@ -1038,6 +1077,7 @@ private fun TopicDetailSimple(
     onBack: () -> Unit,
 ) {
     val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
+    val dividerColor = MainTabDivider
     Column(Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
@@ -1050,7 +1090,7 @@ private fun TopicDetailSimple(
             Text(
                 "‹",
                 fontSize = 22.sp,
-                color = GoaldayDesign.InkPrimary,
+                color = GoaldayDesign.adaptiveInkPrimary,
                 modifier = Modifier
                     .clickable { onBack() }
                     .padding(end = 14.dp),
@@ -1065,11 +1105,11 @@ private fun TopicDetailSimple(
                 book.title,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = GoaldayDesign.InkPrimary,
+                color = GoaldayDesign.adaptiveInkPrimary,
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
             )
-            Text("···", fontSize = 16.sp, color = GoaldayDesign.InkPrimary)
+            Text("···", fontSize = 16.sp, color = GoaldayDesign.adaptiveInkPrimary)
         }
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
@@ -1101,7 +1141,7 @@ private fun TopicDetailSimple(
                         "${index + 1}  $item",
                         fontSize = 15.sp,
                         lineHeight = 20.sp,
-                        color = GoaldayDesign.InkPrimary,
+                        color = GoaldayDesign.adaptiveInkPrimary,
                         textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                     )
                 }
@@ -1111,7 +1151,7 @@ private fun TopicDetailSimple(
                         .height(1.dp)
                         .drawBehind {
                             drawLine(
-                                color = MainTabDivider.copy(alpha = 0.55f),
+                                color = dividerColor.copy(alpha = 0.55f),
                                 start = Offset(0f, size.height / 2),
                                 end = Offset(size.width, size.height / 2),
                                 strokeWidth = 1.dp.toPx(),
@@ -1155,12 +1195,12 @@ private fun WeekPickerSheet(
                     "${monthAnchor.monthValue}月 ${monthAnchor.year}",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = GoaldayDesign.InkPrimary,
+                    color = GoaldayDesign.adaptiveInkPrimary,
                 )
                 Icon(
                     Icons.Filled.KeyboardArrowDown,
                     contentDescription = "下个月",
-                    tint = GoaldayDesign.InkPrimary,
+                    tint = GoaldayDesign.adaptiveInkPrimary,
                     modifier = Modifier
                         .size(24.dp)
                         .clickable {
@@ -1192,7 +1232,7 @@ private fun WeekPickerSheet(
                     Text(
                         it,
                         fontSize = 13.sp,
-                        color = GoaldayDesign.InkMuted,
+                        color = GoaldayDesign.adaptiveInkMuted,
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center,
                     )
@@ -1224,7 +1264,7 @@ private fun WeekPickerSheet(
                             weekNum.toString(),
                             fontSize = 15.sp,
                             fontWeight = if (isCurrentWeek) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isCurrentWeek) GoaldayDesign.InkPrimary else GoaldayDesign.InkMuted,
+                            color = if (isCurrentWeek) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(if (isCurrentWeek) Color.White else Color.Transparent)
@@ -1259,8 +1299,8 @@ private fun WeekPickerSheet(
                                     fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
                                     color = when {
                                         isToday -> Color.White
-                                        !inMonth -> GoaldayDesign.InkMuted.copy(alpha = 0.55f)
-                                        else -> GoaldayDesign.InkPrimary
+                                        !inMonth -> GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.55f)
+                                        else -> GoaldayDesign.adaptiveInkPrimary
                                     },
                                 )
                             }
