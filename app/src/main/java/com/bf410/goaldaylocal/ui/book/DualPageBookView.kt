@@ -431,6 +431,7 @@ fun DualPageBookView(
                                 handbookMode = true,
                                 diaryDate = diaryDate,
                                 onAddImage = {},
+                                scheduleEntries = uiState.schedulePreviewEntries,
                             )
                         },
                         backContent = {
@@ -446,6 +447,7 @@ fun DualPageBookView(
                                 handbookMode = true,
                                 diaryDate = nextDiaryDate,
                                 onAddImage = {},
+                                scheduleEntries = uiState.schedulePreviewEntries,
                             )
                         },
                     )

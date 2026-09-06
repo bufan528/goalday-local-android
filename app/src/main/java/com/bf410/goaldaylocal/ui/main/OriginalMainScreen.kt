@@ -1894,12 +1894,20 @@ private fun MonthScheduleView(
     }
     val dividerColor = MainTabDivider
     val listState = rememberLazyListState()
+    val monthContext = LocalContext.current
+    val monthStore = remember { LocalStateStore(MMKV.defaultMMKV()) }
+    // 右侧清单侧栏折叠（对照 fragment_monthly_schedule 的 bg_arrow 圆钮）
+    var monthPoolCollapsed by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(selectedDate) {
         runCatching { listState.animateScrollToItem((selectedDate.dayOfMonth - 1).coerceAtLeast(0)) }
     }
+    Box(Modifier.fillMaxSize()) {
+    Row(Modifier.fillMaxSize()) {
     LazyColumn(
         state = listState,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .weight(if (monthPoolCollapsed) 1f else 1.15f)
+            .fillMaxHeight(),
         contentPadding = PaddingValues(bottom = 90.dp),
     ) {
         items(monthDays, key = { it.toEpochDay() }) { date ->
@@ -1982,6 +1990,158 @@ private fun MonthScheduleView(
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+
+        if (!monthPoolCollapsed) {
+            // 中缝分隔线
+            Box(
+                Modifier
+                    .width(0.7.dp)
+                    .fillMaxHeight()
+                    .background(dividerColor.copy(alpha = 0.5f)),
+            )
+            // 右侧清单侧栏（对照 fragment_monthly_schedule：选择清单标题栏 + 条目列表）
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(top = 10.dp),
+            ) {
+                val currentBook = uiState.books.getOrNull(uiState.selectedBookIndex)
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White)
+                        .border(0.7.dp, MainTabDivider.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                        .clickable {
+                            val next = (uiState.selectedBookIndex + 1) % uiState.books.size.coerceAtLeast(1)
+                            viewModel.openBook(next)
+                        }
+                        .padding(horizontal = 10.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        Modifier
+                            .size(12.dp)
+                            .background(currentBook?.color ?: PoolBullet, RoundedCornerShape(3.dp)),
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        "选择清单",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                    )
+                    Icon(
+                        Icons.Filled.ExpandMore,
+                        contentDescription = "切换清单",
+                        tint = GoaldayDesign.adaptiveInkMuted,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                LazyColumn(Modifier.weight(1f)) {
+                    val targetPage = currentBook?.pages?.filterIsInstance<TargetPage>()?.firstOrNull()
+                    val listItems = if (targetPage != null && currentBook != null) {
+                        (targetPage.items + monthStore.customPageItems(currentBook.id, targetPage.title)).distinct()
+                    } else {
+                        emptyList()
+                    }
+                    items(listItems, key = { it }) { item ->
+                        val itemChecked = targetPage != null && viewModel.isChecked(targetPage.title, item)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    InteractionFeedback.click(monthContext)
+                                    viewModel.addScheduleFromHandbook(
+                                        item,
+                                        selectedDate.monthValue,
+                                        selectedDate.dayOfMonth,
+                                    )
+                                }
+                                .padding(horizontal = 14.dp, vertical = 9.dp),
+                            verticalAlignment = Alignment.Top,
+                        ) {
+                            if (itemChecked) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(17.dp)
+                                        .border(1.6.dp, Color.Transparent, RoundedCornerShape(4.dp))
+                                        .background(GoaldayDesign.Pink, RoundedCornerShape(4.dp)),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text("✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+                            } else {
+                                Box(
+                                    Modifier
+                                        .padding(top = 5.dp)
+                                        .size(7.dp)
+                                        .background(PoolBullet),
+                                )
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                item,
+                                fontSize = 16.sp,
+                                lineHeight = 20.sp,
+                                color = if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                                textDecoration = if (itemChecked) TextDecoration.LineThrough else TextDecoration.None,
+                            )
+                        }
+                    }
+                    if (listItems.isEmpty()) {
+                        item {
+                            Text(
+                                "点右上角切换清单，点条目即可排入选中日期",
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp,
+                                color = GoaldayDesign.adaptiveInkMuted,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            )
+                        }
+                    }
+                    item { Spacer(Modifier.height(90.dp)) }
+                }
+                // 收起圆钮（对照 bg_arrow 43×43dip）
+                Box(Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 33.dp, bottom = 20.dp)
+                            .size(43.dp)
+                            .background(MainTabBarBg, CircleShape)
+                            .clickable { monthPoolCollapsed = true },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("›", fontSize = 17.sp, color = GoaldayDesign.adaptiveInkPrimary)
+                    }
+                }
+            }
+        }
+        }
+
+        // 折叠态：右下角展开钮
+        if (monthPoolCollapsed) {
+            Box(Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 33.dp, bottom = 40.dp)
+                        .size(43.dp)
+                        .background(MainTabBarBg, CircleShape)
+                        .clickable { monthPoolCollapsed = false },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("‹", fontSize = 17.sp, color = GoaldayDesign.adaptiveInkPrimary)
                 }
             }
         }
