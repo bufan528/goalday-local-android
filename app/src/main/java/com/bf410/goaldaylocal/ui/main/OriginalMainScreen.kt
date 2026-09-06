@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,13 +51,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.isUnspecified
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -347,6 +356,14 @@ private fun WeekScheduleView(
     val monday = selectedDate.with(DayOfWeek.MONDAY)
     val weekDays = remember(monday) { (0..6).map { monday.plusDays(it.toLong()) } }
     var quickInput by remember(editingDate) { mutableStateOf("") }
+    // 长按拖拽：池条目 → 日期行排期
+    var draggingItem by remember { mutableStateOf<String?>(null) }
+    var dropTarget by remember { mutableStateOf<LocalDate?>(null) }
+    val rowBounds = remember { androidx.compose.runtime.mutableStateMapOf<Long, Rect>() }
+    // 池容器在窗口中的原点（把条目局部坐标换算为窗口坐标）
+    var poolOrigin by remember { mutableStateOf(Offset.Zero) }
+    // 右侧任务池折叠开关（对照原版 fragment_schedule 的 bg_arrow 圆钮）
+    var poolCollapsed by rememberSaveable { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
 
@@ -363,7 +380,7 @@ private fun WeekScheduleView(
         LazyColumn(
             state = listState,
             modifier = Modifier
-                .weight(1.15f)
+                .weight(if (poolCollapsed) 1f else 1.15f)
                 .fillMaxHeight(),
         ) {
             items(weekDays, key = { it.toEpochDay() }) { date ->
@@ -375,6 +392,10 @@ private fun WeekScheduleView(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .onGloballyPositioned { rowBounds[date.toEpochDay()] = it.boundsInWindow() }
+                        .background(
+                            if (dropTarget == date) WeekBandBg else Color.Transparent,
+                        )
                         .clickable {
                             onSelectDate(date)
                             onStartEdit(date)
@@ -518,6 +539,7 @@ private fun WeekScheduleView(
             item { Spacer(Modifier.height(90.dp)) }
         }
 
+        if (!poolCollapsed) {
         // 中缝分隔线（对照原版 #C5BBB6 细线）
         Box(
             Modifier
@@ -531,7 +553,8 @@ private fun WeekScheduleView(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                .padding(top = 10.dp),
+                .padding(top = 10.dp)
+                .onGloballyPositioned { poolOrigin = it.boundsInWindow().topLeft },
         ) {
             val currentBook = uiState.books.getOrNull(uiState.selectedBookIndex)
             Row(
@@ -539,8 +562,8 @@ private fun WeekScheduleView(
                     .padding(horizontal = 12.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFFBF7F1))
-                    .border(0.7.dp, MainTabDivider.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                    .background(Color.White)
+                    .border(0.7.dp, MainTabDivider.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
                     .clickable {
                         val next = (uiState.selectedBookIndex + 1) % uiState.books.size.coerceAtLeast(1)
                         viewModel.openBook(next)
@@ -575,6 +598,35 @@ private fun WeekScheduleView(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .alpha(if (draggingItem == poolItem) 0.35f else 1f)
+                            .pointerInput(poolItem) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { draggingItem = poolItem },
+                                    onDrag = { change, _ ->
+                                        change.consume()
+                                        val pt = poolOrigin + change.position
+                                        dropTarget = rowBounds.entries
+                                            .firstOrNull { it.value.contains(pt) }
+                                            ?.let { LocalDate.ofEpochDay(it.key) }
+                                    },
+                                    onDragEnd = {
+                                        val target = dropTarget
+                                        if (target != null && draggingItem != null) {
+                                            viewModel.addScheduleFromHandbook(
+                                                draggingItem!!,
+                                                target.monthValue,
+                                                target.dayOfMonth,
+                                            )
+                                        }
+                                        draggingItem = null
+                                        dropTarget = null
+                                    },
+                                    onDragCancel = {
+                                        draggingItem = null
+                                        dropTarget = null
+                                    },
+                                )
+                            }
                             .clickable {
                                 viewModel.addScheduleFromHandbook(
                                     poolItem,
@@ -613,6 +665,43 @@ private fun WeekScheduleView(
                 }
                 item { Spacer(Modifier.height(90.dp)) }
             }
+
+            // 收起/展开按钮：43×43dp 圆形 #E5DAD4（对照原版 bg_arrow，margin 33dp）
+            Box(Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 33.dp, bottom = 20.dp)
+                        .size(43.dp)
+                        .background(MainTabBarBg, CircleShape)
+                        .clickable { poolCollapsed = !poolCollapsed },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        if (poolCollapsed) "‹" else "›",
+                        fontSize = 17.sp,
+                        color = GoaldayDesign.InkPrimary,
+                    )
+                }
+            }
+        }
+        }
+
+        // 池折叠时：右下角展开按钮
+        if (poolCollapsed) {
+            Box(Modifier.fillMaxHeight()) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 33.dp, bottom = 40.dp)
+                        .size(43.dp)
+                        .background(MainTabBarBg, CircleShape)
+                        .clickable { poolCollapsed = false },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("‹", fontSize = 17.sp, color = GoaldayDesign.InkPrimary)
+                }
+            }
         }
     }
 }
@@ -644,6 +733,33 @@ private fun RecordDiaryView(
     var text by remember(selectedDate) {
         mutableStateOf(diaryUserText(store, selectedDate))
     }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var imagePaths by remember(selectedDate) {
+        mutableStateOf(diaryImagePaths(store, selectedDate))
+    }
+
+    fun saveAll() {
+        store.setDiaryText(DIARY_BOOK_ID, selectedDate.toString(), buildStructuredDiary(selectedDate, entries, text, imagePaths))
+    }
+
+    val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        if (uri != null) {
+            // 复制进应用私有目录，保证长期可读（对照原版本地图片方案）
+            runCatching {
+                val dir = java.io.File(context.filesDir, "diary_images").apply { mkdirs() }
+                val file = java.io.File(dir, "d" + selectedDate.toEpochDay() + "_" + System.currentTimeMillis() + ".jpg")
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    file.outputStream().use { output -> input.copyTo(output) }
+                }
+                if (file.exists() && file.length() > 0) {
+                    imagePaths = imagePaths + file.absolutePath
+                    saveAll()
+                }
+            }
+        }
+    }
 
     Column(Modifier.fillMaxSize()) {
         Column(
@@ -665,15 +781,96 @@ private fun RecordDiaryView(
                 value = text,
                 onValueChange = {
                     text = it
-                    store.setDiaryText(DIARY_BOOK_ID, selectedDate.toString(), buildStructuredDiary(selectedDate, entries, it))
+                    saveAll()
                 },
                 textStyle = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, color = GoaldayDesign.InkPrimary),
                 cursorBrush = SolidColor(TodayCoral),
                 modifier = Modifier.fillMaxWidth(),
             )
+            // 已插入的图片
+            imagePaths.forEach { path ->
+                Spacer(Modifier.height(10.dp))
+                DiaryImageThumb(path = path, onRemove = {
+                    imagePaths = imagePaths - path
+                    java.io.File(path).delete()
+                    saveAll()
+                })
+            }
+            Spacer(Modifier.height(14.dp))
+            // 插图按钮（对照原版日记底栏 ic_select_pic）
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MainTabBarBg.copy(alpha = 0.55f))
+                    .clickable {
+                        imagePicker.launch(
+                            androidx.activity.result.PickVisualMediaRequest(
+                                androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly,
+                            ),
+                        )
+                    }
+                    .padding(horizontal = 14.dp, vertical = 9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("🖼", fontSize = 15.sp)
+                Spacer(Modifier.width(8.dp))
+                Text("插入图片", fontSize = 14.sp, color = GoaldayDesign.InkSecondary)
+            }
             Spacer(Modifier.height(120.dp))
         }
     }
+}
+
+/** 记录页图片缩略图（含移除） */
+@Composable
+private fun DiaryImageThumb(path: String, onRemove: () -> Unit) {
+    val bitmap = remember(path) {
+        runCatching {
+            val f = java.io.File(path)
+            if (f.exists()) {
+                val opts = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                android.graphics.BitmapFactory.decodeFile(path, opts)
+                var sample = 1
+                while (opts.outWidth / sample > 1080 * 2) sample *= 2
+                android.graphics.BitmapFactory.decodeFile(path, android.graphics.BitmapFactory.Options().apply { inSampleSize = sample })
+            } else null
+        }.getOrNull()
+    }
+    if (bitmap != null) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp)),
+        ) {
+            androidx.compose.foundation.Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "日记图片",
+                contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                "×",
+                fontSize = 14.sp,
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .background(Color(0x66000000), CircleShape)
+                    .padding(horizontal = 7.dp, vertical = 1.dp)
+                    .clickable { onRemove() },
+            )
+        }
+    }
+}
+
+/** 解析已存图片路径列表 */
+private fun diaryImagePaths(store: LocalStateStore, date: LocalDate): List<String> {
+    val raw = store.diaryText(DIARY_BOOK_ID, date.toString())
+    val start = raw.indexOf("# 图片")
+    if (start < 0) return emptyList()
+    val bodyStart = raw.indexOf('\n', start).takeIf { it >= 0 }?.plus(1) ?: return emptyList()
+    val next = raw.indexOf("# ", bodyStart).takeIf { it >= 0 } ?: raw.length
+    return raw.substring(bodyStart, next).lines().map(String::trim).filter { it.isNotBlank() }
 }
 
 /** 解析出用户正文（富文本段），用于编辑器回显 */
@@ -689,7 +886,7 @@ private fun diaryUserText(store: LocalStateStore, date: LocalDate): String {
 }
 
 /** 组装结构化日记：日期 + 今日完成（自动同步已完成日程）+ 用户正文 */
-private fun buildStructuredDiary(date: LocalDate, entries: List<ScheduleEntry>, userText: String): String {
+private fun buildStructuredDiary(date: LocalDate, entries: List<ScheduleEntry>, userText: String, imagePaths: List<String> = emptyList()): String {
     val completed = entries
         .filter {
             it.completed && it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth
@@ -701,6 +898,10 @@ private fun buildStructuredDiary(date: LocalDate, entries: List<ScheduleEntry>, 
         if (completed.isNotEmpty()) {
             appendLine("# 今日完成")
             completed.forEach { appendLine(it) }
+        }
+        if (imagePaths.isNotEmpty()) {
+            appendLine("# 图片")
+            imagePaths.forEach { appendLine(it) }
         }
         if (userText.isNotBlank()) {
             appendLine("# 富文本")
