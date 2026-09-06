@@ -81,6 +81,12 @@ import kotlin.math.abs
  * - 翻页时当前页绕书脊做 180° rotationY，transformOrigin 在书脊侧
  * - 子元素（列表、勾选框）仍可交互，翻页手势在全宽区域检测
  */
+/** 书芯按周翻页的最大范围（约 ±5 年） */
+private const val MaxWeekOffset = 260
+
+/** 记录 Tab 与书内右页共用的日记存储 bookId */
+private const val DiaryStoreBookId = "diary"
+
 @Composable
 fun DualPageBookView(
     book: TopicBook,
@@ -92,65 +98,31 @@ fun DualPageBookView(
 ) {
     val density = LocalDensity.current.density
 
-    val pairs = remember(book) { buildPagePairs(book.pages) }
-
-    // 原版行为：默认打开到当前日期所在的月份/周
+    // 原版行为：书芯按周翻页（对照 CircularCalendarPageState），默认打开当前周
     val today = LocalDate.now()
-    val currentMonthPairIndex = remember(pairs, today) {
-        pairs.indexOfFirst {
-            it.schedulePage.title.extractMonthNumber() == today.monthValue
-        }.coerceAtLeast(0)
-    }
-    val initialPairIndex = remember(currentPage, pairs, currentMonthPairIndex) {
-        val fromCurrent = pairs.indexOfFirst { it.schedulePage === currentPage || it.diaryPage === currentPage }
-        if (fromCurrent >= 0) fromCurrent else currentMonthPairIndex
-    }
-    var pairIndex by remember { mutableIntStateOf(initialPairIndex) }
-    LaunchedEffect(initialPairIndex) { pairIndex = initialPairIndex }
+    val currentWeekMonday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    var weekOffset by remember { mutableIntStateOf(0) }
+    val spreadMonday = currentWeekMonday.plusWeeks(weekOffset.toLong())
 
-    val currentPair = pairs.getOrNull(pairIndex)
-    val schedulePage = currentPair?.schedulePage
-        ?: book.pages.filterIsInstance<SchedulePage>().firstOrNull()
+    val schedulePage = book.pages.filterIsInstance<SchedulePage>().firstOrNull()
         ?: SchedulePage("日程页", emptyList())
-    val diaryPage = currentPair?.diaryPage
-        ?: book.pages.filterIsInstance<DiaryPage>().firstOrNull()
+    val diaryPage = book.pages.filterIsInstance<DiaryPage>().firstOrNull()
         ?: DiaryPage("日记页", "写下这一页最重要的记录。")
-    val scheduleIndex = currentPair?.scheduleIndex ?: book.pages.indexOfFirst { it is SchedulePage }.coerceAtLeast(0)
-    val diaryIndex = currentPair?.diaryIndex ?: book.pages.indexOfFirst { it is DiaryPage }.coerceAtLeast(0)
+    val scheduleIndex = book.pages.indexOfFirst { it is SchedulePage }.coerceAtLeast(0)
+    val diaryIndex = book.pages.indexOfFirst { it is DiaryPage }.coerceAtLeast(0)
 
-    // 计算当前双页对应的日期：优先从日程页标题解析月份，否则取日记页，否则今天
-    val pairMonth = schedulePage.title.extractMonthNumber()
-        ?: diaryPage.title.extractMonthNumber()
-        ?: today.monthValue
-    val pairYear = today.year
-    val pairDate = runCatching { LocalDate.of(pairYear, pairMonth, today.dayOfMonth) }.getOrDefault(today)
-    val weekStartDate = pairDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-    // 右页日记固定显示当周周一（原版周一的 diary 页）
-    val diaryDate = weekStartDate
+    val weekStartDate = spreadMonday
+    val diaryDate = spreadMonday
+    val pairMonth = spreadMonday.monthValue
 
-    // 翻页背面：左页背面是上一对日程页，右页背面是下一对日记页
-    val previousPair = pairs.getOrNull(pairIndex - 1)
-    val nextPair = pairs.getOrNull(pairIndex + 1)
-    val prevSchedulePage = previousPair?.schedulePage ?: schedulePage
-    val nextDiaryPage = nextPair?.diaryPage ?: diaryPage
-    val prevScheduleIndex = previousPair?.scheduleIndex ?: scheduleIndex
-    val nextDiaryIndex = nextPair?.diaryIndex ?: diaryIndex
-    val prevWeekStartDate = previousPair?.let {
-        val month = it.schedulePage.title.extractMonthNumber()
-            ?: it.diaryPage.title.extractMonthNumber()
-            ?: today.monthValue
-        runCatching { LocalDate.of(today.year, month, today.dayOfMonth) }
-            .getOrDefault(today)
-            .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-    } ?: weekStartDate
-    val nextDiaryDate = nextPair?.let {
-        val month = it.schedulePage.title.extractMonthNumber()
-            ?: it.diaryPage.title.extractMonthNumber()
-            ?: today.monthValue
-        runCatching { LocalDate.of(today.year, month, today.dayOfMonth) }
-            .getOrDefault(today)
-            .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-    } ?: diaryDate
+    // 翻页背面：左页背面 = 上一周日程，右页背面 = 下周周一日记
+    val prevWeekStartDate = spreadMonday.minusWeeks(1)
+    val nextDiaryDate = spreadMonday.plusWeeks(1)
+
+    // 右页日记内容按日期读取（记录 Tab 与书内共用同一存储）
+    val diaryStore = remember { com.bf410.goaldaylocal.data.LocalStateStore(com.tencent.mmkv.MMKV.defaultMMKV()) }
+    val spreadDiaryDraft = remember(diaryDate) { diaryStore.diaryText(DiaryStoreBookId, diaryDate.toString()) }
+    val nextDiaryDraft = remember(nextDiaryDate) { diaryStore.diaryText(DiaryStoreBookId, nextDiaryDate.toString()) }
 
     val scope = rememberCoroutineScope()
     val progress = remember { Animatable(0f) }
@@ -186,13 +158,11 @@ fun DualPageBookView(
             val currentProgress = progress.value
             if (complete) {
                 progress.animateTo(1f, tween(if (currentProgress > 0.5f) 100 else 300))
-                pairIndex = when (turnDirection) {
-                    TurnDirection.NEXT -> (pairIndex + 1).coerceAtMost(pairs.lastIndex)
-                    TurnDirection.PREVIOUS -> (pairIndex - 1).coerceAtLeast(0)
-                    null -> pairIndex
+                weekOffset = when (turnDirection) {
+                    TurnDirection.NEXT -> (weekOffset + 1).coerceAtMost(MaxWeekOffset)
+                    TurnDirection.PREVIOUS -> (weekOffset - 1).coerceAtLeast(-MaxWeekOffset)
+                    null -> weekOffset
                 }
-                val realPage = pairs.getOrNull(pairIndex)?.schedulePage
-                realPage?.let { viewModel.setPage(book.pages.indexOf(it).coerceAtLeast(0)) }
                 progress.snapTo(0f)
             } else {
                 progress.animateTo(0f, tween(if (currentProgress > 0.5f) 100 else 300))
@@ -270,7 +240,7 @@ fun DualPageBookView(
                         drawContent()
                     }
                     .padding(start = 6.dp, end = 8.dp, top = 10.dp, bottom = 6.dp)
-                    .pointerInput(pairs.size, pairIndex) {
+                    .pointerInput(weekOffset) {
                         val width = size.width.toFloat()
                         pageWidthPx = width
                         awaitPointerEventScope {
@@ -306,8 +276,8 @@ fun DualPageBookView(
                                     if (turnDir == null && abs(dx) > 4f) {
                                         turnDir = if (dx < 0) TurnDirection.NEXT else TurnDirection.PREVIOUS
                                         val can = when (turnDir) {
-                                            TurnDirection.NEXT -> pairIndex < pairs.lastIndex
-                                            TurnDirection.PREVIOUS -> pairIndex > 0
+                                            TurnDirection.NEXT -> weekOffset < MaxWeekOffset
+                                            TurnDirection.PREVIOUS -> weekOffset > -MaxWeekOffset
                                             null -> false
                                         }
                                         if (can) {
@@ -360,8 +330,8 @@ fun DualPageBookView(
                         backContent = {
                             InBookSchedulePreview(
                                 modifier = Modifier.fillMaxSize(),
-                                page = prevSchedulePage,
-                                pageIndex = prevScheduleIndex,
+                                page = schedulePage,
+                                pageIndex = scheduleIndex,
                                 pageCount = book.pages.size,
                                 schedulePreviewEntries = uiState.schedulePreviewEntries,
                                 isChecked = { pageTitle, title ->
@@ -404,7 +374,7 @@ fun DualPageBookView(
                                 page = diaryPage,
                                 pageIndex = diaryIndex,
                                 pageCount = book.pages.size,
-                                diaryDraft = uiState.diaryDraft,
+                                diaryDraft = spreadDiaryDraft,
                                 tint = book.color,
                                 turnProgress = progress.value,
                                 turnDirection = turnDirection,
@@ -416,10 +386,10 @@ fun DualPageBookView(
                         backContent = {
                             InBookDiaryPreview(
                                 modifier = Modifier.fillMaxSize(),
-                                page = nextDiaryPage,
-                                pageIndex = nextDiaryIndex,
+                                page = diaryPage,
+                                pageIndex = diaryIndex,
                                 pageCount = book.pages.size,
-                                diaryDraft = uiState.diaryDraft,
+                                diaryDraft = nextDiaryDraft,
                                 tint = book.color,
                                 turnProgress = progress.value,
                                 turnDirection = turnDirection,
@@ -461,7 +431,7 @@ fun DualPageBookView(
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    text = "${java.time.Year.now().value}",
+                    text = "${spreadMonday.year}",
                     fontSize = 16.sp,
                     color = GoaldayDesign.adaptiveInkPrimary,
                 )
@@ -589,29 +559,6 @@ private fun HandbookPage(
         }
     }
 }
-
-private fun buildPagePairs(pages: List<BookPage>): List<PagePair> {
-    val pairs = mutableListOf<PagePair>()
-    var i = 0
-    while (i < pages.size - 1) {
-        val a = pages[i]
-        val b = pages[i + 1]
-        if (a is SchedulePage && b is DiaryPage) {
-            pairs.add(PagePair(a, b, i, i + 1))
-            i += 2
-        } else {
-            i += 1
-        }
-    }
-    return pairs
-}
-
-private data class PagePair(
-    val schedulePage: SchedulePage,
-    val diaryPage: DiaryPage,
-    val scheduleIndex: Int,
-    val diaryIndex: Int,
-)
 
 @Composable
 private fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier = this.then(
