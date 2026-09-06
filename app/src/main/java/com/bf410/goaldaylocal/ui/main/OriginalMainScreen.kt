@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -49,16 +51,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.data.LocalStateStore
+import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
 import com.bf410.goaldaylocal.ui.book.BookUiState
@@ -76,10 +83,12 @@ import java.util.Locale
  *
  * 信息架构：
  * - 顶部文字 Tab："N周 ▼"(周选择器，弹周历) | "记录"(选中时显示"M月D日") | "清单"，bg #E5DAD4
- * - 周 Tab：左侧周日期列（今日黑底圆角高亮 + 行内快捷输入），右侧任务池（专题 chip + 橙色方块条目）
- * - 记录 Tab：一日一问提示语（灰色 16sp）+ 日记编辑，按日期存取
- * - 清单 Tab：专题卡片（色块 + 名称 + 进度 x/y）
- * - 右下 FAB：+(浅灰圆) 与 💡(黑色圆)
+ *   行内编辑时顶栏变为右上角黑色「完成」按钮（对照原版截图）
+ * - 周 Tab：左侧周日期列（今日黑底圆角高亮），任意一天点空白即可行内新增条目；
+ *   条目 = 圆形勾选框(○/黑底白勾☑) + 文字（完成加删除线）；右侧任务池
+ * - 记录 Tab：一日一问提示语 + 日记编辑（非编辑态无底栏，对照原版）；
+ *   内容以结构化格式存储，自动把当日已完成日程写入「今日完成」供书内渲染卡片
+ * - 清单 Tab：专题卡片（色块 + 名称 + 进度 x/y）+ FAB（+ 与 💡 只在本 Tab，对照原版）
  */
 private val MainTabBarBg = Color(0xFFE5DAD4)
 private val MainContentBg = Color(0xFFFDFAF6)
@@ -87,6 +96,8 @@ private val MainTabDivider = Color(0xFFC5BBB6)
 private val WeekBandBg = Color(0xFFFEECEC)
 private val TodayCoral = Color(0xFFF66061)
 private val TodayBlack = Color(0xFF1E1E1E)
+private val PoolBullet = Color(0xFFF2C0A5)
+private val EntryCircle = Color(0xFF3A3A3A)
 
 private enum class MainSubTab(val label: String) {
     WEEK("周"),
@@ -152,6 +163,8 @@ fun OriginalMainScreen(
     var subTabIndex by rememberSaveable { mutableIntStateOf(MainSubTab.WEEK.ordinal) }
     var selectedDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
     var showWeekPicker by remember { mutableStateOf(false) }
+    // 行内编辑中的日期（任意一天可编辑，对照原版）；非 null 时顶栏显示「完成」
+    var editingDate by remember { mutableStateOf<LocalDate?>(null) }
 
     LaunchedEffect(Unit) { bookViewModel.refreshSchedulePreview() }
 
@@ -161,8 +174,13 @@ fun OriginalMainScreen(
         OriginalTopTabBar(
             selected = currentSubTab,
             selectedDate = selectedDate,
+            editing = editingDate != null,
+            onDone = { editingDate = null },
             onWeekClick = { showWeekPicker = true },
-            onSelect = { subTabIndex = it.ordinal },
+            onSelect = {
+                editingDate = null
+                subTabIndex = it.ordinal
+            },
         )
         Box(Modifier.fillMaxSize()) {
             when (currentSubTab) {
@@ -170,41 +188,21 @@ fun OriginalMainScreen(
                     uiState = uiState,
                     viewModel = bookViewModel,
                     selectedDate = selectedDate,
+                    editingDate = editingDate,
+                    onStartEdit = { editingDate = it },
+                    onFinishEdit = { editingDate = null },
                     onSelectDate = { selectedDate = it },
                 )
-                MainSubTab.RECORD -> RecordDiaryView(selectedDate = selectedDate)
+                MainSubTab.RECORD -> RecordDiaryView(
+                    selectedDate = selectedDate,
+                    entries = uiState.schedulePreviewEntries,
+                )
                 MainSubTab.LIST -> TopicListView(
                     uiState = uiState,
                     onOpenBookShelf = onOpenBook,
+                    onOpenInspiration = onOpenInspiration,
                     onOpenSettings = onOpenSettings,
                 )
-            }
-            // 右下 FAB：+ 与 💡（对照原版主界面右侧两颗悬浮按钮）
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .background(Color(0xFFEFE7DC), CircleShape)
-                        .clickable { onOpenBook() },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("+", fontSize = 26.sp, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.Light)
-                }
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .background(TodayBlack, CircleShape)
-                        .clickable { onOpenInspiration() },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("💡", fontSize = 20.sp)
-                }
             }
         }
     }
@@ -221,15 +219,16 @@ fun OriginalMainScreen(
     }
 }
 
-/** 顶部文字 Tab：N周 ▼ | 记录 | 清单（对照原版 FlexibleTabLayout：18sp，选中加粗黑，未选中灰，细竖线分隔） */
+/** 顶部文字 Tab：N周 ▼ | 记录 | 清单；行内编辑时只显示右上角「完成」 */
 @Composable
 private fun OriginalTopTabBar(
     selected: MainSubTab,
     selectedDate: LocalDate,
+    editing: Boolean,
+    onDone: () -> Unit,
     onWeekClick: () -> Unit,
     onSelect: (MainSubTab) -> Unit,
 ) {
-    val weekNum = selectedDate.get(WeekFields.of(Locale.CHINA).weekOfWeekBasedYear())
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -239,6 +238,20 @@ private fun OriginalTopTabBar(
         horizontalArrangement = Arrangement.spacedBy(20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (editing) {
+            Spacer(Modifier.weight(1f))
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(TodayBlack)
+                    .clickable { onDone() }
+                    .padding(horizontal = 22.dp, vertical = 8.dp),
+            ) {
+                Text("完成", fontSize = 15.sp, color = Color.White)
+            }
+            return@Row
+        }
+        val weekNum = selectedDate.get(WeekFields.ISO.weekOfWeekBasedYear())
         Row(
             modifier = Modifier.clickable { onWeekClick() },
             verticalAlignment = Alignment.CenterVertically,
@@ -283,28 +296,35 @@ private fun TabLabel(text: String, selected: Boolean, onClick: () -> Unit) {
     )
 }
 
-// region 周 Tab —— 左侧周日期列 + 右侧任务池
+// region 周 Tab —— 左侧周日期列（任意天行内编辑）+ 右侧任务池
 
 @Composable
 private fun WeekScheduleView(
     uiState: BookUiState,
     viewModel: BookViewModel,
     selectedDate: LocalDate,
+    editingDate: LocalDate?,
+    onStartEdit: (LocalDate) -> Unit,
+    onFinishEdit: () -> Unit,
     onSelectDate: (LocalDate) -> Unit,
 ) {
     val today = LocalDate.now()
     val monday = selectedDate.with(DayOfWeek.MONDAY)
     val weekDays = remember(monday) { (0..6).map { monday.plusDays(it.toLong()) } }
-    var quickInput by remember(monday) { mutableStateOf("") }
+    var quickInput by remember(editingDate) { mutableStateOf("") }
     val listState = rememberLazyListState()
+    val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(selectedDate) {
         val idx = weekDays.indexOfFirst { it == selectedDate }.coerceAtLeast(0)
         runCatching { listState.animateScrollToItem(idx) }
     }
+    LaunchedEffect(editingDate) {
+        if (editingDate != null) runCatching { focusRequester.requestFocus() }
+    }
 
     Row(Modifier.fillMaxSize()) {
-        // 左侧：周日期列（今日黑底圆角白字 + 行内快捷输入，其余日期素色 + 条目）
+        // 左侧：周日期列（今日黑底圆角白字；任意一天点空白进入行内新增）
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -316,13 +336,15 @@ private fun WeekScheduleView(
                     .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
                     .sortedWith(compareBy({ it.timeText }, { it.id }))
                 val isToday = date == today
-                val isSelected = date == selectedDate
-                Row(
+                val isEditing = editingDate == date
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onSelectDate(date) }
+                        .clickable {
+                            onSelectDate(date)
+                            onStartEdit(date)
+                        }
                         .drawBehind {
-                            // 行底细线，对照原版周视图行分隔
                             val stroke = 0.6.dp.toPx()
                             drawLine(
                                 color = MainTabDivider.copy(alpha = 0.4f),
@@ -332,111 +354,129 @@ private fun WeekScheduleView(
                             )
                         }
                         .padding(horizontal = 10.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.Top,
                 ) {
-                    Column(
-                        modifier = if (isToday) {
-                            Modifier
-                                .width(62.dp)
-                                .background(TodayBlack, RoundedCornerShape(10.dp))
-                                .padding(vertical = 8.dp)
-                        } else {
-                            Modifier.width(62.dp).padding(vertical = 8.dp)
-                        },
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(
-                            date.dayOfMonth.toString(),
-                            fontSize = 20.sp,
-                            lineHeight = 22.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (isToday) Color.White else GoaldayDesign.InkPrimary,
-                        )
-                        Text(
-                            "—",
-                            fontSize = 11.sp,
-                            lineHeight = 12.sp,
-                            color = if (isToday) Color.White.copy(alpha = 0.7f) else MainTabDivider,
-                        )
-                        Text(
-                            weekdayName(date),
-                            fontSize = 11.sp,
-                            lineHeight = 12.sp,
-                            color = if (isToday) Color.White.copy(alpha = 0.85f) else GoaldayDesign.InkMuted,
-                        )
-                    }
-                    Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) {
-                        entries.forEach { entry ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { viewModel.toggleScheduleCompletedFromHandbook(entry.id) }
-                                    .padding(vertical = 3.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                if (entry.timeText.isNotBlank()) {
+                    Row(verticalAlignment = Alignment.Top) {
+                        Column(
+                            modifier = if (isToday) {
+                                Modifier
+                                    .width(62.dp)
+                                    .background(TodayBlack, RoundedCornerShape(10.dp))
+                                    .padding(vertical = 8.dp)
+                            } else {
+                                Modifier.width(62.dp).padding(vertical = 8.dp)
+                            },
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text(
+                                date.dayOfMonth.toString(),
+                                fontSize = 20.sp,
+                                lineHeight = 22.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = if (isToday) Color.White else GoaldayDesign.InkPrimary,
+                            )
+                            Text(
+                                "—",
+                                fontSize = 11.sp,
+                                lineHeight = 12.sp,
+                                color = if (isToday) Color.White.copy(alpha = 0.7f) else MainTabDivider,
+                            )
+                            Text(
+                                weekdayName(date),
+                                fontSize = 11.sp,
+                                lineHeight = 12.sp,
+                                color = if (isToday) Color.White.copy(alpha = 0.85f) else GoaldayDesign.InkMuted,
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            entries.forEach { entry ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    // 圆形勾选框：○ 未完成 / 黑底白勾 完成（对照原版）
+                                    Box(
+                                        modifier = Modifier
+                                            .size(19.dp)
+                                            .border(
+                                                1.8.dp,
+                                                if (entry.completed) Color.Transparent else EntryCircle,
+                                                CircleShape,
+                                            )
+                                            .background(
+                                                if (entry.completed) EntryCircle else Color.Transparent,
+                                                CircleShape,
+                                            )
+                                            .clickable {
+                                                viewModel.toggleScheduleCompletedFromHandbook(entry.id)
+                                            },
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        if (entry.completed) {
+                                            Text("✓", fontSize = 11.sp, color = Color.White)
+                                        }
+                                    }
+                                    Spacer(Modifier.width(10.dp))
                                     Text(
-                                        entry.timeText,
-                                        fontSize = 11.sp,
-                                        color = GoaldayDesign.InkMuted,
-                                        modifier = Modifier.padding(end = 6.dp),
+                                        entry.title,
+                                        fontSize = 15.sp,
+                                        lineHeight = 19.sp,
+                                        color = GoaldayDesign.InkPrimary,
+                                        textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                                        maxLines = 2,
                                     )
                                 }
-                                Text(
-                                    entry.title,
-                                    fontSize = 14.sp,
-                                    lineHeight = 17.sp,
-                                    color = if (entry.completed) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
-                                    textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
-                                    maxLines = 2,
+                            }
+                            if (isEditing) {
+                                BasicTextField(
+                                    value = quickInput,
+                                    onValueChange = { quickInput = it },
+                                    singleLine = true,
+                                    textStyle = TextStyle(fontSize = 15.sp, color = GoaldayDesign.InkPrimary),
+                                    cursorBrush = SolidColor(TodayCoral),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 4.dp)
+                                        .focusRequester(focusRequester),
+                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                    keyboardActions = KeyboardActions(
+                                        onDone = {
+                                            if (quickInput.isNotBlank()) {
+                                                viewModel.addScheduleFromHandbook(
+                                                    quickInput,
+                                                    date.monthValue,
+                                                    date.dayOfMonth,
+                                                )
+                                            }
+                                            quickInput = ""
+                                        },
+                                    ),
+                                    decorationBox = { inner ->
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(19.dp)
+                                                    .border(1.8.dp, EntryCircle, CircleShape),
+                                            )
+                                            Spacer(Modifier.width(10.dp))
+                                            Box {
+                                                if (quickInput.isEmpty()) {
+                                                    Text(
+                                                        "写下你现在最想完成的",
+                                                        fontSize = 15.sp,
+                                                        color = GoaldayDesign.InkMuted.copy(alpha = 0.75f),
+                                                        maxLines = 1,
+                                                    )
+                                                }
+                                                inner()
+                                            }
+                                        }
+                                    },
                                 )
                             }
                         }
-                        if (isToday) {
-                            BasicTextField(
-                                value = quickInput,
-                                onValueChange = { quickInput = it },
-                                singleLine = true,
-                                textStyle = TextStyle(fontSize = 14.sp, color = GoaldayDesign.InkPrimary),
-                                cursorBrush = SolidColor(TodayCoral),
-                                decorationBox = { inner ->
-                                    if (quickInput.isEmpty()) {
-                                        Text(
-                                            "今天想尝试的新技能或安排",
-                                            fontSize = 14.sp,
-                                            color = GoaldayDesign.InkMuted.copy(alpha = 0.75f),
-                                            maxLines = 1,
-                                        )
-                                    }
-                                    inner()
-                                },
-                                keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Done),
-                                keyboardActions = KeyboardActions(
-                                    onDone = {
-                                        if (quickInput.isNotBlank()) {
-                                            viewModel.addScheduleFromHandbook(
-                                                quickInput,
-                                                date.monthValue,
-                                                date.dayOfMonth,
-                                            )
-                                        }
-                                        quickInput = ""
-                                    },
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 4.dp),
-                            )
-                        }
-                    }
-                    if (isSelected && !isToday) {
-                        Box(
-                            Modifier
-                                .padding(start = 4.dp, top = 10.dp)
-                                .size(6.dp)
-                                .background(TodayCoral, CircleShape),
-                        )
                     }
                 }
             }
@@ -476,7 +516,7 @@ private fun WeekScheduleView(
                 Box(
                     Modifier
                         .size(12.dp)
-                        .background(currentBook?.color ?: Color(0xFFF2C0A5), RoundedCornerShape(3.dp)),
+                        .background(currentBook?.color ?: PoolBullet, RoundedCornerShape(3.dp)),
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
@@ -514,7 +554,7 @@ private fun WeekScheduleView(
                             Modifier
                                 .padding(top = 5.dp)
                                 .size(7.dp)
-                                .background(Color(0xFFF2C0A5)),
+                                .background(PoolBullet),
                         )
                         Spacer(Modifier.width(10.dp))
                         Text(
@@ -536,6 +576,7 @@ private fun WeekScheduleView(
                         )
                     }
                 }
+                item { Spacer(Modifier.height(90.dp)) }
             }
         }
     }
@@ -553,17 +594,20 @@ private fun weekdayName(date: LocalDate): String = when (date.dayOfWeek) {
 
 // endregion
 
-// region 记录 Tab —— 一日一问 + 日记编辑
+// region 记录 Tab —— 一日一问 + 日记编辑（结构化存储，供书内渲染今日完成卡片）
 
 @Composable
-private fun RecordDiaryView(selectedDate: LocalDate) {
+private fun RecordDiaryView(
+    selectedDate: LocalDate,
+    entries: List<ScheduleEntry>,
+) {
     val store = remember { LocalStateStore(MMKV.defaultMMKV()) }
-    // 提示语按日期确定性轮换（原版为随机抽取，这里按日期轮换保证回看稳定）
     val prompt = remember(selectedDate) {
         if (JOURNAL_PROMPTS.isEmpty()) "" else JOURNAL_PROMPTS[Math.floorMod(selectedDate.toEpochDay().toInt(), JOURNAL_PROMPTS.size)]
     }
+    // 编辑器只展示用户正文；「今日完成」等结构化段落由系统维护
     var text by remember(selectedDate) {
-        mutableStateOf(store.diaryText(DIARY_BOOK_ID, selectedDate.toString()))
+        mutableStateOf(diaryUserText(store, selectedDate))
     }
 
     Column(Modifier.fillMaxSize()) {
@@ -586,7 +630,7 @@ private fun RecordDiaryView(selectedDate: LocalDate) {
                 value = text,
                 onValueChange = {
                     text = it
-                    store.setDiaryText(DIARY_BOOK_ID, selectedDate.toString(), it)
+                    store.setDiaryText(DIARY_BOOK_ID, selectedDate.toString(), buildStructuredDiary(selectedDate, entries, it))
                 },
                 textStyle = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, color = GoaldayDesign.InkPrimary),
                 cursorBrush = SolidColor(TodayCoral),
@@ -594,112 +638,161 @@ private fun RecordDiaryView(selectedDate: LocalDate) {
             )
             Spacer(Modifier.height(120.dp))
         }
-        // 底部工具栏（对照 fragment_diary.xml：bg #E5DAD4 高 46pt≈102dp）
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MainTabBarBg)
-                .padding(horizontal = 12.dp, vertical = 26.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            Text("🖼", fontSize = 20.sp)
-            Text("⌨", fontSize = 20.sp)
-            Spacer(Modifier.weight(1f))
-            Text(
-                "${selectedDate.monthValue}月${selectedDate.dayOfMonth}日 ${weekdayName(selectedDate)}",
-                fontSize = 13.sp,
-                color = GoaldayDesign.InkMuted,
-            )
-        }
     }
+}
+
+/** 解析出用户正文（富文本段），用于编辑器回显 */
+private fun diaryUserText(store: LocalStateStore, date: LocalDate): String {
+    val raw = store.diaryText(DIARY_BOOK_ID, date.toString())
+    if (raw.isBlank()) return ""
+    if (!raw.contains("# ")) return raw
+    val start = raw.indexOf("# 富文本")
+    if (start < 0) return ""
+    val bodyStart = raw.indexOf('\n', start).takeIf { it >= 0 }?.plus(1) ?: return ""
+    val next = raw.indexOf("# ", bodyStart).takeIf { it >= 0 } ?: raw.length
+    return raw.substring(bodyStart, next).trim()
+}
+
+/** 组装结构化日记：日期 + 今日完成（自动同步已完成日程）+ 用户正文 */
+private fun buildStructuredDiary(date: LocalDate, entries: List<ScheduleEntry>, userText: String): String {
+    val completed = entries
+        .filter {
+            it.completed && it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth
+        }
+        .map { it.title }
+    return buildString {
+        appendLine("# 日期")
+        appendLine(date.toString())
+        if (completed.isNotEmpty()) {
+            appendLine("# 今日完成")
+            completed.forEach { appendLine(it) }
+        }
+        if (userText.isNotBlank()) {
+            appendLine("# 富文本")
+            append(userText.trim())
+        }
+    }.trimEnd()
 }
 
 // endregion
 
-// region 清单 Tab —— 专题卡片列表（色块 + 名称 + 进度）
+// region 清单 Tab —— 专题卡片列表 + FAB（仅本 Tab 显示，对照原版）
 
 @Composable
 private fun TopicListView(
     uiState: BookUiState,
     onOpenBookShelf: () -> Unit,
+    onOpenInspiration: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     val store = remember { LocalStateStore(MMKV.defaultMMKV()) }
     var expandedBookId by rememberSaveable { mutableStateOf<String?>(null) }
     var revision by remember { mutableIntStateOf(0) }
 
-    if (expandedBookId == null) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            item {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    Icon(
-                        Icons.Filled.Settings,
-                        contentDescription = "设置",
-                        tint = GoaldayDesign.InkMuted,
+    Box(Modifier.fillMaxSize()) {
+        if (expandedBookId == null) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                item {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        Icon(
+                            Icons.Filled.Settings,
+                            contentDescription = "设置",
+                            tint = GoaldayDesign.InkMuted,
+                            modifier = Modifier
+                                .size(22.dp)
+                                .clickable { onOpenSettings() },
+                        )
+                    }
+                }
+                items(uiState.books, key = { it.id }) { book ->
+                    val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
+                    val done = page?.items?.count { store.isChecked(book.id, page.title, it) } ?: 0
+                    val total = page?.items?.size ?: 0
+                    Row(
                         modifier = Modifier
-                            .size(22.dp)
-                            .clickable { onOpenSettings() },
-                    )
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFFFBF7F1))
+                            .clickable { expandedBookId = book.id }
+                            .padding(horizontal = 14.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            Modifier
+                                .size(12.dp)
+                                .background(book.color, RoundedCornerShape(3.dp)),
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            book.title,
+                            fontSize = 16.sp,
+                            color = GoaldayDesign.InkPrimary,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                        )
+                        Text(
+                            "$done/$total",
+                            fontSize = 14.sp,
+                            color = GoaldayDesign.InkMuted,
+                        )
+                    }
                 }
             }
-            items(uiState.books, key = { it.id }) { book ->
-                val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
-                val done = page?.items?.count { store.isChecked(book.id, page.title, it) } ?: 0
-                val total = page?.items?.size ?: 0
-                Row(
+        } else {
+            val book = uiState.books.firstOrNull { it.id == expandedBookId }
+            if (book == null) {
+                expandedBookId = null
+            } else {
+                TopicDetailSimple(
+                    book = book,
+                    store = store,
+                    revision = revision,
+                    onToggle = { revision++ },
+                    onBack = { expandedBookId = null },
+                )
+            }
+        }
+
+        // FAB：+ 与 💡，只在清单 Tab 显示（对照原版截图）
+        if (expandedBookId == null) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFFBF7F1))
-                        .clickable { expandedBookId = book.id }
-                        .padding(horizontal = 14.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .size(52.dp)
+                        .background(Color(0xFFEFE7DC), CircleShape)
+                        .clickable { onOpenBookShelf() },
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(
-                        Modifier
-                            .size(12.dp)
-                            .background(book.color, RoundedCornerShape(3.dp)),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        book.title,
-                        fontSize = 16.sp,
-                        color = GoaldayDesign.InkPrimary,
-                        modifier = Modifier.weight(1f),
-                        maxLines = 1,
-                    )
-                    Text(
-                        "$done/$total",
-                        fontSize = 14.sp,
-                        color = GoaldayDesign.InkMuted,
-                    )
+                    Text("+", fontSize = 26.sp, color = GoaldayDesign.InkPrimary, fontWeight = FontWeight.Light)
+                }
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .background(TodayBlack, CircleShape)
+                        .clickable { onOpenInspiration() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("💡", fontSize = 20.sp)
                 }
             }
         }
-    } else {
-        val book = uiState.books.firstOrNull { it.id == expandedBookId }
-        if (book == null) {
-            expandedBookId = null
-            return
-        }
-        TopicDetailSimple(
-            book = book,
-            store = store,
-            revision = revision,
-            onToggle = { revision++ },
-            onBack = { expandedBookId = null },
-        )
     }
 }
 
+/** 清单详情：‹ 返回 + 色块 + 标题 + ···；编号条目 + 珊瑚描边方形勾选框 + 虚线分隔（对照原版截图） */
 @Composable
 private fun TopicDetailSimple(
     book: TopicBook,
@@ -713,27 +806,39 @@ private fun TopicDetailSimple(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .background(MainTabBarBg)
+                .statusBarsPadding()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "‹ 返回",
-                fontSize = 16.sp,
+                "‹",
+                fontSize = 22.sp,
                 color = GoaldayDesign.InkPrimary,
-                modifier = Modifier.clickable { onBack() },
+                modifier = Modifier
+                    .clickable { onBack() }
+                    .padding(end = 14.dp),
             )
-            Spacer(Modifier.width(16.dp))
+            Box(
+                Modifier
+                    .size(11.dp)
+                    .background(book.color, RoundedCornerShape(2.dp)),
+            )
+            Spacer(Modifier.width(8.dp))
             Text(
                 book.title,
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = GoaldayDesign.InkPrimary,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
             )
+            Text("···", fontSize = 16.sp, color = GoaldayDesign.InkPrimary)
         }
         LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
         ) {
-            items(page?.items ?: emptyList(), key = { it }) { item ->
+            itemsIndexed(page?.items ?: emptyList(), key = { _, item -> item }) { index, item ->
                 val checked = store.isChecked(book.id, page?.title ?: "", item)
                 Row(
                     modifier = Modifier
@@ -742,38 +847,41 @@ private fun TopicDetailSimple(
                             store.setChecked(book.id, page?.title ?: "", item, !checked)
                             onToggle()
                         }
-                        .padding(vertical = 13.dp),
+                        .padding(vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(18.dp)
-                            .border(
-                                1.4.dp,
-                                if (checked) GoaldayDesign.InkPrimary else MainTabDivider,
-                                RoundedCornerShape(4.dp),
-                            )
-                            .background(if (checked) GoaldayDesign.InkPrimary else Color.Transparent),
+                            .size(17.dp)
+                            .border(1.6.dp, PoolBullet, RoundedCornerShape(4.dp)),
                         contentAlignment = Alignment.Center,
                     ) {
                         if (checked) {
-                            Text("✓", fontSize = 12.sp, color = Color.White)
+                            Text("✓", fontSize = 11.sp, color = PoolBullet)
                         }
                     }
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(Modifier.width(14.dp))
                     Text(
-                        item,
-                        fontSize = 16.sp,
-                        lineHeight = 21.sp,
-                        color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
+                        "${index + 1}  $item",
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp,
+                        color = GoaldayDesign.InkPrimary,
                         textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                     )
                 }
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .height(0.6.dp)
-                        .background(MainTabDivider.copy(alpha = 0.4f)),
+                        .height(1.dp)
+                        .drawBehind {
+                            drawLine(
+                                color = MainTabDivider.copy(alpha = 0.55f),
+                                start = Offset(0f, size.height / 2),
+                                end = Offset(size.width, size.height / 2),
+                                strokeWidth = 1.dp.toPx(),
+                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx())),
+                            )
+                        },
                 )
             }
         }
@@ -800,7 +908,7 @@ private fun WeekPickerSheet(
     ) {
         val today = LocalDate.now()
         var monthAnchor by remember { mutableStateOf(YearMonth.from(selectedDate)) }
-        val weekFields = WeekFields.of(Locale.CHINA)
+        val weekFields = WeekFields.ISO
 
         Column(Modifier.padding(horizontal = 16.dp)) {
             Row(
