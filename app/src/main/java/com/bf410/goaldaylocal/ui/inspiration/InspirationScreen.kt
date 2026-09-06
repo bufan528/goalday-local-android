@@ -1,5 +1,8 @@
 package com.bf410.goaldaylocal.ui.inspiration
 
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -308,8 +311,14 @@ private fun InspirationCatalogStrip(
             Text(catalogLabel, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
             Text(assetLabel, color = GoaldayDesign.adaptiveInkMuted, style = MaterialTheme.typography.labelSmall)
         }
+        CoverImage(
+            coverKey = template.coverKey,
+            modifier = Modifier
+                .size(width = 96.dp, height = 60.dp)
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusM)),
+        )
+        Spacer(Modifier.width(12.dp))
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("${template.coverKey}.png", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.labelSmall)
             Text("${template.targetKey}.txt · $itemCount 条", color = GoaldayDesign.Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
         }
     }
@@ -329,6 +338,22 @@ private fun InspirationHeroCover(
                 .background(topicCoverBrush(template, index), RoundedCornerShape(GoaldayDesign.RadiusXL))
                 .border(GoaldayDesign.Hairline, GoaldayDesign.WhiteOverlayBorder, RoundedCornerShape(GoaldayDesign.RadiusXL)),
     ) {
+        // 原版真实封面图 + 压暗渐变（白字可读，对应原版标题 shadow 处理）
+        Box(Modifier.matchParentSize().clip(RoundedCornerShape(GoaldayDesign.RadiusXL))) {
+            CoverImage(
+                coverKey = template.coverKey,
+                modifier = Modifier.matchParentSize(),
+            )
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .background(
+                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                            listOf(Color(0x26000000), Color(0x66000000)),
+                        ),
+                    ),
+            )
+        }
         TopicCoverArt(template = template, index = index)
         Box(
             modifier = Modifier
@@ -632,4 +657,36 @@ private fun InspirationDraftPanel(
                 )
             }
     }
+}
+
+/** 原版封面图（assets/cover/<key>.png）；解码失败不渲染，回退底层渐变色块 */
+@Composable
+internal fun CoverImage(
+    coverKey: String,
+    modifier: Modifier = Modifier,
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val bitmap = remember(coverKey) {
+        runCatching {
+            val check = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            context.assets.open("cover/" + coverKey + ".png").use {
+                android.graphics.BitmapFactory.decodeStream(it, null, check)
+            }
+            var sample = 1
+            while (check.outWidth / sample > 800 * 2) sample *= 2
+            context.assets.open("cover/" + coverKey + ".png").use {
+                android.graphics.BitmapFactory.decodeStream(
+                    it,
+                    null,
+                    android.graphics.BitmapFactory.Options().apply { inSampleSize = sample },
+                )
+            }
+        }.getOrNull()
+    } ?: return
+    androidx.compose.foundation.Image(
+        bitmap = bitmap.asImageBitmap(),
+        contentDescription = coverKey,
+        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+        modifier = modifier,
+    )
 }
