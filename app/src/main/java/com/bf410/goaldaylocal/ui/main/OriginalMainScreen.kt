@@ -84,6 +84,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
@@ -883,11 +884,16 @@ private fun WeekScheduleView(
             }
             Spacer(Modifier.height(10.dp))
             LazyColumn(Modifier.weight(1f)) {
-            // 池 = 未排期库存：隐藏已出现在日程里的条目（排期后即离开池，
-            // 对照原版；syncEditableContent 会把今天日程回流进 todayPlanItems，这里滤掉）
-            val scheduledTitles = uiState.schedulePreviewEntries.map { it.title }.toSet()
-            val poolItems = uiState.todayPlanItems.filterNot { it in scheduledTitles }
-            items(poolItems, key = { it }) { poolItem ->
+                // 右栏 = 当前清单条目全集（对照原版周 Tab：未完成=橙方块，
+                // 完成=橙勾框+灰字删除线；点击/拖拽条目 → 排入左侧选中日期）
+                val targetPage = currentBook?.pages?.filterIsInstance<TargetPage>()?.firstOrNull()
+                val listItems = if (targetPage != null && currentBook != null) {
+                    (targetPage.items + diaryStore.customPageItems(currentBook.id, targetPage.title)).distinct()
+                } else {
+                    uiState.todayPlanItems
+                }
+                items(listItems, key = { it }) { poolItem ->
+                    val itemChecked = targetPage != null && viewModel.isChecked(targetPage.title, poolItem)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -910,13 +916,12 @@ private fun WeekScheduleView(
                                         val target = dropTarget
                                         val item = draggingItem
                                         if (target != null && item != null) {
+                                            InteractionFeedback.click(context)
                                             viewModel.addScheduleFromHandbook(
                                                 item,
                                                 target.monthValue,
                                                 target.dayOfMonth,
                                             )
-                                            // 对照原版：排期后条目移出任务池
-                                            viewModel.removeHandbookPoolItem(item)
                                         }
                                         draggingItem = null
                                         dropTarget = null
@@ -934,28 +939,40 @@ private fun WeekScheduleView(
                                     selectedDate.monthValue,
                                     selectedDate.dayOfMonth,
                                 )
-                                // 对照原版：排期后条目移出任务池
-                                viewModel.removeHandbookPoolItem(poolItem)
                             }
                             .padding(horizontal = 14.dp, vertical = 9.dp),
                         verticalAlignment = Alignment.Top,
                     ) {
-                        Box(
-                            Modifier
-                                .padding(top = 5.dp)
-                                .size(7.dp)
-                                .background(PoolBullet),
-                        )
+                        if (itemChecked) {
+                            // 完成条目：橙勾框 + 灰字删除线（对照原版）
+                            Box(
+                                modifier = Modifier
+                                    .size(17.dp)
+                                    .border(1.6.dp, Color.Transparent, RoundedCornerShape(4.dp))
+                                    .background(GoaldayDesign.Pink, RoundedCornerShape(4.dp)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text("✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        } else {
+                            Box(
+                                Modifier
+                                    .padding(top = 5.dp)
+                                    .size(7.dp)
+                                    .background(PoolBullet),
+                            )
+                        }
                         Spacer(Modifier.width(10.dp))
                         Text(
                             poolItem,
                             fontSize = 16.sp,
                             lineHeight = 20.sp,
-                            color = GoaldayDesign.adaptiveInkPrimary,
+                            color = if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                            textDecoration = if (itemChecked) TextDecoration.LineThrough else TextDecoration.None,
                         )
                     }
                 }
-                if (poolItems.isEmpty()) {
+                if (listItems.isEmpty()) {
                     item {
                         Text(
                             "点击右上专题切换清单，点条目即可排入左侧选中日期",
@@ -1071,6 +1088,41 @@ private fun RecordDiaryView(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
+            // 今日完成卡片（对照原版记录 Tab：橙红渐变卡片 + @来源清单）
+            val completedToday = entries.filter {
+                it.completed &&
+                    it.year == selectedDate.year &&
+                    it.month == selectedDate.monthValue &&
+                    it.day == selectedDate.dayOfMonth
+            }
+            completedToday.forEach { doneEntry ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Brush.verticalGradient(listOf(GoaldayDesign.Pink, TodayCoral)))
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                ) {
+                    Column {
+                        Text(
+                            doneEntry.title,
+                            fontSize = 15.sp,
+                            lineHeight = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White,
+                        )
+                        if (doneEntry.note.isNotBlank()) {
+                            Text(
+                                "@" + doneEntry.note,
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp,
+                                color = Color.White.copy(alpha = 0.75f),
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+            }
             if (prompt.isNotBlank()) {
                 Text(
                     prompt,
