@@ -983,6 +983,51 @@ private fun WeekScheduleView(
                         )
                     }
                 }
+                // 尾部新增条目（对照原版：清单尾部直接输入添加）
+                item {
+                    var addItemText by remember { mutableStateOf("") }
+                    BasicTextField(
+                        value = addItemText,
+                        onValueChange = { addItemText = it },
+                        singleLine = true,
+                        textStyle = TextStyle(fontSize = 16.sp, color = GoaldayDesign.adaptiveInkPrimary),
+                        cursorBrush = SolidColor(TodayCoral),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 9.dp),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (addItemText.isNotBlank()) {
+                                    InteractionFeedback.click(context)
+                                    viewModel.addListPageItem(addItemText)
+                                }
+                                addItemText = ""
+                            },
+                        ),
+                        decorationBox = { inner ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    "+",
+                                    fontSize = 16.sp,
+                                    color = GoaldayDesign.adaptiveInkMuted,
+                                    modifier = Modifier.padding(end = 10.dp),
+                                )
+                                Box {
+                                    if (addItemText.isEmpty()) {
+                                        Text(
+                                            "添加条目到当前清单",
+                                            fontSize = 15.sp,
+                                            color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.7f),
+                                            maxLines = 1,
+                                        )
+                                    }
+                                    inner()
+                                }
+                            }
+                        },
+                    )
+                }
                 item { Spacer(Modifier.height(90.dp)) }
             }
 
@@ -1283,6 +1328,8 @@ private fun TopicListView(
     var revision by remember { mutableIntStateOf(0) }
     val listContext = LocalContext.current
     var pendingDeleteBook by remember { mutableStateOf<TopicBook?>(null) }
+    // 新建清单弹层（对照原版 +FAB 的 PlanAddBottomDialog：名称+颜色+完成）
+    var showAddSheet by remember { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize()) {
         if (expandedBookId == null) {
@@ -1387,7 +1434,7 @@ private fun TopicListView(
                     modifier = Modifier
                         .size(52.dp)
                         .background(FabLight, CircleShape)
-                        .clickable { onOpenBookShelf() },
+                        .clickable { showAddSheet = true },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text("+", fontSize = 26.sp, color = GoaldayDesign.adaptiveInkPrimary, fontWeight = FontWeight.Light)
@@ -1431,6 +1478,17 @@ private fun TopicListView(
                             .padding(horizontal = 12.dp, vertical = 6.dp),
                     )
                 },
+            )
+        }
+
+        if (showAddSheet) {
+            TopicAddSheet(
+                onCreate = { title, color ->
+                    InteractionFeedback.click(listContext)
+                    viewModel.createCustomBook(title, "", color)
+                    showAddSheet = false
+                },
+                onDismiss = { showAddSheet = false },
             )
         }
     }
@@ -1571,6 +1629,117 @@ private fun TopicDetailSimple(
                         },
                 )
             }
+        }
+    }
+}
+
+// endregion
+
+// region 新建清单弹层（对照原版 PlanAddBottomDialog：名称 + 颜色选择 + 取消/完成）
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TopicAddSheet(
+    onCreate: (String, Color) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val dark = LocalGoaldayDarkMode.current
+    val fieldBg = if (dark) Color(0xFF35312B) else Color(0xFFFBF7F1)
+    val palette = listOf(
+        Color(0xFFF79941),
+        Color(0xFFF66061),
+        Color(0xFFBBD1AD),
+        Color(0xFF8FA8F0),
+        Color(0xFFC9A8F0),
+        Color(0xFFF5D88B),
+    )
+    var name by remember { mutableStateOf("") }
+    var selected by remember { mutableStateOf(palette.first()) }
+    val sheetState = rememberModalBottomSheetState()
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = if (dark) Color(0xFF2C2722) else Color.White,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+            Text(
+                "新建清单",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = GoaldayDesign.adaptiveInkPrimary,
+            )
+            Spacer(Modifier.height(12.dp))
+            BasicTextField(
+                value = name,
+                onValueChange = { name = it },
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 16.sp, color = GoaldayDesign.adaptiveInkPrimary),
+                cursorBrush = SolidColor(TodayCoral),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(fieldBg)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                decorationBox = { inner ->
+                    Box {
+                        if (name.isEmpty()) {
+                            Text(
+                                "清单名称",
+                                fontSize = 16.sp,
+                                color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.7f),
+                            )
+                        }
+                        inner()
+                    }
+                },
+            )
+            Spacer(Modifier.height(14.dp))
+            Text("选择颜色", fontSize = 13.sp, color = GoaldayDesign.adaptiveInkMuted)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                palette.forEach { colorItem ->
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(colorItem)
+                            .border(
+                                width = if (selected == colorItem) 2.5.dp else 0.dp,
+                                color = if (selected == colorItem) GoaldayDesign.adaptiveInkPrimary else Color.Transparent,
+                                shape = CircleShape,
+                            )
+                            .clickable { selected = colorItem },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (selected == colorItem) {
+                            Text("✓", fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(18.dp))
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "取消",
+                    fontSize = 15.sp,
+                    color = GoaldayDesign.adaptiveInkMuted,
+                    modifier = Modifier
+                        .clickable { onDismiss() }
+                        .padding(horizontal = 12.dp, vertical = 7.dp),
+                )
+                Spacer(Modifier.weight(1f))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (name.trim().isBlank()) GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.4f) else TodayBlack)
+                        .clickable(enabled = name.trim().isNotBlank()) { onCreate(name.trim(), selected) }
+                        .padding(horizontal = 22.dp, vertical = 9.dp),
+                ) {
+                    Text("完成", fontSize = 14.sp, color = Color.White)
+                }
+            }
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
