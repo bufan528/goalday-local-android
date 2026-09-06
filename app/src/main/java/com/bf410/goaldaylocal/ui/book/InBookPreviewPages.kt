@@ -1014,38 +1014,6 @@ internal fun InBookDiaryPreview(
         // 左页: 11sp主 + 9sp副, marginStart=10dp, marginTop=10dp
         // 右页: 12sp主 + 10sp副, marginEnd=10dp, marginTop=10dp
 }
-        if (handbookMode && diaryDate != null) {
-            val diaryHeaderPadding = 10.dp
-            val diaryHeaderMainSize = if (diaryIsLeftPage) 11.sp else 12.sp
-            val diaryHeaderSubSize = if (diaryIsLeftPage) 9.sp else 10.sp
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        start = if (diaryIsLeftPage) diaryHeaderPadding else 0.dp,
-                        top = diaryHeaderPadding,
-                        end = if (diaryIsLeftPage) 0.dp else diaryHeaderPadding,
-                    ),
-                contentAlignment = if (diaryIsLeftPage) Alignment.TopStart else Alignment.TopEnd,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = diaryDateLabelMain,
-                        fontSize = diaryHeaderMainSize,
-                        lineHeight = diaryHeaderMainSize,
-                        color = diaryTabDividerColor,
-                        fontFamily = GoaldayDesign.BodyFontFamily,
-                    )
-                    Text(
-                        text = " | $diaryDateLabelSub",
-                        fontSize = diaryHeaderSubSize,
-                        lineHeight = diaryHeaderMainSize,
-                        color = diaryTabDividerColor,
-                        fontFamily = GoaldayDesign.BodyFontFamily,
-                    )
-                }
-            }
-        }
     }
 }
 

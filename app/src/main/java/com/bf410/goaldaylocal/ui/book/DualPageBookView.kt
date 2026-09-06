@@ -124,7 +124,7 @@ fun DualPageBookView(
     val diaryDate = today.plusWeeks(weekOffset.toLong())
     val pairMonth = diaryDate.monthValue
 
-    // 翻页背面：左页背面 = 上一周日程，右页背面 = 下周当天日记
+    // 翻页背面：左页背面 = 上周前一天日记，右页背面 = 下周当天日记
     val prevWeekStartDate = spreadMonday.minusWeeks(1)
     val nextDiaryDate = diaryDate.plusWeeks(1)
 
@@ -132,6 +132,11 @@ fun DualPageBookView(
     val diaryStore = remember { com.bf410.goaldaylocal.data.LocalStateStore(com.tencent.mmkv.MMKV.defaultMMKV()) }
     val spreadDiaryDraft = remember(diaryDate) { diaryStore.diaryText(DiaryStoreBookId, diaryDate.toString()) }
     val nextDiaryDraft = remember(nextDiaryDate) { diaryStore.diaryText(DiaryStoreBookId, nextDiaryDate.toString()) }
+    // 左页 = 前一天日记页（对照原版书：左 5|周六 / 右 6|周日）
+    val leftDiaryDate = diaryDate.minusDays(1)
+    val leftDiaryDraft = remember(leftDiaryDate) { diaryStore.diaryText(DiaryStoreBookId, leftDiaryDate.toString()) }
+    val prevLeftDiaryDate = leftDiaryDate.minusWeeks(1)
+    val prevLeftDiaryDraft = remember(prevLeftDiaryDate) { diaryStore.diaryText(DiaryStoreBookId, prevLeftDiaryDate.toString()) }
 
     var showBookShelf by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -359,39 +364,37 @@ fun DualPageBookView(
                         isLeft = true,
                         progress = progress.value,
                         direction = turnDirection,
-                        onTap = { onOpenDate(weekStartDate, true) },
+                        onTap = { onOpenDate(leftDiaryDate, false) },
                         content = {
-                            InBookSchedulePreview(
+                            InBookDiaryPreview(
                                 modifier = Modifier.fillMaxSize(),
-                                page = schedulePage,
-                                pageIndex = scheduleIndex,
+                                page = diaryPage,
+                                pageIndex = diaryIndex,
                                 pageCount = book.pages.size,
-                                schedulePreviewEntries = uiState.schedulePreviewEntries,
-                                isChecked = { pageTitle, title ->
-                                    uiState.todayCompletedItems.contains(title)
-                                },
+                                diaryDraft = leftDiaryDraft,
                                 tint = book.color,
                                 turnProgress = progress.value,
                                 turnDirection = turnDirection,
                                 handbookMode = true,
-                                weekStartDate = weekStartDate,
+                                diaryDate = leftDiaryDate,
+                                onAddImage = {},
+                                scheduleEntries = uiState.schedulePreviewEntries,
                             )
                         },
                         backContent = {
-                            InBookSchedulePreview(
+                            InBookDiaryPreview(
                                 modifier = Modifier.fillMaxSize(),
-                                page = schedulePage,
-                                pageIndex = scheduleIndex,
+                                page = diaryPage,
+                                pageIndex = diaryIndex,
                                 pageCount = book.pages.size,
-                                schedulePreviewEntries = uiState.schedulePreviewEntries,
-                                isChecked = { pageTitle, title ->
-                                    uiState.todayCompletedItems.contains(title)
-                                },
+                                diaryDraft = prevLeftDiaryDraft,
                                 tint = book.color,
                                 turnProgress = progress.value,
                                 turnDirection = turnDirection,
                                 handbookMode = true,
-                                weekStartDate = prevWeekStartDate,
+                                diaryDate = prevLeftDiaryDate,
+                                onAddImage = {},
+                                scheduleEntries = uiState.schedulePreviewEntries,
                             )
                         },
                     )
