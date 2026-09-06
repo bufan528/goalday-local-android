@@ -510,23 +510,6 @@ fun DualPageBookView(
             }
         }
 
-        // 编辑本周：书内快捷入口 → 跳主界面周 Tab 定位本周（不用退出再找日期）
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 64.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(Color(0xB31C1C1C))
-                .clickableNoRipple { onOpenDate(weekStartDate, true) }
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-        ) {
-            Text(
-                text = "✎ 编辑本周",
-                fontSize = 13.sp,
-                color = Color.White,
-            )
-        }
-
         // 书架底部弹层（对照原版 BookShelfBottomDialog：横排布纹封面选年份换书）
         if (showBookShelf) {
             BookShelfSheet(
