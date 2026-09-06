@@ -182,6 +182,12 @@ fun GoaldayApp(startTarget: String? = null) {
     var calendarFocusDay by rememberSaveable { mutableStateOf<Int?>(null) }
     // 主界面周选择器触发器：底部日历图标在 MAIN 下递增
     var mainWeekPickerTick by remember { mutableIntStateOf(0) }
+    // 书内点页 → 跳回原版式主界面（日期与 Tab 由 OriginalMainScreen 消费桥接）
+    LaunchedEffect(com.bf410.goaldaylocal.ui.main.MainUiBridge.tick) {
+        if (com.bf410.goaldaylocal.ui.main.MainUiBridge.date != null) {
+            tab = RootTab.MAIN
+        }
+    }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()

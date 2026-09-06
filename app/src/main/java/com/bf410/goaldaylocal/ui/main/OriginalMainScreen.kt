@@ -99,13 +99,34 @@ private val TodayBlack = Color(0xFF1E1E1E)
 private val PoolBullet = Color(0xFFF2C0A5)
 private val EntryCircle = Color(0xFF3A3A3A)
 
-private enum class MainSubTab(val label: String) {
+internal enum class MainSubTab(val label: String) {
     WEEK("周"),
     RECORD("记录"),
     LIST("清单"),
 }
 
 private const val DIARY_BOOK_ID = "diary"
+
+/**
+ * 跨界面导航桥：书内点页 → 跳回主界面并选中对应日期/Tab
+ * （对照原版 EventBus ScheduleDateSelectedEvent/DiaryDateSelectedEvent + onFinish）
+ */
+object MainUiBridge {
+    internal var tick by androidx.compose.runtime.mutableIntStateOf(0)
+    internal var date: LocalDate? = null
+    internal var targetTab: MainSubTab? = null
+
+    internal fun go(date: LocalDate, tab: MainSubTab) {
+        this.date = date
+        this.targetTab = tab
+        tick++
+    }
+
+    fun consume() {
+        date = null
+        targetTab = null
+    }
+}
 
 /** 原版 JournalPrompts 的 41 条一日一问（jadx 反编译 JournalPrompts.java 全量搬运） */
 private val JOURNAL_PROMPTS = listOf(
@@ -170,6 +191,16 @@ fun OriginalMainScreen(
     LaunchedEffect(Unit) { bookViewModel.refreshSchedulePreview() }
     LaunchedEffect(openWeekPickerTick) {
         if (openWeekPickerTick > 0) showWeekPicker = true
+    }
+    // 书内点页 → 跳到对应日期与 Tab（对照原版 EventBus 行为）
+    LaunchedEffect(MainUiBridge.tick) {
+        val target = MainUiBridge.date
+        val tab = MainUiBridge.targetTab
+        if (target != null && tab != null) {
+            selectedDate = target
+            subTabIndex = tab.ordinal
+            MainUiBridge.consume()
+        }
     }
 
     val currentSubTab = MainSubTab.entries[subTabIndex.coerceIn(0, MainSubTab.entries.lastIndex)]
