@@ -4,16 +4,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -23,7 +28,6 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,14 +36,28 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,6 +66,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,13 +88,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bf410.goaldaylocal.ui.InteractionFeedback
 import com.bf410.goaldaylocal.data.LocalStateStore
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.TargetPage
@@ -89,6 +113,8 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.WeekFields
+import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 /**
@@ -284,8 +310,17 @@ fun OriginalMainScreen(
             tabVisibility = tabVisibility,
             tabOrder = tabOrder,
         )
-        Box(Modifier.fillMaxSize()) {
-            when (currentSubTab) {
+        // Tab 切换方向滑动（对照原版 ViewPager2 滑动切换的直觉：往左切页从右滑入）
+        AnimatedContent(
+            targetState = currentSubTab,
+            transitionSpec = {
+                val forward = targetState.ordinal >= initialState.ordinal
+                (slideInHorizontally(tween(220)) { full -> if (forward) full / 8 else -full / 8 } + fadeIn(tween(200))) togetherWith
+                    (slideOutHorizontally(tween(220)) { full -> if (forward) -full / 8 else full / 8 } + fadeOut(tween(150)))
+            },
+            label = "mainTabContent",
+        ) { pageTab ->
+            when (pageTab) {
                 MainSubTab.WEEK -> WeekScheduleView(
                     uiState = uiState,
                     viewModel = bookViewModel,
@@ -462,6 +497,96 @@ private fun TabLabel(text: String, selected: Boolean, onClick: () -> Unit) {
     )
 }
 
+/** 左滑操作项：图标 + 底色（对照原版 SwipeRevealLayout 的编辑黑层/删除红层） */
+data class SwipeAction(
+    val label: String,
+    val bg: Color,
+    val icon: ImageVector,
+    val onAction: () -> Unit,
+)
+
+/**
+ * 行左滑露出操作层（对照原版 SwipeRevealLayout，item_target_detail / item_plan_item）：
+ * 内容行向左拖动露出右侧操作按钮，超过一半松手保持展开，否则弹回。
+ */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun SwipeableActionsRow(
+    actions: List<SwipeAction>,
+    onContentClick: (() -> Unit)? = null,
+    onContentLongClick: (() -> Unit)? = null,
+    content: @Composable RowScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+    val maxRevealPx = with(density) { (56.dp * actions.size).toPx() }
+    val reveal = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    Box(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .height(IntrinsicSize.Min),
+        ) {
+            actions.forEach { action ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(56.dp)
+                        .background(action.bg)
+                        .clickable {
+                            scope.launch { reveal.snapTo(0f) }
+                            action.onAction()
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = action.icon,
+                        contentDescription = action.label,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset { IntOffset(-reveal.value.roundToInt(), 0) }
+                .background(MainContentBg)
+                .pointerInput(actions.size) {
+                    detectHorizontalDragGestures(
+                        onHorizontalDrag = { change, dragAmount ->
+                            change.consume()
+                            scope.launch {
+                                reveal.snapTo((reveal.value - dragAmount).coerceIn(0f, maxRevealPx))
+                            }
+                        },
+                        onDragEnd = {
+                            scope.launch {
+                                if (reveal.value > maxRevealPx / 2) reveal.animateTo(maxRevealPx) else reveal.animateTo(0f)
+                            }
+                        },
+                        onDragCancel = {
+                            scope.launch { reveal.animateTo(0f) }
+                        },
+                    )
+                }
+                .then(
+                    if (onContentClick != null) {
+                        Modifier.combinedClickable(
+                            onClick = onContentClick,
+                            onLongClick = onContentLongClick ?: onContentClick,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            content = content,
+        )
+    }
+}
+
 // region 周 Tab —— 左侧周日期列（任意天行内编辑）+ 右侧任务池
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
@@ -477,6 +602,7 @@ private fun WeekScheduleView(
     onEditEntry: (ScheduleEntry) -> Unit = {},
 ) {
     val today = LocalDate.now()
+    val context = LocalContext.current
     val monday = selectedDate.with(DayOfWeek.MONDAY)
     val weekDays = remember(monday) { (0..6).map { monday.plusDays(it.toLong()) } }
     var quickInput by remember(editingDate) { mutableStateOf("") }
@@ -572,18 +698,33 @@ private fun WeekScheduleView(
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             entries.forEach { entry ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .combinedClickable(
-                                            // 点/长按条目 → 编辑弹层（对照原版点条目出编辑底栏）
-                                            onClick = { onEditEntry(entry) },
-                                            onLongClick = { onEditEntry(entry) },
-                                        )
-                                        .padding(vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                SwipeableActionsRow(
+                                    onContentClick = { onEditEntry(entry) },
+                                    onContentLongClick = { onEditEntry(entry) },
+                                    actions = listOf(
+                                        SwipeAction("编辑", Color(0xFF252525), Icons.Filled.Edit) {
+                                            onEditEntry(entry)
+                                        },
+                                        SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete) {
+                                            InteractionFeedback.click(context)
+                                            InteractionFeedback.haptic(context)
+                                            viewModel.deleteScheduleFromHandbook(entry.id)
+                                            // 同步清理该日日记「今日完成」段（与编辑弹层删除一致）
+                                            val remaining = entries.filterNot { it.id == entry.id }
+                                            diaryStore.setDiaryText(
+                                                DIARY_BOOK_ID,
+                                                date.toString(),
+                                                buildStructuredDiary(
+                                                    date,
+                                                    remaining,
+                                                    diaryUserText(diaryStore, date),
+                                                    diaryImagePaths(diaryStore, date),
+                                                ),
+                                            )
+                                        },
+                                    ),
                                 ) {
-                                    // 圆形勾选框：○ 未完成 / 黑底白勾 完成（对照原版）
+                                    // 勾选框：○ 未完成 / 橙底白勾 完成（对照原版 #F79941 实心勾）
                                     Box(
                                         modifier = Modifier
                                             .size(19.dp)
@@ -593,10 +734,12 @@ private fun WeekScheduleView(
                                                 CircleShape,
                                             )
                                             .background(
-                                                if (entry.completed) EntryCircle else Color.Transparent,
+                                                if (entry.completed) GoaldayDesign.Pink else Color.Transparent,
                                                 CircleShape,
                                             )
                                             .clickable {
+                                                InteractionFeedback.click(context)
+                                                InteractionFeedback.haptic(context, 30L)
                                                 viewModel.toggleScheduleCompletedFromHandbook(entry.id)
                                                 // 同步记录 Tab 日记的「今日完成」段（对照原版自动记录完成事项）
                                                 val flipped = entries.map {
@@ -616,7 +759,7 @@ private fun WeekScheduleView(
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         if (entry.completed) {
-                                            Text("✓", fontSize = 11.sp, color = Color.White)
+                                            Text("✓", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                                         }
                                     }
                                     Spacer(Modifier.width(10.dp))
@@ -624,7 +767,7 @@ private fun WeekScheduleView(
                                         (if (entry.timeText.isNotBlank()) entry.timeText + "  " else "") + entry.title,
                                         fontSize = 15.sp,
                                         lineHeight = 19.sp,
-                                        color = GoaldayDesign.adaptiveInkPrimary,
+                                        color = if (entry.completed) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                                         textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                                         maxLines = 2,
                                     )
@@ -645,6 +788,7 @@ private fun WeekScheduleView(
                                     keyboardActions = KeyboardActions(
                                         onDone = {
                                             if (quickInput.isNotBlank()) {
+                                                InteractionFeedback.click(context)
                                                 viewModel.addScheduleFromHandbook(
                                                     quickInput,
                                                     date.monthValue,
@@ -750,7 +894,11 @@ private fun WeekScheduleView(
                             .alpha(if (draggingItem == poolItem) 0.35f else 1f)
                             .pointerInput(poolItem) {
                                 detectDragGesturesAfterLongPress(
-                                    onDragStart = { draggingItem = poolItem },
+                                    onDragStart = {
+                                        draggingItem = poolItem
+                                        // 拖起时短震（对照原版拖拽触感）
+                                        InteractionFeedback.haptic(context)
+                                    },
                                     onDrag = { change, _ ->
                                         change.consume()
                                         val pt = poolOrigin + change.position
@@ -780,6 +928,7 @@ private fun WeekScheduleView(
                                 )
                             }
                             .clickable {
+                                InteractionFeedback.click(context)
                                 viewModel.addScheduleFromHandbook(
                                     poolItem,
                                     selectedDate.monthValue,
@@ -1080,6 +1229,8 @@ private fun TopicListView(
 ) {
     val store = remember { LocalStateStore(MMKV.defaultMMKV()) }
     var revision by remember { mutableIntStateOf(0) }
+    val listContext = LocalContext.current
+    var pendingDeleteBook by remember { mutableStateOf<TopicBook?>(null) }
 
     Box(Modifier.fillMaxSize()) {
         if (expandedBookId == null) {
@@ -1107,33 +1258,51 @@ private fun TopicListView(
                     val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
                     val done = page?.items?.count { store.isChecked(book.id, page.title, it) } ?: 0
                     val total = page?.items?.size ?: 0
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(RowCardBg)
-                            .clickable { onExpandBook(book.id) }
-                            .padding(horizontal = 14.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                    // 左滑操作层（对照原版清单卡片左滑：黑色信息 + 红色删除）
+                    SwipeableActionsRow(
+                        actions = buildList {
+                            add(
+                                SwipeAction("打开", Color(0xFF252525), Icons.Filled.Info) {
+                                    onExpandBook(book.id)
+                                },
+                            )
+                            if (book.id.startsWith("custom_")) {
+                                add(
+                                    SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete) {
+                                        pendingDeleteBook = book
+                                    },
+                                )
+                            }
+                        },
                     ) {
-                        Box(
-                            Modifier
-                                .size(12.dp)
-                                .background(book.color, RoundedCornerShape(3.dp)),
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        Text(
-                            book.title,
-                            fontSize = 16.sp,
-                            color = GoaldayDesign.adaptiveInkPrimary,
-                            modifier = Modifier.weight(1f),
-                            maxLines = 1,
-                        )
-                        Text(
-                            "$done/$total",
-                            fontSize = 14.sp,
-                            color = GoaldayDesign.adaptiveInkMuted,
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(RowCardBg)
+                                .clickable { onExpandBook(book.id) }
+                                .padding(horizontal = 14.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                Modifier
+                                    .size(12.dp)
+                                    .background(book.color, RoundedCornerShape(3.dp)),
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                book.title,
+                                fontSize = 16.sp,
+                                color = GoaldayDesign.adaptiveInkPrimary,
+                                modifier = Modifier.weight(1f),
+                                maxLines = 1,
+                            )
+                            Text(
+                                "$done/$total",
+                                fontSize = 14.sp,
+                                color = GoaldayDesign.adaptiveInkMuted,
+                            )
+                        }
                     }
                 }
             }
@@ -1181,6 +1350,36 @@ private fun TopicListView(
                     Text("💡", fontSize = 20.sp)
                 }
             }
+        }
+
+        pendingDeleteBook?.let { book ->
+            AlertDialog(
+                onDismissRequest = { pendingDeleteBook = null },
+                title = { Text("删除清单", fontSize = 17.sp, fontWeight = FontWeight.SemiBold) },
+                text = { Text("确定删除「${book.title}」吗？其中的条目与记录会一并删除，无法恢复。") },
+                confirmButton = {
+                    Text(
+                        "删除",
+                        color = TodayCoral,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clickable {
+                                InteractionFeedback.haptic(listContext)
+                                viewModel.removeCustomBookById(book.id)
+                                pendingDeleteBook = null
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    )
+                },
+                dismissButton = {
+                    Text(
+                        "取消",
+                        modifier = Modifier
+                            .clickable { pendingDeleteBook = null }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    )
+                },
+            )
         }
     }
 }
@@ -1236,45 +1435,74 @@ private fun TopicDetailSimple(
             // key 带上 revision：勾选写入的是 MMKV（非 Compose 观测状态），
             // revision 变化时换 key 强制重建 item，重读 isChecked 刷新勾选框
             itemsIndexed(page?.items ?: emptyList(), key = { _, item -> "$revision-$item" }) { index, item ->
+                val detailContext = LocalContext.current
                 val checked = store.isChecked(book.id, page?.title ?: "", item)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            store.setChecked(book.id, page?.title ?: "", item, !checked)
-                            // 联动任务池：勾选进池（可拖去排期），取消勾选移出（同一 (bookId, 页题) 存储）
-                            if (page != null) {
-                                val pool = store.todayPlanItems(book.id, page.title)
-                                store.saveTodayPlanItems(
-                                    book.id,
-                                    page.title,
-                                    if (!checked) (pool + item).distinct() else pool.filterNot { it == item },
-                                )
-                                viewModel.refreshSchedulePreview()
-                            }
-                            onToggle()
-                        }
-                        .padding(vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
+                val checkedDateText = if (checked) store.checkedDate(book.id, page?.title ?: "", item) else ""
+                Column {
+                    Row(
                         modifier = Modifier
-                            .size(17.dp)
-                            .border(1.6.dp, PoolBullet, RoundedCornerShape(4.dp)),
-                        contentAlignment = Alignment.Center,
+                            .fillMaxWidth()
+                            .clickable {
+                                InteractionFeedback.click(detailContext)
+                                InteractionFeedback.haptic(detailContext, 30L)
+                                store.setChecked(book.id, page?.title ?: "", item, !checked)
+                                // 完成日期戳（对照原版勾选后行下显示的日期 chip）
+                                store.setCheckedDate(
+                                    book.id,
+                                    page?.title ?: "",
+                                    item,
+                                    if (!checked) LocalDate.now().toString() else "",
+                                )
+                                // 联动任务池：勾选进池（可拖去排期），取消勾选移出（同一 (bookId, 页题) 存储）
+                                if (page != null) {
+                                    val pool = store.todayPlanItems(book.id, page.title)
+                                    store.saveTodayPlanItems(
+                                        book.id,
+                                        page.title,
+                                        if (!checked) (pool + item).distinct() else pool.filterNot { it == item },
+                                    )
+                                    viewModel.refreshSchedulePreview()
+                                }
+                                onToggle()
+                            }
+                            .padding(vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        if (checked) {
-                            Text("✓", fontSize = 11.sp, color = PoolBullet)
+                        Box(
+                            modifier = Modifier
+                                .size(17.dp)
+                                .border(1.6.dp, if (checked) Color.Transparent else PoolBullet, RoundedCornerShape(4.dp))
+                                .background(if (checked) GoaldayDesign.Pink else Color.Transparent, RoundedCornerShape(4.dp)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (checked) {
+                                Text("✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                        Spacer(Modifier.width(14.dp))
+                        Text(
+                            "${index + 1}  $item",
+                            fontSize = 15.sp,
+                            lineHeight = 20.sp,
+                            color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                        )
+                    }
+                    if (checked && checkedDateText.isNotBlank()) {
+                        // 完成日期戳：原版勾选后行下弹出的橙色圆角日期 chip
+                        Box(
+                            modifier = Modifier
+                                .padding(start = 31.dp, bottom = 8.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(GoaldayDesign.Pink.copy(alpha = 0.75f))
+                                .padding(horizontal = 10.dp, vertical = 3.dp),
+                        ) {
+                            Text(
+                                checkedDateText,
+                                fontSize = 12.sp,
+                                color = Color.White,
+                            )
                         }
                     }
-                    Spacer(Modifier.width(14.dp))
-                    Text(
-                        "${index + 1}  $item",
-                        fontSize = 15.sp,
-                        lineHeight = 20.sp,
-                        color = GoaldayDesign.adaptiveInkPrimary,
-                        textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
-                    )
                 }
                 Box(
                     Modifier
@@ -1314,6 +1542,7 @@ private fun EntryEditSheet(
     var title by remember(entry.id) { mutableStateOf(entry.title) }
     var timeText by remember(entry.id) { mutableStateOf(entry.timeText) }
     val dark = LocalGoaldayDarkMode.current
+    val sheetContext = LocalContext.current
     val fieldBg = if (dark) Color(0xFF35312B) else Color(0xFFFBF7F1)
     val sheetState = rememberModalBottomSheetState()
     val diaryStore = remember { LocalStateStore(MMKV.defaultMMKV()) }
@@ -1443,6 +1672,8 @@ private fun EntryEditSheet(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .clickable {
+                            InteractionFeedback.click(sheetContext)
+                            InteractionFeedback.haptic(sheetContext)
                             viewModel.deleteScheduleFromHandbook(entry.id)
                             // 同步清理该日日记「今日完成」段（与勾选联动共用同一存储）
                             val remaining = allEntries.filter {
@@ -1500,6 +1731,7 @@ private fun TabManageSheet(
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
+    val context = LocalContext.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -1531,7 +1763,10 @@ private fun TabManageSheet(
                         .background(if (LocalGoaldayDarkMode.current) Color(0xFF35312B) else Color(0xFFFBF7F1))
                         .pointerInput(tab) {
                             detectDragGesturesAfterLongPress(
-                                onDragStart = { draggingTab = tab },
+                                onDragStart = {
+                                    draggingTab = tab
+                                    InteractionFeedback.haptic(context)
+                                },
                                 onDrag = { change, _ ->
                                     change.consume()
                                     val from = localOrder.indexOf(tab)
@@ -1566,21 +1801,17 @@ private fun TabManageSheet(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        "☰",
-                        fontSize = 14.sp,
-                        color = GoaldayDesign.adaptiveInkMuted,
-                        modifier = Modifier.padding(end = 10.dp),
-                    )
-                    Text(
                         tab.label,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = GoaldayDesign.adaptiveInkPrimary,
                     )
                     Spacer(Modifier.weight(1f))
-                    Text(
-                        if (visible) "👁" else "🚫",
-                        fontSize = 15.sp,
+                    Icon(
+                        imageVector = if (visible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                        contentDescription = if (visible) "隐藏" else "显示",
+                        tint = if (visible) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
+                        modifier = Modifier.size(22.dp),
                     )
                 }
                 }

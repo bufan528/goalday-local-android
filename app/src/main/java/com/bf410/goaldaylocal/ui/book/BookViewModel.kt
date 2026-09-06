@@ -609,15 +609,22 @@ class BookViewModel(
     fun removeCurrentCustomBook() {
         val currentBook = currentBook()
         if (!currentBook.id.startsWith("custom_")) return
-        currentBook.pages.forEach { page ->
+        removeCustomBookById(currentBook.id)
+    }
+
+    /** 按删除清单 Tab 里左滑删除的指定自建清单（预设示例清单不可删） */
+    fun removeCustomBookById(bookId: String) {
+        if (!bookId.startsWith("custom_")) return
+        val target = allBooks().firstOrNull { it.id == bookId } ?: return
+        target.pages.forEach { page ->
             store.removePageScopedData(
-                bookId = currentBook.id,
+                bookId = bookId,
                 pageTitle = page.title,
-                checkedItems = checkedItemsForPage(currentBook.id, page),
+                checkedItems = checkedItemsForPage(bookId, page),
             )
         }
-        store.removeSavedBook(currentBook.id)
-        store.removeCustomBook(currentBook.id)
+        store.removeSavedBook(bookId)
+        store.removeCustomBook(bookId)
         refreshBooks(selectBookId = allBooks().firstOrNull()?.id.orEmpty(), openBook = false)
     }
 
