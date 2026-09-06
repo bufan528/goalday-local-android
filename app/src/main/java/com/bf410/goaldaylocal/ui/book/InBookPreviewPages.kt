@@ -1013,6 +1013,7 @@ internal fun InBookDiaryPreview(
         // 书内日期标签：对照 fragment_diary_inbook.xml
         // 左页: 11sp主 + 9sp副, marginStart=10dp, marginTop=10dp
         // 右页: 12sp主 + 10sp副, marginEnd=10dp, marginTop=10dp
+}
         if (handbookMode && diaryDate != null) {
             val diaryHeaderPadding = 10.dp
             val diaryHeaderMainSize = if (diaryIsLeftPage) 11.sp else 12.sp
@@ -1046,7 +1047,6 @@ internal fun InBookDiaryPreview(
             }
         }
     }
-}
 }
 
 // 将普通日记块映射为书内渲染变体，确保在 InBookDiaryPreview 中使用 item_diary_*_inbook 风格。
