@@ -407,7 +407,7 @@ private fun InBookScheduleTargetColumn(
                         fontSize = 8.sp,
                         // 槽高仅 12dp，必须收紧 lineHeight（默认 24sp 会把文字挤出槽位）
                         lineHeight = 9.sp,
-                        color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                        color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
                         textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -492,19 +492,19 @@ internal fun InBookPlanPreview(
                             text = page.title,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = GoaldayDesign.adaptiveInkPrimary,
+                            color = GoaldayDesign.InkPrimary,
                         )
                         Text(
                             text = "${pageIndex + 1}/$pageCount",
                             fontSize = 10.sp,
-                            color = GoaldayDesign.adaptiveInkMuted,
+                            color = GoaldayDesign.InkMuted,
                         )
                     }
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(0.7.dp)
-                            .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
+                            .background(GoaldayDesign.InkMuted.copy(alpha = 0.15f)),
                     )
                     Spacer(Modifier.height(6.dp))
                 }
@@ -752,7 +752,7 @@ private fun InBookPlanRow(
                 modifier = Modifier
                     .padding(start = 15.dp)
                     .size(10.dp)
-                    .background(GoaldayDesign.adaptiveInkPrimary, shape = RoundedCornerShape(90.dp))
+                    .background(GoaldayDesign.InkPrimary, shape = RoundedCornerShape(90.dp))
                     .pointerInput(Unit) {
                         detectTapGestures(onTap = { onToggleChecked() })
                     },
@@ -761,7 +761,7 @@ private fun InBookPlanRow(
             Text(
                 item.title,
                 fontSize = 16.sp,
-                color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
                 textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                 modifier = Modifier
                     .padding(start = 16.dp, top = 14.dp, bottom = 14.dp)
@@ -774,7 +774,7 @@ private fun InBookPlanRow(
             Text(
                 text = item.timeText,
                 fontSize = 14.sp,
-                color = GoaldayDesign.adaptiveInkMuted,
+                color = GoaldayDesign.InkMuted,
                 modifier = Modifier
                     .padding(end = 14.dp, top = 14.dp, bottom = 14.dp),
             )
@@ -842,12 +842,12 @@ internal fun InBookDiaryPreview(
                     text = diaryDateLabel(diary.date),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = GoaldayDesign.adaptiveInkPrimary,
+                    color = GoaldayDesign.InkPrimary,
                 )
                 Text(
                     text = "${pageIndex + 1}/$pageCount",
                     fontSize = 10.sp,
-                    color = GoaldayDesign.adaptiveInkMuted,
+                    color = GoaldayDesign.InkMuted,
                 )
             }
             Box(
@@ -855,7 +855,7 @@ internal fun InBookDiaryPreview(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .height(0.7.dp)
-                    .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
+                    .background(GoaldayDesign.InkMuted.copy(alpha = 0.15f)),
             )
             Spacer(Modifier.height(6.dp))
         }
@@ -915,7 +915,7 @@ internal fun InBookDiaryPreview(
                     Text(
                         text = moodItems.joinToString("  "),
                         fontSize = 12.sp,
-                        color = GoaldayDesign.adaptiveInkMuted,
+                        color = GoaldayDesign.InkMuted,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -1098,12 +1098,12 @@ internal fun InBookTargetPreview(
                                 text = page.title,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = GoaldayDesign.adaptiveInkPrimary,
+                                color = GoaldayDesign.InkPrimary,
                             )
                             Text(
                                 text = "${pageIndex + 1}/$pageCount",
                                 fontSize = 10.sp,
-                                color = GoaldayDesign.adaptiveInkMuted,
+                                color = GoaldayDesign.InkMuted,
                             )
                         }
                         Box(
@@ -1111,7 +1111,7 @@ internal fun InBookTargetPreview(
                                 .fillMaxWidth()
                                 .padding(horizontal = 20.dp)
                                 .height(0.7.dp)
-                                .background(GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.15f)),
+                                .background(GoaldayDesign.InkMuted.copy(alpha = 0.15f)),
                         )
                         Spacer(Modifier.height(6.dp))
                     }
@@ -1191,7 +1191,7 @@ internal fun InBookTargetPreview(
                 text = "$completedCount/$totalCount",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
-                color = GoaldayDesign.adaptiveInkSecondary,
+                color = GoaldayDesign.InkSecondary,
             )
             Spacer(Modifier.width(12.dp))
             // 进度条
@@ -1429,14 +1429,14 @@ private fun InBookTargetRow(
                 Text(
                     text = "${index + 1}",
                     fontSize = 20.sp,
-                    color = GoaldayDesign.adaptiveInkMuted,
+                    color = GoaldayDesign.InkMuted,
                     modifier = Modifier.padding(start = 9.dp),
                 )
                 // 目标文字：对照 tv_content textSize=20dip, marginStart=10dip, marginEnd=27dip, paddingBottom=12dip
                 Text(
                     item,
                     fontSize = 20.sp,
-                    color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                    color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
                     textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier

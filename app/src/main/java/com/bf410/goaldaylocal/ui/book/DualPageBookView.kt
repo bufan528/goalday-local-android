@@ -221,7 +221,7 @@ fun DualPageBookView(
                 text = headerMonth,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
-                color = GoaldayDesign.adaptiveInkPrimary,
+                color = GoaldayDesign.InkPrimary,
             )
             Spacer(Modifier.height(28.dp))
 
@@ -473,7 +473,7 @@ fun DualPageBookView(
                     imageVector = Icons.Default.Share,
                     contentDescription = "导出",
                     modifier = Modifier.size(22.dp),
-                    tint = GoaldayDesign.adaptiveInkPrimary,
+                    tint = GoaldayDesign.InkPrimary,
                 )
             }
             Row(
@@ -484,13 +484,13 @@ fun DualPageBookView(
                 Text(
                     text = "${spreadMonday.year}",
                     fontSize = 16.sp,
-                    color = GoaldayDesign.adaptiveInkPrimary,
+                    color = GoaldayDesign.InkPrimary,
                 )
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = "切换年份",
                     modifier = Modifier.size(18.dp),
-                    tint = GoaldayDesign.adaptiveInkPrimary,
+                    tint = GoaldayDesign.InkPrimary,
                 )
             }
             Box(
@@ -502,7 +502,7 @@ fun DualPageBookView(
                 Text(
                     text = "返回",
                     fontSize = 14.sp,
-                    color = GoaldayDesign.adaptiveInkPrimary,
+                    color = GoaldayDesign.InkPrimary,
                 )
             }
         }
