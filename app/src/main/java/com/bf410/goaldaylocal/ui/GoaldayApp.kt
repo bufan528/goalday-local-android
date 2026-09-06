@@ -54,6 +54,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -63,6 +64,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -271,8 +273,21 @@ fun GoaldayApp(startTarget: String? = null) {
         }
     }
 
-    BackHandler(enabled = canGoBackInsideApp) {
-        navigateBackInsideApp()
+    // 返回反馈：应用内逐级返回；已在主页时双击返回退出（Toast 提示，避免误触闪退）
+    val appBackContext = LocalContext.current
+    var lastBackExitTick by remember { mutableLongStateOf(0L) }
+    BackHandler(enabled = true) {
+        if (canGoBackInsideApp) {
+            navigateBackInsideApp()
+        } else {
+            val now = System.currentTimeMillis()
+            if (now - lastBackExitTick < 2000) {
+                (appBackContext as? android.app.Activity)?.finish()
+            } else {
+                lastBackExitTick = now
+                android.widget.Toast.makeText(appBackContext, "再按一次退出 Goalday", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     LaunchedEffect(tab, bookSurface) {

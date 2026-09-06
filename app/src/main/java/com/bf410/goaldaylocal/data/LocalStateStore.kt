@@ -30,6 +30,14 @@ class LocalStateStore(
         mmkv.encode(checkKey(bookId, pageTitle, item), checked)
     }
 
+    /** 完成日期（对照原版勾选后行下显示的日期戳，如 2026-09-06） */
+    fun checkedDate(bookId: String, pageTitle: String, item: String): String =
+        mmkv.decodeString(checkKey(bookId, pageTitle, item) + "_date", "").orEmpty()
+
+    fun setCheckedDate(bookId: String, pageTitle: String, item: String, dateText: String) {
+        mmkv.encode(checkKey(bookId, pageTitle, item) + "_date", dateText)
+    }
+
     fun savedBookIds(): Set<String> = mmkv.decodeStringSet(KEY_SAVED_BOOKS, emptySet()) ?: emptySet()
 
     fun saveBook(bookId: String) {
