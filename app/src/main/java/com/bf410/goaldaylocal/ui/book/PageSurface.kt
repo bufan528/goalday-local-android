@@ -1006,14 +1006,50 @@ internal fun DiaryTypedBlockPreview(
 ) {
     if (blocks.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
-        blocks.take(6).forEachIndexed { index, block ->
+        blocks.take(10).forEachIndexed { index, block ->
             when (block.type) {
                 DiaryBlockType.TARGET -> DiaryTargetBlockPreview(block)
                 DiaryBlockType.TOPIC_TARGET -> DiaryTopicTargetBlockPreview(block)
                 DiaryBlockType.TARGET_CHILD -> DiaryTargetChildPreview(block)
+                DiaryBlockType.IMAGE -> DiaryImageBlockPreview(block)
                 else -> DiaryTextBlockPreviewRow(block)
             }
         }
+    }
+}
+
+/** 书内日记图片块：从本地文件解码展示（对照原版日记图片卡） */
+@Composable
+private fun DiaryImageBlockPreview(block: DiaryEntryBlock) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val path = block.text.trim().removePrefix("file://")
+    val bitmap = remember(path) {
+        runCatching {
+            val file = java.io.File(path)
+            if (file.exists()) {
+                val opts = android.graphics.BitmapFactory.Options().apply {
+                    inJustDecodeBounds = true
+                }
+                android.graphics.BitmapFactory.decodeFile(path, opts)
+                val targetW = 720
+                var sample = 1
+                while (opts.outWidth / sample > targetW * 2) sample *= 2
+                android.graphics.BitmapFactory.decodeFile(
+                    path,
+                    android.graphics.BitmapFactory.Options().apply { inSampleSize = sample },
+                )
+            } else null
+        }.getOrNull()
+    }
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = "日记图片",
+            contentScale = ContentScale.FillWidth,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp)),
+        )
     }
 }
 
