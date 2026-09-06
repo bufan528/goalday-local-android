@@ -173,6 +173,18 @@ class BookViewModel(
         addItemToSchedule(trimmed, today.dayOfMonth)
     }
 
+    /** 清单侧栏尾部新增条目：只加入清单，不自动排期（对照原版清单行为） */
+    fun addListPageItem(text: String) {
+        if (!supportsCustomItems()) return
+        val trimmed = text.trim()
+        if (trimmed.isBlank()) return
+        val page = currentBook().pages.filterIsInstance<TargetPage>().firstOrNull() ?: return
+        val book = currentBook()
+        val updated = (store.customPageItems(book.id, page.title) + trimmed).distinct()
+        store.saveCustomPageItems(book.id, page.title, updated)
+        syncEditableContent()
+    }
+
     fun addCustomPageItemWithDeadline(text: String, day: Int?) {
         addCustomPageItem(text)
         val resolvedDay = day ?: return
