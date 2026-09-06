@@ -433,6 +433,21 @@ class BookViewModel(
         syncEditableContent()
     }
 
+    fun updateScheduleTimeFromHandbook(entryId: String, timeText: String) {
+        if (entryId.isBlank()) return
+        val updated = scheduleRepository.entries().map { entry ->
+            if (entry.id == entryId) entry.copy(timeText = timeText.trim()) else entry
+        }
+        scheduleRepository.saveEntries(updated)
+        syncEditableContent()
+    }
+
+    fun deleteScheduleFromHandbook(entryId: String) {
+        if (entryId.isBlank()) return
+        scheduleRepository.saveEntries(scheduleRepository.entries().filterNot { it.id == entryId })
+        syncEditableContent()
+    }
+
     fun updateScheduleRepeatFromHandbook(entryId: String, repeatRule: String, repeatInterval: Int = 1) {
         if (entryId.isBlank()) return
         val updated = scheduleRepository.entries().map { entry ->

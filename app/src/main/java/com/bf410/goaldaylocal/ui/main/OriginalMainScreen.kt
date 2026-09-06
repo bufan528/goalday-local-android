@@ -3,6 +3,7 @@ package com.bf410.goaldaylocal.ui.main
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -212,6 +214,8 @@ fun OriginalMainScreen(
     var editingDate by remember { mutableStateOf<LocalDate?>(null) }
     // 清单详情（提升到主界面层以便系统返回拦截）
     var expandedBookId by rememberSaveable { mutableStateOf<String?>(null) }
+    // 日程条目编辑弹层（点/长按条目唤出：编辑标题/时间/移动/删除，对照原版 item_target_detail）
+    var editingEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
     // Tab 显隐（对照原版长按顶栏的 dialog_tab_manage，月默认隐藏）
     val mmkvStore = remember { MMKV.defaultMMKV() }
     var tabVisibility by remember {
@@ -221,12 +225,24 @@ fun OriginalMainScreen(
             },
         )
     }
+    // Tab 顺序（对照原版 dialog_tab_manage「按住拖动调整页面顺序」）
+    var tabOrder by remember {
+        val parsed = mmkvStore.decodeString("main_tab_order", null)
+            ?.split(",")?.mapNotNull { name -> MainSubTab.entries.firstOrNull { it.name == name.trim() } }
+        val valid = parsed
+            ?.takeIf { it.size == MainSubTab.entries.size && it.distinct().size == it.size }
+            ?: MainSubTab.entries.toList()
+        mutableStateOf(valid)
+    }
     var showTabManage by remember { mutableStateOf(false) }
 
-    // 系统返回：清单详情/行内编辑优先返回上一级，其余交给应用级返回
-    androidx.activity.compose.BackHandler(enabled = editingDate != null || expandedBookId != null) {
+    // 系统返回：清单详情/行内编辑/条目编辑优先返回上一级，其余交给应用级返回
+    androidx.activity.compose.BackHandler(
+        enabled = editingDate != null || expandedBookId != null || editingEntry != null,
+    ) {
         editingDate = null
         expandedBookId = null
+        editingEntry = null
     }
 
     LaunchedEffect(Unit) { bookViewModel.refreshSchedulePreview() }
@@ -246,8 +262,8 @@ fun OriginalMainScreen(
 
     var currentSubTab = MainSubTab.entries[subTabIndex.coerceIn(0, MainSubTab.entries.lastIndex)]
     if (tabVisibility[currentSubTab] == false) {
-        // 回退到第一个可见 Tab（当前 Tab 被隐藏时）
-        val firstVisible = MainSubTab.entries.firstOrNull { tabVisibility[it] == true } ?: MainSubTab.WEEK
+        // 回退到第一个可见 Tab（当前 Tab 被隐藏时，按用户自定顺序）
+        val firstVisible = tabOrder.firstOrNull { tabVisibility[it] == true } ?: MainSubTab.WEEK
         currentSubTab = firstVisible
         subTabIndex = firstVisible.ordinal
     }
@@ -266,6 +282,7 @@ fun OriginalMainScreen(
             onManageTabs = { showTabManage = true },
             onOpenSettings = onOpenSettings,
             tabVisibility = tabVisibility,
+            tabOrder = tabOrder,
         )
         Box(Modifier.fillMaxSize()) {
             when (currentSubTab) {
@@ -277,6 +294,7 @@ fun OriginalMainScreen(
                     onStartEdit = { editingDate = it },
                     onFinishEdit = { editingDate = null },
                     onSelectDate = { selectedDate = it },
+                    onEditEntry = { editingEntry = it },
                 )
                 MainSubTab.MONTH -> MonthScheduleView(
                     uiState = uiState,
@@ -287,6 +305,7 @@ fun OriginalMainScreen(
                         editingDate = null
                         subTabIndex = MainSubTab.WEEK.ordinal
                     },
+                    onEditEntry = { editingEntry = it },
                 )
                 MainSubTab.RECORD -> RecordDiaryView(
                     selectedDate = selectedDate,
@@ -294,6 +313,7 @@ fun OriginalMainScreen(
                 )
                 MainSubTab.LIST -> TopicListView(
                     uiState = uiState,
+                    viewModel = bookViewModel,
                     expandedBookId = expandedBookId,
                     onExpandBook = { expandedBookId = it },
                     onOpenBookShelf = onOpenBook,
@@ -307,12 +327,17 @@ fun OriginalMainScreen(
     if (showTabManage) {
         TabManageSheet(
             visibility = tabVisibility,
+            order = tabOrder,
             onToggle = { tab, visible ->
                 // 至少保留一个可见 Tab
                 if (visible || tabVisibility.count { it.value } > 1) {
                     tabVisibility = tabVisibility.toMutableMap().apply { put(tab, visible) }
                     mmkvStore.encode("main_tab_visible_" + tab.name, visible)
                 }
+            },
+            onReorder = { newOrder ->
+                tabOrder = newOrder
+                mmkvStore.encode("main_tab_order", newOrder.joinToString(",") { it.name })
             },
             onDismiss = { showTabManage = false },
         )
@@ -325,6 +350,14 @@ fun OriginalMainScreen(
                 subTabIndex = MainSubTab.WEEK.ordinal
             },
             onDismiss = { showWeekPicker = false },
+        )
+    }
+    editingEntry?.let { entry ->
+        EntryEditSheet(
+            entry = entry,
+            viewModel = bookViewModel,
+            allEntries = uiState.schedulePreviewEntries,
+            onDismiss = { editingEntry = null },
         )
     }
 }
@@ -342,6 +375,7 @@ private fun OriginalTopTabBar(
     onManageTabs: () -> Unit,
     onOpenSettings: () -> Unit,
     tabVisibility: Map<MainSubTab, Boolean>,
+    tabOrder: List<MainSubTab> = MainSubTab.entries.toList(),
 ) {
     Row(
         modifier = Modifier
@@ -368,7 +402,7 @@ private fun OriginalTopTabBar(
             }
             return@Row
         }
-        val visible = MainSubTab.entries.filter { tabVisibility[it] == true }
+        val visible = tabOrder.filter { tabVisibility[it] == true }
         visible.forEachIndexed { index, tabItem ->
             if (index > 0) TabDividerText()
             when (tabItem) {
@@ -430,6 +464,7 @@ private fun TabLabel(text: String, selected: Boolean, onClick: () -> Unit) {
 
 // region 周 Tab —— 左侧周日期列（任意天行内编辑）+ 右侧任务池
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun WeekScheduleView(
     uiState: BookUiState,
@@ -439,6 +474,7 @@ private fun WeekScheduleView(
     onStartEdit: (LocalDate) -> Unit,
     onFinishEdit: () -> Unit,
     onSelectDate: (LocalDate) -> Unit,
+    onEditEntry: (ScheduleEntry) -> Unit = {},
 ) {
     val today = LocalDate.now()
     val monday = selectedDate.with(DayOfWeek.MONDAY)
@@ -539,6 +575,11 @@ private fun WeekScheduleView(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .combinedClickable(
+                                            // 点/长按条目 → 编辑弹层（对照原版点条目出编辑底栏）
+                                            onClick = { onEditEntry(entry) },
+                                            onLongClick = { onEditEntry(entry) },
+                                        )
                                         .padding(vertical = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
@@ -580,7 +621,7 @@ private fun WeekScheduleView(
                                     }
                                     Spacer(Modifier.width(10.dp))
                                     Text(
-                                        entry.title,
+                                        (if (entry.timeText.isNotBlank()) entry.timeText + "  " else "") + entry.title,
                                         fontSize = 15.sp,
                                         lineHeight = 19.sp,
                                         color = GoaldayDesign.adaptiveInkPrimary,
@@ -698,7 +739,11 @@ private fun WeekScheduleView(
             }
             Spacer(Modifier.height(10.dp))
             LazyColumn(Modifier.weight(1f)) {
-                items(uiState.todayPlanItems, key = { it }) { poolItem ->
+            // 池 = 未排期库存：隐藏已出现在日程里的条目（排期后即离开池，
+            // 对照原版；syncEditableContent 会把今天日程回流进 todayPlanItems，这里滤掉）
+            val scheduledTitles = uiState.schedulePreviewEntries.map { it.title }.toSet()
+            val poolItems = uiState.todayPlanItems.filterNot { it in scheduledTitles }
+            items(poolItems, key = { it }) { poolItem ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -715,12 +760,15 @@ private fun WeekScheduleView(
                                     },
                                     onDragEnd = {
                                         val target = dropTarget
-                                        if (target != null && draggingItem != null) {
+                                        val item = draggingItem
+                                        if (target != null && item != null) {
                                             viewModel.addScheduleFromHandbook(
-                                                draggingItem!!,
+                                                item,
                                                 target.monthValue,
                                                 target.dayOfMonth,
                                             )
+                                            // 对照原版：排期后条目移出任务池
+                                            viewModel.removeHandbookPoolItem(item)
                                         }
                                         draggingItem = null
                                         dropTarget = null
@@ -737,6 +785,8 @@ private fun WeekScheduleView(
                                     selectedDate.monthValue,
                                     selectedDate.dayOfMonth,
                                 )
+                                // 对照原版：排期后条目移出任务池
+                                viewModel.removeHandbookPoolItem(poolItem)
                             }
                             .padding(horizontal = 14.dp, vertical = 9.dp),
                         verticalAlignment = Alignment.Top,
@@ -756,7 +806,7 @@ private fun WeekScheduleView(
                         )
                     }
                 }
-                if (uiState.todayPlanItems.isEmpty()) {
+                if (poolItems.isEmpty()) {
                     item {
                         Text(
                             "点击右上专题切换清单，点条目即可排入左侧选中日期",
@@ -1021,6 +1071,7 @@ private fun buildStructuredDiary(date: LocalDate, entries: List<ScheduleEntry>, 
 @Composable
 private fun TopicListView(
     uiState: BookUiState,
+    viewModel: BookViewModel,
     expandedBookId: String?,
     onExpandBook: (String?) -> Unit,
     onOpenBookShelf: () -> Unit,
@@ -1094,6 +1145,7 @@ private fun TopicListView(
                 TopicDetailSimple(
                     book = book,
                     store = store,
+                    viewModel = viewModel,
                     revision = revision,
                     onToggle = { revision++ },
                     onBack = { onExpandBook(null) },
@@ -1138,6 +1190,7 @@ private fun TopicListView(
 private fun TopicDetailSimple(
     book: TopicBook,
     store: LocalStateStore,
+    viewModel: BookViewModel,
     revision: Int,
     onToggle: () -> Unit,
     onBack: () -> Unit,
@@ -1180,13 +1233,25 @@ private fun TopicDetailSimple(
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
         ) {
-            itemsIndexed(page?.items ?: emptyList(), key = { _, item -> item }) { index, item ->
+            // key 带上 revision：勾选写入的是 MMKV（非 Compose 观测状态），
+            // revision 变化时换 key 强制重建 item，重读 isChecked 刷新勾选框
+            itemsIndexed(page?.items ?: emptyList(), key = { _, item -> "$revision-$item" }) { index, item ->
                 val checked = store.isChecked(book.id, page?.title ?: "", item)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
                             store.setChecked(book.id, page?.title ?: "", item, !checked)
+                            // 联动任务池：勾选进池（可拖去排期），取消勾选移出（同一 (bookId, 页题) 存储）
+                            if (page != null) {
+                                val pool = store.todayPlanItems(book.id, page.title)
+                                store.saveTodayPlanItems(
+                                    book.id,
+                                    page.title,
+                                    if (!checked) (pool + item).distinct() else pool.filterNot { it == item },
+                                )
+                                viewModel.refreshSchedulePreview()
+                            }
                             onToggle()
                         }
                         .padding(vertical = 14.dp),
@@ -1232,13 +1297,206 @@ private fun TopicDetailSimple(
 
 // endregion
 
+// region 日程条目编辑弹层（对照原版点条目的编辑底栏：标题/时间/状态/移动/删除）
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EntryEditSheet(
+    entry: ScheduleEntry,
+    viewModel: BookViewModel,
+    allEntries: List<ScheduleEntry>,
+    onDismiss: () -> Unit,
+) {
+    val entryDate = remember(entry.id) { LocalDate.of(entry.year, entry.month, entry.day) }
+    val weekDays = remember(entry.id) {
+        (0..6).map { entryDate.with(DayOfWeek.MONDAY).plusDays(it.toLong()) }
+    }
+    var title by remember(entry.id) { mutableStateOf(entry.title) }
+    var timeText by remember(entry.id) { mutableStateOf(entry.timeText) }
+    val dark = LocalGoaldayDarkMode.current
+    val fieldBg = if (dark) Color(0xFF35312B) else Color(0xFFFBF7F1)
+    val sheetState = rememberModalBottomSheetState()
+    val diaryStore = remember { LocalStateStore(MMKV.defaultMMKV()) }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = if (dark) Color(0xFF2C2722) else Color.White,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+            Text(
+                "${entryDate.monthValue}月${entryDate.dayOfMonth}日 · ${weekdayName(entryDate)}",
+                fontSize = 13.sp,
+                color = GoaldayDesign.adaptiveInkMuted,
+            )
+            Spacer(Modifier.height(10.dp))
+            // 标题
+            BasicTextField(
+                value = title,
+                onValueChange = { title = it },
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 16.sp, color = GoaldayDesign.adaptiveInkPrimary),
+                cursorBrush = SolidColor(TodayCoral),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(fieldBg)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+            )
+            Spacer(Modifier.height(8.dp))
+            // 时间（可选，如 09:30）
+            BasicTextField(
+                value = timeText,
+                onValueChange = { timeText = it },
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 15.sp, color = GoaldayDesign.adaptiveInkPrimary),
+                cursorBrush = SolidColor(TodayCoral),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(fieldBg)
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                decorationBox = { inner ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "⏰",
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(end = 8.dp),
+                        )
+                        Box {
+                            if (timeText.isEmpty()) {
+                                Text(
+                                    "时间（可选，如 09:30）",
+                                    fontSize = 15.sp,
+                                    color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.7f),
+                                )
+                            }
+                            inner()
+                        }
+                    }
+                },
+            )
+            Spacer(Modifier.height(12.dp))
+            // 移动到本周其他天
+            Text(
+                "移动到",
+                fontSize = 13.sp,
+                color = GoaldayDesign.adaptiveInkMuted,
+            )
+            Spacer(Modifier.height(6.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                weekDays.forEach { day ->
+                    val isCurrent = day == entryDate
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (isCurrent) TodayBlack else fieldBg,
+                            )
+                            .clickable(enabled = !isCurrent) {
+                                viewModel.moveScheduleDayFromHandbook(entry.id, day.monthValue, day.dayOfMonth)
+                                onDismiss()
+                            }
+                            .padding(vertical = 9.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            weekdayName(day).removePrefix("周"),
+                            fontSize = 13.sp,
+                            color = if (isCurrent) Color.White else GoaldayDesign.adaptiveInkPrimary,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // 状态切换
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(fieldBg)
+                        .clickable {
+                            viewModel.toggleScheduleCompletedFromHandbook(entry.id)
+                            onDismiss()
+                        }
+                        .padding(horizontal = 12.dp, vertical = 7.dp),
+                ) {
+                    Text(
+                        if (entry.completed) "标记未完成" else "标记完成",
+                        fontSize = 13.sp,
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                // 删除（红字，对照原版危险操作）
+                Text(
+                    "删除",
+                    fontSize = 15.sp,
+                    color = TodayCoral,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clickable {
+                            viewModel.deleteScheduleFromHandbook(entry.id)
+                            // 同步清理该日日记「今日完成」段（与勾选联动共用同一存储）
+                            val remaining = allEntries.filter {
+                                it.id != entry.id &&
+                                    it.year == entry.year && it.month == entry.month && it.day == entry.day
+                            }
+                            diaryStore.setDiaryText(
+                                DIARY_BOOK_ID,
+                                entryDate.toString(),
+                                buildStructuredDiary(
+                                    entryDate,
+                                    remaining,
+                                    diaryUserText(diaryStore, entryDate),
+                                    diaryImagePaths(diaryStore, entryDate),
+                                ),
+                            )
+                            onDismiss()
+                        }
+                        .padding(horizontal = 12.dp, vertical = 7.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                // 保存
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(TodayBlack)
+                        .clickable {
+                            if (title.trim().isNotBlank()) {
+                                viewModel.updateScheduleTitleFromHandbook(entry.id, title)
+                            }
+                            viewModel.updateScheduleTimeFromHandbook(entry.id, timeText)
+                            onDismiss()
+                        }
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                ) {
+                    Text("保存", fontSize = 14.sp, color = Color.White)
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+// endregion
+
 // region Tab 管理弹层（对照原版 dialog_tab_manage）
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TabManageSheet(
     visibility: Map<MainSubTab, Boolean>,
+    order: List<MainSubTab>,
     onToggle: (MainSubTab, Boolean) -> Unit,
+    onReorder: (List<MainSubTab>) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
@@ -1255,18 +1513,64 @@ private fun TabManageSheet(
                 color = GoaldayDesign.adaptiveInkMuted,
                 modifier = Modifier.padding(vertical = 6.dp),
             )
-            MainSubTab.entries.forEach { tab ->
+            var localOrder by remember { mutableStateOf(order) }
+            var draggingTab by remember { mutableStateOf<MainSubTab?>(null) }
+            val rowBounds = remember { androidx.compose.runtime.mutableStateMapOf<MainSubTab, Rect>() }
+            localOrder.forEach { tab ->
                 val visible = visibility[tab] == true
+                // key 按身份跟踪行：拖拽换位时 pointerInput 不因位置重组而销毁，
+                // 否则手势以 cancel 收场、onDragEnd 的保存不会执行
+                key(tab) {
                 Row(
-                    Modifier
+                    modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
+                        .onGloballyPositioned { rowBounds[tab] = it.boundsInWindow() }
+                        .alpha(if (draggingTab == tab) 0.4f else 1f)
                         .clip(RoundedCornerShape(10.dp))
                         .background(if (LocalGoaldayDarkMode.current) Color(0xFF35312B) else Color(0xFFFBF7F1))
+                        .pointerInput(tab) {
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = { draggingTab = tab },
+                                onDrag = { change, _ ->
+                                    change.consume()
+                                    val from = localOrder.indexOf(tab)
+                                    if (from < 0) return@detectDragGesturesAfterLongPress
+                                    val bounds = rowBounds[tab] ?: return@detectDragGesturesAfterLongPress
+                                    val pt = bounds.topLeft + change.position
+                                    val hit = rowBounds.entries
+                                        .firstOrNull { it.value.contains(pt) }?.key
+                                        ?: return@detectDragGesturesAfterLongPress
+                                    if (hit != tab) {
+                                        val to = localOrder.indexOf(hit)
+                                        if (to >= 0) {
+                                            localOrder = localOrder.toMutableList().apply {
+                                                add(to, removeAt(from))
+                                            }
+                                        }
+                                    }
+                                },
+                                onDragEnd = {
+                                    draggingTab = null
+                                    onReorder(localOrder)
+                                },
+                                onDragCancel = {
+                                    // 行重排可能中断手势：cancel 时同样落盘，避免顺序丢失
+                                    draggingTab = null
+                                    onReorder(localOrder)
+                                },
+                            )
+                        }
                         .clickable { onToggle(tab, !visible) }
                         .padding(horizontal = 16.dp, vertical = 15.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Text(
+                        "☰",
+                        fontSize = 14.sp,
+                        color = GoaldayDesign.adaptiveInkMuted,
+                        modifier = Modifier.padding(end = 10.dp),
+                    )
                     Text(
                         tab.label,
                         fontSize = 16.sp,
@@ -1279,6 +1583,7 @@ private fun TabManageSheet(
                         fontSize = 15.sp,
                     )
                 }
+                }
             }
             Spacer(Modifier.height(20.dp))
         }
@@ -1289,12 +1594,14 @@ private fun TabManageSheet(
 
 // region 月视图（原版月 Tab：整月日程滚动列表）
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun MonthScheduleView(
     uiState: BookUiState,
     viewModel: BookViewModel,
     selectedDate: LocalDate,
     onPickDay: (LocalDate) -> Unit = {},
+    onEditEntry: (ScheduleEntry) -> Unit = {},
 ) {
     val today = LocalDate.now()
     val monthDays = remember(selectedDate.withDayOfMonth(1)) {
@@ -1368,7 +1675,11 @@ private fun MonthScheduleView(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { viewModel.toggleScheduleCompletedFromHandbook(entry.id) }
+                                .combinedClickable(
+                                    // 月视图条目同样进编辑弹层（快速勾选走周视图圆形框）
+                                    onClick = { onEditEntry(entry) },
+                                    onLongClick = { onEditEntry(entry) },
+                                )
                                 .padding(vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
