@@ -58,6 +58,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.app.Activity
 import android.graphics.Rect
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.platform.LocalContext
 import android.os.Build
 import androidx.compose.ui.layout.positionInWindow
 import com.bf410.goaldaylocal.data.BookPage
@@ -94,6 +101,7 @@ fun DualPageBookView(
     uiState: BookUiState,
     viewModel: BookViewModel,
     onBack: () -> Unit = {},
+    onOpenDate: (LocalDate, Boolean) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current.density
@@ -124,6 +132,7 @@ fun DualPageBookView(
     val spreadDiaryDraft = remember(diaryDate) { diaryStore.diaryText(DiaryStoreBookId, diaryDate.toString()) }
     val nextDiaryDraft = remember(nextDiaryDate) { diaryStore.diaryText(DiaryStoreBookId, nextDiaryDate.toString()) }
 
+    var showBookShelf by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val progress = remember { Animatable(0f) }
     var turnDirection by remember { mutableStateOf<TurnDirection?>(null) }
@@ -177,6 +186,23 @@ fun DualPageBookView(
     val headerMonth = "${pairMonth}月"
     val shellColor = GoaldayDesign.BookBoardLight
     val shadowColor = Color(0xFFC5BBB6)
+    // 布纹贴图：取原版封面左上干净区域（无书脊线/年份字）
+    val context = LocalContext.current
+    val fabricImage = remember {
+        runCatching {
+            val src = android.graphics.BitmapFactory.decodeResource(
+                context.resources,
+                com.bf410.goaldaylocal.R.drawable.book_cover_fabric,
+            )
+            android.graphics.Bitmap.createBitmap(
+                src,
+                (src.width * 0.10f).toInt(),
+                (src.height * 0.06f).toInt(),
+                (src.width * 0.40f).toInt(),
+                (src.height * 0.35f).toInt(),
+            ).asImageBitmap()
+        }.getOrNull()
+    }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         val configuration = LocalConfiguration.current
@@ -222,7 +248,29 @@ fun DualPageBookView(
                         spotColor = shadowColor,
                     )
                     .clip(RoundedCornerShape(0.dp, 10.dp, 10.dp, 0.dp))
-                    .background(shellColor)
+                    .drawWithContent {
+                        // 书壳布纹：使用原版逆向提取的 book_cover_fabric 贴图平铺（避开左上书脊与年份字）
+                        fabricImage?.let { bmp ->
+                            val tileW = bmp.width
+                            val tileH = bmp.height
+                            var y = 0
+                            while (y < size.height.toInt()) {
+                                var x = 0
+                                while (x < size.width.toInt()) {
+                                    drawImage(
+                                        image = bmp,
+                                        srcOffset = IntOffset(0, 0),
+                                        srcSize = IntSize(tileW, tileH),
+                                        dstOffset = IntOffset(x, y),
+                                        dstSize = IntSize(tileW, tileH),
+                                    )
+                                    x += tileW
+                                }
+                                y += tileH
+                            }
+                        } ?: drawRect(shellColor)
+                        drawContent()
+                    }
                     .drawWithContent {
                         // 右侧书页厚度堆叠效果：模拟一本真实书的页缘
                         val stackWidth = 10.dp.toPx()
@@ -310,6 +358,7 @@ fun DualPageBookView(
                         isLeft = true,
                         progress = progress.value,
                         direction = turnDirection,
+                        onTap = { onOpenDate(weekStartDate, true) },
                         content = {
                             InBookSchedulePreview(
                                 modifier = Modifier.fillMaxSize(),
@@ -368,6 +417,7 @@ fun DualPageBookView(
                         isLeft = false,
                         progress = progress.value,
                         direction = turnDirection,
+                        onTap = { onOpenDate(diaryDate, false) },
                         content = {
                             InBookDiaryPreview(
                                 modifier = Modifier.fillMaxSize(),
@@ -429,6 +479,7 @@ fun DualPageBookView(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.clickableNoRipple { showBookShelf = true },
             ) {
                 Text(
                     text = "${spreadMonday.year}",
@@ -455,6 +506,101 @@ fun DualPageBookView(
                 )
             }
         }
+
+        // 书架底部弹层（对照原版 BookShelfBottomDialog：横排布纹封面选年份换书）
+        if (showBookShelf) {
+            BookShelfSheet(
+                fabricImage = fabricImage,
+                currentYear = spreadMonday.year,
+                onPickYear = { year ->
+                    val targetMonday = LocalDate.of(year, 1, 1)
+                        .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                    weekOffset = java.time.temporal.ChronoUnit.WEEKS
+                        .between(currentWeekMonday, targetMonday).toInt()
+                    showBookShelf = false
+                },
+                onDismiss = { showBookShelf = false },
+            )
+        }
+    }
+}
+
+/** 书架弹层：横排布纹封面 + 年份，点击切换到对应年份的书（对照原版截图） */
+@Composable
+private fun BookShelfSheet(
+    fabricImage: androidx.compose.ui.graphics.ImageBitmap?,
+    currentYear: Int,
+    onPickYear: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    androidx.compose.material3.Surface(color = Color.White) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 14.dp, bottom = 26.dp),
+        ) {
+            Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                Text(
+                    "书架",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GoaldayDesign.InkPrimary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                Text(
+                    "取消",
+                    fontSize = 15.sp,
+                    color = Color(0xFF3875F6),
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .clickableNoRipple { onDismiss() },
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
+                val years = listOf(currentYear, currentYear - 1, currentYear - 2, currentYear - 3).sortedDescending()
+                years.forEach { year ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(width = 58.dp, height = 84.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(GoaldayDesign.BookBoardLight)
+                                .clickableNoRipple { onPickYear(year) },
+                        ) {
+                            fabricImage?.let { bmp ->
+                                Image(
+                                    bitmap = bmp,
+                                    contentDescription = "${year}年封面",
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                    modifier = Modifier.matchParentSize(),
+                                )
+                            }
+                            Text(
+                                year.toString(),
+                                fontSize = 11.sp,
+                                color = Color(0xFF8B4A4A),
+                                modifier = Modifier.align(Alignment.Center),
+                            )
+                        }
+                        Text(
+                            year.toString(),
+                            fontSize = 14.sp,
+                            color = GoaldayDesign.InkPrimary,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -466,6 +612,7 @@ private fun HandbookPage(
     direction: TurnDirection?,
     content: @Composable () -> Unit,
     backContent: @Composable () -> Unit = {},
+    onTap: () -> Unit = {},
 ) {
     // 左页：左侧平、右侧圆；右页：左侧圆、右侧平
     val pageShape = RoundedCornerShape(
@@ -545,6 +692,14 @@ private fun HandbookPage(
                 .graphicsLayer { alpha = frontAlpha },
         ) {
             content()
+            if (onTap != {}) {
+                // 原版书页为 NoTouchConstraintLayout：点任意页面区域即跳转主界面
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .clickableNoRipple { onTap() },
+                )
+            }
         }
         // 背面内容：反方向再旋转 180°，翻到背面时正向可读
         Box(

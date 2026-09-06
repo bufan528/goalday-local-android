@@ -1066,6 +1066,15 @@ private fun BookDetailView(
                 uiState = uiState,
                 viewModel = viewModel,
                 onBack = onBackToLibrary,
+                onOpenDate = { date, isSchedule ->
+                    // 对照原版：点书页跳回主界面（日程页→周 Tab，日记页→记录 Tab）
+                    com.bf410.goaldaylocal.ui.main.MainUiBridge.go(
+                        date,
+                        if (isSchedule) com.bf410.goaldaylocal.ui.main.MainSubTab.WEEK
+                        else com.bf410.goaldaylocal.ui.main.MainSubTab.RECORD,
+                    )
+                    onBackToLibrary()
+                },
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
