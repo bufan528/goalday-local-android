@@ -247,8 +247,10 @@ fun OriginalMainScreen(
 
     var currentSubTab = MainSubTab.entries[subTabIndex.coerceIn(0, MainSubTab.entries.lastIndex)]
     if (tabVisibility[currentSubTab] == false) {
-        currentSubTab = MainSubTab.WEEK
-        subTabIndex = MainSubTab.WEEK.ordinal
+        // 回退到第一个可见 Tab（当前 Tab 被隐藏时）
+        val firstVisible = MainSubTab.entries.firstOrNull { tabVisibility[it] == true } ?: MainSubTab.WEEK
+        currentSubTab = firstVisible
+        subTabIndex = firstVisible.ordinal
     }
 
     Column(Modifier.fillMaxSize().background(MainContentBg)) {
@@ -302,8 +304,11 @@ fun OriginalMainScreen(
         TabManageSheet(
             visibility = tabVisibility,
             onToggle = { tab, visible ->
-                tabVisibility = tabVisibility.toMutableMap().apply { put(tab, visible) }
-                mmkvStore.encode("main_tab_visible_" + tab.name, visible)
+                // 至少保留一个可见 Tab
+                if (visible || tabVisibility.count { it.value } > 1) {
+                    tabVisibility = tabVisibility.toMutableMap().apply { put(tab, visible) }
+                    mmkvStore.encode("main_tab_visible_" + tab.name, visible)
+                }
             },
             onDismiss = { showTabManage = false },
         )

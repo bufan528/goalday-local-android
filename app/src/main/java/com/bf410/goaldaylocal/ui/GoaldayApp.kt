@@ -262,8 +262,8 @@ fun GoaldayApp(startTarget: String? = null) {
     }
 
     fun navigateBackInsideApp() {
-        // 书内点页/返回按钮触发的桥接优先消费
-        com.bf410.goaldaylocal.ui.main.MainUiBridge.consume()
+        // 注意：不能在这里 consume MainUiBridge——书内点页正是经由
+        // onBackToLibrary → 本函数回到主界面，桥接需由主界面消费
         if (tab != RootTab.MAIN) {
             tab = RootTab.MAIN
             bookSurface = BookRootSurface.HOME
