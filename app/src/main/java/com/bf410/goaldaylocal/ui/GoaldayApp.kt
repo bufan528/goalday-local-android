@@ -63,6 +63,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -179,6 +180,8 @@ fun GoaldayApp(startTarget: String? = null) {
         )
     }
     var calendarFocusDay by rememberSaveable { mutableStateOf<Int?>(null) }
+    // 主界面周选择器触发器：底部日历图标在 MAIN 下递增
+    var mainWeekPickerTick by remember { mutableIntStateOf(0) }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
     val calendarViewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory)
     val bookUiState by bookViewModel.uiState.collectAsState()
@@ -359,13 +362,18 @@ fun GoaldayApp(startTarget: String? = null) {
                     GoaldayBottomNavOriginal(
                         selected = tab,
                         onSelect = { item ->
-                            tab = item
-                            when (item) {
-                                RootTab.BOOK -> {
-                                    bookSurface = BookRootSurface.BOOK
-                                    bookEntryMode = BookEntryMode.HANDBOOK
+                            if (item == RootTab.CALENDAR && tab == RootTab.MAIN) {
+                                // 原版行为：主界面点日历图标 = 弹出周选择器，不切页
+                                mainWeekPickerTick++
+                            } else {
+                                tab = item
+                                when (item) {
+                                    RootTab.BOOK -> {
+                                        bookSurface = BookRootSurface.BOOK
+                                        bookEntryMode = BookEntryMode.HANDBOOK
+                                    }
+                                    else -> Unit
                                 }
-                                else -> Unit
                             }
                         },
                     )
@@ -466,6 +474,7 @@ fun GoaldayApp(startTarget: String? = null) {
                         }
                         RootTab.MAIN -> OriginalMainScreen(
                             bookViewModel = bookViewModel,
+                            openWeekPickerTick = mainWeekPickerTick,
                             onOpenBook = {
                                 tab = RootTab.BOOK
                                 bookSurface = BookRootSurface.BOOK

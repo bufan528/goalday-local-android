@@ -155,6 +155,7 @@ private val JOURNAL_PROMPTS = listOf(
 @Composable
 fun OriginalMainScreen(
     bookViewModel: BookViewModel,
+    openWeekPickerTick: Int = 0,
     onOpenBook: () -> Unit,
     onOpenInspiration: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -167,6 +168,9 @@ fun OriginalMainScreen(
     var editingDate by remember { mutableStateOf<LocalDate?>(null) }
 
     LaunchedEffect(Unit) { bookViewModel.refreshSchedulePreview() }
+    LaunchedEffect(openWeekPickerTick) {
+        if (openWeekPickerTick > 0) showWeekPicker = true
+    }
 
     val currentSubTab = MainSubTab.entries[subTabIndex.coerceIn(0, MainSubTab.entries.lastIndex)]
 
