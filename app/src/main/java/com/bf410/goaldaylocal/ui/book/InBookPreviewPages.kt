@@ -868,7 +868,7 @@ internal fun InBookDiaryPreview(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .padding(top = 5.dp, bottom = 30.dp, start = diaryMarginH, end = diaryMarginH),
+                .padding(top = 5.dp, bottom = 30.dp, start = diaryMarginH, end = diaryMarginH)
         ) {
             val contentScroll = if (handbookMode) Modifier else Modifier.verticalScroll(rememberScrollState())
             val moodItems = remember(diary.moodTags) {

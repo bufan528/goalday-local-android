@@ -89,3 +89,13 @@
 3. 原版周右栏列表尾部有行内新增（已对齐）。
 4. lottie goalday.json 仅用于 GuideActivity/CouponActivity，非完成庆祝——不接入。
 5. 原版月 Tab 顶栏切换后偶现不刷新（原版自身行为，不跟）。
+
+### 书右页内容区高度塌陷 bug（下轮优先定位，2026-09-06 实测数据）
+- 现象：InBookDiaryPreview 内容区 Box(weight(1f)) 实测 360x0（onSizeChanged），
+  同函数外层 Box 的日期标签 overlay 正常显示；卡片/今日完成块/prompt 全部不可见。
+  存量问题（右页历史上一直空白），与本轮日期模型改动无关。
+- 已验证：数据链正常（日志 done=1 rows=1 draftLen=31；scheduleEntries 传入正确）。
+- 线索：外层 Column(fillMaxSize)=402x1014 正常；内容 Box 是 Column A 内唯一活跃子项，
+  weight(1f) 却分到 0。怀疑 weight 作用域/嵌套结构误判，需用 Layout Inspector 或
+  在 weight Box 外再包一层 fillMaxHeight 实验定位。
+- 本轮已落地：右页日期=当天(diaryDate=today+weekOffset)、顶部月份标题跟随当天（9月✓）。

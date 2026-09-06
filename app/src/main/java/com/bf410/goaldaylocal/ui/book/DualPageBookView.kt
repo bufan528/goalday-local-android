@@ -120,12 +120,13 @@ fun DualPageBookView(
     val diaryIndex = book.pages.indexOfFirst { it is DiaryPage }.coerceAtLeast(0)
 
     val weekStartDate = spreadMonday
-    val diaryDate = spreadMonday
-    val pairMonth = spreadMonday.monthValue
+    // 右页日记=当天（对照原版实机书右页显示今天 6|周日 + 当天完成卡片），翻页按周平移
+    val diaryDate = today.plusWeeks(weekOffset.toLong())
+    val pairMonth = diaryDate.monthValue
 
-    // 翻页背面：左页背面 = 上一周日程，右页背面 = 下周周一日记
+    // 翻页背面：左页背面 = 上一周日程，右页背面 = 下周当天日记
     val prevWeekStartDate = spreadMonday.minusWeeks(1)
-    val nextDiaryDate = spreadMonday.plusWeeks(1)
+    val nextDiaryDate = diaryDate.plusWeeks(1)
 
     // 右页日记内容按日期读取（记录 Tab 与书内共用同一存储）
     val diaryStore = remember { com.bf410.goaldaylocal.data.LocalStateStore(com.tencent.mmkv.MMKV.defaultMMKV()) }
