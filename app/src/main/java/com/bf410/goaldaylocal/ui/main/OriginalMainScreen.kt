@@ -1,7 +1,6 @@
 package com.bf410.goaldaylocal.ui.main
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -283,6 +282,11 @@ fun OriginalMainScreen(
                     uiState = uiState,
                     viewModel = bookViewModel,
                     selectedDate = selectedDate,
+                    onPickDay = { picked ->
+                        selectedDate = picked
+                        editingDate = null
+                        subTabIndex = MainSubTab.WEEK.ordinal
+                    },
                 )
                 MainSubTab.RECORD -> RecordDiaryView(
                     selectedDate = selectedDate,
@@ -1290,6 +1294,7 @@ private fun MonthScheduleView(
     uiState: BookUiState,
     viewModel: BookViewModel,
     selectedDate: LocalDate,
+    onPickDay: (LocalDate) -> Unit = {},
 ) {
     val today = LocalDate.now()
     val monthDays = remember(selectedDate.withDayOfMonth(1)) {
@@ -1315,6 +1320,7 @@ private fun MonthScheduleView(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clickable { onPickDay(date) }
                     .drawBehind {
                         val stroke = 0.6.dp.toPx()
                         drawLine(
