@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Row
@@ -30,6 +32,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.EditNote
@@ -80,6 +83,7 @@ import com.bf410.goaldaylocal.ui.calendar.CalendarScreen
 import com.bf410.goaldaylocal.ui.calendar.CalendarViewModel
 import com.bf410.goaldaylocal.ui.home.HomeScreen
 import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
+import com.bf410.goaldaylocal.ui.main.OriginalMainScreen
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.LocalGoaldayDarkMode
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
@@ -120,6 +124,8 @@ private val goaldayDarkColorScheme = darkColorScheme(
 )
 
 private enum class RootTab(val label: String, val icon: ImageVector) {
+    // MAIN = 原版主界面（周|记录|清单 + 底部三图标导航），对照 com.first.goalday 1:1
+    MAIN("记录", Icons.Filled.Adjust),
     BOOK("手账", Icons.AutoMirrored.Filled.MenuBook),
     CALENDAR("日历", Icons.Filled.CalendarMonth),
     SETTINGS("设置", Icons.Filled.Settings),
@@ -146,7 +152,13 @@ private data class AppRoute(
 @Composable
 fun GoaldayApp(startTarget: String? = null) {
     var tab by rememberSaveable(startTarget) {
-        mutableStateOf(RootTab.BOOK)
+        mutableStateOf(
+            if (startTarget == START_TARGET_DIARY || startTarget == START_TARGET_HANDBOOK) {
+                RootTab.BOOK
+            } else {
+                RootTab.MAIN
+            }
+        )
     }
     var bookSurface by rememberSaveable(startTarget) {
         mutableStateOf(
@@ -314,10 +326,12 @@ fun GoaldayApp(startTarget: String? = null) {
         Scaffold(
             containerColor = if (isDark) GoaldayDesign.DarkAppBg else GoaldayDesign.AppBg,
             topBar = {
-                // P1-1：导航改为顶部文字 Tab（对照原版 FlexibleTabLayout：minHeight=49dp, 纯文字 18sp bold）
+                // 原版化导航：MAIN 自带 周|记录|清单 顶栏；其余界面保留旧顶部 Tab 作为次级导航
                 val immersiveBook = tab == RootTab.BOOK && bookSurface == BookRootSurface.BOOK && bookEntryMode != BookEntryMode.PLANNER
-                if (!immersiveBook) {
-                    val visibleTabs = tabConfigs.filter { it.visible }.map { it.tab }
+                if (!immersiveBook && tab != RootTab.MAIN) {
+                    val visibleTabs = tabConfigs
+                        .filter { it.visible && it.tab != RootTab.MAIN }
+                        .map { it.tab }
                     GoaldayTopTabBar(
                         selectedTab = tab,
                         tabs = visibleTabs,
@@ -330,10 +344,30 @@ fun GoaldayApp(startTarget: String? = null) {
                                         bookEntryMode = BookEntryMode.PLANNER
                                     }
                                     RootTab.CALENDAR, RootTab.SETTINGS -> Unit
+                                    RootTab.MAIN -> Unit
                                 }
                             }
                         },
                         onManage = { showTabManager = true },
+                    )
+                }
+            },
+            bottomBar = {
+                // 原版底部三图标导航：● 记录主页 / 日历 / 书本（沉浸式手账时隐藏）
+                val immersiveBook = tab == RootTab.BOOK && bookSurface == BookRootSurface.BOOK && bookEntryMode != BookEntryMode.PLANNER
+                if (!immersiveBook) {
+                    GoaldayBottomNavOriginal(
+                        selected = tab,
+                        onSelect = { item ->
+                            tab = item
+                            when (item) {
+                                RootTab.BOOK -> {
+                                    bookSurface = BookRootSurface.BOOK
+                                    bookEntryMode = BookEntryMode.HANDBOOK
+                                }
+                                else -> Unit
+                            }
+                        },
                     )
                 }
             },
@@ -430,6 +464,20 @@ fun GoaldayApp(startTarget: String? = null) {
                                 }
                             }
                         }
+                        RootTab.MAIN -> OriginalMainScreen(
+                            bookViewModel = bookViewModel,
+                            onOpenBook = {
+                                tab = RootTab.BOOK
+                                bookSurface = BookRootSurface.BOOK
+                                bookEntryMode = BookEntryMode.HANDBOOK
+                            },
+                            onOpenInspiration = {
+                                tab = RootTab.BOOK
+                                bookSurface = BookRootSurface.INSPIRATION
+                                bookEntryMode = BookEntryMode.PLANNER
+                            },
+                            onOpenSettings = { tab = RootTab.SETTINGS },
+                        )
                         RootTab.CALENDAR -> CalendarScreen(
                             viewModel = calendarViewModel,
                             focusDay = calendarFocusDay,
@@ -601,6 +649,45 @@ private fun BookRootSegmentChip(
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             maxLines = 1,
         )
+    }
+}
+
+// 原版底部三图标导航（对照原版主界面：● 记录 / 日历 / 书本，bg #E5DAD4，高 56dp）
+@Composable
+private fun GoaldayBottomNavOriginal(
+    selected: RootTab,
+    onSelect: (RootTab) -> Unit,
+) {
+    val items = listOf(
+        RootTab.MAIN to Icons.Filled.Adjust,
+        RootTab.CALENDAR to Icons.Filled.CalendarMonth,
+        RootTab.BOOK to Icons.AutoMirrored.Filled.MenuBook,
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (LocalGoaldayDarkMode.current) GoaldayDesign.DarkSurface else GoaldayDesign.TabBarBg)
+            .navigationBarsPadding()
+            .height(56.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        items.forEach { (item, icon) ->
+            val active = selected == item
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clickable { onSelect(item) },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = item.label,
+                    tint = if (active) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
+                    modifier = Modifier.size(26.dp),
+                )
+            }
+        }
     }
 }
 
