@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.graphicsLayer
@@ -799,6 +800,8 @@ internal fun InBookDiaryPreview(
     // 书内双页展开模式：右页顶部显示 day | weekday
     diaryDate: java.time.LocalDate? = null,
     onAddImage: () -> Unit = {},
+    // 当天日程（用于右页顶部渲染今日完成橙卡片，对照原版书右页）
+    scheduleEntries: List<ScheduleEntry> = emptyList(),
 ) {
     // HANDBOOK 模式下外部已应用 turningPageTransform 3D 翻页，内容应贴在页面上随页转动。
     val eased = turnProgress * turnProgress * (3f - 2f * turnProgress)
@@ -910,6 +913,48 @@ internal fun InBookDiaryPreview(
                     .then(contentScroll),
                 verticalArrangement = Arrangement.spacedBy(5.dp),
             ) {
+                // 今日完成卡片（对照原版书右页：当天完成的日程以橙红渐变卡片置顶）
+                val doneEntries = if (diaryDate != null) {
+                    scheduleEntries.filter {
+                        it.completed &&
+                            it.year == diaryDate.year &&
+                            it.month == diaryDate.monthValue &&
+                            it.day == diaryDate.dayOfMonth
+                    }
+                } else {
+                    emptyList()
+                }
+                doneEntries.forEach { doneEntry ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(GoaldayDesign.Pink, Color(0xFFF66061)),
+                                ),
+                            )
+                            .padding(horizontal = 11.dp, vertical = 9.dp),
+                    ) {
+                        Column {
+                            Text(
+                                doneEntry.title,
+                                fontSize = 13.sp,
+                                lineHeight = 17.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White,
+                            )
+                            if (doneEntry.note.isNotBlank()) {
+                                Text(
+                                    "@" + doneEntry.note,
+                                    fontSize = 10.sp,
+                                    lineHeight = 13.sp,
+                                    color = Color.White.copy(alpha = 0.75f),
+                                )
+                            }
+                        }
+                    }
+                }
                 // 心情标签：对照 fragment_diary_inbook.xml 顶部标签行
                 if (moodItems.isNotEmpty()) {
                     Text(
