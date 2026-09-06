@@ -661,27 +661,32 @@ private fun HandbookPage(
             .background(Color.White)
             .drawWithContent {
                 drawContent()
-                // 页面右侧极淡厚度阴影，模拟纸张边缘（仅非旋转态显示）
                 if (rotationY == 0f) {
-                    val shadowWidth = 6.dp.toPx()
+                    // 书脊侧弯入阴影：宽 12dp，贴近中缝处最深（对照原版页面弯入装订处）
+                    val spineWidth = 12.dp.toPx()
                     drawRect(
                         brush = Brush.horizontalGradient(
                             colors = listOf(
                                 Color(0xFFC5BBB6).copy(alpha = 0f),
-                                Color(0xFFC5BBB6).copy(alpha = 0.08f),
+                                Color(0xFFC5BBB6).copy(alpha = 0.14f),
                             ),
-                            startX = if (isLeft) size.width - shadowWidth else 0f,
-                            endX = if (isLeft) size.width else shadowWidth,
+                            startX = if (isLeft) size.width - spineWidth else 0f,
+                            endX = if (isLeft) size.width else spineWidth,
                         ),
-                        size = Size(
-                            width = shadowWidth,
-                            height = size.height,
-                        ),
-                        topLeft = Offset(
-                            x = if (isLeft) size.width - shadowWidth else 0f,
-                            y = 0f,
-                        ),
+                        size = Size(width = spineWidth, height = size.height),
+                        topLeft = Offset(x = if (isLeft) size.width - spineWidth else 0f, y = 0f),
                     )
+                    // 外侧书口：多层细线模拟纸页厚度堆叠
+                    val stackWidth = 4.dp.toPx()
+                    for (i in 0 until 3) {
+                        val x = if (isLeft) i * stackWidth / 3 else size.width - stackWidth + (i * stackWidth / 3)
+                        drawLine(
+                            color = Color(0xFFC5BBB6).copy(alpha = 0.10f + i * 0.04f),
+                            start = Offset(x, 0f),
+                            end = Offset(x, size.height),
+                            strokeWidth = 0.8f,
+                        )
+                    }
                 }
             },
     ) {
