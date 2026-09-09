@@ -9,6 +9,7 @@ class GoaldayApplication : Application() {
         super.onCreate()
         appContext = applicationContext
         MMKV.initialize(this)
+        com.first.goalday.basemodule.utils.FontUtils.init()
     }
 
     companion object {

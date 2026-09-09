@@ -375,6 +375,10 @@ fun GoaldayApp(startTarget: String? = null) {
                             if (item == RootTab.CALENDAR && tab == RootTab.MAIN) {
                                 // 原版行为：主界面点日历图标 = 弹出周选择器，不切页
                                 mainWeekPickerTick++
+                            } else if (item == RootTab.MAIN && tab == RootTab.MAIN) {
+                                // 原版行为：再点已选中的首页图标 = 打开设置页
+                                // （对照 MainTabFragment TabInfo.action + FlexibleTabContainer.selectTab）
+                                tab = RootTab.SETTINGS
                             } else {
                                 tab = item
                                 when (item) {

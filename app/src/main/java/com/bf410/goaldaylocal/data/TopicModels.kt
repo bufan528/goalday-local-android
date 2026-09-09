@@ -8,6 +8,8 @@ data class TopicBook(
     val subtitle: String,
     val color: Color,
     val pages: List<BookPage>,
+    /** 是否关联到周视图右栏（对照原版 target_topic.linkToSchedule：关联=方形点，否则圆点） */
+    val linkedToSchedule: Boolean = false,
 )
 
 data class TargetItemMeta(

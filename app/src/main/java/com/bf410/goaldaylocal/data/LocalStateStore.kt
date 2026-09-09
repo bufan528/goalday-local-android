@@ -269,6 +269,7 @@ class LocalStateStore(
                         subtitle = item.optString("subtitle"),
                         color = Color(item.optInt("color", 0xFFF2C0A5.toInt())),
                         pages = decodePages(item.optJSONArray("pages") ?: JSONArray()),
+                        linkedToSchedule = item.optBoolean("linked", false),
                     )
                 }.getOrNull()?.let(::add)
             }
@@ -284,13 +285,14 @@ class LocalStateStore(
                     .put("title", book.title)
                     .put("subtitle", book.subtitle)
                     .put("color", book.color.toArgbCompat())
-                    .put("pages", encodePages(book.pages)),
+                    .put("pages", encodePages(book.pages))
+                    .put("linked", book.linkedToSchedule),
             )
         }
         mmkv.encode(KEY_CUSTOM_BOOKS, array.toString())
     }
 
-    fun addCustomBook(title: String, subtitle: String, color: Color): TopicBook {
+    fun addCustomBook(title: String, subtitle: String, color: Color, linkedToSchedule: Boolean = false): TopicBook {
         val book = TopicBook(
             id = "custom_${UUID.randomUUID()}",
             title = title,
@@ -302,6 +304,7 @@ class LocalStateStore(
                 SchedulePage("日程页", emptyList()),
                 DiaryPage("日记页", "写下这本书今天最重要的一条记录。"),
             ),
+            linkedToSchedule = linkedToSchedule,
         )
         saveCustomBooks(customBooks() + book)
         return book

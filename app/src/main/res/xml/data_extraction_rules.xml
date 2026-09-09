@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
-    <cloud-backup>
-        <include domain="file" path="mmkv/." />
-        <include domain="external" path="backups/." />
-    </cloud-backup>
-    <device-transfer>
-        <include domain="file" path="mmkv/." />
-    </device-transfer>
+    <cloud-backup />
 </data-extraction-rules>
