@@ -6,8 +6,10 @@
 *.iml
 local.properties
 
-# Android SDK and reverse engineering assets (large directories)
+# Android SDK
 /android-sdk/
+
+# Reverse engineering artifacts (stays local only)
 /reverse_root/
 /apk_dec*/
 /reverse-assets/
@@ -16,6 +18,12 @@ local.properties
 /.superpowers/
 /.worktrees/
 /__pycache__/
+/Goalday/
+/orig_res/
+/reference_assets/
+/port_ref/
+/dumped_dex/
+/apk_unpacked*/
 
 # APK files and signatures
 *.apk
@@ -26,23 +34,23 @@ local.properties
 *.jar
 frida-gadget*.so
 
-# Scripts
+# Temp scripts and logs
 *.js
 *.bat
 *.c
+*.err
+*.log
+*.py
+*.raw
+*.ps1
+*.idsig
+apk_*/
 
-# Reference files
-docs/reference-apk/
+# Reference docs and screenshots (local only)
+docs/
 goalday_orig.apk
 ref.apk
 ref.zip
-
-# Temporary files
-*.txt
-*.zip
-*.log
-*.py
-apk_*/
 
 # Kotlin cache
 .kotlin/
@@ -50,11 +58,25 @@ apk_*/
 # Debug keys
 debug.keystore
 
-# Docs (reference materials)
-docs/superpowers/plans/
-
-# Test screenshots / UI dumps / screen recordings (root only)
+# UI dumps and screenshots (root level)
 /*.png
 /*.mp4
 /*.xml
+/*.raw
 /4
+
+# Reverse-engineered code migrated from decompiled source
+app/src/main/java/com/first/
+app/src/main/java/com/chauthai/
+app/src/main/java/com/kyleduo/
+
+# Seed data
+app/src/main/assets/seed/
+
+# Loose root-level scripts and temp files
+/*.json
+push_result.txt
+screen_now.raw
+build5.err
+build7.err
+gadget_config.json
