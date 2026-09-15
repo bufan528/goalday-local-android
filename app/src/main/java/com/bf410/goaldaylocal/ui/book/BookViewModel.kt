@@ -173,15 +173,36 @@ class BookViewModel(
         addItemToSchedule(trimmed, today.dayOfMonth)
     }
 
-    /** 清单侧栏尾部新增条目：只加入清单，不自动排期（对照原版清单行为） */
+    /** 清单侧栏尾部新增条目：只加入清单，不自动排期（对照原版清单行为）。
+     *  存储键固定为书内第一个 TargetPage，与主屏清单池的读取键一致；不能依赖 currentPage，当前页停在哪页都有可能。 */
     fun addListPageItem(text: String) {
-        if (!supportsCustomItems()) return
         val trimmed = text.trim()
         if (trimmed.isBlank()) return
-        val page = currentBook().pages.filterIsInstance<TargetPage>().firstOrNull() ?: return
         val book = currentBook()
+        val page = book.pages.filterIsInstance<TargetPage>().firstOrNull() ?: return
         val updated = (store.customPageItems(book.id, page.title) + trimmed).distinct()
         store.saveCustomPageItems(book.id, page.title, updated)
+        _uiState.update { it.copy(checkedRevision = it.checkedRevision + 1L) }
+        syncEditableContent()
+    }
+
+    /** 主屏清单池删除自定义条目：与 addListPageItem 同键（书内第一个 TargetPage）。
+     *  不能走 removeCustomPageItem（currentPage 作键），否则删除会写进别的页，池里条目永远不消失。 */
+    fun removeListPageItem(item: String) {
+        val normalized = item.trim()
+        if (normalized.isBlank()) return
+        val book = currentBook()
+        val page = book.pages.filterIsInstance<TargetPage>().firstOrNull() ?: return
+        store.saveCustomPageItems(book.id, page.title, removeExactItem(store.customPageItems(book.id, page.title), normalized))
+        store.saveTodayPlanItems(book.id, page.title, removeExactItem(store.todayPlanItems(book.id, page.title), normalized))
+        store.saveTodayCompletedItems(book.id, page.title, removeExactItem(store.todayCompletedItems(book.id, page.title), normalized))
+        store.setChecked(book.id, page.title, normalized, false)
+        store.setTargetItemMeta(book.id, page.title, normalized, TargetItemMeta())
+        val cleanedSchedules = scheduleRepository.entries().filterNot { entry ->
+            entry.title == normalized && entry.note == book.title
+        }
+        scheduleRepository.saveEntries(cleanedSchedules)
+        _uiState.update { it.copy(checkedRevision = it.checkedRevision + 1L) }
         syncEditableContent()
     }
 

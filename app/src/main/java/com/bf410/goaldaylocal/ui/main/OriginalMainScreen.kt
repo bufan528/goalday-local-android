@@ -1106,7 +1106,10 @@ items(listItems, key = { it }) { poolItem ->
                                             },
                                             onDrag = { change, _ ->
                                                 change.consume()
-                                                dragFingerWindow += change.positionChange()
+                                                // 用绝对坐标（Box 原点+指针位置）反推窗口坐标；
+                                                // 不能在 consume() 之后读 positionChange()（会恒为 Zero，浮条不跟手）
+                                                val origin = poolItemOrigins[poolItem] ?: poolOrigin
+                                                dragFingerWindow = Offset(origin.x + change.position.x, origin.y + change.position.y)
                                                 dropTarget = rowBounds.entries
                                                     .firstOrNull { it.value.contains(dragFingerWindow) }
                                                     ?.let { LocalDate.ofEpochDay(it.key) }
@@ -1141,7 +1144,7 @@ items(listItems, key = { it }) { poolItem ->
                                         .background(Color(0xFFED8888), RoundedCornerShape(8.dp))
                                         .clickable {
                                             InteractionFeedback.click(dragContext)
-                                            viewModel.removeCustomPageItem(poolItem)
+                                            viewModel.removeListPageItem(poolItem)
                                         },
                                     contentAlignment = Alignment.Center,
                                 ) {
