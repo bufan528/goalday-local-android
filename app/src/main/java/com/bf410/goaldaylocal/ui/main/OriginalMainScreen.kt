@@ -740,9 +740,9 @@ private fun WeekScheduleView(
                         .padding(start = 0.dp, top = 5.dp, end = 12.dp, bottom = 5.dp),
                 ) {
                     Row(verticalAlignment = Alignment.Top) {
-                        // 日期列：43dp 宽（原版真机 fl_day_1 实测 113px/2.625）；今天 = 37×75dp 黑底圆角白字
+                        // 日期列：24.5dp 宽（原版真机 fl_day_1 实测 64px/2.625）；今天 = 37×75dp 黑底圆角白字
                         Column(
-                            modifier = Modifier.width(43.dp),
+                            modifier = Modifier.width(24.5.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Column(
@@ -782,12 +782,12 @@ private fun WeekScheduleView(
                             }
                         }
                         Spacer(Modifier.width(4.dp))
-                        // 日程区：固定模式=原版 2×3 槽（槽高 27dp=71px 真机实测）；自适应模式=行数随内容增长
+                        // 日程区：固定模式=原版 2×3 槽（槽高 37dp=98px 真机实测）；自适应模式=行数随内容增长
                         val editingSlot = if (isEditing) entries.size else -1
                         val renderCell: @Composable (Int, Boolean) -> Unit = { slotIndex, fixed ->
                             val entry = entries.getOrNull(slotIndex)
                             Box(
-                                modifier = if (fixed) Modifier.height(27.dp) else Modifier.heightIn(min = 33.dp),
+                                modifier = if (fixed) Modifier.height(37.dp) else Modifier.heightIn(min = 37.dp),
                                 contentAlignment = Alignment.CenterStart,
                             ) {
                                 when {
