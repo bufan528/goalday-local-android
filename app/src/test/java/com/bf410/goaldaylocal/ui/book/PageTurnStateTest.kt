@@ -93,9 +93,14 @@ class PageTurnStateTest {
 
     @Test
     fun visual_progress_emphasizes_late_turn_more_than_linear_progress() {
-        val visual = visualTurnProgress(0.7f)
+        val visual = TurnProfile.DEFAULT.visualProgress(0.7f)
 
         assertTrue(visual > 0.7f)
+    }
+
+    @Test
+    fun handbook_linear_visual_progress_matches_raw_progress() {
+        assertEquals(0.7f, TurnProfile.HANDBOOK.visualProgress(0.7f), 0.0001f)
     }
 
     @Test
@@ -126,13 +131,13 @@ class PageTurnStateTest {
 
     @Test
     fun handbook_drag_turn_starts_only_from_page_edges() {
+        // 窄热区（edgeRatio<0.5）：中央按下不翻，边缘按下才按方向翻
         val centerDrag = resolveDragTurnDirection(
             profile = TurnProfile.HANDBOOK,
             dragStartX = 200f,
             pageWidthPx = 400f,
             dragAmountPx = -80f,
             edgeGestureRatio = 0.28f,
-            dragStartThreshold = 0.28f,
         )
         val edgeDrag = resolveDragTurnDirection(
             profile = TurnProfile.HANDBOOK,
@@ -140,11 +145,29 @@ class PageTurnStateTest {
             pageWidthPx = 400f,
             dragAmountPx = -80f,
             edgeGestureRatio = 0.28f,
-            dragStartThreshold = 0.28f,
+        )
+        val prevEdgeDrag = resolveDragTurnDirection(
+            profile = TurnProfile.DEFAULT,
+            dragStartX = 10f,
+            pageWidthPx = 400f,
+            dragAmountPx = 80f,
         )
 
         assertEquals(null, centerDrag)
         assertEquals(TurnDirection.NEXT, edgeDrag)
+        assertEquals(TurnDirection.PREVIOUS, prevEdgeDrag)
+    }
+
+    @Test
+    fun handbook_full_width_gesture_turns_by_drag_direction() {
+        assertEquals(
+            TurnDirection.NEXT,
+            resolveDragTurnDirection(TurnProfile.HANDBOOK, 200f, 400f, -80f),
+        )
+        assertEquals(
+            TurnDirection.PREVIOUS,
+            resolveDragTurnDirection(TurnProfile.HANDBOOK, 200f, 400f, 80f),
+        )
     }
 
     @Test
@@ -171,8 +194,9 @@ class PageTurnStateTest {
 
     @Test
     fun handbook_turn_pivots_from_spine_not_outer_book_edge() {
-        assertEquals(0.5f, turnTransformOriginX(TurnProfile.HANDBOOK, TurnDirection.NEXT), 0.0001f)
-        assertEquals(0.5f, turnTransformOriginX(TurnProfile.HANDBOOK, TurnDirection.PREVIOUS), 0.0001f)
+        // 对照原版 RenderPages：全部 TransformOrigin(0, 0.5f) 绕书脊
+        assertEquals(0f, turnTransformOriginX(TurnProfile.HANDBOOK, TurnDirection.NEXT), 0.0001f)
+        assertEquals(0f, turnTransformOriginX(TurnProfile.HANDBOOK, TurnDirection.PREVIOUS), 0.0001f)
         assertEquals(0f, turnTransformOriginX(TurnProfile.DEFAULT, TurnDirection.NEXT), 0.0001f)
         assertEquals(1f, turnTransformOriginX(TurnProfile.DEFAULT, TurnDirection.PREVIOUS), 0.0001f)
     }

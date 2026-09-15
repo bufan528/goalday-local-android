@@ -259,6 +259,31 @@ fun updatedTurnProgress(
 fun turnTransformOriginX(profile: TurnProfile, direction: TurnDirection?): Float =
     profile.transformOriginX(direction)
 
+/**
+ * 拖拽起始方向判定（对照 PageTurnEngine.detectEdgePageTurnGestures 的启动逻辑）：
+ * 全宽热区（edgeRatio>=0.5，手账）按拖动方向；边缘热区按落点是否在左右边缘内。
+ */
+fun resolveDragTurnDirection(
+    profile: TurnProfile = TurnProfile.DEFAULT,
+    dragStartX: Float,
+    pageWidthPx: Float,
+    dragAmountPx: Float,
+    edgeGestureRatio: Float = profile.edgeGestureRatio,
+): TurnDirection? {
+    val safeWidth = pageWidthPx.coerceAtLeast(1f)
+    if (dragAmountPx == 0f) return null
+    if (edgeGestureRatio >= 0.5f) {
+        return if (dragAmountPx < 0f) TurnDirection.NEXT else TurnDirection.PREVIOUS
+    }
+    val edgePx = safeWidth * edgeGestureRatio.coerceIn(0.05f, 0.45f)
+    val wantNext = dragAmountPx < 0f
+    return when {
+        wantNext && dragStartX >= safeWidth - edgePx -> TurnDirection.NEXT
+        !wantNext && dragStartX <= edgePx -> TurnDirection.PREVIOUS
+        else -> null
+    }
+}
+
 fun destinationRevealAlpha(progress: Float, profile: TurnProfile = TurnProfile.DEFAULT): Float {
     val emphasized = profile.visualProgress(progress).coerceIn(0f, 1f)
     return (0.05f + emphasized * 0.95f).coerceIn(0.05f, 1f)

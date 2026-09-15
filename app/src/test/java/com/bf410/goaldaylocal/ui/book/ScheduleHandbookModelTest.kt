@@ -48,7 +48,7 @@ class ScheduleHandbookModelTest {
     }
 
     @Test
-    fun window_start_is_clamped_to_month_end() {
+    fun window_renders_full_month_days() {
         val model = buildScheduleHandbookModel(
             page = SchedulePage("2月日程", emptyList()),
             scheduleEntries = listOf(entry("a", "月末任务", 2026, 2, 28)),
@@ -58,9 +58,10 @@ class ScheduleHandbookModelTest {
             today = LocalDate.of(2026, 6, 28),
         )
 
-        assertEquals(25, model.windowStart)
-        assertEquals(listOf(26, 27, 28), model.visibleDays)
-        assertEquals("26-28日", model.visibleRangeLabel)
+        // 对照原版 RecyclerView 一次渲染整月：窗口即整月，不再裁三天（锚定today=6月，30天）
+        assertEquals(0, model.windowStart)
+        assertEquals((1..30).toList(), model.visibleDays)
+        assertEquals("1-30日", model.visibleRangeLabel)
     }
 
     @Test
