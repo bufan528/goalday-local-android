@@ -792,31 +792,11 @@ private fun WeekScheduleView(
                             ) {
                                 when {
                                     entry != null -> {
-                                        SwipeableActionsRow(
-                                            onContentClick = { onEditEntry(entry) },
-                                            onContentLongClick = { onEditEntry(entry) },
-                                            actions = listOf(
-                                                SwipeAction("编辑", Color(0xFF252525), Icons.Filled.Edit, iconRes = com.bf410.goaldaylocal.R.drawable.plan_edit) {
-                                                    onEditEntry(entry)
-                                                },
-                                                SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete, iconRes = com.bf410.goaldaylocal.R.drawable.plan_trash) {
-                                                    InteractionFeedback.click(context)
-                                                    InteractionFeedback.haptic(context)
-                                                    viewModel.deleteScheduleFromHandbook(entry.id)
-                                                    // 同步清理该日日记「今日完成」段（与编辑弹层删除一致）
-                                                    val remaining = entries.filterNot { it.id == entry.id }
-                                                    diaryStore.setDiaryText(
-                                                        DIARY_BOOK_ID,
-                                                        date.toString(),
-                                                        buildStructuredDiary(
-                                                            date,
-                                                            remaining,
-                                                            diaryUserText(diaryStore, date),
-                                                            diaryImagePaths(diaryStore, date),
-                                                        ),
-                                                    )
-                                                },
-                                            ),
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable { onEditEntry(entry) },
+                                            verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             // 勾选框：○ 未完成 / 橙底白勾 完成（对照原版 #F79941 实心勾）
                                             Box(
@@ -835,7 +815,6 @@ private fun WeekScheduleView(
                                                         InteractionFeedback.click(context)
                                                         InteractionFeedback.haptic(context, 30L)
                                                         viewModel.toggleScheduleCompletedFromHandbook(entry.id)
-                                                        // 同步记录 Tab 日记的「今日完成」段（对照原版自动记录完成事项）
                                                         val flipped = entries.map {
                                                             if (it.id == entry.id) it.copy(completed = !it.completed) else it
                                                         }
@@ -1059,123 +1038,121 @@ private fun WeekScheduleView(
                 } else {
                     uiState.todayPlanItems
                 }
-                items(listItems, key = { it }) { poolItem ->
-                    val itemChecked = targetPage != null && viewModel.isChecked(targetPage.title, poolItem)
-                    // 自定义条目可左滑删除（对照原版清空文本即删；基种条目保留）
-                    val isCustomPoolItem = targetPage != null && currentBook != null &&
-                        diaryStore.customPageItems(currentBook.id, targetPage.title).contains(poolItem)
-                    // 行内：勾选框/圆点 + 文字（两分支共用）
-                    val poolInner: @Composable RowScope.() -> Unit = {
-                        if (itemChecked) {
-                            // 完成条目：橙勾框 + 灰字删除线（对照原版）
-                            Box(
-                                modifier = Modifier
-                                    .size(17.dp)
-                                    .border(1.6.dp, Color.Transparent, RoundedCornerShape(4.dp))
-                                    .background(GoaldayDesign.Pink, RoundedCornerShape(4.dp)),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text("✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                            }
-                        } else {
-                            // 对照原版真机：条目圆点 5dp 跟清单颜色（v_dot 13px），文字单行截断
-                            Box(
-                                Modifier
-                                    .padding(top = 5.dp)
-                                    .size(5.dp)
-                                    .background(currentBook?.color ?: PoolBullet),
-                            )
-                        }
-                        Spacer(Modifier.width(10.dp))
-                        Text(
-                            poolItem,
-                            fontSize = 16.sp,
-                            lineHeight = 20.sp,
-                            color = if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
-                            textDecoration = if (itemChecked) TextDecoration.LineThrough else TextDecoration.None,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    // 长按拖拽手势：对照原版startDragAndDrop+TargetDragShadowBuilder跟手灰影；
-                    // 手指窗口坐标=行窗口原点+触点行内偏移，移动累加positionChange保证跟手。
-                    val dragMod = Modifier
-                        .fillMaxWidth()
-                        .alpha(if (draggingItem == poolItem) 0.35f else 1f)
-                        .onGloballyPositioned { poolItemOrigins[poolItem] = it.boundsInWindow().topLeft }
-                        .pointerInput(poolItem) {
-                            detectDragGesturesAfterLongPress(
-                                onDragStart = { touch ->
-                                    draggingItem = poolItem
-                                    dragFingerWindow = (poolItemOrigins[poolItem] ?: poolOrigin) + touch
-                                    // 拖起时短震（对照原版拖拽触感）
-                                    InteractionFeedback.haptic(context)
-                                },
-                                onDrag = { change, _ ->
-                                    change.consume()
-                                    dragFingerWindow += change.positionChange()
-                                    dropTarget = rowBounds.entries
-                                        .firstOrNull { it.value.contains(dragFingerWindow) }
-                                        ?.let { LocalDate.ofEpochDay(it.key) }
-                                },
-                                onDragEnd = {
-                                    val target = dropTarget
-                                    val item = draggingItem
-                                    if (target != null && item != null) {
-                                        InteractionFeedback.click(context)
-                                        viewModel.addScheduleFromHandbook(
-                                            item,
-                                            target.monthValue,
-                                            target.dayOfMonth,
-                                        )
-                                    }
-                                    draggingItem = null
-                                    dropTarget = null
-                                },
-                                onDragCancel = {
-                                    draggingItem = null
-                                    dropTarget = null
-                                },
-                            )
-                        }
-                    val addPoolToSchedule = {
-                        InteractionFeedback.click(context)
-                        viewModel.addScheduleFromHandbook(
-                            poolItem,
-                            selectedDate.monthValue,
-                            selectedDate.dayOfMonth,
-                        )
-                    }
-                    // 池行不套左滑（会抢长按拖拽手势致拖不动）；自定义条目行尾挂红底trash直删
-                    Row(
-                        modifier = dragMod
-                            .clickable(onClick = addPoolToSchedule)
-                            .padding(horizontal = 14.dp, vertical = 9.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        poolInner()
-                        if (isCustomPoolItem) {
-                            Spacer(Modifier.width(8.dp))
-                            Box(
-                                Modifier
-                                    .size(28.dp)
-                                    .background(Color(0xFFED8888), RoundedCornerShape(7.dp))
-                                    .clickable {
-                                        InteractionFeedback.click(context)
-                                        viewModel.removeCustomPageItem(poolItem)
-                                    },
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Image(
-                                    painter = painterResource(com.bf410.goaldaylocal.R.drawable.plan_trash),
-                                    contentDescription = "删除",
-                                    modifier = Modifier.width(15.dp),
-                                    contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+items(listItems, key = { it }) { poolItem ->
+                        val itemChecked = targetPage != null && viewModel.isChecked(targetPage.title, poolItem)
+                        val isCustomPoolItem = targetPage != null && currentBook != null &&
+                            diaryStore.customPageItems(currentBook.id, targetPage.title).contains(poolItem)
+                        val poolInner: @Composable RowScope.() -> Unit = {
+                            if (itemChecked) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(17.dp)
+                                        .border(1.6.dp, Color.Transparent, RoundedCornerShape(4.dp))
+                                        .background(GoaldayDesign.Pink, RoundedCornerShape(4.dp)),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text("✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+                            } else {
+                                Box(
+                                    Modifier
+                                        .padding(top = 5.dp)
+                                        .size(5.dp)
+                                        .background(currentBook?.color ?: PoolBullet),
                                 )
                             }
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                poolItem,
+                                fontSize = 16.sp,
+                                lineHeight = 20.sp,
+                                color = if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                                textDecoration = if (itemChecked) TextDecoration.LineThrough else TextDecoration.None,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        val addPoolToSchedule = {
+                            InteractionFeedback.click(context)
+                            viewModel.addScheduleFromHandbook(
+                                poolItem,
+                                selectedDate.monthValue,
+                                selectedDate.dayOfMonth,
+                            )
+                        }
+                        // 外层仅处理长按拖拽,不拦截点击事件
+                        // 点击由内部 Row 的单独 clickable 处理,避免与删除按钮冲突
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .alpha(if (draggingItem == poolItem) 0.35f else 1f)
+                                .onGloballyPositioned { poolItemOrigins[poolItem] = it.boundsInWindow().topLeft }
+                                .pointerInput(poolItem) {
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = { touch ->
+                                            draggingItem = poolItem
+                                            val origin = poolItemOrigins[poolItem] ?: poolOrigin
+                                            dragFingerWindow = Offset(origin.x + touch.x, origin.y + touch.y)
+                                            InteractionFeedback.haptic(context)
+                                        },
+                                        onDrag = { change, _ ->
+                                            change.consume()
+                                            dragFingerWindow += change.positionChange()
+                                            dropTarget = rowBounds.entries
+                                                .firstOrNull { it.value.contains(dragFingerWindow) }
+                                                ?.let { LocalDate.ofEpochDay(it.key) }
+                                        },
+                                        onDragEnd = {
+                                            val target = dropTarget
+                                            val item = draggingItem
+                                            if (target != null && item != null) {
+                                                InteractionFeedback.click(context)
+                                                viewModel.addScheduleFromHandbook(
+                                                    item,
+                                                    target.monthValue,
+                                                    target.dayOfMonth,
+                                                )
+                                            }
+                                            draggingItem = null
+                                            dropTarget = null
+                                        },
+                                        onDragCancel = {
+                                            draggingItem = null
+                                            dropTarget = null
+                                        },
+                                    )
+                                }
+                                .padding(horizontal = 14.dp, vertical = 9.dp),
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.weight(1f).clickable(onClick = addPoolToSchedule)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        poolInner()
+                                    }
+                                }
+                                if (isCustomPoolItem) {
+                                    Spacer(Modifier.width(8.dp))
+                                    Box(
+                                        Modifier
+                                            .size(36.dp)
+                                            .background(Color(0xFFED8888), RoundedCornerShape(8.dp))
+                                            .clickable {
+                                                InteractionFeedback.click(context)
+                                                viewModel.removeCustomPageItem(poolItem)
+                                            },
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Image(
+                                            painter = painterResource(com.bf410.goaldaylocal.R.drawable.plan_trash),
+                                            contentDescription = "删除",
+                                            modifier = Modifier.width(20.dp),
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
-                }
                 if (listItems.isEmpty()) {
                     item {
                         Text(
