@@ -793,12 +793,10 @@ private fun WeekScheduleView(
                                 when {
                                     entry != null -> {
                                         Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable { onEditEntry(entry) },
+                                            modifier = Modifier.fillMaxWidth(),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
-                                            // 勾选框：○ 未完成 / 橙底白勾 完成（对照原版 #F79941 实心勾）
+                                            // 勾选框：独立clickable,不与文本区抢事件
                                             Box(
                                                 modifier = Modifier
                                                     .size(19.dp)
@@ -836,15 +834,17 @@ private fun WeekScheduleView(
                                                 }
                                             }
                                             Spacer(Modifier.width(10.dp))
-                                            Text(
-                                                (if (entry.timeText.isNotBlank()) entry.timeText + "  " else "") + entry.title,
-                                                fontSize = 15.sp,
-                                                lineHeight = 19.sp,
-                                                color = if (entry.completed) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
-                                                textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
+                                            Box(Modifier.weight(1f).clickable { onEditEntry(entry) }) {
+                                                Text(
+                                                    (if (entry.timeText.isNotBlank()) entry.timeText + "  " else "") + entry.title,
+                                                    fontSize = 15.sp,
+                                                    lineHeight = 19.sp,
+                                                    color = if (entry.completed) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                                                    textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            }
                                         }
                                     }
                                     // 对照原版：今天第一个空槽显示随机引导提示语（schedule_empty_hints）
