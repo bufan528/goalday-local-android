@@ -1084,6 +1084,7 @@ items(listItems, key = { it }) { poolItem ->
                         // - 左侧内容区域：combinedClickable处理点击(排期) + pointerInput处理长按拖拽
                         // - 右侧删除按钮：独立clickable，不被父容器拦截
                         val dragContext = context
+                        val dragEnable = true
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1095,7 +1096,7 @@ items(listItems, key = { it }) { poolItem ->
                                 modifier = Modifier
                                     .weight(1f)
                                     .onGloballyPositioned { poolItemOrigins[poolItem] = it.boundsInWindow().topLeft }
-                                    .pointerInput(poolItem) {
+                                    .pointerInput(dragEnable) {
                                         detectDragGesturesAfterLongPress(
                                             onDragStart = { touch ->
                                                 draggingItem = poolItem
@@ -1115,11 +1116,7 @@ items(listItems, key = { it }) { poolItem ->
                                                 val item = draggingItem
                                                 if (target != null && item != null) {
                                                     InteractionFeedback.click(dragContext)
-                                                    viewModel.addScheduleFromHandbook(
-                                                        item,
-                                                        target.monthValue,
-                                                        target.dayOfMonth,
-                                                    )
+                                                    viewModel.addScheduleFromHandbook(item, target.monthValue, target.dayOfMonth)
                                                 }
                                                 draggingItem = null
                                                 dropTarget = null
@@ -1130,10 +1127,7 @@ items(listItems, key = { it }) { poolItem ->
                                             },
                                         )
                                     }
-                                    .combinedClickable(
-                                        onClick = addPoolToSchedule,
-                                        onLongClick = {},
-                                    ),
+                                    .clickable(onClick = addPoolToSchedule),
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     poolInner()
