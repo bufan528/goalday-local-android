@@ -89,6 +89,7 @@ import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.graphics.Brush
@@ -652,6 +653,10 @@ private fun WeekScheduleView(
     val rowBounds = remember { androidx.compose.runtime.mutableStateMapOf<Long, Rect>() }
     // 池容器在窗口中的原点（把条目局部坐标换算为窗口坐标）
     var poolOrigin by remember { mutableStateOf(Offset.Zero) }
+    // 跟手浮层：手指窗口坐标 + 外层容器原点（浮层偏移=手指窗口-容器窗口）
+    var dragFingerWindow by remember { mutableStateOf(Offset.Zero) }
+    var weekRootOrigin by remember { mutableStateOf(Offset.Zero) }
+    val poolItemOrigins = remember { androidx.compose.runtime.mutableStateMapOf<String, Offset>() }
     // 右侧任务池折叠开关（对照原版 fragment_schedule 的 bg_arrow 圆钮）
     var poolCollapsed by rememberSaveable { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -665,6 +670,12 @@ private fun WeekScheduleView(
         if (editingDate != null) runCatching { focusRequester.requestFocus() }
     }
 
+    // 外层Box承载跟手浮层（对照原版TargetDragShadowBuilder系统阴影跟手）
+    Box(
+        Modifier
+            .fillMaxSize()
+            .onGloballyPositioned { weekRootOrigin = it.boundsInWindow().topLeft },
+    ) {
     Row(Modifier.fillMaxSize()) {
         // 左侧：周日期列（今日黑底圆角白字；任意一天点空白进入行内新增）
         LazyColumn(
@@ -1023,55 +1034,11 @@ private fun WeekScheduleView(
                 }
                 items(listItems, key = { it }) { poolItem ->
                     val itemChecked = targetPage != null && viewModel.isChecked(targetPage.title, poolItem)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .alpha(if (draggingItem == poolItem) 0.35f else 1f)
-                            .pointerInput(poolItem) {
-                                detectDragGesturesAfterLongPress(
-                                    onDragStart = {
-                                        draggingItem = poolItem
-                                        // 拖起时短震（对照原版拖拽触感）
-                                        InteractionFeedback.haptic(context)
-                                    },
-                                    onDrag = { change, _ ->
-                                        change.consume()
-                                        val pt = poolOrigin + change.position
-                                        dropTarget = rowBounds.entries
-                                            .firstOrNull { it.value.contains(pt) }
-                                            ?.let { LocalDate.ofEpochDay(it.key) }
-                                    },
-                                    onDragEnd = {
-                                        val target = dropTarget
-                                        val item = draggingItem
-                                        if (target != null && item != null) {
-                                            InteractionFeedback.click(context)
-                                            viewModel.addScheduleFromHandbook(
-                                                item,
-                                                target.monthValue,
-                                                target.dayOfMonth,
-                                            )
-                                        }
-                                        draggingItem = null
-                                        dropTarget = null
-                                    },
-                                    onDragCancel = {
-                                        draggingItem = null
-                                        dropTarget = null
-                                    },
-                                )
-                            }
-                            .clickable {
-                                InteractionFeedback.click(context)
-                                viewModel.addScheduleFromHandbook(
-                                    poolItem,
-                                    selectedDate.monthValue,
-                                    selectedDate.dayOfMonth,
-                                )
-                            }
-                            .padding(horizontal = 14.dp, vertical = 9.dp),
-                        verticalAlignment = Alignment.Top,
-                    ) {
+                    // 自定义条目可左滑删除（对照原版清空文本即删；基种条目保留）
+                    val isCustomPoolItem = targetPage != null && currentBook != null &&
+                        diaryStore.customPageItems(currentBook.id, targetPage.title).contains(poolItem)
+                    // 行内：勾选框/圆点 + 文字（两分支共用）
+                    val poolInner: @Composable RowScope.() -> Unit = {
                         if (itemChecked) {
                             // 完成条目：橙勾框 + 灰字删除线（对照原版）
                             Box(
@@ -1102,6 +1069,81 @@ private fun WeekScheduleView(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                    }
+                    // 长按拖拽手势：对照原版startDragAndDrop+TargetDragShadowBuilder跟手灰影；
+                    // 手指窗口坐标=行窗口原点+触点行内偏移，移动累加positionChange保证跟手。
+                    val dragMod = Modifier
+                        .fillMaxWidth()
+                        .alpha(if (draggingItem == poolItem) 0.35f else 1f)
+                        .onGloballyPositioned { poolItemOrigins[poolItem] = it.boundsInWindow().topLeft }
+                        .pointerInput(poolItem) {
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = { touch ->
+                                    draggingItem = poolItem
+                                    dragFingerWindow = (poolItemOrigins[poolItem] ?: poolOrigin) + touch
+                                    // 拖起时短震（对照原版拖拽触感）
+                                    InteractionFeedback.haptic(context)
+                                },
+                                onDrag = { change, _ ->
+                                    change.consume()
+                                    dragFingerWindow += change.positionChange()
+                                    dropTarget = rowBounds.entries
+                                        .firstOrNull { it.value.contains(dragFingerWindow) }
+                                        ?.let { LocalDate.ofEpochDay(it.key) }
+                                },
+                                onDragEnd = {
+                                    val target = dropTarget
+                                    val item = draggingItem
+                                    if (target != null && item != null) {
+                                        InteractionFeedback.click(context)
+                                        viewModel.addScheduleFromHandbook(
+                                            item,
+                                            target.monthValue,
+                                            target.dayOfMonth,
+                                        )
+                                    }
+                                    draggingItem = null
+                                    dropTarget = null
+                                },
+                                onDragCancel = {
+                                    draggingItem = null
+                                    dropTarget = null
+                                },
+                            )
+                        }
+                    val addPoolToSchedule = {
+                        InteractionFeedback.click(context)
+                        viewModel.addScheduleFromHandbook(
+                            poolItem,
+                            selectedDate.monthValue,
+                            selectedDate.dayOfMonth,
+                        )
+                    }
+                    if (isCustomPoolItem) {
+                        SwipeableActionsRow(
+                            actions = listOf(
+                                SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete) {
+                                    InteractionFeedback.click(context)
+                                    viewModel.removeCustomPageItem(poolItem)
+                                },
+                            ),
+                            onContentClick = addPoolToSchedule,
+                            // 长按留给拖拽排期，不触发点击添加（否则长按即加一次+松手落点再加一次）
+                            onContentLongClick = {},
+                            content = {
+                                Row(
+                                    modifier = dragMod.padding(horizontal = 14.dp, vertical = 9.dp),
+                                    verticalAlignment = Alignment.Top,
+                                ) { poolInner() }
+                            },
+                        )
+                    } else {
+                        Row(
+                            modifier = dragMod
+                                .clickable(onClick = addPoolToSchedule)
+                                .padding(horizontal = 14.dp, vertical = 9.dp),
+                            verticalAlignment = Alignment.Top,
+                        ) { poolInner() }
                     }
                 }
                 if (listItems.isEmpty()) {
@@ -1200,7 +1242,22 @@ private fun WeekScheduleView(
                 }
             }
         }
+    } // Row
+    // 跟手浮层：对照原版1.2倍灰影，对应 dccccc 灰底
+    draggingItem?.let { label ->
+        val local = dragFingerWindow - weekRootOrigin
+        Box(
+            Modifier
+                .align(Alignment.TopStart)
+                .offset { IntOffset(local.x.roundToInt(), local.y.roundToInt()) }
+                .width(120.dp)
+                .background(Color(0xFFCCCCCC), RoundedCornerShape(6.dp))
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+        ) {
+            Text(label, fontSize = 15.sp, color = GoaldayDesign.adaptiveInkPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
+    } // Box
 }
 
 private fun weekdayName(date: LocalDate): String = when (date.dayOfWeek) {
