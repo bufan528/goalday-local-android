@@ -1,6 +1,7 @@
 package com.bf410.goaldaylocal.ui.book
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -126,23 +127,31 @@ fun DualPageBookView(
     val scheduleIndex = book.pages.indexOfFirst { it is SchedulePage }.coerceAtLeast(0)
     val diaryIndex = book.pages.indexOfFirst { it is DiaryPage }.coerceAtLeast(0)
 
-    val weekStartDate = spreadMonday
-    // 对照原版实机：左页=当天（15|周二），右页=次日（16|周三），翻页按周平移
-    val leftDiaryDate = today.plusWeeks(weekOffset.toLong())
-    val diaryDate = leftDiaryDate.plusDays(1)
-    val pairMonth = diaryDate.monthValue
+    // 对照原版真机 5 次翻页实测（NEXT/PREV 均为严格 ±7 天）：
+    // offset=0：左页=本周日程（"M月 | 第W周"），右页=周一日记；
+    // offset!=0：左页=该周周二日记，右页=该周周三日记；标题月份跟右页。
+    // （原版开页后日程 spread 只在 offset=0 出现，其余 spread 均为 Tue|Wed 日记对页）
+    val mondayOfOffset = { o: Int -> currentWeekMonday.plusWeeks(o.toLong()) }
+    val leftIsSchedule = weekOffset == 0
+    val leftTueDate = mondayOfOffset(weekOffset).plusDays(1)
+    val rightDate = if (weekOffset == 0) mondayOfOffset(0) else mondayOfOffset(weekOffset).plusDays(2)
+    val pairMonth = rightDate.monthValue
 
-    // 翻页背面：左页背面 = 上周当天，右页背面 = 下周次日
+    // 翻页背面：左页背面 = 上一 spread 的左页，右页背面 = 下一 spread 的右页
     val prevWeekStartDate = spreadMonday.minusWeeks(1)
-    val nextDiaryDate = diaryDate.plusWeeks(1)
+    val prevLeftIsSchedule = weekOffset - 1 == 0
+    val prevLeftTueDate = mondayOfOffset(weekOffset - 1).plusDays(1)
+    val nextRightDate = if (weekOffset + 1 == 0) mondayOfOffset(weekOffset + 1)
+        else mondayOfOffset(weekOffset + 1).plusDays(2)
 
     // 日记内容按日期读取（记录 Tab 与书内共用同一存储）
     val diaryStore = remember { com.bf410.goaldaylocal.data.LocalStateStore(com.tencent.mmkv.MMKV.defaultMMKV()) }
-    val spreadDiaryDraft = remember(diaryDate) { diaryStore.diaryText(DiaryStoreBookId, diaryDate.toString()) }
-    val nextDiaryDraft = remember(nextDiaryDate) { diaryStore.diaryText(DiaryStoreBookId, nextDiaryDate.toString()) }
-    val leftDiaryDraft = remember(leftDiaryDate) { diaryStore.diaryText(DiaryStoreBookId, leftDiaryDate.toString()) }
-    val prevLeftDiaryDate = leftDiaryDate.minusWeeks(1)
-    val prevLeftDiaryDraft = remember(prevLeftDiaryDate) { diaryStore.diaryText(DiaryStoreBookId, prevLeftDiaryDate.toString()) }
+    fun diaryTextOf(date: LocalDate): String = diaryStore.diaryText(DiaryStoreBookId, date.toString())
+    val spreadDiaryDraft = remember(rightDate) { diaryTextOf(rightDate) }
+    val nextDiaryDraft = remember(nextRightDate) { diaryTextOf(nextRightDate) }
+    val leftDiaryDraft = remember(leftTueDate) { diaryTextOf(leftTueDate) }
+    val prevLeftDiaryDate = prevLeftTueDate
+    val prevLeftDiaryDraft = remember(prevLeftTueDate) { diaryTextOf(prevLeftTueDate) }
 
     var showBookShelf by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -183,14 +192,15 @@ fun DualPageBookView(
         }
     }
 
-    // 对照原版：动画时长自适应，progress>0.5 时 100ms，否则 300ms
+    // 对照原版：动画时长自适应，progress>0.5 时 100ms，否则 300ms，线性 easing
     fun settle(complete: Boolean) {
         if (isAnimating) return
         scope.launch {
             isAnimating = true
             val currentProgress = progress.value
+            val spec = tween<Float>(if (currentProgress > 0.5f) 100 else 300, easing = LinearEasing)
             if (complete) {
-                progress.animateTo(1f, tween(if (currentProgress > 0.5f) 100 else 300))
+                progress.animateTo(1f, spec)
                 weekOffset = when (turnDirection) {
                     TurnDirection.NEXT -> (weekOffset + 1).coerceAtMost(MaxWeekOffset)
                     TurnDirection.PREVIOUS -> (weekOffset - 1).coerceAtLeast(-MaxWeekOffset)
@@ -198,7 +208,7 @@ fun DualPageBookView(
                 }
                 progress.snapTo(0f)
             } else {
-                progress.animateTo(0f, tween(if (currentProgress > 0.5f) 100 else 300))
+                progress.animateTo(0f, spec)
             }
             turnDirection = null
             // 对照原版：动画结束后 10ms 再重新启用手势
@@ -322,9 +332,10 @@ fun DualPageBookView(
                                     val change = event.changes.firstOrNull { it.id == down.id } ?: continue
                                     if (change.pressed.not()) {
                                         val velocity = velocityTracker.calculateVelocity().x
+                                        // 对照原版 BaseBookViewKt 开页翻页阈值 0.3 + fling 560
                                         val complete = when (turnDir) {
-                                            TurnDirection.NEXT -> progress.value > 0.25f || velocity < -800
-                                            TurnDirection.PREVIOUS -> progress.value > 0.25f || velocity > 800
+                                            TurnDirection.NEXT -> progress.value > 0.3f || velocity < -560
+                                            TurnDirection.PREVIOUS -> progress.value > 0.3f || velocity > 560
                                             null -> false
                                         }
                                         settle(complete)
@@ -394,54 +405,86 @@ fun DualPageBookView(
                         .padding(start = 13.dp, end = 13.dp, top = 11.dp, bottom = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(0.dp),
                 ) {
-                    // 左页：日程
+                    // 左页：offset=0 时为本周日程，其余为周二日记（对照原版真机）
                     HandbookPage(
                         modifier = Modifier.weight(1f),
                         isLeft = true,
                         progress = progress.value,
                         direction = turnDirection,
-                        onTap = { onOpenDate(leftDiaryDate, false) },
+                        onTap = { if (leftIsSchedule) onOpenDate(spreadMonday, true) else onOpenDate(leftTueDate, false) },
                         content = {
-                            InBookDiaryPreview(
-                                modifier = Modifier.fillMaxSize(),
-                                page = diaryPage,
-                                pageIndex = 0,
-                                pageCount = book.pages.size,
-                                diaryDraft = leftDiaryDraft,
-                                tint = book.color,
-                                turnProgress = progress.value,
-                                turnDirection = turnDirection,
-                                handbookMode = true,
-                                diaryDate = leftDiaryDate,
-                                onAddImage = {},
-                                scheduleEntries = uiState.schedulePreviewEntries,
-                            )
+                            if (leftIsSchedule) {
+                                InBookSchedulePreview(
+                                    modifier = Modifier.fillMaxSize(),
+                                    page = schedulePage,
+                                    pageIndex = 0,
+                                    pageCount = book.pages.size,
+                                    schedulePreviewEntries = uiState.schedulePreviewEntries,
+                                    isChecked = viewModel::isChecked,
+                                    tint = book.color,
+                                    turnProgress = progress.value,
+                                    turnDirection = turnDirection,
+                                    handbookMode = true,
+                                    weekStartDate = spreadMonday,
+                                )
+                            } else {
+                                InBookDiaryPreview(
+                                    modifier = Modifier.fillMaxSize(),
+                                    page = diaryPage,
+                                    pageIndex = 0,
+                                    pageCount = book.pages.size,
+                                    diaryDraft = leftDiaryDraft,
+                                    tint = book.color,
+                                    turnProgress = progress.value,
+                                    turnDirection = turnDirection,
+                                    handbookMode = true,
+                                    diaryDate = leftTueDate,
+                                    onAddImage = {},
+                                    scheduleEntries = uiState.schedulePreviewEntries,
+                                )
+                            }
                         },
                         backContent = {
-                            InBookDiaryPreview(
-                                modifier = Modifier.fillMaxSize(),
-                                page = diaryPage,
-                                pageIndex = 0,
-                                pageCount = book.pages.size,
-                                diaryDraft = prevLeftDiaryDraft,
-                                tint = book.color,
-                                turnProgress = progress.value,
-                                turnDirection = turnDirection,
-                                handbookMode = true,
-                                diaryDate = prevLeftDiaryDate,
-                                onAddImage = {},
-                                scheduleEntries = uiState.schedulePreviewEntries,
-                            )
+                            if (prevLeftIsSchedule) {
+                                InBookSchedulePreview(
+                                    modifier = Modifier.fillMaxSize(),
+                                    page = schedulePage,
+                                    pageIndex = 0,
+                                    pageCount = book.pages.size,
+                                    schedulePreviewEntries = uiState.schedulePreviewEntries,
+                                    isChecked = viewModel::isChecked,
+                                    tint = book.color,
+                                    turnProgress = progress.value,
+                                    turnDirection = turnDirection,
+                                    handbookMode = true,
+                                    weekStartDate = prevWeekStartDate,
+                                )
+                            } else {
+                                InBookDiaryPreview(
+                                    modifier = Modifier.fillMaxSize(),
+                                    page = diaryPage,
+                                    pageIndex = 0,
+                                    pageCount = book.pages.size,
+                                    diaryDraft = prevLeftDiaryDraft,
+                                    tint = book.color,
+                                    turnProgress = progress.value,
+                                    turnDirection = turnDirection,
+                                    handbookMode = true,
+                                    diaryDate = prevLeftTueDate,
+                                    onAddImage = {},
+                                    scheduleEntries = uiState.schedulePreviewEntries,
+                                )
+                            }
                         },
                     )
 
-                    // 右页：日记
+                    // 右页：日记（offset=0 为周一，其余为周三）
                     HandbookPage(
                         modifier = Modifier.weight(1f),
                         isLeft = false,
                         progress = progress.value,
                         direction = turnDirection,
-                        onTap = { onOpenDate(diaryDate, false) },
+                        onTap = { onOpenDate(rightDate, false) },
                         content = {
                             InBookDiaryPreview(
                                 modifier = Modifier.fillMaxSize(),
@@ -453,7 +496,7 @@ fun DualPageBookView(
                                 turnProgress = progress.value,
                                 turnDirection = turnDirection,
                                 handbookMode = true,
-                                diaryDate = diaryDate,
+                                diaryDate = rightDate,
                                 onAddImage = {},
                                 scheduleEntries = uiState.schedulePreviewEntries,
                             )
@@ -469,7 +512,7 @@ fun DualPageBookView(
                                 turnProgress = progress.value,
                                 turnDirection = turnDirection,
                                 handbookMode = true,
-                                diaryDate = nextDiaryDate,
+                                diaryDate = nextRightDate,
                                 onAddImage = {},
                                 scheduleEntries = uiState.schedulePreviewEntries,
                             )
@@ -676,7 +719,8 @@ private fun HandbookPage(
             .fillMaxSize()
             .graphicsLayer {
                 this.rotationY = rotationY
-                this.cameraDistance = 60f * density
+                // 对照原版 BaseBookViewKt：cameraDistance = 40 × density
+                this.cameraDistance = 40f * density
                 this.transformOrigin = if (isLeft) {
                     TransformOrigin(1f, 0.5f)
                 } else {
