@@ -135,7 +135,6 @@ fun DualPageBookView(
     val leftIsSchedule = weekOffset == 0
     val leftTueDate = mondayOfOffset(weekOffset).plusDays(1)
     val rightDate = if (weekOffset == 0) mondayOfOffset(0) else mondayOfOffset(weekOffset).plusDays(2)
-    val pairMonth = rightDate.monthValue
 
     // 翻页背面：左页背面 = 上一 spread 的左页，右页背面 = 下一 spread 的右页
     val prevWeekStartDate = spreadMonday.minusWeeks(1)
@@ -161,8 +160,8 @@ fun DualPageBookView(
     var pageWidthPx by remember { mutableFloatStateOf(1f) }
     // 对照原版 BookPageAnimationConfigurator：6页曲线 + isLeftSlide按progress位置判定
     val flipConfigurator = remember { BookPageAnimationConfigurator() }
-    // 单通道drag：避免每move一个launch乱序，合流到最新进度
-    var dragJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    // 单通道drag：避免每move一个launch乱序，合流到最新进度（holder不用state，免每次move重组）
+    val dragJobHolder = remember { arrayOfNulls<kotlinx.coroutines.Job>(1) }
 
     // 把书页左右边缘排除在系统返回手势之外，确保全宽翻页热区可用
     val view = LocalView.current
@@ -357,8 +356,8 @@ fun DualPageBookView(
                                         if (can) {
                                             turnDirection = turnDir
                                             flipConfigurator.start()
-                                            dragJob?.cancel()
-                                            dragJob = scope.launch { progress.snapTo(0f) }
+                                            dragJobHolder[0]?.cancel()
+                                            dragJobHolder[0] = scope.launch { progress.snapTo(0f) }
                                         } else {
                                             finished = true
                                             break
@@ -370,8 +369,8 @@ fun DualPageBookView(
                                         val singlePage = (width / 2f).coerceAtLeast(1f)
                                         val rawProgress = abs(change.position.x - startX) / singlePage
                                         val newProgress = rawProgress.coerceIn(0f, 1f)
-                                        dragJob?.cancel()
-                                        dragJob = scope.launch { progress.snapTo(newProgress) }
+                                        dragJobHolder[0]?.cancel()
+                                        dragJobHolder[0] = scope.launch { progress.snapTo(newProgress) }
                                     }
                                     change.consume()
                                 }
