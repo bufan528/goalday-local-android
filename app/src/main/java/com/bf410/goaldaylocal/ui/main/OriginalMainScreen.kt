@@ -487,13 +487,19 @@ private fun OriginalTopTabBar(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         val weekNum = selectedDate.get(WeekFields.ISO.weekOfWeekBasedYear())
-                        // 对照原版：未选中只显示"周"，选中才显示"N周"+箭头
+                        // 对照原版tab_main：18sp恒粗体；选中黑、未选中#36000000（color_tab_main选择器）
                         val weekLabel = if (selected == MainSubTab.WEEK) "${weekNum}周" else "周"
                         Text(
                             weekLabel,
                             fontSize = 18.sp,
-                            fontWeight = if (selected == MainSubTab.WEEK) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selected == MainSubTab.WEEK) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selected == MainSubTab.WEEK) {
+                                if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkPrimary else Color.Black
+                            } else if (LocalGoaldayDarkMode.current) {
+                                GoaldayDesign.adaptiveInkMuted
+                            } else {
+                                Color(0x36000000)
+                            },
                         )
                         if (selected == MainSubTab.WEEK) {
                             Spacer(Modifier.width(4.dp))
@@ -529,8 +535,15 @@ private fun TabLabel(text: String, selected: Boolean, onClick: () -> Unit) {
     Text(
         text,
         fontSize = 18.sp,
-        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-        color = if (selected) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
+        fontWeight = FontWeight.Bold,
+        color = if (selected) {
+            if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkPrimary else Color.Black
+        } else if (LocalGoaldayDarkMode.current) {
+            GoaldayDesign.adaptiveInkMuted
+        } else {
+            // 对照原版color_tab_main未选中态#36000000
+            Color(0x36000000)
+        },
         modifier = Modifier.clickable(onClick = onClick),
     )
 }
@@ -2151,37 +2164,54 @@ private fun TabManageSheet(
     onReorder: (List<MainSubTab>) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        // 对照原版 bg_tab_manage_sheet：#FDFAF6 + 顶部35dp圆角；BottomSheetDialog强制展开+跳过折叠态
+        containerColor = if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color(0xFFFDFAF6),
+        shape = RoundedCornerShape(topStart = 35.dp, topEnd = 35.dp),
     ) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        Column(Modifier.fillMaxWidth()) {
+            // 拖拽手柄：对照原版59×8dp/marginTop12/#F0F0F0/6dp圆角
+            Box(
+                Modifier
+                    .padding(top = 12.dp)
+                    .size(width = 59.dp, height = 8.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .background(Color(0xFFF0F0F0), RoundedCornerShape(6.dp)),
+            )
             Text(
                 "按住拖动调整页面顺序",
-                fontSize = 13.sp,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
                 color = GoaldayDesign.adaptiveInkMuted,
-                modifier = Modifier.padding(vertical = 6.dp),
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 12.dp),
             )
             var localOrder by remember { mutableStateOf(order) }
             var draggingTab by remember { mutableStateOf<MainSubTab?>(null) }
             val rowBounds = remember { androidx.compose.runtime.mutableStateMapOf<MainSubTab, Rect>() }
+            Column(Modifier.padding(horizontal = 16.dp)) {
             localOrder.forEach { tab ->
                 val visible = visibility[tab] == true
+                // 对照原版 MainTab.canHide：周（SCHEDULE）不可隐藏，眼镜置灰0.6+点按吐司
+                val canHideTab = tab != MainSubTab.WEEK
+                val cantHideHint = {
+                    InteractionFeedback.click(context)
+                    android.widget.Toast.makeText(context, "该页面不支持隐藏", android.widget.Toast.LENGTH_SHORT).show()
+                }
                 // key 按身份跟踪行：拖拽换位时 pointerInput 不因位置重组而销毁，
                 // 否则手势以 cancel 收场、onDragEnd 的保存不会执行
                 key(tab) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                        .padding(top = 8.dp)
                         .onGloballyPositioned { rowBounds[tab] = it.boundsInWindow() }
                         .alpha(if (draggingTab == tab) 0.4f else 1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (LocalGoaldayDarkMode.current) Color(0xFF35312B) else Color(0xFFFBF7F1))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (LocalGoaldayDarkMode.current) Color(0xFF35312B) else Color.White)
                         .pointerInput(tab) {
                             detectDragGesturesAfterLongPress(
                                 onDragStart = {
@@ -2217,8 +2247,9 @@ private fun TabManageSheet(
                                 },
                             )
                         }
-                        .clickable { onToggle(tab, !visible) }
-                        .padding(horizontal = 16.dp, vertical = 15.dp),
+                        // 对照原版：行体只有长按（拖拽），点击只在眼睛上；行体点击无操作
+                        .height(52.dp)
+                        .padding(start = 20.dp, end = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
@@ -2229,15 +2260,23 @@ private fun TabManageSheet(
                     )
                     Spacer(Modifier.weight(1f))
                     Icon(
+                        // 对照原版 ic_eye_visible/ic_eye_hidden（#252525矢量）；不可隐藏的周恒显+0.6灰
                         imageVector = if (visible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                         contentDescription = if (visible) "隐藏" else "显示",
-                        tint = if (visible) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
-                        modifier = Modifier.size(22.dp),
+                        tint = GoaldayDesign.adaptiveInkPrimary,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .alpha(if (canHideTab) 1f else 0.6f)
+                            .clickable {
+                                if (canHideTab) onToggle(tab, !visible) else cantHideHint()
+                            },
                     )
                 }
                 }
             }
-            Spacer(Modifier.height(20.dp))
+            }
+            // 对照原版 dialog_tab_manage paddingBottom=224dip
+            Spacer(Modifier.height(224.dp))
         }
     }
 }
