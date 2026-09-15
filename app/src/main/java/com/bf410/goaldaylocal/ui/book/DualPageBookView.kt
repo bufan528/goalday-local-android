@@ -161,6 +161,8 @@ fun DualPageBookView(
     var pageWidthPx by remember { mutableFloatStateOf(1f) }
     // 对照原版 BookPageAnimationConfigurator：6页曲线 + isLeftSlide按progress位置判定
     val flipConfigurator = remember { BookPageAnimationConfigurator() }
+    // 单通道drag：避免每move一个launch乱序，合流到最新进度
+    var dragJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     // 把书页左右边缘排除在系统返回手势之外，确保全宽翻页热区可用
     val view = LocalView.current
@@ -220,7 +222,6 @@ fun DualPageBookView(
         }
     }
 
-    val headerMonth = "${pairMonth}月"
     val shellColor = GoaldayDesign.BookBoardLight
     val shadowColor = Color(0xFFC5BBB6)
     // 布纹贴图：取原版封面左上干净区域（无书脊线/年份字）
@@ -244,27 +245,15 @@ fun DualPageBookView(
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         val configuration = LocalConfiguration.current
         val screenWidthDp = configuration.screenWidthDp.dp
-        val screenDensity = LocalDensity.current
         // 真机dump修正（2026-09-15 BookActivity hierarchy 904x2316）：
         // 白页总宽848px=0.938屏宽、总高785px，单页424x785 h/w=1.851=原版AnimationBookWidth*1.85；
         // 旧1.092整书比偏高18%，白页276dp偏窄，已废弃。白页垂直居中top≈766px。
+        // 月标签在页内左上（9月 | 第38周），屏顶不再放居中大月（对照dump index17/18）。
         val shellWidth = screenWidthDp * 0.968f
         val spreadWidth = shellWidth - 10.dp
         val spreadHeight = spreadWidth * 0.926f
         // 壳比白页每边大5dp水平/8dp垂直，露出层叠纸边
         val shellHeight = spreadHeight + 16.dp
-
-        // 顶部月份标题：中心对齐原版屏高 20.6%（18sp 文字半高约 5dp）
-        val titleTop = with(screenDensity) { configuration.screenHeightDp.dp * 0.206f - 5.dp }
-        Text(
-            text = headerMonth,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = GoaldayDesign.InkPrimary,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = titleTop),
-        )
 
         // 书壳（最外层：布纹）。对称内边，白页垂直居中于屏幕（dump top≈766px即居中）
         Box(
@@ -368,7 +357,8 @@ fun DualPageBookView(
                                         if (can) {
                                             turnDirection = turnDir
                                             flipConfigurator.start()
-                                            scope.launch { progress.snapTo(0f) }
+                                            dragJob?.cancel()
+                                            dragJob = scope.launch { progress.snapTo(0f) }
                                         } else {
                                             finished = true
                                             break
@@ -380,7 +370,8 @@ fun DualPageBookView(
                                         val singlePage = (width / 2f).coerceAtLeast(1f)
                                         val rawProgress = abs(change.position.x - startX) / singlePage
                                         val newProgress = rawProgress.coerceIn(0f, 1f)
-                                        scope.launch { progress.snapTo(newProgress) }
+                                        dragJob?.cancel()
+                                        dragJob = scope.launch { progress.snapTo(newProgress) }
                                     }
                                     change.consume()
                                 }
@@ -551,22 +542,23 @@ fun DualPageBookView(
                 .background(GoaldayDesign.TabBarBg),
         ) {
             Column {
+                // 对照dump底栏总高68px=26dp：导出[6,2122][132,2190]/年[341,2116][564,2190]/返回[731,2125][857,2190]
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
+                        .height(26.dp)
                         .padding(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
-                        modifier = Modifier.size(40.dp),
+                        modifier = Modifier.size(26.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = remember { uploadTrayIcon() },
                             contentDescription = "导出",
-                            modifier = Modifier.size(22.dp),
+                            modifier = Modifier.size(18.dp),
                             tint = GoaldayDesign.InkPrimary,
                         )
                     }
@@ -577,30 +569,29 @@ fun DualPageBookView(
                     ) {
                         Text(
                             text = "${spreadMonday.year}",
-                            fontSize = 16.sp,
+                            fontSize = 14.sp,
                             color = GoaldayDesign.InkPrimary,
                         )
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
                             contentDescription = "切换年份",
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(16.dp),
                             tint = GoaldayDesign.InkPrimary,
                         )
                     }
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(26.dp)
                             .clickableNoRipple { onBack() },
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = "返回",
-                            fontSize = 14.sp,
+                            fontSize = 13.sp,
                             color = GoaldayDesign.InkPrimary,
                         )
                     }
                 }
-                Spacer(Modifier.height(24.dp))
             }
         }
 
