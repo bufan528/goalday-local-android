@@ -1080,75 +1080,83 @@ items(listItems, key = { it }) { poolItem ->
                                 selectedDate.dayOfMonth,
                             )
                         }
-                        // 外层仅处理长按拖拽,不拦截点击事件
-                        // 点击由内部 Row 的单独 clickable 处理,避免与删除按钮冲突
-                        Box(
+                        // 拖拽+点击手势与删除按钮完全分离：
+                        // - 左侧内容区域：combinedClickable处理点击(排期) + pointerInput处理长按拖拽
+                        // - 右侧删除按钮：独立clickable，不被父容器拦截
+                        val dragContext = context
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .alpha(if (draggingItem == poolItem) 0.35f else 1f)
-                                .onGloballyPositioned { poolItemOrigins[poolItem] = it.boundsInWindow().topLeft }
-                                .pointerInput(poolItem) {
-                                    detectDragGesturesAfterLongPress(
-                                        onDragStart = { touch ->
-                                            draggingItem = poolItem
-                                            val origin = poolItemOrigins[poolItem] ?: poolOrigin
-                                            dragFingerWindow = Offset(origin.x + touch.x, origin.y + touch.y)
-                                            InteractionFeedback.haptic(context)
-                                        },
-                                        onDrag = { change, _ ->
-                                            change.consume()
-                                            dragFingerWindow += change.positionChange()
-                                            dropTarget = rowBounds.entries
-                                                .firstOrNull { it.value.contains(dragFingerWindow) }
-                                                ?.let { LocalDate.ofEpochDay(it.key) }
-                                        },
-                                        onDragEnd = {
-                                            val target = dropTarget
-                                            val item = draggingItem
-                                            if (target != null && item != null) {
-                                                InteractionFeedback.click(context)
-                                                viewModel.addScheduleFromHandbook(
-                                                    item,
-                                                    target.monthValue,
-                                                    target.dayOfMonth,
-                                                )
-                                            }
-                                            draggingItem = null
-                                            dropTarget = null
-                                        },
-                                        onDragCancel = {
-                                            draggingItem = null
-                                            dropTarget = null
-                                        },
-                                    )
-                                }
                                 .padding(horizontal = 14.dp, vertical = 9.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(Modifier.weight(1f).clickable(onClick = addPoolToSchedule)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        poolInner()
-                                    }
-                                }
-                                if (isCustomPoolItem) {
-                                    Spacer(Modifier.width(8.dp))
-                                    Box(
-                                        Modifier
-                                            .size(36.dp)
-                                            .background(Color(0xFFED8888), RoundedCornerShape(8.dp))
-                                            .clickable {
-                                                InteractionFeedback.click(context)
-                                                viewModel.removeCustomPageItem(poolItem)
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .onGloballyPositioned { poolItemOrigins[poolItem] = it.boundsInWindow().topLeft }
+                                    .pointerInput(poolItem) {
+                                        detectDragGesturesAfterLongPress(
+                                            onDragStart = { touch ->
+                                                draggingItem = poolItem
+                                                val origin = poolItemOrigins[poolItem] ?: poolOrigin
+                                                dragFingerWindow = Offset(origin.x + touch.x, origin.y + touch.y)
+                                                InteractionFeedback.haptic(dragContext)
                                             },
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Image(
-                                            painter = painterResource(com.bf410.goaldaylocal.R.drawable.plan_trash),
-                                            contentDescription = "删除",
-                                            modifier = Modifier.width(20.dp),
-                                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                                            onDrag = { change, _ ->
+                                                change.consume()
+                                                dragFingerWindow += change.positionChange()
+                                                dropTarget = rowBounds.entries
+                                                    .firstOrNull { it.value.contains(dragFingerWindow) }
+                                                    ?.let { LocalDate.ofEpochDay(it.key) }
+                                            },
+                                            onDragEnd = {
+                                                val target = dropTarget
+                                                val item = draggingItem
+                                                if (target != null && item != null) {
+                                                    InteractionFeedback.click(dragContext)
+                                                    viewModel.addScheduleFromHandbook(
+                                                        item,
+                                                        target.monthValue,
+                                                        target.dayOfMonth,
+                                                    )
+                                                }
+                                                draggingItem = null
+                                                dropTarget = null
+                                            },
+                                            onDragCancel = {
+                                                draggingItem = null
+                                                dropTarget = null
+                                            },
                                         )
                                     }
+                                    .combinedClickable(
+                                        onClick = addPoolToSchedule,
+                                        onLongClick = {},
+                                    ),
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    poolInner()
+                                }
+                            }
+                            if (isCustomPoolItem) {
+                                Spacer(Modifier.width(8.dp))
+                                Box(
+                                    Modifier
+                                        .size(36.dp)
+                                        .background(Color(0xFFED8888), RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            InteractionFeedback.click(dragContext)
+                                            viewModel.removeCustomPageItem(poolItem)
+                                        },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Image(
+                                        painter = painterResource(com.bf410.goaldaylocal.R.drawable.plan_trash),
+                                        contentDescription = "删除",
+                                        modifier = Modifier.width(20.dp),
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                                    )
                                 }
                             }
                         }
