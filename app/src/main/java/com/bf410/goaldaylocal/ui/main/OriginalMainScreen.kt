@@ -78,6 +78,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -162,7 +163,8 @@ private val WeekBandBg: Color @Composable get() =
 private val TodayCoral = Color(0xFFF66061)
 private val TodayBlack: Color @Composable get() =
     if (LocalGoaldayDarkMode.current) Color(0xFFF66061) else Color(0xFF1E1E1E)
-private val PoolBullet = Color(0xFFF2C0A5)
+// 对照原版周视图右侧任务池：统一粉橙小方块（主品牌色 #F79941）
+private val PoolBullet = Color(0xFFF79941)
 private val EntryCircle: Color @Composable get() =
     if (LocalGoaldayDarkMode.current) Color(0xFFB9B1A7) else Color(0xFF3A3A3A)
 private val RowCardBg: Color @Composable get() =
@@ -335,12 +337,14 @@ fun OriginalMainScreen(
             tabOrder = tabOrder,
         )
         // Tab 切换方向滑动（对照原版 ViewPager2 滑动切换的直觉：往左切页从右滑入）
+        // 退出页整屏滑出，避免残留纹理在屏幕边缘露出；clipToBounds 兜底裁剪
         AnimatedContent(
             targetState = currentSubTab,
+            modifier = Modifier.fillMaxSize().clipToBounds(),
             transitionSpec = {
                 val forward = targetState.ordinal >= initialState.ordinal
-                (slideInHorizontally(tween(220)) { full -> if (forward) full / 8 else -full / 8 } + fadeIn(tween(200))) togetherWith
-                    (slideOutHorizontally(tween(220)) { full -> if (forward) -full / 8 else full / 8 } + fadeOut(tween(150)))
+                (slideInHorizontally(tween(240)) { full -> if (forward) full else -full } + fadeIn(tween(200))) togetherWith
+                    (slideOutHorizontally(tween(240)) { full -> if (forward) -full else full } + fadeOut(tween(180)))
             },
             label = "mainTabContent",
         ) { pageTab ->
@@ -482,8 +486,10 @@ private fun OriginalTopTabBar(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         val weekNum = selectedDate.get(WeekFields.ISO.weekOfWeekBasedYear())
+                        // 对照原版：未选中只显示"周"，选中才显示"N周"+箭头
+                        val weekLabel = if (selected == MainSubTab.WEEK) "${weekNum}周" else "周"
                         Text(
-                            "${weekNum}周",
+                            weekLabel,
                             fontSize = 18.sp,
                             fontWeight = if (selected == MainSubTab.WEEK) FontWeight.Bold else FontWeight.Normal,
                             color = if (selected == MainSubTab.WEEK) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
@@ -651,9 +657,9 @@ private fun WeekScheduleView(
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(selectedDate) {
-        val idx = weekDays.indexOfFirst { it == selectedDate }.coerceAtLeast(0)
-        runCatching { listState.animateScrollToItem(idx) }
+    // 对照原版：周视图始终从周一（列表首项）开始展示完整一周，不自动滚到今天
+    LaunchedEffect(monday) {
+        runCatching { listState.scrollToItem(0) }
     }
     LaunchedEffect(editingDate) {
         if (editingDate != null) runCatching { focusRequester.requestFocus() }
@@ -696,9 +702,9 @@ private fun WeekScheduleView(
                         .padding(start = 0.dp, top = 5.dp, end = 12.dp, bottom = 5.dp),
                 ) {
                     Row(verticalAlignment = Alignment.Top) {
-                        // 日期列：49dp 宽；今天 = 37×75dp 黑底圆角白字（对照原版 v_cur/bg_schedule_day_of_week）
+                        // 日期列：43dp 宽（原版真机 fl_day_1 实测 113px/2.625）；今天 = 37×75dp 黑底圆角白字
                         Column(
-                            modifier = Modifier.width(49.dp),
+                            modifier = Modifier.width(43.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Column(
@@ -723,7 +729,7 @@ private fun WeekScheduleView(
                                 Spacer(Modifier.height(4.dp))
                                 Box(
                                     Modifier
-                                        .width(24.dp)
+                                        .width(21.dp)
                                         .height(1.dp)
                                         .background(if (isToday) Color.White else Color(0xFFB3000000)),
                                 )
@@ -738,12 +744,12 @@ private fun WeekScheduleView(
                             }
                         }
                         Spacer(Modifier.width(4.dp))
-                        // 日程区：固定模式=原版 2×3 槽（每槽 31dp）；自适应模式=行数随内容增长（对照 bS.xml）
+                        // 日程区：固定模式=原版 2×3 槽（槽高 27dp=71px 真机实测）；自适应模式=行数随内容增长
                         val editingSlot = if (isEditing) entries.size else -1
                         val renderCell: @Composable (Int, Boolean) -> Unit = { slotIndex, fixed ->
                             val entry = entries.getOrNull(slotIndex)
                             Box(
-                                modifier = if (fixed) Modifier.height(31.dp) else Modifier.heightIn(min = 33.dp),
+                                modifier = if (fixed) Modifier.height(27.dp) else Modifier.heightIn(min = 33.dp),
                                 contentAlignment = Alignment.CenterStart,
                             ) {
                                 when {
@@ -909,7 +915,7 @@ private fun WeekScheduleView(
                                 }
                             }
                         } else {
-                            Row(Modifier.heightIn(min = 93.dp)) {
+                            Row(Modifier.heightIn(min = 102.dp)) {
                                 Column(Modifier.weight(1f)) {
                                     repeat(3) { renderCell(it, true) }
                                 }
@@ -983,10 +989,11 @@ private fun WeekScheduleView(
                     .padding(horizontal = 10.dp, vertical = 9.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                // 对照原版真机：标题圆点 10dp 跟清单颜色（v_dot 26px）
                 Box(
                     Modifier
-                        .size(12.dp)
-                        .background(currentBook?.color ?: PoolBullet, RoundedCornerShape(3.dp)),
+                        .size(10.dp)
+                        .background(currentBook?.color ?: PoolBullet, RoundedCornerShape(2.dp)),
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
@@ -1077,11 +1084,12 @@ private fun WeekScheduleView(
                                 Text("✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         } else {
+                            // 对照原版真机：条目圆点 5dp 跟清单颜色（v_dot 13px），文字单行截断
                             Box(
                                 Modifier
                                     .padding(top = 5.dp)
-                                    .size(7.dp)
-                                    .background(PoolBullet),
+                                    .size(5.dp)
+                                    .background(currentBook?.color ?: PoolBullet),
                             )
                         }
                         Spacer(Modifier.width(10.dp))
@@ -1091,6 +1099,8 @@ private fun WeekScheduleView(
                             lineHeight = 20.sp,
                             color = if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                             textDecoration = if (itemChecked) TextDecoration.LineThrough else TextDecoration.None,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -1504,7 +1514,7 @@ private fun TopicListView(
                             Box(
                                 Modifier
                                     .size(10.dp)
-                                    // 对照原版 v_dot 状态列表：关联日程=方形点，否则圆点
+                                    // 对照原版 v_dot 状态列表：关联日程=方形点，否则圆点，颜色跟清单
                                     .background(
                                         book.color,
                                         if (book.linkedToSchedule) RoundedCornerShape(2.dp) else CircleShape,
@@ -1659,7 +1669,7 @@ private fun TopicDetailSimple(
             Box(
                 Modifier
                     .size(11.dp)
-                    .background(book.color, RoundedCornerShape(2.dp)),
+                    .background(PoolBullet, RoundedCornerShape(2.dp)),
             )
             Spacer(Modifier.width(8.dp))
             Text(
@@ -2330,7 +2340,7 @@ private fun MonthScheduleView(
                     Box(
                         Modifier
                             .size(12.dp)
-                            .background(currentBook?.color ?: PoolBullet, RoundedCornerShape(3.dp)),
+                            .background(PoolBullet, RoundedCornerShape(3.dp)),
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(

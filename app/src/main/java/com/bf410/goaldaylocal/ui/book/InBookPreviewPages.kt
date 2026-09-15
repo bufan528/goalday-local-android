@@ -861,6 +861,38 @@ internal fun InBookDiaryPreview(
                     .background(GoaldayDesign.InkMuted.copy(alpha = 0.15f)),
             )
             Spacer(Modifier.height(6.dp))
+        } else if (diaryDate != null) {
+            // 书内阅读态日期标签：对照 fragment_diary_inbook.xml
+            // 左页左上 "15 | 周二" 11sp+9sp，右页右上 "16 | 周三" 12sp+10sp，颜色 #C5BBB6
+            val isLeft = pageIndex % 2 == 0
+            val mainSize = if (isLeft) 11.sp else 12.sp
+            val subSize = if (isLeft) 9.sp else 10.sp
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = if (isLeft) 10.dp else 0.dp,
+                        end = if (isLeft) 0.dp else 10.dp,
+                        top = 10.dp,
+                    ),
+                horizontalArrangement = if (isLeft) Arrangement.Start else Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = diaryDateLabelMain,
+                    fontSize = mainSize,
+                    lineHeight = mainSize,
+                    color = diaryTabDividerColor,
+                    fontFamily = GoaldayDesign.BodyFontFamily,
+                )
+                Text(
+                    text = " | $diaryDateLabelSub",
+                    fontSize = subSize,
+                    lineHeight = mainSize,
+                    color = diaryTabDividerColor,
+                    fontFamily = GoaldayDesign.BodyFontFamily,
+                )
+            }
         }
         // 内容区：对照 fragment_diary_inbook.xml RecyclerView
         // marginTop=5dip, marginBottom=30dip, marginStart/End=7.5dip
@@ -890,7 +922,19 @@ internal fun InBookDiaryPreview(
                         add(DiaryEntryBlock(DiaryBlockType.TEXT, plainTextFromHtml(diary.richHtml)))
                     }
                     if (diary.photoText.isNotBlank()) {
-                        add(DiaryEntryBlock(DiaryBlockType.TEXT, diary.photoText))
+                        // 裸路径行永不打原文：文件还在就当图片块渲染（对照原版图片卡），没了直接丢弃
+                        val (pathLines, normalLines) = diary.photoText.lines()
+                            .partition { it.trim().isBareDiaryFilePath() }
+                        pathLines.map { it.trim() }.filter { it.isNotBlank() }.forEach { rawPath ->
+                            val file = java.io.File(rawPath.removePrefix("file://"))
+                            if (file.exists() && file.isFile) {
+                                add(DiaryEntryBlock(DiaryBlockType.IMAGE, rawPath))
+                            }
+                        }
+                        val restText = normalLines.joinToString("\n").trim()
+                        if (restText.isNotBlank()) {
+                            add(DiaryEntryBlock(DiaryBlockType.TEXT, restText))
+                        }
                     }
                     // 4) 摘要分区转换为书内目标/文字行
                     if (diary.todayDone.isNotBlank()) {
@@ -967,8 +1011,8 @@ internal fun InBookDiaryPreview(
                 // 对照 fragment_diary_inbook.xml RecyclerView：统一列表渲染所有行类型
                 if (diaryRows.isNotEmpty()) {
                     DiaryTypedBlockPreview(blocks = diaryRows)
-                } else if (moodItems.isEmpty()) {
-                    // 空日记显示提示语
+                } else if (moodItems.isEmpty() && !handbookMode) {
+                    // 空日记显示提示语（书内阅读态保持空白，对照原版书页）
                     Text(
                         page.prompt,
                         fontSize = 16.sp,
@@ -1500,3 +1544,10 @@ private fun InBookTargetRow(
     }
 }
 // endregion
+
+/** 无前缀的裸文件路径行（旧版本存的日记图片路径）：展示层永不打原文 */
+private fun String.isBareDiaryFilePath(): Boolean {
+    val t = trim()
+    return t.startsWith("/data/") || t.startsWith("/storage/") ||
+        t.startsWith("file://") || t.startsWith("content://")
+}
