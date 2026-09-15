@@ -1,5 +1,6 @@
 package com.bf410.goaldaylocal.ui.main
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -100,6 +101,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -548,11 +550,13 @@ private fun TabLabel(text: String, selected: Boolean, onClick: () -> Unit) {
     )
 }
 
-/** 左滑操作项：图标 + 底色（对照原版 SwipeRevealLayout 的编辑黑层/删除红层） */
+/** 左滑操作项：图标 + 底色（对照原版 SwipeRevealLayout 的编辑黑层/删除红层，按钮内图宽50dp） */
 data class SwipeAction(
     val label: String,
     val bg: Color,
     val icon: ImageVector,
+    // 原版 plan_edit/plan_trash PNG（白图，只能站深底）；有值时优先用图（放onAction前以保trailing写法）
+    val iconRes: Int? = null,
     val onAction: () -> Unit,
 )
 
@@ -569,7 +573,8 @@ private fun SwipeableActionsRow(
     content: @Composable RowScope.() -> Unit,
 ) {
     val density = LocalDensity.current
-    val maxRevealPx = with(density) { (56.dp * actions.size).toPx() }
+    // 对照原版：按钮内 ImageView 宽50dp居中，每操作占50dp
+    val maxRevealPx = with(density) { (50.dp * actions.size).toPx() }
     val reveal = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
     Box(Modifier.fillMaxWidth()) {
@@ -582,7 +587,7 @@ private fun SwipeableActionsRow(
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .width(56.dp)
+                        .width(50.dp)
                         .background(action.bg)
                         .clickable {
                             scope.launch { reveal.snapTo(0f) }
@@ -590,12 +595,21 @@ private fun SwipeableActionsRow(
                         },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        imageVector = action.icon,
-                        contentDescription = action.label,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp),
-                    )
+                    if (action.iconRes != null) {
+                        Image(
+                            painter = painterResource(action.iconRes),
+                            contentDescription = action.label,
+                            modifier = Modifier.width(50.dp),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = action.icon,
+                            contentDescription = action.label,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 }
             }
         }
@@ -782,10 +796,10 @@ private fun WeekScheduleView(
                                             onContentClick = { onEditEntry(entry) },
                                             onContentLongClick = { onEditEntry(entry) },
                                             actions = listOf(
-                                                SwipeAction("编辑", Color(0xFF252525), Icons.Filled.Edit) {
+                                                SwipeAction("编辑", Color(0xFF252525), Icons.Filled.Edit, iconRes = com.bf410.goaldaylocal.R.drawable.plan_edit) {
                                                     onEditEntry(entry)
                                                 },
-                                                SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete) {
+                                                SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete, iconRes = com.bf410.goaldaylocal.R.drawable.plan_trash) {
                                                     InteractionFeedback.click(context)
                                                     InteractionFeedback.haptic(context)
                                                     viewModel.deleteScheduleFromHandbook(entry.id)
@@ -1132,31 +1146,34 @@ private fun WeekScheduleView(
                             selectedDate.dayOfMonth,
                         )
                     }
-                    if (isCustomPoolItem) {
-                        SwipeableActionsRow(
-                            actions = listOf(
-                                SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete) {
-                                    InteractionFeedback.click(context)
-                                    viewModel.removeCustomPageItem(poolItem)
-                                },
-                            ),
-                            onContentClick = addPoolToSchedule,
-                            // 长按留给拖拽排期，不触发点击添加（否则长按即加一次+松手落点再加一次）
-                            onContentLongClick = {},
-                            content = {
-                                Row(
-                                    modifier = dragMod.padding(horizontal = 14.dp, vertical = 9.dp),
-                                    verticalAlignment = Alignment.Top,
-                                ) { poolInner() }
-                            },
-                        )
-                    } else {
-                        Row(
-                            modifier = dragMod
-                                .clickable(onClick = addPoolToSchedule)
-                                .padding(horizontal = 14.dp, vertical = 9.dp),
-                            verticalAlignment = Alignment.Top,
-                        ) { poolInner() }
+                    // 池行不套左滑（会抢长按拖拽手势致拖不动）；自定义条目行尾挂红底trash直删
+                    Row(
+                        modifier = dragMod
+                            .clickable(onClick = addPoolToSchedule)
+                            .padding(horizontal = 14.dp, vertical = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        poolInner()
+                        if (isCustomPoolItem) {
+                            Spacer(Modifier.width(8.dp))
+                            Box(
+                                Modifier
+                                    .size(28.dp)
+                                    .background(Color(0xFFED8888), RoundedCornerShape(7.dp))
+                                    .clickable {
+                                        InteractionFeedback.click(context)
+                                        viewModel.removeCustomPageItem(poolItem)
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Image(
+                                    painter = painterResource(com.bf410.goaldaylocal.R.drawable.plan_trash),
+                                    contentDescription = "删除",
+                                    modifier = Modifier.width(15.dp),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                                )
+                            }
+                        }
                     }
                 }
                 if (listItems.isEmpty()) {
@@ -1564,7 +1581,7 @@ private fun TopicListView(
                             )
                             if (book.id.startsWith("custom_")) {
                                 add(
-                                    SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete) {
+                                    SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete, iconRes = com.bf410.goaldaylocal.R.drawable.plan_trash) {
                                         pendingDeleteBook = book
                                     },
                                 )
