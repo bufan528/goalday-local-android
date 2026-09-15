@@ -159,6 +159,8 @@ fun DualPageBookView(
     var turnDirection by remember { mutableStateOf<TurnDirection?>(null) }
     var isAnimating by remember { mutableStateOf(false) }
     var pageWidthPx by remember { mutableFloatStateOf(1f) }
+    // 对照原版 BookPageAnimationConfigurator：6页曲线 + isLeftSlide按progress位置判定
+    val flipConfigurator = remember { BookPageAnimationConfigurator() }
 
     // 把书页左右边缘排除在系统返回手势之外，确保全宽翻页热区可用
     val view = LocalView.current
@@ -211,6 +213,7 @@ fun DualPageBookView(
                 progress.animateTo(0f, spec)
             }
             turnDirection = null
+            flipConfigurator.idle()
             // 对照原版：动画结束后 10ms 再重新启用手势
             kotlinx.coroutines.delay(10)
             isAnimating = false
@@ -242,14 +245,14 @@ fun DualPageBookView(
         val configuration = LocalConfiguration.current
         val screenWidthDp = configuration.screenWidthDp.dp
         val screenDensity = LocalDensity.current
-        // 像素测量原版实机截图（904x2316, density 2.625）三层结构：
-        // 布纹书壳(最外,宽≈0.937屏宽) → 层叠灰白书页边(中) → 当前纯白双页(最内)；
-        // 当前双页白宽 = 书壳-46dp、双页高/白宽≈1.092；书垂直中心在屏幕 50%；标题中心在屏高 20.6%。
-        val shellWidth = screenWidthDp * 0.937f
-        val spreadWidth = shellWidth - 46.dp
-        val spreadHeight = spreadWidth * 1.092f
-        // 像素实测原版：白页上方书壳边 14.5dp、下方 24.5dp（下宽上窄的层叠纸边）
-        val shellHeight = spreadHeight + 39.dp
+        // 真机dump修正（2026-09-15 BookActivity hierarchy 904x2316）：
+        // 白页总宽848px=0.938屏宽、总高785px，单页424x785 h/w=1.851=原版AnimationBookWidth*1.85；
+        // 旧1.092整书比偏高18%，白页276dp偏窄，已废弃。白页垂直居中top≈766px。
+        val shellWidth = screenWidthDp * 0.968f
+        val spreadWidth = shellWidth - 10.dp
+        val spreadHeight = spreadWidth * 0.926f
+        // 壳比白页每边大5dp水平/8dp垂直，露出层叠纸边
+        val shellHeight = spreadHeight + 16.dp
 
         // 顶部月份标题：中心对齐原版屏高 20.6%（18sp 文字半高约 5dp）
         val titleTop = with(screenDensity) { configuration.screenHeightDp.dp * 0.206f - 5.dp }
@@ -263,11 +266,10 @@ fun DualPageBookView(
                 .padding(top = titleTop),
         )
 
-        // 书壳（最外层：布纹）。下内边比上内边宽 10dp，故整体下移 4.5dp 让内部白页仍垂直居中于屏幕
+        // 书壳（最外层：布纹）。对称内边，白页垂直居中于屏幕（dump top≈766px即居中）
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(y = 4.5.dp)
                 .width(shellWidth)
                 .height(shellHeight)
                 .onGloballyPositioned {
@@ -321,31 +323,43 @@ fun DualPageBookView(
                                     continue
                                 }
                                 val startX = down.position.x
+                                val startY = down.position.y
                                 val velocityTracker = VelocityTracker()
                                 velocityTracker.resetTracking()
                                 velocityTracker.addPointerInputChange(down)
 
                                 var turnDir: TurnDirection? = null
                                 var finished = false
+                                // 对照原版 ComposeModifiersKt.horizontalSwipeGesture：
+                                // detectHorizontalDragGestures 内部走系统 touchSlop + 水平锁定，
+                                // progress=abs(totalDistance)/threshold 钳制0..1，
+                                // velocity=dx/dt，isFling=abs(v)>minFling，方向首动锁定不再翻转。
+                                val touchSlop = viewConfiguration.touchSlop.toFloat()
                                 while (!finished) {
                                     val event = awaitPointerEvent()
                                     val change = event.changes.firstOrNull { it.id == down.id } ?: continue
                                     if (change.pressed.not()) {
                                         val velocity = velocityTracker.calculateVelocity().x
-                                        // 对照原版 BaseBookViewKt 开页翻页阈值 0.3 + fling 560
+                                        // 对照原版 BaseBookViewKt阈值0.3 + fling560 + 反向300回弹
+                                        val opposing = when (turnDir) {
+                                            TurnDirection.NEXT -> velocity > 300f
+                                            TurnDirection.PREVIOUS -> velocity < -300f
+                                            null -> false
+                                        }
                                         val complete = when (turnDir) {
-                                            TurnDirection.NEXT -> progress.value > 0.3f || velocity < -560
-                                            TurnDirection.PREVIOUS -> progress.value > 0.3f || velocity > 560
+                                            TurnDirection.NEXT -> !opposing && (progress.value > 0.3f || velocity < -560f)
+                                            TurnDirection.PREVIOUS -> !opposing && (progress.value > 0.3f || velocity > 560f)
                                             null -> false
                                         }
                                         settle(complete)
                                         finished = true
                                         break
                                     }
-                                    val dx = change.positionChange().x
+                                    val totalDx = change.position.x - startX
+                                    val totalDy = change.position.y - startY
                                     velocityTracker.addPointerInputChange(change)
-                                    if (turnDir == null && abs(dx) > 4f) {
-                                        turnDir = if (dx < 0) TurnDirection.NEXT else TurnDirection.PREVIOUS
+                                    if (turnDir == null && abs(totalDx) > touchSlop && abs(totalDx) > abs(totalDy)) {
+                                        turnDir = if (totalDx < 0) TurnDirection.NEXT else TurnDirection.PREVIOUS
                                         val can = when (turnDir) {
                                             TurnDirection.NEXT -> weekOffset < MaxWeekOffset
                                             TurnDirection.PREVIOUS -> weekOffset > -MaxWeekOffset
@@ -353,6 +367,7 @@ fun DualPageBookView(
                                         }
                                         if (can) {
                                             turnDirection = turnDir
+                                            flipConfigurator.start()
                                             scope.launch { progress.snapTo(0f) }
                                         } else {
                                             finished = true
@@ -360,7 +375,10 @@ fun DualPageBookView(
                                         }
                                     }
                                     if (turnDir != null) {
-                                        val rawProgress = abs(change.position.x - startX) / (width * 0.45f)
+                                        // 单页宽=整壳宽/2（原版AnimationBookWidth=屏宽*0.47≈单页），
+                                        // 之前width*0.45偏敏感9%，改回width/2与原版一致。
+                                        val singlePage = (width / 2f).coerceAtLeast(1f)
+                                        val rawProgress = abs(change.position.x - startX) / singlePage
                                         val newProgress = rawProgress.coerceIn(0f, 1f)
                                         scope.launch { progress.snapTo(newProgress) }
                                     }
@@ -370,11 +388,11 @@ fun DualPageBookView(
                         }
                     },
             ) {
-                // 中层：层叠书页灰白边（布纹内缩，模拟后面叠着的纸页）
+                // 中层：层叠书页灰白边（壳→白总水平10dp/垂直16dp，对照dump白页848x785）
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .padding(horizontal = 2.dp, vertical = 2.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .background(Color(0xFFFAF9F7)),
                 ) {
@@ -402,7 +420,7 @@ fun DualPageBookView(
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(start = 13.dp, end = 13.dp, top = 11.dp, bottom = 20.dp),
+                        .padding(start = 3.dp, end = 3.dp, top = 6.dp, bottom = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(0.dp),
                 ) {
                     // 左页：offset=0 时为本周日程，其余为周二日记（对照原版真机）
@@ -412,6 +430,7 @@ fun DualPageBookView(
                         progress = progress.value,
                         direction = turnDirection,
                         onTap = { if (leftIsSchedule) onOpenDate(spreadMonday, true) else onOpenDate(leftTueDate, false) },
+                        configurator = flipConfigurator,
                         content = {
                             if (leftIsSchedule) {
                                 InBookSchedulePreview(
@@ -485,6 +504,7 @@ fun DualPageBookView(
                         progress = progress.value,
                         direction = turnDirection,
                         onTap = { onOpenDate(rightDate, false) },
+                        configurator = flipConfigurator,
                         content = {
                             InBookDiaryPreview(
                                 modifier = Modifier.fillMaxSize(),
@@ -690,6 +710,7 @@ private fun HandbookPage(
     content: @Composable () -> Unit,
     backContent: @Composable () -> Unit = {},
     onTap: () -> Unit = {},
+    configurator: BookPageAnimationConfigurator? = null,
 ) {
     // 左页：左侧平、右侧圆；右页：左侧圆、右侧平
     val pageShape = RoundedCornerShape(
@@ -700,14 +721,17 @@ private fun HandbookPage(
     )
 
     // 翻页时当前页绕书脊旋转
+    // 对照原版6页曲线：优先用configurator.handbookPageRotationY取非线性幅度，fallback线性progress*180
     val shouldRotate = when (direction) {
         TurnDirection.NEXT -> !isLeft
         TurnDirection.PREVIOUS -> isLeft
         null -> false
     }
+    val curveMag = configurator?.let { kotlin.math.abs(it.handbookPageRotationY(direction, progress)) }
+        ?: (progress * 180f)
     val rotationY = if (shouldRotate) {
         val sign = if (isLeft) 1f else -1f
-        progress * 180f * sign
+        curveMag * sign
     } else 0f
     val absRotation = kotlin.math.abs(rotationY)
     // 正面可见条件：rotationY 绝对值 <= 90°；背面可见条件：> 90°
