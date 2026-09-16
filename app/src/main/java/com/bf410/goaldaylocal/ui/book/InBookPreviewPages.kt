@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -1078,6 +1079,115 @@ private fun summaryTargetInBookBlock(title: String, content: String): DiaryEntry
     }.trimEnd()
     return DiaryEntryBlock(DiaryBlockType.TARGET_IN_BOOK, body, DiaryBlockStyle.BODY)
 }
+
+/**
+ * 书内日记页·可写态：嵌入 StructuredDiaryEditor（对照原版书内嵌 DiaryFragment：
+ * 翻到日记面即可直接书写/插图/加块），改动经 onStateChange 即时落盘。
+ * 日期标签与今日完成橙卡保持与阅读态一致。
+ */
+@Composable
+internal fun InBookDiaryEditorPage(
+    modifier: Modifier,
+    date: java.time.LocalDate,
+    isLeftPage: Boolean,
+    state: StructuredDiary,
+    onStateChange: (StructuredDiary) -> Unit,
+    onAddImage: () -> Unit,
+    scheduleEntries: List<ScheduleEntry> = emptyList(),
+) {
+    val tabDividerColor = Color(0xFFC5BBB6)
+    val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
+    Column(modifier = modifier.fillMaxSize()) {
+        // 日期标签：左页左上 11sp+9sp / 右页右上 12sp+10sp（对照 fragment_diary_inbook.xml）
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = if (isLeftPage) 10.dp else 0.dp,
+                    end = if (isLeftPage) 0.dp else 10.dp,
+                    top = 10.dp,
+                ),
+            horizontalArrangement = if (isLeftPage) Arrangement.Start else Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = date.dayOfMonth.toString(),
+                fontSize = if (isLeftPage) 11.sp else 12.sp,
+                lineHeight = if (isLeftPage) 11.sp else 12.sp,
+                color = tabDividerColor,
+                fontFamily = GoaldayDesign.BodyFontFamily,
+            )
+            Text(
+                text = " | " + weekdayNames.getOrElse(date.dayOfWeek.value - 1) { "" },
+                fontSize = if (isLeftPage) 9.sp else 10.sp,
+                lineHeight = if (isLeftPage) 11.sp else 12.sp,
+                color = tabDividerColor,
+                fontFamily = GoaldayDesign.BodyFontFamily,
+            )
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(start = 7.5.dp, end = 7.5.dp, top = 5.dp, bottom = 30.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
+            // 今日完成橙卡（对照原版书右页置顶卡片）
+            scheduleEntries
+                .filter {
+                    it.completed &&
+                        it.year == date.year &&
+                        it.month == date.monthValue &&
+                        it.day == date.dayOfMonth
+                }
+                .forEach { doneEntry ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(GoaldayDesign.Pink, Color(0xFFF66061)),
+                                ),
+                            )
+                            .padding(horizontal = 11.dp, vertical = 9.dp),
+                    ) {
+                        Column {
+                            Text(
+                                doneEntry.title,
+                                fontSize = 13.sp,
+                                lineHeight = 17.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White,
+                            )
+                            if (doneEntry.note.isNotBlank()) {
+                                Text(
+                                    "@" + doneEntry.note,
+                                    fontSize = 10.sp,
+                                    lineHeight = 13.sp,
+                                    color = Color.White.copy(alpha = 0.75f),
+                                )
+                            }
+                        }
+                    }
+                }
+            StructuredDiaryEditor(
+                state = state,
+                onStateChange = onStateChange,
+                onPickDate = {},
+                onAddImage = onAddImage,
+                onAddTextBlock = { onStateChange(state.withTextBlock()) },
+                onAddTopicTargetBlock = { onStateChange(state.withTopicTargetBlock()) },
+                onRemoveImage = { uri -> onStateChange(state.withoutImageUri(uri)) },
+                pendingCommand = null,
+                onCommand = {},
+                onDone = {},
+                isInBook = true,
+                contentFirst = true,
+            )
+        }
+    }
+}
 // endregion
 
 // region 目标页 (item_target_detail.xml 简化版, 支持滑动删除)
@@ -1546,7 +1656,7 @@ private fun InBookTargetRow(
 // endregion
 
 /** 无前缀的裸文件路径行（旧版本存的日记图片路径）：展示层永不打原文 */
-private fun String.isBareDiaryFilePath(): Boolean {
+internal fun String.isBareDiaryFilePath(): Boolean {
     val t = trim()
     return t.startsWith("/data/") || t.startsWith("/storage/") ||
         t.startsWith("file://") || t.startsWith("content://")

@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.KeyboardHide
@@ -62,6 +64,8 @@ internal fun StructuredDiaryEditor(
     onCommand: (RichEditorCommand) -> Unit,
     onDone: () -> Unit,
     isInBook: Boolean = false,
+    // 书内内容优先模式：去头部/工具栏/分区面板，文本块原位可写（对照原版书内嵌 DiaryFragment 内容优先）
+    contentFirst: Boolean = false,
 ) {
     val dateLabel = remember(state.dateIso) { diaryDateLabel(state.date) }
     var richEditorExpanded by remember(state.dateIso) { mutableStateOf(false) }
@@ -77,6 +81,106 @@ internal fun StructuredDiaryEditor(
     }
     val normalizedFocusIndex = focusedBlockIndex.coerceIn(0, (state.blocks.size - 1).coerceAtLeast(0))
     val focusedBlock = state.blocks.getOrNull(normalizedFocusIndex)
+    if (contentFirst) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            state.blocks.forEachIndexed { index, block ->
+                if (block.type == DiaryBlockType.TEXT) {
+                    BasicTextField(
+                        value = block.text,
+                        onValueChange = { onStateChange(state.withBlockText(index, it)) },
+                        textStyle = TextStyle(
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            color = GoaldayDesign.InkPrimary,
+                            fontFamily = GoaldayDesign.BodyFontFamily,
+                        ),
+                        cursorBrush = SolidColor(GoaldayDesign.Pink),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    DiaryTypedBlockPreview(blocks = listOf(block))
+                }
+            }
+            // 遗留存储兼容：photoText 混存图片路径行与裸文本——路径行渲染图片卡，文本部分原位可写
+            if (state.photoText.isNotBlank()) {
+                val (pathLines, normalLines) = state.photoText.lines()
+                    .partition { it.trim().isBareDiaryFilePath() }
+                pathLines.map { it.trim() }.filter { it.isNotBlank() }.forEach { rawPath ->
+                    val file = java.io.File(rawPath.removePrefix("file://"))
+                    if (file.exists() && file.isFile) {
+                        DiaryTypedBlockPreview(blocks = listOf(DiaryEntryBlock(DiaryBlockType.IMAGE, rawPath)))
+                    }
+                }
+                val restText = normalLines.joinToString("\n").trim()
+                if (restText.isNotBlank()) {
+                    BasicTextField(
+                        value = restText,
+                        onValueChange = { newText ->
+                            onStateChange(
+                                state.withPhotoText(
+                                    (pathLines.map { it.trim() } + newText.lines())
+                                        .filter { it.isNotBlank() }
+                                        .joinToString("\n"),
+                                ),
+                            )
+                        },
+                        textStyle = TextStyle(
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            color = GoaldayDesign.InkPrimary,
+                            fontFamily = GoaldayDesign.BodyFontFamily,
+                        ),
+                        cursorBrush = SolidColor(GoaldayDesign.Pink),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+            if (state.richHtml.isNotBlank()) {
+                BasicTextField(
+                    value = plainTextFromHtml(state.richHtml),
+                    onValueChange = { html ->
+                        onStateChange(
+                            state.withRichHtml(
+                                html.lines().filter { it.isNotBlank() }
+                                    .joinToString("") { "<p>$it</p>" },
+                        ),
+                        )
+                    },
+                    textStyle = TextStyle(
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
+                        color = GoaldayDesign.InkPrimary,
+                        fontFamily = GoaldayDesign.BodyFontFamily,
+                    ),
+                    cursorBrush = SolidColor(GoaldayDesign.Pink),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            if (state.blocks.isEmpty() && state.photoText.isBlank() && state.richHtml.isBlank()) {
+                Text(
+                    "写下你现在最想完成的",
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp,
+                    color = GoaldayDesign.InkMuted.copy(alpha = 0.75f),
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(
+                    "+ 文字",
+                    fontSize = 10.sp,
+                    color = GoaldayDesign.InkMuted,
+                    modifier = Modifier.clickable { onStateChange(state.withTextBlock()) },
+                )
+                Text(
+                    "+ 图片",
+                    fontSize = 10.sp,
+                    color = GoaldayDesign.InkMuted,
+                    modifier = Modifier.clickable { onAddImage() },
+                )
+            }
+        }
+        return
+    }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         DiaryEditorHeader(
             dateLabel = dateLabel,

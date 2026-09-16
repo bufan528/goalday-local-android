@@ -1,5 +1,7 @@
 package com.bf410.goaldaylocal.ui.book
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -141,13 +143,31 @@ fun DualPageBookView(
     val diaryPage = book.pages.filterIsInstance<DiaryPage>().firstOrNull()
         ?: DiaryPage("日记页", "写下这一页最重要的记录。")
 
-    // 日记内容按日期读取（记录 Tab 与书内共用同一存储）
+    // 日记内容按日期读取（记录 Tab 与书内共用同一存储）；书内可写态按日期缓存编辑态并即时落盘
     val diaryStore = remember { com.bf410.goaldaylocal.data.LocalStateStore(com.tencent.mmkv.MMKV.defaultMMKV()) }
-    fun diaryTextOf(date: LocalDate): String = diaryStore.diaryText(DiaryStoreBookId, date.toString())
-    val leftDiaryDraft = remember(leftPage.date) { diaryTextOf(leftPage.date) }
-    val rightDiaryDraft = remember(rightPage.date) { diaryTextOf(rightPage.date) }
-    val nextLeftDiaryDraft = remember(nextLeftPage.date) { diaryTextOf(nextLeftPage.date) }
-    val prevRightDiaryDraft = remember(prevRightPage.date) { diaryTextOf(prevRightPage.date) }
+    val diaryStates = remember { androidx.compose.runtime.mutableStateMapOf<LocalDate, StructuredDiary>() }
+    fun diaryStateOf(date: LocalDate): StructuredDiary =
+        diaryStates.getOrPut(date) {
+            StructuredDiary.fromRaw(diaryStore.diaryText(DiaryStoreBookId, date.toString()))
+        }
+    fun saveDiaryState(date: LocalDate, state: StructuredDiary) {
+        diaryStates[date] = state
+        diaryStore.setDiaryText(DiaryStoreBookId, date.toString(), state.toRaw())
+    }
+    var pendingImageDate by remember { mutableStateOf<LocalDate?>(null) }
+    val pickerContext = LocalContext.current
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: android.net.Uri? ->
+        val date = pendingImageDate
+        if (uri != null && date != null) {
+            runCatching {
+                pickerContext.contentResolver.takePersistableUriPermission(
+                    uri,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+            }
+            saveDiaryState(date, diaryStateOf(date).withImageUri(uri.toString()))
+        }
+    }
 
     var showBookShelf by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -161,8 +181,8 @@ fun DualPageBookView(
     val dragJobHolder = remember { arrayOfNulls<kotlinx.coroutines.Job>(1) }
 
     // 书芯单页渲染：日程面=该页所在周的书内周视图（原版书内嵌 ScheduleFragment，7 行 Mon-Sun），
-    // 日记面=该日日记（对照原版 m31351o 按 isSchedule 分派 Diary/ScheduleDelegate）
-    val pageContent: @Composable (DayPage, String) -> Unit = { page, draft ->
+    // 日记面=可写日记页（原版书内嵌 DiaryFragment，翻到即可书写；改动即时落盘）
+    val pageContent: @Composable (DayPage, Boolean) -> Unit = { page, isLeftPage ->
         if (page.isSchedule) {
             InBookSchedulePreview(
                 modifier = Modifier.fillMaxSize(),
@@ -178,18 +198,16 @@ fun DualPageBookView(
                 weekStartDate = page.date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
             )
         } else {
-            InBookDiaryPreview(
+            InBookDiaryEditorPage(
                 modifier = Modifier.fillMaxSize(),
-                page = diaryPage,
-                pageIndex = 1,
-                pageCount = book.pages.size,
-                diaryDraft = draft,
-                tint = book.color,
-                turnProgress = progress.value,
-                turnDirection = turnDirection,
-                handbookMode = true,
-                diaryDate = page.date,
-                onAddImage = {},
+                date = page.date,
+                isLeftPage = isLeftPage,
+                state = diaryStateOf(page.date),
+                onStateChange = { saveDiaryState(page.date, it) },
+                onAddImage = {
+                    pendingImageDate = page.date
+                    imagePicker.launch(arrayOf("image/*"))
+                },
                 scheduleEntries = uiState.schedulePreviewEntries,
             )
         }
@@ -462,12 +480,17 @@ fun DualPageBookView(
                         isLeft = true,
                         progress = progress.value,
                         direction = turnDirection,
-                        onTap = { onOpenDate(leftPage.date, leftPage.isSchedule) },
+                        // 日程面点按跳主界面周Tab；日记面为可写编辑器，不盖点按层（触摸交给编辑器）
+                        onTap = if (leftPage.isSchedule) {
+                            { onOpenDate(leftPage.date, true) }
+                        } else {
+                            null
+                        },
                         configurator = flipConfigurator,
-                        content = { pageContent(leftPage, leftDiaryDraft) },
+                        content = { pageContent(leftPage, true) },
                         backContent = {
                             // PREV 左页向右翻，背面=上一 spread 的右页
-                            pageContent(prevRightPage, prevRightDiaryDraft)
+                            pageContent(prevRightPage, false)
                         },
                     )
 
@@ -477,12 +500,16 @@ fun DualPageBookView(
                         isLeft = false,
                         progress = progress.value,
                         direction = turnDirection,
-                        onTap = { onOpenDate(rightPage.date, rightPage.isSchedule) },
+                        onTap = if (rightPage.isSchedule) {
+                            { onOpenDate(rightPage.date, true) }
+                        } else {
+                            null
+                        },
                         configurator = flipConfigurator,
-                        content = { pageContent(rightPage, rightDiaryDraft) },
+                        content = { pageContent(rightPage, false) },
                         backContent = {
                             // NEXT 右页向左翻，背面=下一 spread 的左页
-                            pageContent(nextLeftPage, nextLeftDiaryDraft)
+                            pageContent(nextLeftPage, true)
                         },
                     )
                 }
@@ -665,7 +692,7 @@ private fun HandbookPage(
     direction: TurnDirection?,
     content: @Composable () -> Unit,
     backContent: @Composable () -> Unit = {},
-    onTap: () -> Unit = {},
+    onTap: (() -> Unit)? = null,
     configurator: BookPageAnimationConfigurator? = null,
 ) {
     // 左页：左侧平、右侧圆；右页：左侧圆、右侧平
@@ -757,8 +784,8 @@ private fun HandbookPage(
                 .graphicsLayer { alpha = frontAlpha },
         ) {
             content()
-            if (onTap != {}) {
-                // 原版书页为 NoTouchConstraintLayout：点任意页面区域即跳转主界面
+            if (onTap != null) {
+                // 原版书页为 NoTouchConstraintLayout：点任意页面区域即跳转主界面（仅日程面）
                 Box(
                     Modifier
                         .matchParentSize()
