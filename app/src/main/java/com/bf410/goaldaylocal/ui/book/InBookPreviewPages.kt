@@ -1371,11 +1371,14 @@ internal fun InBookDiaryEditorPage(
                 }
                 Spacer(Modifier.height(4.dp))
             }
-            // 当日灵感提示语（一日一问）：与记录 Tab 同一天同一条。
+            // 当日灵感提示语（一日一问）：与记录 Tab 同一天同一条（含记录 Tab 的轮换偏移）。
             // 对照原版 JournalPrompts（空文本块 hint 显示）；书内字小，随版式取 12sp/17sp。
             // 注意不用 BodyFontFamily：真机上该字体会吞掉个别字形（路/朵/写等，字库本身完好，属设备渲染问题），
             // 默认字体与记录 Tab 提示语渲染一致，保证可读。
-            val dayPrompt = remember(date) { journalPromptFor(date) }
+            val dayPrompt = remember(date) {
+                val offset = com.tencent.mmkv.MMKV.defaultMMKV().decodeInt(diaryPromptOffsetKey(date), 0)
+                journalPromptFor(date, offset)
+            }
             if (dayPrompt.isNotBlank()) {
                 Text(
                     text = dayPrompt,

@@ -36,4 +36,21 @@ class DiaryPromptsTest {
         assertTrue(a.isNotBlank() && b.isNotBlank())
         assertTrue(a != b)
     }
+
+    @Test
+    fun rotation_offset_cycles_and_wraps() {
+        // 点提示语轮换：offset+1 取下一条，满 41 回绕（floorMod 兜底，offset 只增不减也无妨）
+        val date = LocalDate.of(2026, 9, 16)
+        val base = journalPromptFor(date, 0)
+        assertEquals(JOURNAL_PROMPTS[8], journalPromptFor(date, 1))
+        assertEquals(base, journalPromptFor(date, JOURNAL_PROMPTS.size))
+        assertEquals(base, journalPromptFor(date, -JOURNAL_PROMPTS.size))
+        assertEquals(JOURNAL_PROMPTS[6], journalPromptFor(date, -1))
+    }
+
+    @Test
+    fun offset_key_is_stable_per_day() {
+        assertEquals("diary_prompt_offset_2026-09-16", diaryPromptOffsetKey(LocalDate.of(2026, 9, 16)))
+        assertTrue(diaryPromptOffsetKey(LocalDate.of(2026, 9, 16)) != diaryPromptOffsetKey(LocalDate.of(2026, 9, 17)))
+    }
 }

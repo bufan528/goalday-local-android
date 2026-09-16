@@ -42,12 +42,14 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -127,6 +129,7 @@ import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
 import com.bf410.goaldaylocal.ui.book.BookUiState
 import com.bf410.goaldaylocal.ui.book.BookViewModel
+import com.bf410.goaldaylocal.ui.book.diaryPromptOffsetKey
 import com.bf410.goaldaylocal.ui.book.journalPromptFor
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.LocalGoaldayDarkMode
@@ -1370,7 +1373,11 @@ private fun RecordDiaryView(
     onEditorFocusChanged: (Boolean) -> Unit = {},
 ) {
     val store = remember { LocalStateStore(MMKV.defaultMMKV()) }
-    val prompt = remember(selectedDate) { journalPromptFor(selectedDate) }
+    // 提示语轮换：点提示语切下一条，按天持久化（书内页同步读取同一偏移，同一天同一条）
+    var promptOffset by remember(selectedDate) {
+        mutableStateOf(MMKV.defaultMMKV().decodeInt(diaryPromptOffsetKey(selectedDate), 0))
+    }
+    val prompt = remember(selectedDate, promptOffset) { journalPromptFor(selectedDate, promptOffset) }
     // 编辑器只展示用户正文；「今日完成」等结构化段落由系统维护
     var text by remember(selectedDate) {
         mutableStateOf(diaryUserText(store, selectedDate))
@@ -1458,6 +1465,15 @@ private fun RecordDiaryView(
                     fontSize = 16.sp,
                     lineHeight = 22.sp,
                     color = GoaldayDesign.adaptiveInkMuted,
+                    modifier = Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) {
+                        // 点提示语轮换下一条（对照原版随机取法的"换一条"直觉；按天持久化）
+                        val next = promptOffset + 1
+                        promptOffset = next
+                        MMKV.defaultMMKV().encode(diaryPromptOffsetKey(selectedDate), next)
+                    },
                 )
                 Spacer(Modifier.height(14.dp))
             }
@@ -1487,7 +1503,7 @@ private fun RecordDiaryView(
             }
             Spacer(Modifier.height(120.dp))
         }
-        // 键盘工具栏（对照原版 fragment_diary 底栏：bg #E5DAD4 高约 46dp，插图图标 25dp，仅编辑时出现）
+        // 键盘工具栏（对照原版 fragment_diary 底栏：bg #E5DAD4 高约 46dp，插图/键盘双 25dp 图标，仅编辑时出现）
         if (editorFocused) {
             Row(
                 modifier = Modifier
@@ -1509,6 +1525,15 @@ private fun RecordDiaryView(
                                 ),
                             )
                         },
+                )
+                Spacer(Modifier.width(16.dp))
+                Icon(
+                    Icons.Filled.Keyboard,
+                    contentDescription = "收起键盘",
+                    tint = GoaldayDesign.adaptiveInkPrimary,
+                    modifier = Modifier
+                        .size(25.dp)
+                        .clickable { focusManager.clearFocus() },
                 )
             }
         }
