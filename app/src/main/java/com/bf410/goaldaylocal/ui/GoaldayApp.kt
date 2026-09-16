@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -675,16 +676,16 @@ private fun BookRootSegmentChip(
     }
 }
 
-// 原版底部三图标导航（对照原版主界面：● 记录 / 日历 / 书本，bg #E5DAD4，高 56dp）
+// 原版底部三图标导航（对照原版 MainTabFragment：ic_tab_setting/ic_tab_calendar/ic_tab_book 黑色描边原图，bg #E5DAD4，高 56dp）
 @Composable
 private fun GoaldayBottomNavOriginal(
     selected: RootTab,
     onSelect: (RootTab) -> Unit,
 ) {
     val items = listOf(
-        RootTab.MAIN to Icons.Filled.Adjust,
-        RootTab.CALENDAR to Icons.Filled.CalendarMonth,
-        RootTab.BOOK to Icons.AutoMirrored.Filled.MenuBook,
+        RootTab.MAIN to com.bf410.goaldaylocal.R.drawable.ic_tab_setting,
+        RootTab.CALENDAR to com.bf410.goaldaylocal.R.drawable.ic_tab_calendar,
+        RootTab.BOOK to com.bf410.goaldaylocal.R.drawable.ic_tab_book,
     )
     Row(
         modifier = Modifier
@@ -694,8 +695,7 @@ private fun GoaldayBottomNavOriginal(
             .height(56.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        items.forEach { (item, icon) ->
-            val active = selected == item
+        items.forEach { (item, iconRes) ->
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -703,11 +703,11 @@ private fun GoaldayBottomNavOriginal(
                     .clickable { onSelect(item) },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = icon,
+                // 原版真机三图标恒为黑色描边，不随选中变灰
+                Image(
+                    painter = androidx.compose.ui.res.painterResource(iconRes),
                     contentDescription = item.label,
-                    tint = if (active) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
-                    modifier = Modifier.size(26.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }

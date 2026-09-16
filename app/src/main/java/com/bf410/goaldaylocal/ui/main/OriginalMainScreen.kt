@@ -1,5 +1,6 @@
 package com.bf410.goaldaylocal.ui.main
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -72,6 +73,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -97,6 +99,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -322,6 +325,16 @@ fun OriginalMainScreen(
         subTabIndex = firstVisible.ordinal
     }
 
+    // 对照原版真机：状态栏与顶栏同色（米色延伸到状态栏区）+ 黑色状态栏图标
+    val statusBarColor = MainTabBarBg
+    val mainWindow = (LocalContext.current as? android.app.Activity)?.window
+    SideEffect {
+        mainWindow?.let { w ->
+            w.statusBarColor = statusBarColor.toArgb()
+            androidx.core.view.WindowInsetsControllerCompat(w, w.decorView).isAppearanceLightStatusBars = true
+        }
+    }
+
     Column(Modifier.fillMaxSize().background(MainContentBg)) {
         OriginalTopTabBar(
             selected = currentSubTab,
@@ -451,7 +464,7 @@ private fun OriginalTopTabBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(MainTabBarBg)
-            .statusBarsPadding()
+            // 状态栏 inset 由外层容器统一处理，这里再加会双重下移（对照原版 Tab 文字中心≈屏y152px）
             .height(49.dp)
             .pointerInput(Unit) {
                 detectTapGestures(onLongPress = { onManageTabs() })
@@ -505,13 +518,8 @@ private fun OriginalTopTabBar(
                         )
                         if (selected == MainSubTab.WEEK) {
                             Spacer(Modifier.width(4.dp))
-                            // 对照原版：展开（自适应）= 上箭头 ic_expanded，收起（固定）= 下箭头 ic_collapsed
-                            Icon(
-                                if (weekAdaptive) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                                contentDescription = "切换周视图模式",
-                                tint = GoaldayDesign.adaptiveInkPrimary,
-                                modifier = Modifier.size(14.dp),
-                            )
+                            // 对照原版真机：实心黑三角（收起=▼，展开=▲），非细 chevron
+                            WeekTriangle(expanded = weekAdaptive)
                         }
                     }
                     MainSubTab.MONTH -> TabLabel("月", selected == MainSubTab.MONTH) { onSelect(MainSubTab.MONTH) }
@@ -530,6 +538,27 @@ private fun OriginalTopTabBar(
 @Composable
 private fun TabDividerText() {
     Text("｜", fontSize = 15.sp, color = MainTabDivider)
+}
+
+/** 周 Tab 旁的实心三角指示器：对照原版真机为填充▼/▲，而非线性 chevron */
+@Composable
+private fun WeekTriangle(expanded: Boolean) {
+    val color = if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkPrimary else Color.Black
+    Canvas(Modifier.size(16.dp, 10.dp)) {
+        val path = androidx.compose.ui.graphics.Path().apply {
+            if (expanded) {
+                moveTo(0f, size.height)
+                lineTo(size.width, size.height)
+                lineTo(size.width / 2f, 0f)
+            } else {
+                moveTo(0f, 0f)
+                lineTo(size.width, 0f)
+                lineTo(size.width / 2f, size.height)
+            }
+            close()
+        }
+        drawPath(path, color)
+    }
 }
 
 @Composable
@@ -707,6 +736,8 @@ private fun WeekScheduleView(
         // 左侧：周日期列（今日黑底圆角白字；任意一天点空白进入行内新增）
         LazyColumn(
             state = listState,
+            // 对照原版真机：左列表首行距顶栏约 21dp（原版 14 文本 y284 = 顶栏底216 + 行内13 + 顶隙55）
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 18.dp),
             modifier = Modifier
                 .weight(if (poolCollapsed) 1f else 1.15f)
                 .fillMaxHeight(),
@@ -740,7 +771,8 @@ private fun WeekScheduleView(
                         .padding(start = 0.dp, top = 5.dp, end = 12.dp, bottom = 5.dp),
                 ) {
                     Row(verticalAlignment = Alignment.Top) {
-                        // 日期列：24.5dp 宽（原版真机 fl_day_1 实测 64px/2.625）；今天 = 37×75dp 黑底圆角白字
+                        // 日期列：24.5dp 宽（原版真机 fl_day_1 实测 64px/2.625）；
+                        // 今天 = 黑底圆角白字胶囊（约37×75dp），非今天不占固定高度，整行高度由 3×31dp 槽决定
                         Column(
                             modifier = Modifier.width(24.5.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -752,7 +784,7 @@ private fun WeekScheduleView(
                                         .height(75.dp)
                                         .background(TodayBlack, RoundedCornerShape(8.dp))
                                 } else {
-                                    Modifier.width(37.dp).height(75.dp)
+                                    Modifier.width(37.dp)
                                 },
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center,
@@ -782,12 +814,12 @@ private fun WeekScheduleView(
                             }
                         }
                         Spacer(Modifier.width(4.dp))
-                        // 日程区：固定模式=原版 2×3 槽（槽高 37dp=98px 真机实测）；自适应模式=行数随内容增长
+                        // 日程区：固定模式=原版 2×3 槽（槽高 31dp，真机行高 271px=103dp=3×31+上下5）；自适应模式=行数随内容增长
                         val editingSlot = if (isEditing) entries.size else -1
                         val renderCell: @Composable (Int, Boolean) -> Unit = { slotIndex, fixed ->
                             val entry = entries.getOrNull(slotIndex)
                             Box(
-                                modifier = if (fixed) Modifier.height(37.dp) else Modifier.heightIn(min = 37.dp),
+                                modifier = if (fixed) Modifier.height(31.dp) else Modifier.heightIn(min = 31.dp),
                                 contentAlignment = Alignment.CenterStart,
                             ) {
                                 when {
@@ -842,7 +874,7 @@ private fun WeekScheduleView(
                                                     color = if (entry.completed) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                                                     textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                                                     maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
+                                                    overflow = TextOverflow.Clip,
                                                 )
                                             }
                                         }
@@ -932,7 +964,8 @@ private fun WeekScheduleView(
                                 }
                             }
                         } else {
-                            Row(Modifier.heightIn(min = 102.dp)) {
+                            // 固定模式内容区=3×31dp 槽（原版真机行高 271px=103dp=内容93+上下padding10）
+                            Row(Modifier.heightIn(min = 93.dp)) {
                                 Column(Modifier.weight(1f)) {
                                     repeat(3) { renderCell(it, true) }
                                 }
@@ -1069,7 +1102,7 @@ items(listItems, key = { it }) { poolItem ->
                                 color = if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                                 textDecoration = if (itemChecked) TextDecoration.LineThrough else TextDecoration.None,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                                overflow = TextOverflow.Clip,
                             )
                         }
                         val addPoolToSchedule = {

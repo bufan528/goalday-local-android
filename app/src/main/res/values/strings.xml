@@ -5,8 +5,8 @@
     <string-array name="schedule_empty_hints">
         <item>今天最重要的一件事是？</item>
         <item>写下你现在最想完成的事</item>
-        <item>先完成一个小目标 👇</item>
-        <item>3分钟内能完成的事？</item>
+        <item>先完成一个小目标</item>
+        <item>今天想记些什么呢?</item>
         <item>今天有哪些必须完成的小任务？</item>
         <item>今天做一件让自己开心的事吧</item>
         <item>今天想尝试的新技能或小技巧是什么？</item>
