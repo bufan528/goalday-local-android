@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
@@ -1217,6 +1218,10 @@ internal fun InBookDiaryEditorPage(
     onStateChange: (StructuredDiary) -> Unit,
     onAddImage: () -> Unit,
     scheduleEntries: List<ScheduleEntry> = emptyList(),
+    planItems: List<String> = emptyList(),
+    donePlanItems: List<String> = emptyList(),
+    onCompleteItem: (String) -> Unit = {},
+    onUncompleteItem: (String) -> Unit = {},
 ) {
     val tabDividerColor = Color(0xFFC5BBB6)
     val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
@@ -1294,6 +1299,78 @@ internal fun InBookDiaryEditorPage(
                         }
                     }
                 }
+            // 内嵌目标打卡（对照原版 DiaryTargetAdapterInBook：勾选即完成，联动计划看板与"今日完成"卡片）
+            if (planItems.isNotEmpty() || donePlanItems.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(GoaldayDesign.DiaryTargetBackground)
+                        .border(0.5.dp, Color(0x4D000000), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
+                    Text(
+                        "今日目标 · 点击勾选",
+                        fontSize = 9.sp,
+                        color = Color(0xFF503311),
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    planItems.forEach { item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable { onCompleteItem(item) }
+                                .padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                Modifier
+                                    .size(14.dp)
+                                    .border(1.2.dp, Color(0xFFB07A5A), CircleShape),
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                item,
+                                fontSize = 10.sp,
+                                lineHeight = 14.sp,
+                                color = GoaldayDesign.InkPrimary,
+                                maxLines = 2,
+                            )
+                        }
+                    }
+                    donePlanItems.forEach { item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable { onUncompleteItem(item) }
+                                .padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                Modifier
+                                    .size(14.dp)
+                                    .background(GoaldayDesign.Pink, CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text("✓", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                item,
+                                fontSize = 10.sp,
+                                lineHeight = 14.sp,
+                                color = GoaldayDesign.InkMuted,
+                                textDecoration = TextDecoration.LineThrough,
+                                maxLines = 2,
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+            }
             StructuredDiaryEditor(
                 state = state,
                 onStateChange = onStateChange,

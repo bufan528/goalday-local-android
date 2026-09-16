@@ -221,6 +221,11 @@ fun DualPageBookView(
                     imagePicker.launch(arrayOf("image/*"))
                 },
                 scheduleEntries = uiState.schedulePreviewEntries,
+                // 内嵌目标打卡：联动当前书的计划看板（今日待办/已完成）
+                planItems = uiState.todayPlanItems,
+                donePlanItems = uiState.todayCompletedItems,
+                onCompleteItem = viewModel::moveItemToCompleted,
+                onUncompleteItem = viewModel::moveItemToToday,
             )
         }
     }
