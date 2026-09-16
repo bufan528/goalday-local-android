@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.ui.book.InspirationTemplate
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.book.InspirationTemplates
@@ -246,7 +247,8 @@ fun InspirationScreen(
         Text(
             "保存到我的计划",
             color = Color.White,
-            style = MaterialTheme.typography.titleMedium,
+            fontSize = 20.sp,
+            lineHeight = 26.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .background(
