@@ -18,7 +18,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -42,22 +45,19 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.temporal.TemporalAdjusters
-
-/** 导出内容模式（对照原版 PrintPage.RenderMode：ONLY_DIARY / ONLY_SCHEDULE / BOTH） */
-internal enum class ExportContentMode(val label: String) {
-    BOTH("日记+日程"),
-    DIARY("仅日记"),
-    SCHEDULE("仅日程"),
-}
 
 /**
- * 导出中心底部弹层（对照原版 PrintPage：内容筛选 + 起止日期 + 真 PDF 生成 + 系统分享）。
- * - 日记：范围内每天一页（复用 renderDiaryLongImage 纸张风格排版）；
- * - 日程：范围内每周一页（对照书内周日程 spread，Mon-Sun 七行）；
- * - 两者：每周 [周日程页 + 7 张日记页]。
+ * 导出中心底部弹层（对照原版 PrintPage `getDefaultSections` 三分区：打印PDF + 时间 + 预览）。
+ * - 打印PDF：勾选项 周计划(id=1)/日记(id=2)，默认双勾（对照 CheckableItem）；
+ * - 时间：起止日期（对照 DATE 分区 开始/结束）；
+ * - 预览：待办页表（对照 PreviewItem(date, type)，周一出周计划页、每天出日记页，空日记也成页；
+ *   预览截断 30 页，正式生成不限，对照 `m31229Z0` 的 z 开关）；
+ * - 生成走 FIFO 任务队列逐项渲染并报进度（对照 ConcurrentLinkedQueue<PdfTask> + processBatch），
+ *   离开弹层取消剩余任务。
+ * - 日记每天一页（复用 renderDiaryLongImage 纸张风格排版，空日记为空白模板页）；
+ * - 日程逢周一出一页（对照书内周日程 spread，Mon-Sun 七行）；
+ * - 双勾时按日期交错（周一先周计划后日记，对照原版逐天走表的顺序）。
  */
 @Composable
 internal fun ExportCenterSheet(
@@ -69,11 +69,28 @@ internal fun ExportCenterSheet(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val now = LocalDate.now()
-    var mode by remember { mutableStateOf(ExportContentMode.BOTH) }
+    var includeSchedule by remember { mutableStateOf(true) }
+    var includeDiary by remember { mutableStateOf(true) }
     var startDate by remember { mutableStateOf(LocalDate.of(now.year, 1, 1)) }
     var endDate by remember { mutableStateOf(LocalDate.of(now.year, 12, 31)) }
     var generating by remember { mutableStateOf(false) }
+    var progressDone by remember { mutableStateOf(0) }
+    var progressTotal by remember { mutableStateOf(0) }
     var resultUri by remember { mutableStateOf<Uri?>(null) }
+    var runJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    // 离开弹层取消未做完的渲染任务（对照队列取消）
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { runJob?.cancel() }
+    }
+    // 预览页表（截断 30，正式生成用不限长的同一顺序）
+    val previewItems = remember(startDate, endDate, includeSchedule, includeDiary) {
+        buildExportItems(startDate, endDate, includeSchedule, includeDiary, previewCap = true)
+    }
+    val fullCount = remember(startDate, endDate, includeSchedule, includeDiary) {
+        buildExportItems(startDate, endDate, includeSchedule, includeDiary, previewCap = false).size
+    }
+    val rangeValid = !startDate.isAfter(endDate)
+    val canGenerate = !generating && rangeValid && (includeSchedule || includeDiary) && fullCount > 0
 
     fun pickDate(current: LocalDate, onPicked: (LocalDate) -> Unit) {
         DatePickerDialog(
@@ -104,28 +121,45 @@ internal fun ExportCenterSheet(
             }
             Spacer(Modifier.height(16.dp))
 
-            Text("内容", fontSize = 13.sp, color = GoaldayDesign.InkMuted)
+            Text("打印PDF", fontSize = 13.sp, color = GoaldayDesign.InkMuted)
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ExportContentMode.entries.forEach { candidate ->
-                    val active = mode == candidate
+            defaultExportCheckables().forEach { item ->
+                val checked = when (item.id) {
+                    EXPORT_SCHEDULE_ID -> includeSchedule
+                    else -> includeDiary
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color_SurfaceSoft)
+                        .clickable {
+                            if (item.id == EXPORT_SCHEDULE_ID) includeSchedule = !includeSchedule
+                            else includeDiary = !includeDiary
+                        }
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (active) GoaldayDesign.PinkSoft else Color_SurfaceSoft)
-                            .clickable { mode = candidate }
-                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                            .padding(end = 10.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(if (checked) GoaldayDesign.Pink else Color.Transparent)
+                            .padding(horizontal = 5.dp, vertical = 1.dp),
                     ) {
                         Text(
-                            candidate.label,
-                            fontSize = 14.sp,
-                            color = if (active) GoaldayDesign.Pink else GoaldayDesign.adaptiveInkPrimary,
-                            fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
+                            if (checked) "✓" else "○",
+                            fontSize = 13.sp,
+                            color = if (checked) Color.White else GoaldayDesign.adaptiveInkMuted,
                         )
                     }
+                    Text(item.title, fontSize = 14.sp, color = GoaldayDesign.InkPrimary)
                 }
+                Spacer(Modifier.height(8.dp))
             }
-            Spacer(Modifier.height(14.dp))
+
+            Text("时间", fontSize = 13.sp, color = GoaldayDesign.InkMuted)
+            Spacer(Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier
@@ -154,25 +188,93 @@ internal fun ExportCenterSheet(
             }
             Spacer(Modifier.height(16.dp))
 
+            // 预览分区（对照 PLACEHOLDER 分区 + PreviewItem 逐页表；预览截断 30 页）
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("预览", fontSize = 13.sp, color = GoaldayDesign.InkMuted)
+                Text(
+                    if (!rangeValid) "起止日期非法" else "共 $fullCount 页",
+                    fontSize = 12.sp,
+                    color = GoaldayDesign.adaptiveInkMuted,
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            if (!rangeValid) {
+                Text("起始日期不能晚于结束日期", fontSize = 13.sp, color = GoaldayDesign.Pink)
+            } else if (previewItems.isEmpty()) {
+                Text(
+                    "该范围暂无可导出页面（至少勾选一项内容）",
+                    fontSize = 13.sp,
+                    color = GoaldayDesign.adaptiveInkMuted,
+                )
+            } else {
+                androidx.compose.foundation.lazy.LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 240.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color_SurfaceSoft),
+                ) {
+                    items(previewItems.size) { index ->
+                        val item = previewItems[index]
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 9.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                "${index + 1}. ${item.title}",
+                                fontSize = 13.sp,
+                                color = GoaldayDesign.InkPrimary,
+                            )
+                            Text(
+                                item.type.label,
+                                fontSize = 11.sp,
+                                color = GoaldayDesign.adaptiveInkMuted,
+                            )
+                        }
+                    }
+                }
+                if (fullCount > previewItems.size) {
+                    Text(
+                        "页面较多，仅显示前 ${previewItems.size} 页",
+                        fontSize = 11.sp,
+                        color = GoaldayDesign.adaptiveInkMuted,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(GoaldayDesign.InkPrimary)
-                    .clickable(enabled = !generating) {
-                        scope.launch {
-                            if (startDate.isAfter(endDate)) return@launch
+                    .background(if (canGenerate) GoaldayDesign.InkPrimary else Color_SurfaceSoft)
+                    .clickable(enabled = canGenerate) {
+                        runJob = scope.launch {
                             generating = true
+                            progressDone = 0
                             resultUri = withContext(Dispatchers.Default) {
                                 runCatching {
-                                    generateExportPdf(
+                                    generateExportPdfQueued(
                                         context = context,
                                         startDate = startDate,
                                         endDate = endDate,
-                                        mode = mode,
+                                        includeSchedule = includeSchedule,
+                                        includeDiary = includeDiary,
                                         diaryTextFor = diaryTextFor,
                                         scheduleEntries = scheduleEntries,
                                         weeklyTheme = weeklyTheme,
+                                        onProgress = { done, total ->
+                                            progressDone = done
+                                            progressTotal = total
+                                        },
                                     )
                                 }.getOrNull()
                             }
@@ -183,10 +285,14 @@ internal fun ExportCenterSheet(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    if (generating) "生成中…" else "生成 PDF",
+                    when {
+                        generating -> "生成中 $progressDone/$progressTotal…"
+                        !canGenerate -> "生成 PDF"
+                        else -> "生成 PDF（$fullCount 页）"
+                    },
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
+                    color = if (canGenerate || generating) Color.White else GoaldayDesign.adaptiveInkMuted,
                 )
             }
 
@@ -215,47 +321,51 @@ internal fun ExportCenterSheet(
     }
 }
 
-/** 组装 PDF：日程按周成页、日记按天成页（空日记跳过） */
-private fun generateExportPdf(
+/** 组装 PDF：FIFO 任务队列逐项渲染（对照 PdfTask 队列 + processBatch 顺序），空日记也成页 */
+private fun generateExportPdfQueued(
     context: Context,
     startDate: LocalDate,
     endDate: LocalDate,
-    mode: ExportContentMode,
+    includeSchedule: Boolean,
+    includeDiary: Boolean,
     diaryTextFor: (LocalDate) -> String,
     scheduleEntries: List<ScheduleEntry>,
     weeklyTheme: String,
+    onProgress: (done: Int, total: Int) -> Unit,
 ): Uri? {
+    val queue = ExportPdfQueue(
+        buildExportItems(startDate, endDate, includeSchedule, includeDiary, previewCap = false),
+    )
+    if (queue.total == 0) return null
     val document = PdfDocument()
     try {
-        if (mode != ExportContentMode.DIARY) {
-            var weekCursor = startDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-            while (!weekCursor.isAfter(endDate)) {
-                val days = (0..6).map { weekCursor.plusDays(it.toLong()) }
-                val bitmap = renderHandbookScheduleLongImage(
-                    year = weekCursor.year,
-                    month = weekCursor.monthValue,
-                    days = days.map { it.dayOfMonth },
-                    entries = scheduleEntries,
-                    weeklyTheme = weeklyTheme,
-                )
-                appendPdfPage(document, bitmap)
-                weekCursor = weekCursor.plusWeeks(1)
-            }
-        }
-        if (mode != ExportContentMode.SCHEDULE) {
-            var dayCursor = startDate
-            while (!dayCursor.isAfter(endDate)) {
-                val state = StructuredDiary.fromRaw(diaryTextFor(dayCursor))
-                if (state.isNotEmpty()) {
-                    val bitmap = renderDiaryLongImage(
-                        context = context,
-                        title = "${dayCursor.monthValue}月${dayCursor.dayOfMonth}日 · ${dayCursor.year}",
-                        state = state,
+        onProgress(0, queue.total)
+        while (true) {
+            val item = queue.poll() ?: break
+            val bitmap = when (item.type) {
+                ExportPreviewType.SCHEDULE -> {
+                    val monday = item.weekMonday()
+                    val days = (0..6).map { monday.plusDays(it.toLong()) }
+                    renderHandbookScheduleLongImage(
+                        year = monday.year,
+                        month = monday.monthValue,
+                        days = days.map { it.dayOfMonth },
+                        entries = scheduleEntries,
+                        weeklyTheme = weeklyTheme,
                     )
-                    appendPdfPage(document, bitmap)
                 }
-                dayCursor = dayCursor.plusDays(1)
+                ExportPreviewType.DIARY -> {
+                    val day = item.date
+                    renderDiaryLongImage(
+                        context = context,
+                        title = "${day.monthValue}月${day.dayOfMonth}日 · ${day.year}",
+                        state = StructuredDiary.fromRaw(diaryTextFor(day)),
+                    )
+                }
             }
+            appendPdfPage(document, bitmap)
+            queue.markDone()
+            onProgress(queue.doneCount, queue.total)
         }
         // 范围内无内容时放一张空白页，保证产出有效文件
         if (document.pages.size == 0) {
@@ -272,12 +382,6 @@ private fun generateExportPdf(
         document.close()
     }
 }
-
-private fun StructuredDiary.isNotEmpty(): Boolean =
-    blocks.isNotEmpty() || legacyImageUris.isNotEmpty() ||
-        photoText.isNotBlank() || richHtml.isNotBlank() ||
-        todayDone.isNotBlank() || workTasks.isNotBlank() ||
-        smallJoy.isNotBlank() || canImprove.isNotBlank()
 
 private fun appendPdfPage(document: PdfDocument, bitmap: Bitmap) {
     val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, document.pages.size + 1).create()
