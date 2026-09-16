@@ -127,6 +127,7 @@ import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
 import com.bf410.goaldaylocal.ui.book.BookUiState
 import com.bf410.goaldaylocal.ui.book.BookViewModel
+import com.bf410.goaldaylocal.ui.book.journalPromptFor
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.LocalGoaldayDarkMode
 import com.tencent.mmkv.MMKV
@@ -213,51 +214,6 @@ object MainUiBridge {
         targetTab = null
     }
 }
-
-/** 原版 JournalPrompts 的 41 条一日一问（jadx 反编译 JournalPrompts.java 全量搬运） */
-private val JOURNAL_PROMPTS = listOf(
-    "描述一周中最值得记住的时刻。",
-    "今天的天气如何？它影响了你的心情吗？",
-    "醒来后第一个念头是什么？",
-    "今天穿的衣服是什么颜色/风格？为什么选这套？",
-    "早餐/今天的第一口食物是什么？味道如何？",
-    "路上看到最有趣的事物是什么？（比如一只猫、一朵云、一个招牌）",
-    "手机相册里今天的第一张照片拍的是什么？",
-    "今天听到最印象深刻的一句话（或歌词）是什么？",
-    "手边常用的物品（比如水杯、笔）今天有什么特别之处吗？",
-    "今天是否闻到了某种特别的气味？让你联想到了什么？",
-    "天空的颜色在一天中有变化吗？哪个时刻最美？",
-    "用三个词形容今天的整体情绪。",
-    "今天什么时候笑了？为什么？",
-    "是否有瞬间感到焦虑或不安？当时在做什么？",
-    "今天最让自己感到骄傲的一件小事是什么？",
-    "如果今天有一种颜色，它会是什么？为什么？",
-    "今天是否错过了什么？心里有什么感觉？",
-    "谁或什么事让你今天感到温暖？",
-    "今天是否做了决定？是轻松还是艰难的选择？",
-    "睡前此刻的心情是怎样的？",
-    "今天是否有什么意外惊喜？",
-    "今天和谁聊天最愉快？聊了什么？",
-    "是否帮助了别人或被别人帮助？细节是什么？",
-    "今天听到最有趣的八卦或故事是什么？",
-    "如果有人给你今天的社交状态拍张照，会是什么画面？",
-    "是否遇到新面孔？TA给你什么印象？",
-    "今天是否说了\"谢谢\"或收到感谢？因为什么？",
-    "是否和某人产生分歧？后来如何了？",
-    "今天最想分享给朋友的事是什么？",
-    "如果给家人发今天的一条总结短信，你会写什么？",
-    "今天是否想到某个远方的人？为什么？",
-    "如果今天是一部电影，它的名字会叫什么？",
-    "今天有什么瞬间想按下\"暂停键\"重复体验？",
-    "如果让今天的你给十年后的自己写句话，会写什么？",
-    "今天是否有一个\"啊哈！\"的灵感时刻？",
-    "如果今天是一种食物，它会是什么味道？",
-    "今天的衣服风格像哪种动物或植物？",
-    "今天是否听到一段音乐或声音让你浮想联翩？",
-    "如果今天是一个梦境，你会如何解释它？",
-    "给今天的关键词画个简单的符号（描述出来即可）。",
-    "平行世界的另一个你今天可能在做什么？",
-)
 
 @Composable
 fun OriginalMainScreen(
@@ -1407,9 +1363,7 @@ private fun RecordDiaryView(
     onEditorFocusChanged: (Boolean) -> Unit = {},
 ) {
     val store = remember { LocalStateStore(MMKV.defaultMMKV()) }
-    val prompt = remember(selectedDate) {
-        if (JOURNAL_PROMPTS.isEmpty()) "" else JOURNAL_PROMPTS[Math.floorMod(selectedDate.toEpochDay().toInt(), JOURNAL_PROMPTS.size)]
-    }
+    val prompt = remember(selectedDate) { journalPromptFor(selectedDate) }
     // 编辑器只展示用户正文；「今日完成」等结构化段落由系统维护
     var text by remember(selectedDate) {
         mutableStateOf(diaryUserText(store, selectedDate))
