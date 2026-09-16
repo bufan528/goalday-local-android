@@ -826,7 +826,7 @@ private fun WeekScheduleView(
                         val renderCell: @Composable (Int, Boolean) -> Unit = { slotIndex, fixed ->
                             val entry = entries.getOrNull(slotIndex)
                             Box(
-                                modifier = if (fixed) Modifier.height(31.dp) else Modifier.heightIn(min = 31.dp),
+                                modifier = if (fixed) Modifier.height(31.dp) else Modifier.heightIn(min = 33.dp),
                                 contentAlignment = Alignment.CenterStart,
                             ) {
                                 when {
@@ -962,7 +962,8 @@ private fun WeekScheduleView(
                                 if (isEditing) entries.size + 1 else -1,
                                 if (isToday && entries.isEmpty()) 1 else -1,
                             ).coerceAtLeast(1)
-                            Column {
+                            // 对照原版 item_schedule_item_adaptive：展开态行 minHeight（真机空行254px）
+                            Column(Modifier.heightIn(min = 87.dp)) {
                                 repeat((cellCount + 1) / 2) { row ->
                                     Row {
                                         Box(Modifier.weight(1f)) { renderCell(row * 2, false) }
@@ -1080,7 +1081,7 @@ private fun WeekScheduleView(
                 } else {
                     uiState.todayPlanItems
                 }
-items(listItems, key = { it }) { poolItem ->
+                items(listItems, key = { it }) { poolItem ->
                         val itemChecked = targetPage != null && viewModel.isChecked(targetPage.title, poolItem)
                         val isCustomPoolItem = targetPage != null && currentBook != null &&
                             diaryStore.customPageItems(currentBook.id, targetPage.title).contains(poolItem)
@@ -1088,6 +1089,7 @@ items(listItems, key = { it }) { poolItem ->
                             if (itemChecked) {
                                 Box(
                                     modifier = Modifier
+                                        .padding(top = 3.dp)
                                         .size(17.dp)
                                         .border(1.6.dp, Color.Transparent, RoundedCornerShape(4.dp))
                                         .background(GoaldayDesign.Pink, RoundedCornerShape(4.dp)),
@@ -1097,21 +1099,20 @@ items(listItems, key = { it }) { poolItem ->
                                 }
                             } else {
                                 Box(
-                                    Modifier
-                                        .padding(top = 5.dp)
+                                    modifier = Modifier
+                                        .padding(top = 9.dp)
                                         .size(5.dp)
                                         .background(currentBook?.color ?: PoolBullet),
                                 )
                             }
                             Spacer(Modifier.width(10.dp))
+                            // 对照原版周视图：条目多行换行（17sp 字/23sp 行高，条目间距 7dp）
                             Text(
                                 poolItem,
-                                fontSize = 16.sp,
-                                lineHeight = 20.sp,
+                                fontSize = 17.sp,
+                                lineHeight = 23.sp,
                                 color = if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                                 textDecoration = if (itemChecked) TextDecoration.LineThrough else TextDecoration.None,
-                                maxLines = 1,
-                                overflow = TextOverflow.Clip,
                             )
                         }
                         val addPoolToSchedule = {
@@ -1131,7 +1132,8 @@ items(listItems, key = { it }) { poolItem ->
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .alpha(if (draggingItem == poolItem) 0.35f else 1f)
-                                .padding(horizontal = 14.dp, vertical = 6.dp),
+                                // 对照原版真机：条目间距=行高23sp+上下6.5dp（单行条目间距95px、两行154px）
+                                .padding(horizontal = 14.dp, vertical = 6.5.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Box(
@@ -1174,7 +1176,8 @@ items(listItems, key = { it }) { poolItem ->
                                     }
                                     .clickable(onClick = addPoolToSchedule),
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Top 对齐+padding 使圆点/勾选中心落在首行字心（行高23sp）
+                                Row(verticalAlignment = Alignment.Top) {
                                     poolInner()
                                 }
                             }
