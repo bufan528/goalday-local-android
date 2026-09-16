@@ -83,23 +83,22 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 import kotlin.math.abs
 
 /**
  * 双页展开手账视图。
  *
- * 对照原版 BookViewExampleKt.CalendarBookView + BaseBookViewKt：
- * - 书尺寸 fillMaxSize，不再使用 screenWidth*0.47 的窄条
- * - 左右两页同时可见：左页=日程，右页=日记
- * - 页面背景纯白、左平右圆圆角(10dp)、10dp 阴影(#FFC5BBB6)
- * - 翻页时当前页绕书脊做 180° rotationY，transformOrigin 在书脊侧
- * - 子元素（列表、勾选框）仍可交互，翻页手势在全宽区域检测
+ * 对照原版 BookViewExampleKt.CalendarBookView + BaseBookViewKt + CircularCalendarPageState：
+ * - 书芯为按日双面的年历书：spread = [左页 | 右页]，每页 = 一天的日程面或日记面；
+ *   中心落在周一时 spread 为 [周一日程 | 周一日记]，其余为 [D-1 日记 | D 日记]；
+ * - 翻页步长 NEXT +2 天（中心周日 +1）/ PREV -2 天（中心周一 -1），4 次翻完一周；
+ * - 页面背景纯白、左平右圆圆角(10dp)、10dp 阴影(#FFC5BBB6)；
+ * - 翻页时当前页绕书脊做 180° rotationY，transformOrigin 在书脊侧；
+ * - 子元素（列表、勾选框）仍可交互，翻页手势在全宽区域检测。
  */
-/** 书芯按周翻页的最大范围（约 ±5 年） */
-private const val MaxWeekOffset = 260
-
-/** 记录 Tab 与书内右页共用的日记存储 bookId */
+/** 书芯年份边界（对照原版 BookPageDateRange.fromYear：整年循环） */
 private const val DiaryStoreBookId = "diary"
 
 @Composable
@@ -114,14 +113,24 @@ fun DualPageBookView(
 ) {
     val density = LocalDensity.current.density
 
-    // 原版行为：书芯按周翻页（对照 CircularCalendarPageState），默认打开当前周
-    val today = LocalDate.now()
-    val currentWeekMonday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-    var weekOffset by remember { mutableIntStateOf(0) }
-    val spreadMonday = currentWeekMonday.plusWeeks(weekOffset.toLong())
+    // 原版书芯状态机：按日双面年历书（spread=pages[4]/[5]；中心=周一时 [周一日程|周一日记]，
+    // 其余 [D-1 日记|D 日记]；开书对照真机落在本周一）。翻页 NEXT +2 天(周日+1)/PREV -2 天(周一-1)
+    val pageState = remember {
+        CircularCalendarPageState(
+            initialCenterDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
+        )
+    }
+    var turnCount by remember { mutableIntStateOf(0) }
+    val leftPage = pageState.leftPage
+    val rightPage = pageState.rightPage
+    // 翻页背面落点：NEXT 右页背面=下一 spread 左页；PREV 左页背面=上一 spread 右页
+    val nextSpread = pageState.nextSpread()
+    val prevSpread = pageState.prevSpread()
+    val nextLeftPage = nextSpread.first
+    val prevRightPage = prevSpread.second
     // 对照原版真机：开书/翻页后屏顶短暂显示月标题（"9月"中心≈屏高20.3%），2.5s 后隐去
     var showMonthTitle by remember { mutableStateOf(true) }
-    LaunchedEffect(weekOffset) {
+    LaunchedEffect(turnCount) {
         showMonthTitle = true
         kotlinx.coroutines.delay(2500)
         showMonthTitle = false
@@ -131,33 +140,14 @@ fun DualPageBookView(
         ?: SchedulePage("日程页", emptyList())
     val diaryPage = book.pages.filterIsInstance<DiaryPage>().firstOrNull()
         ?: DiaryPage("日记页", "写下这一页最重要的记录。")
-    val scheduleIndex = book.pages.indexOfFirst { it is SchedulePage }.coerceAtLeast(0)
-    val diaryIndex = book.pages.indexOfFirst { it is DiaryPage }.coerceAtLeast(0)
-
-    // 对照原版真机 5 次翻页实测（NEXT/PREV 均为严格 ±7 天）：
-    // offset=0：左页=本周日程（"M月 | 第W周"），右页=周一日记；
-    // offset!=0：左页=该周周二日记，右页=该周周三日记；标题月份跟右页。
-    // （原版开页后日程 spread 只在 offset=0 出现，其余 spread 均为 Tue|Wed 日记对页）
-    val mondayOfOffset = { o: Int -> currentWeekMonday.plusWeeks(o.toLong()) }
-    val leftIsSchedule = weekOffset == 0
-    val leftTueDate = mondayOfOffset(weekOffset).plusDays(1)
-    val rightDate = if (weekOffset == 0) mondayOfOffset(0) else mondayOfOffset(weekOffset).plusDays(2)
-
-    // 翻页背面（实体书翻页背面=落点 spread 的同侧页）：
-    // NEXT 右页向左翻，背面落到左侧 → 下一 spread 的左页（offset+1==0 时为日程，否则周二日记）；
-    // PREV 左页向右翻，背面落到右侧 → 上一 spread 的右页（offset-1==0 时为周一日记，否则周三日记）。
-    val nextLeftIsSchedule = weekOffset + 1 == 0
-    val nextLeftTueDate = mondayOfOffset(weekOffset + 1).plusDays(1)
-    val prevRightDate = if (weekOffset - 1 == 0) mondayOfOffset(weekOffset - 1)
-        else mondayOfOffset(weekOffset - 1).plusDays(2)
 
     // 日记内容按日期读取（记录 Tab 与书内共用同一存储）
     val diaryStore = remember { com.bf410.goaldaylocal.data.LocalStateStore(com.tencent.mmkv.MMKV.defaultMMKV()) }
     fun diaryTextOf(date: LocalDate): String = diaryStore.diaryText(DiaryStoreBookId, date.toString())
-    val spreadDiaryDraft = remember(rightDate) { diaryTextOf(rightDate) }
-    val nextLeftDiaryDraft = remember(nextLeftTueDate) { diaryTextOf(nextLeftTueDate) }
-    val leftDiaryDraft = remember(leftTueDate) { diaryTextOf(leftTueDate) }
-    val prevRightDiaryDraft = remember(prevRightDate) { diaryTextOf(prevRightDate) }
+    val leftDiaryDraft = remember(leftPage.date) { diaryTextOf(leftPage.date) }
+    val rightDiaryDraft = remember(rightPage.date) { diaryTextOf(rightPage.date) }
+    val nextLeftDiaryDraft = remember(nextLeftPage.date) { diaryTextOf(nextLeftPage.date) }
+    val prevRightDiaryDraft = remember(prevRightPage.date) { diaryTextOf(prevRightPage.date) }
 
     var showBookShelf by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -169,6 +159,41 @@ fun DualPageBookView(
     val flipConfigurator = remember { BookPageAnimationConfigurator() }
     // 单通道drag：避免每move一个launch乱序，合流到最新进度（holder不用state，免每次move重组）
     val dragJobHolder = remember { arrayOfNulls<kotlinx.coroutines.Job>(1) }
+
+    // 书芯单页渲染：日程面=该页所在周的书内周视图（原版书内嵌 ScheduleFragment，7 行 Mon-Sun），
+    // 日记面=该日日记（对照原版 m31351o 按 isSchedule 分派 Diary/ScheduleDelegate）
+    val pageContent: @Composable (DayPage, String) -> Unit = { page, draft ->
+        if (page.isSchedule) {
+            InBookSchedulePreview(
+                modifier = Modifier.fillMaxSize(),
+                page = schedulePage,
+                pageIndex = 0,
+                pageCount = book.pages.size,
+                schedulePreviewEntries = uiState.schedulePreviewEntries,
+                isChecked = viewModel::isChecked,
+                tint = book.color,
+                turnProgress = progress.value,
+                turnDirection = turnDirection,
+                handbookMode = true,
+                weekStartDate = page.date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
+            )
+        } else {
+            InBookDiaryPreview(
+                modifier = Modifier.fillMaxSize(),
+                page = diaryPage,
+                pageIndex = 1,
+                pageCount = book.pages.size,
+                diaryDraft = draft,
+                tint = book.color,
+                turnProgress = progress.value,
+                turnDirection = turnDirection,
+                handbookMode = true,
+                diaryDate = page.date,
+                onAddImage = {},
+                scheduleEntries = uiState.schedulePreviewEntries,
+            )
+        }
+    }
 
     // 把书页左右边缘排除在系统返回手势之外，确保全宽翻页热区可用
     val view = LocalView.current
@@ -211,11 +236,12 @@ fun DualPageBookView(
             val spec = tween<Float>(if (currentProgress > 0.5f) 100 else 300, easing = LinearEasing)
             if (complete) {
                 progress.animateTo(1f, spec)
-                weekOffset = when (turnDirection) {
-                    TurnDirection.NEXT -> (weekOffset + 1).coerceAtMost(MaxWeekOffset)
-                    TurnDirection.PREVIOUS -> (weekOffset - 1).coerceAtLeast(-MaxWeekOffset)
-                    null -> weekOffset
+                when (turnDirection) {
+                    TurnDirection.NEXT -> pageState.goNextPage()
+                    TurnDirection.PREVIOUS -> pageState.goPreviousPage()
+                    null -> {}
                 }
+                turnCount++
                 progress.snapTo(0f)
             } else {
                 progress.animateTo(0f, spec)
@@ -251,7 +277,7 @@ fun DualPageBookView(
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         if (showMonthTitle) {
             Text(
-                "${spreadMonday.monthValue}月",
+                "${rightPage.date.monthValue}月",
                 fontSize = 18.sp,
                 color = GoaldayDesign.adaptiveInkPrimary,
                 modifier = Modifier
@@ -317,7 +343,7 @@ fun DualPageBookView(
                     } ?: drawRect(shellColor)
                     drawContent()
                 }
-                    .pointerInput(weekOffset) {
+                    .pointerInput(Unit) {
                         val width = size.width.toFloat()
                         pageWidthPx = width
                         awaitPointerEventScope {
@@ -366,8 +392,8 @@ fun DualPageBookView(
                                     if (turnDir == null && abs(totalDx) > touchSlop && abs(totalDx) > abs(totalDy)) {
                                         turnDir = if (totalDx < 0) TurnDirection.NEXT else TurnDirection.PREVIOUS
                                         val can = when (turnDir) {
-                                            TurnDirection.NEXT -> weekOffset < MaxWeekOffset
-                                            TurnDirection.PREVIOUS -> weekOffset > -MaxWeekOffset
+                                            TurnDirection.NEXT -> pageState.canGoNext()
+                                            TurnDirection.PREVIOUS -> pageState.canGoPrevious()
                                             null -> false
                                         }
                                         if (can) {
@@ -430,121 +456,33 @@ fun DualPageBookView(
                         .padding(start = 3.dp, end = 3.dp, top = 6.dp, bottom = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(0.dp),
                 ) {
-                    // 左页：offset=0 时为本周日程，其余为周二日记（对照原版真机）
+                    // 左页：spread 第4页（周一中心=周一日程面，其余=D-1 日记面）
                     HandbookPage(
                         modifier = Modifier.weight(1f),
                         isLeft = true,
                         progress = progress.value,
                         direction = turnDirection,
-                        onTap = { if (leftIsSchedule) onOpenDate(spreadMonday, true) else onOpenDate(leftTueDate, false) },
+                        onTap = { onOpenDate(leftPage.date, leftPage.isSchedule) },
                         configurator = flipConfigurator,
-                        content = {
-                            if (leftIsSchedule) {
-                                InBookSchedulePreview(
-                                    modifier = Modifier.fillMaxSize(),
-                                    page = schedulePage,
-                                    pageIndex = 0,
-                                    pageCount = book.pages.size,
-                                    schedulePreviewEntries = uiState.schedulePreviewEntries,
-                                    isChecked = viewModel::isChecked,
-                                    tint = book.color,
-                                    turnProgress = progress.value,
-                                    turnDirection = turnDirection,
-                                    handbookMode = true,
-                                    weekStartDate = spreadMonday,
-                                )
-                            } else {
-                                InBookDiaryPreview(
-                                    modifier = Modifier.fillMaxSize(),
-                                    page = diaryPage,
-                                    pageIndex = 0,
-                                    pageCount = book.pages.size,
-                                    diaryDraft = leftDiaryDraft,
-                                    tint = book.color,
-                                    turnProgress = progress.value,
-                                    turnDirection = turnDirection,
-                                    handbookMode = true,
-                                    diaryDate = leftTueDate,
-                                    onAddImage = {},
-                                    scheduleEntries = uiState.schedulePreviewEntries,
-                                )
-                            }
-                        },
+                        content = { pageContent(leftPage, leftDiaryDraft) },
                         backContent = {
-                            // PREV 落到右侧 → 上一 spread 的右页（恒为日记）
-                            InBookDiaryPreview(
-                                modifier = Modifier.fillMaxSize(),
-                                page = diaryPage,
-                                pageIndex = 1,
-                                pageCount = book.pages.size,
-                                diaryDraft = prevRightDiaryDraft,
-                                tint = book.color,
-                                turnProgress = progress.value,
-                                turnDirection = turnDirection,
-                                handbookMode = true,
-                                diaryDate = prevRightDate,
-                                onAddImage = {},
-                                scheduleEntries = uiState.schedulePreviewEntries,
-                            )
+                            // PREV 左页向右翻，背面=上一 spread 的右页
+                            pageContent(prevRightPage, prevRightDiaryDraft)
                         },
                     )
 
-                    // 右页：日记（offset=0 为周一，其余为周三）
+                    // 右页：spread 第5页（周一中心=周一日记面，其余=D 日记面）
                     HandbookPage(
                         modifier = Modifier.weight(1f),
                         isLeft = false,
                         progress = progress.value,
                         direction = turnDirection,
-                        onTap = { onOpenDate(rightDate, false) },
+                        onTap = { onOpenDate(rightPage.date, rightPage.isSchedule) },
                         configurator = flipConfigurator,
-                        content = {
-                            InBookDiaryPreview(
-                                modifier = Modifier.fillMaxSize(),
-                                page = diaryPage,
-                                pageIndex = 1,
-                                pageCount = book.pages.size,
-                                diaryDraft = spreadDiaryDraft,
-                                tint = book.color,
-                                turnProgress = progress.value,
-                                turnDirection = turnDirection,
-                                handbookMode = true,
-                                diaryDate = rightDate,
-                                onAddImage = {},
-                                scheduleEntries = uiState.schedulePreviewEntries,
-                            )
-                        },
+                        content = { pageContent(rightPage, rightDiaryDraft) },
                         backContent = {
-                            // NEXT 落到左侧 → 下一 spread 的左页（offset+1==0 时为日程，否则周二日记）
-                            if (nextLeftIsSchedule) {
-                                InBookSchedulePreview(
-                                    modifier = Modifier.fillMaxSize(),
-                                    page = schedulePage,
-                                    pageIndex = 0,
-                                    pageCount = book.pages.size,
-                                    schedulePreviewEntries = uiState.schedulePreviewEntries,
-                                    isChecked = viewModel::isChecked,
-                                    tint = book.color,
-                                    turnProgress = progress.value,
-                                    turnDirection = turnDirection,
-                                    handbookMode = true,
-                                    weekStartDate = mondayOfOffset(weekOffset + 1),
-                                )
-                            } else {
-                                InBookDiaryPreview(
-                                    modifier = Modifier.fillMaxSize(),
-                                    page = diaryPage,
-                                    pageIndex = 0,
-                                    pageCount = book.pages.size,
-                                    diaryDraft = nextLeftDiaryDraft,
-                                    tint = book.color,
-                                    turnProgress = progress.value,
-                                    turnDirection = turnDirection,
-                                    handbookMode = true,
-                                    diaryDate = nextLeftTueDate,
-                                    onAddImage = {},
-                                    scheduleEntries = uiState.schedulePreviewEntries,
-                                )
-                            }
+                            // NEXT 右页向左翻，背面=下一 spread 的左页
+                            pageContent(nextLeftPage, nextLeftDiaryDraft)
                         },
                     )
                 }
@@ -586,7 +524,7 @@ fun DualPageBookView(
                         modifier = Modifier.clickableNoRipple { showBookShelf = true },
                     ) {
                         Text(
-                            text = "${spreadMonday.year}",
+                            text = "${rightPage.date.year}",
                             fontSize = 14.sp,
                             color = GoaldayDesign.InkPrimary,
                         )
@@ -619,12 +557,19 @@ fun DualPageBookView(
         if (showBookShelf) {
             BookShelfSheet(
                 fabricImage = fabricImage,
-                currentYear = spreadMonday.year,
+                currentYear = rightPage.date.year,
                 onPickYear = { year ->
-                    val targetMonday = LocalDate.of(year, 1, 1)
-                        .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-                    weekOffset = java.time.temporal.ChronoUnit.WEEKS
-                        .between(currentWeekMonday, targetMonday).toInt()
+                    // 对照原版 BookShelfManager/BookPageDateRange.fromYear：选年换整年书并限定翻页边界
+                    val start = LocalDate.of(year, 1, 1)
+                    val end = LocalDate.of(year, 12, 31)
+                    pageState.setDateRange(
+                        BookPageDateRange(
+                            start.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+                            end.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - 1,
+                        ),
+                    )
+                    pageState.jumpToDate(start)
+                    turnCount++
                     showBookShelf = false
                 },
                 onDismiss = { showBookShelf = false },

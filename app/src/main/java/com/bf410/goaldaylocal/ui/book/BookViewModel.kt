@@ -50,7 +50,9 @@ class BookViewModel(
 
     fun initCalendarPageState(initialDate: Date? = null, dateRange: BookPageDateRange? = null) {
         calendarPageState = CircularCalendarPageState(
-            initialCenterDate = initialDate ?: Date(),
+            initialCenterDate = initialDate?.toInstant()
+                ?.atZone(java.time.ZoneId.systemDefault())?.toLocalDate()
+                ?: java.time.LocalDate.now(),
             dateRange = dateRange
         )
     }
@@ -64,7 +66,9 @@ class BookViewModel(
     }
 
     fun jumpToDate(date: Date) {
-        calendarPageState?.jumpToDate(date)
+        calendarPageState?.jumpToDate(
+            date.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+        )
     }
 
     fun setDateRange(range: BookPageDateRange) {

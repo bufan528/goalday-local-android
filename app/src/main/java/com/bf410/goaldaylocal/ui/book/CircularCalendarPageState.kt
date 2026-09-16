@@ -1,191 +1,149 @@
 package com.bf410.goaldaylocal.ui.book
 
-import java.util.Calendar
-import java.util.Date
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
- * 循环日历页面状态管理器
- * 管理书本的10个页面（封面+8个内页+封底）的循环状态
- * 
- * 核心功能：
- * - 维护10个页面的日历数据
- * - 管理中心日期（当前显示的日期）
- * - 处理翻页逻辑（向前/向后翻页）
- * - 支持日期范围限制
+ * 书芯单页：日期 + 是否日程面（对照原版 CalendarPage(date, isSchedule)）。
+ * isSchedule=true 渲染该日日程列表，false 渲染该日日记页。
+ */
+data class DayPage(
+    val date: LocalDate,
+    val isSchedule: Boolean = false,
+)
+
+/**
+ * 循环日历页面状态（逐行移植原版 CircularCalendarPageState.kt，jadx 2.5.7）。
+ *
+ * 10 页环形缓冲，开书可见 spread = 第 4/5 页（左/右）。页表由中心日期重建：
+ * - 从中心向后退 6 页、向前进 4 页；
+ * - 周一那天会产生相邻两页 (周一, 日程面) + (周一, 日记面)，
+ *   因此中心落在周一时 spread 为 [周一日程 | 周一日记]，其余中心为 [D-1 日记 | D 日记]；
+ * - 翻页步长按原版 onPageTurned：NEXT = 中心周日 +1 天否则 +2 天，
+ *   PREV = 中心周一 -1 天否则 -2 天；4 次翻页循环一周（+7 天）。
  */
 class CircularCalendarPageState(
-    private val initialCenterDate: Date = Date(),
-    private val dateRange: BookPageDateRange? = null
+    initialCenterDate: LocalDate = LocalDate.now(),
+    private var dateRange: BookPageDateRange? = null,
 ) {
-    // 10个页面的循环缓冲区
-    private val pages = MutableList(10) { index ->
-        CalendarPage(getDateByOffset(index - 4), false)
+    private var center: LocalDate = initialCenterDate
+    val centerDate: LocalDate get() = center
+
+    private var pages: MutableList<DayPage> = MutableList(10) { DayPage(initialCenterDate) }
+
+    init {
+        rebuild()
     }
-    
-    // 中心日期（当前显示的日期）
-    private var _centerDate = initialCenterDate
-    val centerDate: Date get() = _centerDate
-    
-    // 当前页面索引（0-9）
-    private var _currentPageIndex = 4
-    val currentPageIndex: Int get() = _currentPageIndex
-    
-    // 翻页配置
-    private var flipConfig = BookFlipConfig()
-    
-    // 页面状态委托
-    private var _delegate: AllState = AllState.IDLE
-    val delegate: AllState get() = _delegate
-    
-    /**
-     * 获取指定位置的页面
-     */
-    fun getPage(index: Int): CalendarPage {
-        return pages[index.coerceIn(0, 9)]
-    }
-    
-    /**
-     * 获取所有当前页面
-     */
-    fun getCurrentPages(): List<CalendarPage> {
-        return pages.toList()
-    }
-    
-    /**
-     * 检查是否可以向前翻页（翻到更早的日期）
-     */
-    fun canGoPrevious(): Boolean {
-        if (dateRange == null) return true
-        val previousDate = getDateByOffset(-1)
-        return previousDate.time >= dateRange.startTimeMills
-    }
-    
-    /**
-     * 检查是否可以向后翻页（翻到更晚的日期）
-     */
-    fun canGoNext(): Boolean {
-        if (dateRange == null) return true
-        val nextDate = getDateByOffset(1)
-        return nextDate.time <= dateRange.endTimeMills
-    }
-    
-    /**
-     * 向前翻页（翻到更早的日期）
-     */
-    fun goPreviousPage(config: BookFlipConfig? = null) {
-        if (!canGoPrevious()) return
-        
-        _delegate = AllState.TURNING_PREVIOUS
-        config?.let { flipConfig = it }
-        
-        // 更新中心日期
-        _centerDate = getDateByOffset(-1)
-        
-        // 循环移动页面
-        val lastPage = pages.removeAt(9)
-        val newPage = CalendarPage(getDateByOffset(-5), false)
-        pages.add(0, newPage)
-        
-        // 更新当前页面索引
-        _currentPageIndex = (_currentPageIndex + 1).coerceIn(0, 9)
-        
-        _delegate = AllState.IDLE
-    }
-    
-    /**
-     * 向后翻页（翻到更晚的日期）
-     */
-    fun goNextPage(config: BookFlipConfig? = null) {
+
+    fun getPage(index: Int): DayPage = pages[index.coerceIn(0, 9)]
+
+    /** 开书 spread 左页 */
+    val leftPage: DayPage get() = pages[4]
+
+    /** 开书 spread 右页 */
+    val rightPage: DayPage get() = pages[5]
+
+    fun getCurrentPages(): List<DayPage> = pages.toList()
+
+    fun canGoNext(): Boolean = inRange(nextCenter())
+
+    fun canGoPrevious(): Boolean = inRange(prevCenter())
+
+    fun goNextPage() {
         if (!canGoNext()) return
-        
-        _delegate = AllState.TURNING_NEXT
-        config?.let { flipConfig = it }
-        
-        // 更新中心日期
-        _centerDate = getDateByOffset(1)
-        
-        // 循环移动页面
-        val firstPage = pages.removeAt(0)
-        val newPage = CalendarPage(getDateByOffset(5), false)
-        pages.add(newPage)
-        
-        // 更新当前页面索引
-        _currentPageIndex = (_currentPageIndex - 1).coerceIn(0, 9)
-        
-        _delegate = AllState.IDLE
+        center = nextCenter()
+        rebuild()
     }
-    
-    /**
-     * 跳转到指定日期
-     */
-    fun jumpToDate(targetDate: Date) {
-        if (dateRange != null) {
-            if (targetDate.time < dateRange.startTimeMills || targetDate.time > dateRange.endTimeMills) {
-                return
-            }
-        }
-        
-        _centerDate = targetDate
-        
-        // 重新生成所有页面
-        for (i in 0 until 10) {
-            pages[i] = CalendarPage(getDateByOffset(i - 4), false)
-        }
-        
-        _currentPageIndex = 4
+
+    fun goPreviousPage() {
+        if (!canGoPrevious()) return
+        center = prevCenter()
+        rebuild()
     }
-    
-    /**
-     * 更新页面的日程状态
-     */
-    fun updatePageScheduleStatus(pageIndex: Int, hasSchedule: Boolean) {
-        if (pageIndex in 0..9) {
-            pages[pageIndex] = pages[pageIndex].copy(isSchedule = hasSchedule)
-        }
+
+    /** 翻页完成后的 spread（用于渲染翻页背面落点页） */
+    fun nextSpread(): Pair<DayPage, DayPage> = spreadAt(nextCenter())
+
+    fun prevSpread(): Pair<DayPage, DayPage> = spreadAt(prevCenter())
+
+    fun jumpToDate(target: LocalDate) {
+        val range = dateRange
+        if (range != null && !range.containsLocal(target)) return
+        center = target
+        rebuild()
     }
-    
-    /**
-     * 根据偏移量获取日期
-     * @param offset 相对于中心日期的偏移天数
-     */
-    private fun getDateByOffset(offset: Int): Date {
-        val calendar = Calendar.getInstance().apply {
-            time = _centerDate
-            add(Calendar.DAY_OF_MONTH, offset)
-        }
-        return calendar.time
-    }
-    
-    /**
-     * 获取当前日期范围
-     */
-    fun getCurrentDateRange(): BookPageDateRange {
-        val startDate = pages.first().date
-        val endDate = pages.last().date
-        return BookPageDateRange(startDate.time, endDate.time)
-    }
-    
-    /**
-     * 设置日期范围
-     */
+
     fun setDateRange(range: BookPageDateRange) {
-        // 如果当前中心日期不在新范围内，调整到范围的开始
-        if (_centerDate.time < range.startTimeMills || _centerDate.time > range.endTimeMills) {
-            _centerDate = Date(range.startTimeMills)
-            
-            // 重新生成所有页面
-            for (i in 0 until 10) {
-                pages[i] = CalendarPage(getDateByOffset(i - 4), false)
-            }
+        dateRange = range
+        if (!range.containsLocal(center)) {
+            center = range.startLocal()
+            rebuild()
         }
     }
-    
-    /**
-     * 所有状态枚举
-     */
-    enum class AllState {
-        IDLE,           // 空闲状态
-        TURNING_NEXT,   // 正在向后翻页
-        TURNING_PREVIOUS // 正在向前翻页
+
+    private fun nextCenter(): LocalDate =
+        if (center.dayOfWeek == DayOfWeek.SUNDAY) center.plusDays(1) else center.plusDays(2)
+
+    private fun prevCenter(): LocalDate =
+        if (center.dayOfWeek == DayOfWeek.MONDAY) center.minusDays(1) else center.minusDays(2)
+
+    private fun inRange(date: LocalDate): Boolean {
+        val range = dateRange ?: return true
+        return range.containsLocal(date)
+    }
+
+    /** 对照原版 updatePageCache：i=5..0 回退填页，再 6..9 前进填页 */
+    private fun rebuild() {
+        val arr = arrayOfNulls<DayPage>(10)
+        var i = 5
+        var value = center
+        var mondayPending = false
+        while (i >= 0) {
+            arr[i] = if (value.dayOfWeek == DayOfWeek.MONDAY && mondayPending) {
+                DayPage(value, true)
+            } else {
+                DayPage(value, false)
+            }
+            if (value.dayOfWeek != DayOfWeek.MONDAY || mondayPending) {
+                value = value.minusDays(1)
+            } else {
+                mondayPending = true
+            }
+            i--
+        }
+        // 注意：原版 jadx 此处循环下界写成 i+1(=0) 会整表覆盖，按语义修正为 6..9（保留回退填充的 0..5）
+        var forward = center.plusDays(1)
+        var mondayEmitted = true
+        for (k in 6..9) {
+            if (forward.dayOfWeek == DayOfWeek.MONDAY && mondayEmitted) {
+                arr[k] = DayPage(forward, true)
+                mondayEmitted = false
+            } else {
+                arr[k] = DayPage(forward, false)
+                forward = forward.plusDays(1)
+            }
+        }
+        pages = MutableList(10) { idx -> arr[idx] ?: DayPage(center) }
+    }
+
+    private fun spreadAt(centerDate: LocalDate): Pair<DayPage, DayPage> {
+        val saved = center
+        center = centerDate
+        rebuild()
+        val spread = leftPage to rightPage
+        center = saved
+        rebuild()
+        return spread
     }
 }
+
+/** BookPageDateRange 的 LocalDate 便捷扩展 */
+fun BookPageDateRange.startLocal(): LocalDate =
+    java.util.Date(startTimeMills).toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+
+fun BookPageDateRange.endLocal(): LocalDate =
+    java.util.Date(endTimeMills).toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+
+fun BookPageDateRange.containsLocal(date: LocalDate): Boolean =
+    !date.isBefore(startLocal()) && !date.isAfter(endLocal())
