@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -46,6 +47,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.outlined.Add
@@ -771,20 +773,20 @@ private fun WeekScheduleView(
                         .padding(start = 0.dp, top = 5.dp, end = 12.dp, bottom = 5.dp),
                 ) {
                     Row(verticalAlignment = Alignment.Top) {
-                        // 日期列：24.5dp 宽（原版真机 fl_day_1 实测 64px/2.625）；
-                        // 今天 = 黑底圆角白字胶囊（约37×75dp），非今天不占固定高度，整行高度由 3×31dp 槽决定
+                        // 日期列：对照原版真机 43dp 宽（fl_day 113px），内容居中→数字中心≈21.5dp、
+                        // 今天胶囊33dp居中溢出列两侧（原版[14,100]px）；非今天不占固定高度
                         Column(
-                            modifier = Modifier.width(24.5.dp),
+                            modifier = Modifier.width(43.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Column(
                                 modifier = if (isToday) {
                                     Modifier
-                                        .width(37.dp)
+                                        .width(33.dp)
                                         .height(75.dp)
                                         .background(TodayBlack, RoundedCornerShape(8.dp))
                                 } else {
-                                    Modifier.width(37.dp)
+                                    Modifier.width(33.dp)
                                 },
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center,
@@ -799,7 +801,7 @@ private fun WeekScheduleView(
                                 Spacer(Modifier.height(4.dp))
                                 Box(
                                     Modifier
-                                        .width(21.dp)
+                                        .width(15.dp)
                                         .height(1.dp)
                                         .background(if (isToday) Color.White else Color(0xFFB3000000)),
                                 )
@@ -1025,10 +1027,11 @@ private fun WeekScheduleView(
                 .onGloballyPositioned { poolOrigin = it.boundsInWindow().topLeft },
         ) {
             val currentBook = uiState.books.getOrNull(uiState.selectedBookIndex)
+            // 对照原版真机：chip 为包裹宽度、右对齐（右边距18dp），非通栏
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
             Row(
                 modifier = Modifier
-                    .padding(horizontal = 12.dp)
-                    .fillMaxWidth()
+                    .padding(end = 18.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White)
                     .border(0.7.dp, MainTabDivider.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
@@ -1052,7 +1055,7 @@ private fun WeekScheduleView(
                     fontWeight = FontWeight.SemiBold,
                     color = GoaldayDesign.adaptiveInkPrimary,
                     maxLines = 1,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.widthIn(max = 200.dp),
                 )
                 Icon(
                     Icons.Filled.ExpandMore,
@@ -1060,6 +1063,7 @@ private fun WeekScheduleView(
                     tint = GoaldayDesign.adaptiveInkMuted,
                     modifier = Modifier.size(18.dp),
                 )
+            }
             }
             Spacer(Modifier.height(10.dp))
             LazyColumn(Modifier.weight(1f)) {
@@ -1122,7 +1126,7 @@ items(listItems, key = { it }) { poolItem ->
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .alpha(if (draggingItem == poolItem) 0.35f else 1f)
-                                .padding(horizontal = 14.dp, vertical = 9.dp),
+                                .padding(horizontal = 14.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Box(
@@ -1586,6 +1590,8 @@ private fun TopicListView(
                     val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
                     val done = page?.items?.count { store.isChecked(book.id, page.title, it) } ?: 0
                     val total = page?.items?.size ?: 0
+                    // 对照原版真机：当前选中清单的圆点为方块，其余为圆点
+                    val isSelectedBook = uiState.books.getOrNull(uiState.selectedBookIndex)?.id == book.id
                     // 左滑操作层（对照原版清单卡片左滑：黑色信息 + 红色删除）
                     SwipeableActionsRow(
                         actions = buildList {
@@ -1616,10 +1622,9 @@ private fun TopicListView(
                             Box(
                                 Modifier
                                     .size(10.dp)
-                                    // 对照原版 v_dot 状态列表：关联日程=方形点，否则圆点，颜色跟清单
                                     .background(
                                         book.color,
-                                        if (book.linkedToSchedule) RoundedCornerShape(2.dp) else CircleShape,
+                                        if (isSelectedBook) RoundedCornerShape(2.dp) else CircleShape,
                                     ),
                             )
                             Spacer(Modifier.width(16.dp))
@@ -1633,7 +1638,7 @@ private fun TopicListView(
                             Text(
                                 "$done/$total",
                                 fontSize = 14.sp,
-                                color = GoaldayDesign.adaptiveInkMuted,
+                                color = GoaldayDesign.adaptiveInkPrimary,
                             )
                         }
                     }
@@ -2600,10 +2605,14 @@ private fun WeekPickerSheet(
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
+    // 对照原版真机：无拖拽手柄、深色遮罩（约60%黑）、月标题常规字重+右箭头、中文周标题、
+    // 周数列带竖分隔线、无当前周高亮、非本月日期留空、日期浅灰
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Color.White,
+        scrimColor = Color.Black.copy(alpha = 0.58f),
+        dragHandle = null,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
         val today = rememberToday()
@@ -2617,16 +2626,16 @@ private fun WeekPickerSheet(
             ) {
                 Text(
                     "${monthAnchor.monthValue}月 ${monthAnchor.year}",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Normal,
                     color = GoaldayDesign.adaptiveInkPrimary,
                 )
                 Icon(
-                    Icons.Filled.KeyboardArrowDown,
+                    Icons.Filled.KeyboardArrowRight,
                     contentDescription = "下个月",
                     tint = GoaldayDesign.adaptiveInkPrimary,
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(22.dp)
                         .clickable {
                             monthAnchor = if (monthAnchor.monthValue == 12) {
                                 YearMonth.of(monthAnchor.year + 1, 1)
@@ -2649,84 +2658,84 @@ private fun WeekPickerSheet(
                     Text("今天", fontSize = 14.sp, color = Color.White)
                 }
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(24.dp))
             Row(Modifier.fillMaxWidth()) {
                 Spacer(Modifier.width(46.dp))
-                listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach {
+                listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日").forEach {
                     Text(
                         it,
-                        fontSize = 13.sp,
-                        color = GoaldayDesign.adaptiveInkMuted,
+                        fontSize = 14.sp,
+                        color = Color(0xFFC9C9C9),
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center,
                     )
                 }
             }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(10.dp))
             val first = monthAnchor.atDay(1)
             val firstMonday = first.with(DayOfWeek.MONDAY).let {
                 if (it.isAfter(first)) it.minusWeeks(1) else it
             }
-            (0..5).map { firstMonday.plusWeeks(it.toLong()) }.forEach { weekStart ->
-                val days = (0..6).map { weekStart.plusDays(it.toLong()) }
-                val isCurrentWeek =
-                    !selectedDate.isBefore(weekStart) && selectedDate.isBefore(weekStart.plusWeeks(1))
-                val weekNum = weekStart.get(weekFields.weekOfWeekBasedYear())
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 2.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (isCurrentWeek) WeekBandBg else Color.Transparent),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier.width(46.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            weekNum.toString(),
-                            fontSize = 15.sp,
-                            fontWeight = if (isCurrentWeek) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isCurrentWeek) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveInkMuted,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isCurrentWeek) Color.White else Color.Transparent)
-                                .padding(horizontal = 10.dp, vertical = 8.dp),
-                        )
-                    }
-                    days.forEach { date ->
-                        val inMonth = date.monthValue == monthAnchor.monthValue
-                        val isToday = date == today
+            Row(Modifier.fillMaxWidth()) {
+                // 周数列 + 竖分隔线（对照原版日历面板）
+                Column(Modifier.width(46.dp)) {
+                    (0..5).map { firstMonday.plusWeeks(it.toLong()) }.forEach { weekStart ->
                         Box(
                             modifier = Modifier
-                                .weight(1f)
-                                .clickable {
-                                    onPick(date)
-                                    onDismiss()
-                                }
-                                .padding(vertical = 5.dp),
+                                .fillMaxWidth()
+                                .height(51.dp),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .background(
-                                        if (isToday) TodayCoral else Color.Transparent,
-                                        RoundedCornerShape(10.dp),
-                                    ),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    date.dayOfMonth.toString(),
-                                    fontSize = 16.sp,
-                                    fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                                    color = when {
-                                        isToday -> Color.White
-                                        !inMonth -> GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.55f)
-                                        else -> GoaldayDesign.adaptiveInkPrimary
-                                    },
-                                )
+                            Text(
+                                weekStart.get(weekFields.weekOfWeekBasedYear()).toString(),
+                                fontSize = 14.sp,
+                                color = Color(0xFFC9C9C9),
+                            )
+                        }
+                    }
+                }
+                Box(
+                    Modifier
+                        .width(1.dp)
+                        .height(51.dp * 6)
+                        .background(Color(0xFFE3E3E3)),
+                )
+                Column(Modifier.weight(1f)) {
+                    (0..5).map { firstMonday.plusWeeks(it.toLong()) }.forEach { weekStart ->
+                        val days = (0..6).map { weekStart.plusDays(it.toLong()) }
+                        Row(Modifier.fillMaxWidth().height(51.dp)) {
+                            days.forEach { date ->
+                                val inMonth = date.monthValue == monthAnchor.monthValue
+                                val isToday = date == today
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .clickable(enabled = inMonth) {
+                                            onPick(date)
+                                            onDismiss()
+                                        },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    if (inMonth) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(30.dp)
+                                                .background(
+                                                    if (isToday) TodayCoral else Color.Transparent,
+                                                    RoundedCornerShape(8.dp),
+                                                ),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Text(
+                                                date.dayOfMonth.toString(),
+                                                fontSize = 16.sp,
+                                                fontWeight = if (isToday) FontWeight.SemiBold else FontWeight.Normal,
+                                                color = if (isToday) Color.White else Color(0xFFBDBDBD),
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

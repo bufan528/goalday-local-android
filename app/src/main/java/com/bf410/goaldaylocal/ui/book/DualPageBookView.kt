@@ -119,6 +119,13 @@ fun DualPageBookView(
     val currentWeekMonday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     var weekOffset by remember { mutableIntStateOf(0) }
     val spreadMonday = currentWeekMonday.plusWeeks(weekOffset.toLong())
+    // 对照原版真机：开书/翻页后屏顶短暂显示月标题（"9月"中心≈屏高20.3%），2.5s 后隐去
+    var showMonthTitle by remember { mutableStateOf(true) }
+    LaunchedEffect(weekOffset) {
+        showMonthTitle = true
+        kotlinx.coroutines.delay(2500)
+        showMonthTitle = false
+    }
 
     val schedulePage = book.pages.filterIsInstance<SchedulePage>().firstOrNull()
         ?: SchedulePage("日程页", emptyList())
@@ -242,6 +249,16 @@ fun DualPageBookView(
     }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        if (showMonthTitle) {
+            Text(
+                "${spreadMonday.monthValue}月",
+                fontSize = 18.sp,
+                color = GoaldayDesign.adaptiveInkPrimary,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 167.dp),
+            )
+        }
         val configuration = LocalConfiguration.current
         val screenWidthDp = configuration.screenWidthDp.dp
         // 真机dump修正（2026-09-15 BookActivity hierarchy 904x2316）：
@@ -593,6 +610,8 @@ fun DualPageBookView(
                         )
                     }
                 }
+                // 下方留给系统手势条（对照原版底栏内容不贴屏幕底）
+                Spacer(Modifier.height(24.dp))
             }
         }
 
