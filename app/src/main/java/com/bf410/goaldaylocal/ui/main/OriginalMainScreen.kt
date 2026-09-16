@@ -287,8 +287,13 @@ fun OriginalMainScreen(
         subTabIndex = firstVisible.ordinal
     }
 
-    // 对照原版真机：状态栏与顶栏同色（米色延伸到状态栏区）+ 黑色状态栏图标
-    val statusBarColor = MainTabBarBg
+    // 对照原版清单展开态（o_listexp）：详情是全屏页，不带主 Tab 栏；
+    // 展开时藏起顶部 Tab 栏，详情自带顶栏（TopicDetailSimple）。
+    val listDetailExpanded = currentSubTab == MainSubTab.LIST && expandedBookId != null
+
+    // 对照原版真机：状态栏与顶栏同色（米色延伸到状态栏区）+ 黑色状态栏图标；
+    // 清单详情全屏时顶栏为内容底色。
+    val statusBarColor = if (listDetailExpanded) MainContentBg else MainTabBarBg
     val mainWindow = (LocalContext.current as? android.app.Activity)?.window
     SideEffect {
         mainWindow?.let { w ->
@@ -298,22 +303,24 @@ fun OriginalMainScreen(
     }
 
     Column(Modifier.fillMaxSize().background(MainContentBg)) {
-        OriginalTopTabBar(
-            selected = currentSubTab,
-            selectedDate = selectedDate,
-            editing = editingDate != null,
-            onDone = { editingDate = null },
-            onWeekClick = { scheduleAdaptive = !scheduleAdaptive },
-            weekAdaptive = scheduleAdaptive,
-            onSelect = {
-                editingDate = null
-                subTabIndex = it.ordinal
-            },
-            onManageTabs = { showTabManage = true },
-            onOpenSettings = onOpenSettings,
-            tabVisibility = tabVisibility,
-            tabOrder = tabOrder,
-        )
+        if (!listDetailExpanded) {
+            OriginalTopTabBar(
+                selected = currentSubTab,
+                selectedDate = selectedDate,
+                editing = editingDate != null,
+                onDone = { editingDate = null },
+                onWeekClick = { scheduleAdaptive = !scheduleAdaptive },
+                weekAdaptive = scheduleAdaptive,
+                onSelect = {
+                    editingDate = null
+                    subTabIndex = it.ordinal
+                },
+                onManageTabs = { showTabManage = true },
+                onOpenSettings = onOpenSettings,
+                tabVisibility = tabVisibility,
+                tabOrder = tabOrder,
+            )
+        }
         // Tab 切换方向滑动（对照原版 ViewPager2 滑动切换的直觉：往左切页从右滑入）
         // 退出页整屏滑出，避免残留纹理在屏幕边缘露出；clipToBounds 兜底裁剪
         AnimatedContent(
@@ -1798,12 +1805,13 @@ private fun TopicDetailSimple(
     val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
     val dividerColor = MainTabDivider
     Column(Modifier.fillMaxSize()) {
+        // 对照原版展开态顶栏（o_listexp）：全屏页无主 Tab 栏，顶栏为内容底色；
+        // 返回黑 chevron + 本书色方块 + 22sp 级标题 + 右侧更多。
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MainTabBarBg)
                 .statusBarsPadding()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(start = 14.dp, end = 16.dp, top = 14.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -1817,12 +1825,13 @@ private fun TopicDetailSimple(
             Box(
                 Modifier
                     .size(11.dp)
-                    .background(PoolBullet, RoundedCornerShape(2.dp)),
+                    .background(book.color, RoundedCornerShape(2.dp)),
             )
             Spacer(Modifier.width(8.dp))
             Text(
                 book.title,
-                fontSize = 17.sp,
+                fontSize = 20.sp,
+                lineHeight = 26.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = GoaldayDesign.adaptiveInkPrimary,
                 modifier = Modifier.weight(1f),
@@ -1871,20 +1880,20 @@ private fun TopicDetailSimple(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(17.dp)
-                                .border(1.6.dp, if (checked) Color.Transparent else PoolBullet, RoundedCornerShape(4.dp))
+                                .size(20.dp)
+                                .border(2.dp, if (checked) Color.Transparent else book.color, RoundedCornerShape(4.dp))
                                 .background(if (checked) GoaldayDesign.Pink else Color.Transparent, RoundedCornerShape(4.dp)),
                             contentAlignment = Alignment.Center,
                         ) {
                             if (checked) {
-                                Text("✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text("✓", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
                         Spacer(Modifier.width(14.dp))
                         Text(
                             "${index + 1}  $item",
-                            fontSize = 15.sp,
-                            lineHeight = 20.sp,
+                            fontSize = 18.sp,
+                            lineHeight = 25.sp,
                             color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                         )
                     }
