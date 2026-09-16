@@ -33,6 +33,8 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -79,6 +81,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -106,6 +109,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -389,9 +393,10 @@ fun OriginalMainScreen(
                     },
                     onEditEntry = { editingEntry = it },
                 )
-                MainSubTab.RECORD -> RecordDiaryView(
+                MainSubTab.RECORD -> RecordDiaryPager(
                     selectedDate = selectedDate,
                     entries = uiState.schedulePreviewEntries,
+                    onSelectDate = { selectedDate = it },
                 )
                 MainSubTab.LIST -> TopicListView(
                     uiState = uiState,
@@ -1335,10 +1340,71 @@ private fun weekdayName(date: LocalDate): String = when (date.dayOfWeek) {
 
 // region 记录 Tab —— 一日一问 + 日记编辑（结构化存储，供书内渲染今日完成卡片）
 
+/** 历史日记分页窗口：对照原版 DiaryScrollAdapter.getItemCount=5，中心页=2（开屏即当天）。 */
+internal const val DIARY_PAGER_SIZE = 5
+internal const val DIARY_PAGER_CENTER = 2
+
+/**
+ * 分页窗口页对应的日期：date = anchor + (page - center)。
+ * 对照原版 DiaryScrollAdapter.m31003a：calendar = centerCalendar + (position - 2) 天。
+ */
+internal fun diaryPagerDate(anchor: LocalDate, page: Int, center: Int = DIARY_PAGER_CENTER): LocalDate =
+    anchor.plusDays((page - center).toLong())
+
+/**
+ * 历史日记纵向分页浏览。
+ *
+ * 对照原版 DiaryScrollFragment（纵向 ViewPager2 + DiaryScrollAdapter 5 页窗口）：
+ * - 纵滑逐天浏览历史日记，每页即当日完整编辑器（对照 createFragment 按日期 new DiaryFragment）；
+ * - 落定后锚点跟随到落定日并无动画回正到中心页，再同步选中日期
+ *  （对照 onPageSelected 500ms 后 setCurrentItem(2,false) + 日期事件；Compose 落定即完成，无需延迟）；
+ * - 外部跳日期（周表选日/书内跳转）时锚点重置并回正（对照 m31002b + ConstantViewModel 日期事件）；
+ * - 编辑态（键盘工具栏出现）锁定纵滑翻页，阅读滚动不受影响（对照原版编辑态 setUserInputEnabled(false)）。
+ * 注：原版 paging/DiaryPagingSource 经查无任何调用（死代码），日期按日历算术生成即可，无需 Paging3。
+ */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun RecordDiaryPager(
+    selectedDate: LocalDate,
+    entries: List<ScheduleEntry>,
+    onSelectDate: (LocalDate) -> Unit,
+) {
+    var anchorDate by remember { mutableStateOf(selectedDate) }
+    val pagerState = rememberPagerState(initialPage = DIARY_PAGER_CENTER, pageCount = { DIARY_PAGER_SIZE })
+    var editorFocused by remember { mutableStateOf(false) }
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.collect { settled ->
+            if (settled != DIARY_PAGER_CENTER) {
+                anchorDate = diaryPagerDate(anchorDate, settled)
+                onSelectDate(anchorDate)
+                pagerState.scrollToPage(DIARY_PAGER_CENTER)
+            }
+        }
+    }
+    LaunchedEffect(selectedDate) {
+        if (selectedDate != anchorDate) {
+            anchorDate = selectedDate
+            pagerState.scrollToPage(DIARY_PAGER_CENTER)
+        }
+    }
+    VerticalPager(
+        state = pagerState,
+        modifier = Modifier.fillMaxSize(),
+        userScrollEnabled = !editorFocused,
+    ) { page ->
+        RecordDiaryView(
+            selectedDate = diaryPagerDate(anchorDate, page),
+            entries = entries,
+            onEditorFocusChanged = { editorFocused = it },
+        )
+    }
+}
+
 @Composable
 private fun RecordDiaryView(
     selectedDate: LocalDate,
     entries: List<ScheduleEntry>,
+    onEditorFocusChanged: (Boolean) -> Unit = {},
 ) {
     val store = remember { LocalStateStore(MMKV.defaultMMKV()) }
     val prompt = remember(selectedDate) {
@@ -1350,6 +1416,11 @@ private fun RecordDiaryView(
     }
     // 键盘工具栏显隐（对照原版：底栏仅编辑时出现）
     var editorFocused by remember { mutableStateOf(false) }
+    // 对照原版 DiaryScrollFragment 返回键回调：编辑态下返回先退出编辑（解锁纵滑），而非退出页面
+    val focusManager = LocalFocusManager.current
+    androidx.activity.compose.BackHandler(enabled = editorFocused) {
+        focusManager.clearFocus()
+    }
     val context = androidx.compose.ui.platform.LocalContext.current
     var imagePaths by remember(selectedDate) {
         mutableStateOf(diaryImagePaths(store, selectedDate))
@@ -1439,7 +1510,10 @@ private fun RecordDiaryView(
                 cursorBrush = SolidColor(TodayCoral),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .onFocusChanged { editorFocused = it.isFocused },
+                    .onFocusChanged {
+                        editorFocused = it.isFocused
+                        onEditorFocusChanged(it.isFocused)
+                    },
             )
             // 已插入的图片
             imagePaths.forEach { path ->
