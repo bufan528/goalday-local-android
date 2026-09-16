@@ -170,6 +170,7 @@ fun DualPageBookView(
     }
 
     var showBookShelf by remember { mutableStateOf(false) }
+    var showExportSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val progress = remember { Animatable(0f) }
     var turnDirection by remember { mutableStateOf<TurnDirection?>(null) }
@@ -536,7 +537,9 @@ fun DualPageBookView(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
-                        modifier = Modifier.size(26.dp),
+                        modifier = Modifier
+                            .size(26.dp)
+                            .clickableNoRipple { showExportSheet = true },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -602,6 +605,28 @@ fun DualPageBookView(
                 },
                 onDismiss = { showBookShelf = false },
             )
+        }
+
+        // 导出中心弹层（对照原版 PrintPage：内容筛选+起止日期+真PDF+分享）
+        if (showExportSheet) {
+            Box(Modifier.fillMaxSize()) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color(0x66000000))
+                        .clickableNoRipple { showExportSheet = false },
+                )
+                Box(Modifier.align(Alignment.BottomCenter)) {
+                    ExportCenterSheet(
+                        diaryTextFor = { date ->
+                            diaryStore.diaryText(DiaryStoreBookId, date.toString())
+                        },
+                        scheduleEntries = uiState.schedulePreviewEntries,
+                        weeklyTheme = uiState.weeklyTheme,
+                        onDismiss = { showExportSheet = false },
+                    )
+                }
+            }
         }
     }
 }
