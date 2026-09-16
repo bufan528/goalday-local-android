@@ -497,10 +497,13 @@ private fun OriginalTopTabBar(
             ) {
                 when (tabItem) {
                     MainSubTab.WEEK -> Row(
-                        modifier = Modifier.clickable {
-                            // 对照原版 FlexibleTabContainer.selectTab：首次点=选中周 Tab，再点=展开/切换视图
-                            if (selected == MainSubTab.WEEK) onWeekClick() else onSelect(MainSubTab.WEEK)
-                        },
+                        modifier = Modifier.combinedClickable(
+                            onClick = {
+                                // 对照原版 FlexibleTabContainer.selectTab：首次点=选中周 Tab，再点=展开/切换视图
+                                if (selected == MainSubTab.WEEK) onWeekClick() else onSelect(MainSubTab.WEEK)
+                            },
+                            onLongClick = onManageTabs,
+                        ),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         val weekNum = selectedDate.get(WeekFields.ISO.weekOfWeekBasedYear())
@@ -524,12 +527,13 @@ private fun OriginalTopTabBar(
                             WeekTriangle(expanded = weekAdaptive)
                         }
                     }
-                    MainSubTab.MONTH -> TabLabel("月", selected == MainSubTab.MONTH) { onSelect(MainSubTab.MONTH) }
+                    MainSubTab.MONTH -> TabLabel("月", selected == MainSubTab.MONTH, onLongPress = onManageTabs) { onSelect(MainSubTab.MONTH) }
                     MainSubTab.RECORD -> TabLabel(
                         text = if (selected == MainSubTab.RECORD) "${selectedDate.monthValue}月${selectedDate.dayOfMonth}日" else "记录",
                         selected = selected == MainSubTab.RECORD,
+                        onLongPress = onManageTabs,
                     ) { onSelect(MainSubTab.RECORD) }
-                    MainSubTab.LIST -> TabLabel("清单", selected == MainSubTab.LIST) { onSelect(MainSubTab.LIST) }
+                    MainSubTab.LIST -> TabLabel("清单", selected == MainSubTab.LIST, onLongPress = onManageTabs) { onSelect(MainSubTab.LIST) }
                 }
             }
         }
@@ -563,8 +567,9 @@ private fun WeekTriangle(expanded: Boolean) {
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun TabLabel(text: String, selected: Boolean, onClick: () -> Unit) {
+private fun TabLabel(text: String, selected: Boolean, onLongPress: () -> Unit = {}, onClick: () -> Unit) {
     Text(
         text,
         fontSize = 18.sp,
@@ -577,7 +582,7 @@ private fun TabLabel(text: String, selected: Boolean, onClick: () -> Unit) {
             // 对照原版color_tab_main未选中态#36000000
             Color(0x36000000)
         },
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongPress),
     )
 }
 
@@ -1677,10 +1682,10 @@ private fun TopicListView(
                         .clickable { showAddSheet = true },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        Icons.Outlined.Add,
+                    // 对照原版 iv_add：src=plan_add 原图
+                    Image(
+                        painter = androidx.compose.ui.res.painterResource(com.bf410.goaldaylocal.R.drawable.plan_add),
                         contentDescription = "新建清单",
-                        tint = GoaldayDesign.adaptiveInkPrimary,
                         modifier = Modifier.size(22.dp),
                     )
                 }
@@ -1691,10 +1696,11 @@ private fun TopicListView(
                         .clickable { onOpenInspiration() },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        Icons.Filled.Lightbulb,
+                    // 对照原版 iv_tip：src=plan_tip 原图 tint 白
+                    Image(
+                        painter = androidx.compose.ui.res.painterResource(com.bf410.goaldaylocal.R.drawable.plan_tip),
                         contentDescription = "灵感",
-                        tint = Color.White,
+                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White),
                         modifier = Modifier.size(20.dp),
                     )
                 }
@@ -1909,6 +1915,7 @@ private fun TopicAddSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        dragHandle = null,
         containerColor = if (dark) Color(0xFF2C2722) else Color.White,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
@@ -2020,6 +2027,7 @@ private fun EntryEditSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        dragHandle = null,
         containerColor = if (dark) Color(0xFF2C2722) else Color.White,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
@@ -2206,7 +2214,9 @@ private fun TabManageSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        // 对照原版 bg_tab_manage_sheet：#FDFAF6 + 顶部35dp圆角；BottomSheetDialog强制展开+跳过折叠态
+        // 对照原版 bg_tab_manage_sheet：#FDFAF6 + 顶部35dp圆角；BottomSheetDialog强制展开+跳过折叠态；
+        // 原版无系统拖拽手柄（仅自定义浅灰小条），故 dragHandle=null
+        dragHandle = null,
         containerColor = if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color(0xFFFDFAF6),
         shape = RoundedCornerShape(topStart = 35.dp, topEnd = 35.dp),
     ) {
@@ -2610,9 +2620,9 @@ private fun WeekPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        dragHandle = null,
         containerColor = Color.White,
         scrimColor = Color.Black.copy(alpha = 0.58f),
-        dragHandle = null,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
         val today = rememberToday()
