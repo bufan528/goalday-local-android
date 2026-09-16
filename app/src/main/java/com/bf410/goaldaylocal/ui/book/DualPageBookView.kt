@@ -57,6 +57,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.util.addPointerInputChange
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -75,6 +76,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import android.os.Build
 import androidx.compose.ui.layout.positionInWindow
 import com.bf410.goaldaylocal.data.BookPage
@@ -670,7 +672,8 @@ private fun BookShelfSheet(
                     .padding(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(18.dp),
             ) {
-                val years = listOf(currentYear, currentYear - 1, currentYear - 2, currentYear - 3).sortedDescending()
+                // 对照原版 BookConstant：固定 2023–2026 四本年度书，书衣按 BookShelfManager.bookCoverMapping
+                val years = listOf(2026, 2025, 2024, 2023)
                 years.forEach { year ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -683,19 +686,17 @@ private fun BookShelfSheet(
                                 .background(GoaldayDesign.BookBoardLight)
                                 .clickableNoRipple { onPickYear(year) },
                         ) {
-                            fabricImage?.let { bmp ->
-                                Image(
-                                    bitmap = bmp,
-                                    contentDescription = "${year}年封面",
-                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                                    modifier = Modifier.matchParentSize(),
-                                )
+                            val coverRes = when (year) {
+                                2026 -> com.bf410.goaldaylocal.R.drawable.ic_2026_cover_2
+                                2025 -> com.bf410.goaldaylocal.R.drawable.ic_2025_cover
+                                2024 -> com.bf410.goaldaylocal.R.drawable.ic_2024_cover
+                                else -> com.bf410.goaldaylocal.R.drawable.ic_2023_cover
                             }
-                            Text(
-                                year.toString(),
-                                fontSize = 11.sp,
-                                color = Color(0xFF8B4A4A),
-                                modifier = Modifier.align(Alignment.Center),
+                            Image(
+                                painter = painterResource(coverRes),
+                                contentDescription = "${year}年封面",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.matchParentSize(),
                             )
                         }
                         Text(
