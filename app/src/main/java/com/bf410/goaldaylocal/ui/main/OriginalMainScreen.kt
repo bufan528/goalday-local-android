@@ -833,11 +833,13 @@ private fun WeekScheduleView(
                                     entry != null -> {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
-                                            verticalAlignment = Alignment.CenterVertically,
+                                            // 展开态条目可多行：勾选框顶对齐首行（中心≈首行字心）
+                                            verticalAlignment = if (fixed) Alignment.CenterVertically else Alignment.Top,
                                         ) {
                                             // 勾选框：独立clickable,不与文本区抢事件
                                             Box(
                                                 modifier = Modifier
+                                                    .padding(top = if (fixed) 0.dp else 2.dp)
                                                     .size(19.dp)
                                                     .border(
                                                         1.8.dp,
@@ -874,13 +876,14 @@ private fun WeekScheduleView(
                                             }
                                             Spacer(Modifier.width(10.dp))
                                             Box(Modifier.weight(1f).clickable { onEditEntry(entry) }) {
+                                                // 对照原版：固定2×3槽单行截断；展开(自适应)态多行换行不截断
                                                 Text(
                                                     (if (entry.timeText.isNotBlank()) entry.timeText + "  " else "") + entry.title,
-                                                    fontSize = 15.sp,
-                                                    lineHeight = 19.sp,
+                                                    fontSize = 17.sp,
+                                                    lineHeight = 23.sp,
                                                     color = if (entry.completed) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                                                     textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
-                                                    maxLines = 1,
+                                                    maxLines = if (fixed) 1 else Int.MAX_VALUE,
                                                     overflow = TextOverflow.Clip,
                                                 )
                                             }
@@ -897,9 +900,10 @@ private fun WeekScheduleView(
                                         if (hint.isNotEmpty()) {
                                             Text(
                                                 hint,
-                                                fontSize = 15.sp,
+                                                fontSize = 17.sp,
+                                                lineHeight = 23.sp,
                                                 color = GoaldayDesign.adaptiveInkMuted,
-                                                maxLines = 1,
+                                                maxLines = if (fixed) 1 else 2,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
                                         }
