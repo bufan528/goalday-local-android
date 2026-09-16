@@ -24,6 +24,9 @@ object WidgetRefresh {
         refreshProvider(context, manager, QuickDiaryWidgetProvider::class.java) { id ->
             QuickDiaryWidgetProvider.buildRemoteViews(context, id)
         }
+        refreshProvider(context, manager, DiaryAddWidgetProvider::class.java) { id ->
+            DiaryAddWidgetProvider.buildRemoteViews(context, id)
+        }
     }
 
     private fun refreshProvider(
