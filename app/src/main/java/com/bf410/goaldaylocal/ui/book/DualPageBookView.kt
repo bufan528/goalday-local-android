@@ -196,6 +196,15 @@ fun DualPageBookView(
                 turnDirection = turnDirection,
                 handbookMode = true,
                 weekStartDate = page.date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
+                // 书内日程面可交互（对照原版书内嵌 ScheduleFragment）：空槽行内新增/点条目改名/点日期列跳主界面
+                editable = true,
+                onAddEntry = { date, text ->
+                    viewModel.addScheduleFromHandbook(text, date.monthValue, date.dayOfMonth)
+                },
+                onRenameEntry = { entryId, newTitle ->
+                    viewModel.updateScheduleTitleFromHandbook(entryId, newTitle)
+                },
+                onOpenDay = { date -> onOpenDate(date, true) },
             )
         } else {
             InBookDiaryEditorPage(
@@ -480,12 +489,8 @@ fun DualPageBookView(
                         isLeft = true,
                         progress = progress.value,
                         direction = turnDirection,
-                        // 日程面点按跳主界面周Tab；日记面为可写编辑器，不盖点按层（触摸交给编辑器）
-                        onTap = if (leftPage.isSchedule) {
-                            { onOpenDate(leftPage.date, true) }
-                        } else {
-                            null
-                        },
+                        // 日程面/日记面均为可交互嵌入页（触摸交给内容），不盖整页点按层
+                        onTap = null,
                         configurator = flipConfigurator,
                         content = { pageContent(leftPage, true) },
                         backContent = {
@@ -500,11 +505,7 @@ fun DualPageBookView(
                         isLeft = false,
                         progress = progress.value,
                         direction = turnDirection,
-                        onTap = if (rightPage.isSchedule) {
-                            { onOpenDate(rightPage.date, true) }
-                        } else {
-                            null
-                        },
+                        onTap = null,
                         configurator = flipConfigurator,
                         content = { pageContent(rightPage, false) },
                         backContent = {
@@ -793,16 +794,18 @@ private fun HandbookPage(
                 )
             }
         }
-        // 背面内容：反方向再旋转 180°，翻到背面时正向可读
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer {
-                    alpha = backAlpha
-                    this.rotationY = 180f
-                },
-        ) {
-            backContent()
+        // 背面内容：仅翻页越过 90° 时才组合（静止时若常驻会盖在正面层之上拦截触摸）
+        if (backAlpha > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        alpha = backAlpha
+                        this.rotationY = 180f
+                    },
+            ) {
+                backContent()
+            }
         }
     }
 }

@@ -5,6 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,6 +37,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +49,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -129,6 +139,11 @@ internal fun InBookSchedulePreview(
     handbookMode: Boolean = false,
     // 书内双页展开模式：传入当周周一，则渲染 Mon-Sun 共 7 行
     weekStartDate: java.time.LocalDate? = null,
+    // 年历书日程面可交互（对照原版书内嵌 ScheduleFragment：空槽行内新增、点条目改名、点日期列跳主界面）
+    editable: Boolean = false,
+    onAddEntry: (java.time.LocalDate, String) -> Unit = { _, _ -> },
+    onRenameEntry: (String, String) -> Unit = { _, _ -> },
+    onOpenDay: (java.time.LocalDate) -> Unit = {},
 ) {
     // HANDBOOK 模式下外部已应用 turningPageTransform 3D 翻页，内容应贴在页面上随页转动，
     // 不再额外做水平视差，避免双重位移导致页面晃动/残影。
@@ -160,6 +175,7 @@ internal fun InBookSchedulePreview(
                 day = date.dayOfMonth,
                 weekday = weekdayNames.getOrElse(date.dayOfWeek.value - 1) { "" },
                 entries = entries,
+                date = date,
             )
         }
     }
@@ -239,6 +255,11 @@ internal fun InBookSchedulePreview(
                         entries = weekDay.entries,
                         pageTitle = page.title,
                         isChecked = isChecked,
+                        date = weekDay.date,
+                        editable = editable,
+                        onAddEntry = onAddEntry,
+                        onRenameEntry = onRenameEntry,
+                        onOpenDay = onOpenDay,
                     )
                 }
             }
@@ -292,6 +313,7 @@ private data class ScheduleWeekDay(
     val day: Int,
     val weekday: String,
     val entries: List<ScheduleEntry>,
+    val date: java.time.LocalDate,
 )
 
 // 对照 item_schedule_item_in_book.xml
@@ -306,11 +328,50 @@ private fun InBookScheduleDayRow(
     pageTitle: String,
     isChecked: (String, String) -> Boolean,
     modifier: Modifier = Modifier,
+    date: java.time.LocalDate? = null,
+    editable: Boolean = false,
+    onAddEntry: (java.time.LocalDate, String) -> Unit = { _, _ -> },
+    onRenameEntry: (String, String) -> Unit = { _, _ -> },
+    onOpenDay: (java.time.LocalDate) -> Unit = {},
 ) {
     val dateColumnColor = GoaldayDesign.ScheduleDateColumnSeparator
+    // 书内可交互：行内编辑态 = (列, 槽, 文本)；行级 pointerInput 按坐标命中槽位开字段
+    // （槽内 clickable 在书页 3D graphicsLayer 下不响应，行级手势经真机验证可用）
+    var edit by remember { mutableStateOf<Triple<Int, Int, String>?>(null) }
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .then(
+                if (editable) {
+                    Modifier.pointerInput(date, entries) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val down = awaitFirstDown()
+                                if (down.isConsumed) continue
+                                down.consume()
+                                val x = down.position.x
+                                val y = down.position.y
+                                val w = size.width.toFloat()
+                                val h = size.height.toFloat()
+                                if (x <= 24.5.dp.toPx()) {
+                                    if (date != null) onOpenDay(date)
+                                    continue
+                                }
+                                val col = if (x < w / 2f) 0 else 1
+                                val slot = (y / (h / 3f)).toInt().coerceIn(0, 2)
+                                val columnEntries = if (col == 0) {
+                                    entries.filterIndexed { idx, _ -> idx % 2 == 0 }.take(3)
+                                } else {
+                                    entries.filterIndexed { idx, _ -> idx % 2 == 1 }.take(3)
+                                }
+                                edit = Triple(col, slot, columnEntries.getOrNull(slot)?.title ?: "")
+                            }
+                        }
+                    }
+                } else {
+                    Modifier
+                },
+            )
             .drawBehind {
                 // 每天底部一条分隔线，对照原版截图：线从页面最左缘贯穿到右缘
                 // 实测原版线色 ≈ #D9D2CF（C5BBB6 于白底上 alpha≈0.7 的效果）
@@ -330,7 +391,9 @@ private fun InBookScheduleDayRow(
         // 注意：必须显式收紧 lineHeight——Material3 默认 bodyLarge lineHeight=24sp
         // 会把 9sp 小字的行框撑到 24sp，导致日期/横线/周几被摊满整行且相互重叠
         Box(
-            modifier = Modifier.width(24.5.dp).fillMaxHeight(),
+            modifier = Modifier
+                .width(24.5.dp)
+                .fillMaxHeight(),
             contentAlignment = Alignment.Center,
         ) {
             // 日期列紧凑居中：数字 + 分隔线 + 周几
@@ -369,12 +432,38 @@ private fun InBookScheduleDayRow(
             pageTitle = pageTitle,
             isChecked = isChecked,
             modifier = Modifier.weight(1f),
+            columnIndex = 0,
+            edit = edit,
+            onEditText = { text -> edit = edit?.copy(third = text) },
+            onCommit = { text ->
+                val entry = leftEntries.getOrNull(edit?.second ?: -1)
+                if (entry != null) {
+                    onRenameEntry(entry.id, text)
+                } else if (date != null) {
+                    onAddEntry(date, text)
+                }
+                edit = null
+            },
+            onDismissEdit = { edit = null },
         )
         InBookScheduleTargetColumn(
             entries = rightEntries,
             pageTitle = pageTitle,
             isChecked = isChecked,
             modifier = Modifier.weight(1f),
+            columnIndex = 1,
+            edit = edit,
+            onEditText = { text -> edit = edit?.copy(third = text) },
+            onCommit = { text ->
+                val entry = rightEntries.getOrNull(edit?.second ?: -1)
+                if (entry != null) {
+                    onRenameEntry(entry.id, text)
+                } else if (date != null) {
+                    onAddEntry(date, text)
+                }
+                edit = null
+            },
+            onDismissEdit = { edit = null },
         )
     }
 }
@@ -385,10 +474,21 @@ private fun InBookScheduleTargetColumn(
     pageTitle: String,
     isChecked: (String, String) -> Boolean,
     modifier: Modifier = Modifier,
+    columnIndex: Int = 0,
+    edit: Triple<Int, Int, String>? = null,
+    onEditText: (String) -> Unit = {},
+    onCommit: (String) -> Unit = {},
+    onDismissEdit: () -> Unit = {},
 ) {
     // 对照 item_schedule_item_in_book.xml: 2个 LinearLayout(weight=1), paddingVertical=3.5dip
     // 行高 12dip（pt 是解码器对 dip 的误标，直接使用原始值）
     // et_target 使用 ContentTextView + FontUtils contentSize；默认 mode=1 时 contentSize=16dp，isInBook 减半为 8sp
+    // 行内编辑字段由行级 pointerInput 开启（edit=列/槽/文本），Done 落盘
+    val editFocusRequester = remember { FocusRequester() }
+    val isEditingHere = edit != null && edit.first == columnIndex
+    LaunchedEffect(isEditingHere) {
+        if (isEditingHere) runCatching { editFocusRequester.requestFocus() }
+    }
     Column(
         modifier = modifier.padding(vertical = InBookScheduleColumnPaddingVertical),
     ) {
@@ -402,7 +502,30 @@ private fun InBookScheduleTargetColumn(
                     .clipToBounds(),
                 contentAlignment = Alignment.CenterStart,
             ) {
-                if (entry != null) {
+                if (isEditingHere && edit.second == i) {
+                    BasicTextField(
+                        value = edit.third,
+                        onValueChange = onEditText,
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontSize = 8.sp,
+                            lineHeight = 9.sp,
+                            color = GoaldayDesign.InkPrimary,
+                        ),
+                        cursorBrush = SolidColor(GoaldayDesign.Pink),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                val text = edit.third.trim()
+                                if (text.isNotEmpty()) onCommit(text) else onDismissEdit()
+                            },
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(editFocusRequester)
+                            .padding(start = 2.dp, end = 2.dp),
+                    )
+                } else if (entry != null) {
                     val checked = entry.completed || isChecked(pageTitle, entry.title)
                     Text(
                         entry.title,
