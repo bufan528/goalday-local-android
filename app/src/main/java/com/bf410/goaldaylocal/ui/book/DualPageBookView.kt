@@ -182,6 +182,21 @@ fun DualPageBookView(
     val flipConfigurator = remember { BookPageAnimationConfigurator() }
     // 单通道drag：避免每move一个launch乱序，合流到最新进度（holder不用state，免每次move重组）
     val dragJobHolder = remember { arrayOfNulls<kotlinx.coroutines.Job>(1) }
+    // 对照原版 BaseBookView$2 + performOpenAnimation(m31449r)：
+    // 进书 800ms 后播开书动画（封面 frontRotation U = -180*progress 翻到左侧），期间禁用翻页手势；
+    // 开书完成后 bookIsOpen=true（翻页阈值由 0.5 降到 0.3，对照 e0），封面常驻 -180 隐藏。
+    var bookIsOpen by remember { mutableStateOf(false) }
+    val openProgress = remember { Animatable(0f) }
+    var isOpening by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(800)
+        openProgress.animateTo(1f, tween(450, easing = LinearEasing))
+        bookIsOpen = true
+        kotlinx.coroutines.delay(10)
+        isOpening = false
+    }
+    // 释放阈值双态：闭合→首页 0.5，页→页 0.3（对照原版 e0；开启动画期间手势已锁，闭合态只影响首翻）
+    val flipThreshold = if (bookIsOpen) 0.3f else 0.5f
 
     // 书芯单页渲染：日程面=该页所在周的书内周视图（原版书内嵌 ScheduleFragment，7 行 Mon-Sun），
     // 日记面=可写日记页（原版书内嵌 DiaryFragment，翻到即可书写；改动即时落盘）
@@ -384,7 +399,7 @@ fun DualPageBookView(
                         awaitPointerEventScope {
                             while (true) {
                                 val down = awaitFirstDown(requireUnconsumed = false)
-                                if (isAnimating) {
+                                if (isAnimating || isOpening) {
                                     down.consume()
                                     continue
                                 }
@@ -413,8 +428,8 @@ fun DualPageBookView(
                                             null -> false
                                         }
                                         val complete = when (turnDir) {
-                                            TurnDirection.NEXT -> !opposing && (progress.value > 0.3f || velocity < -560f)
-                                            TurnDirection.PREVIOUS -> !opposing && (progress.value > 0.3f || velocity > 560f)
+                                            TurnDirection.NEXT -> !opposing && (progress.value > flipThreshold || velocity < -560f)
+                                            TurnDirection.PREVIOUS -> !opposing && (progress.value > flipThreshold || velocity > 560f)
                                             null -> false
                                         }
                                         settle(complete)
@@ -485,6 +500,9 @@ fun DualPageBookView(
                         },
                 )
                 // 书页容器：左右页（当前纯白双页，内缩露出后方横格层叠页）
+                // 对照原版 RenderPages 6 页联动：每侧主动页之后垫一张白色衬纸，
+                // 以主动页旋转的 FOLLOW_FACTOR(26.5/180) 跟随剥离；静止 progress=0 时跟随角=0
+                // （与主动页完全重合，稳态像素零变化），仅翻页中显出纸张层叠。
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -492,34 +510,92 @@ fun DualPageBookView(
                     horizontalArrangement = Arrangement.spacedBy(0.dp),
                 ) {
                     // 左页：spread 第4页（周一中心=周一日程面，其余=D-1 日记面）
-                    HandbookPage(
-                        modifier = Modifier.weight(1f),
-                        isLeft = true,
-                        progress = progress.value,
-                        direction = turnDirection,
-                        // 日程面/日记面均为可交互嵌入页（触摸交给内容），不盖整页点按层
-                        onTap = null,
-                        configurator = flipConfigurator,
-                        content = { pageContent(leftPage, true) },
-                        backContent = {
-                            // PREV 左页向右翻，背面=上一 spread 的右页
-                            pageContent(prevRightPage, false)
-                        },
-                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        val leftActive = handbookActiveRotation(true, progress.value, turnDirection, flipConfigurator)
+                        if (turnDirection != null && progress.value > 0.01f && leftActive != 0f) {
+                            FollowerPaper(isLeft = true, rotationY = flipConfigurator.followerRotation(leftActive), density = density)
+                        }
+                        HandbookPage(
+                            modifier = Modifier.fillMaxSize(),
+                            isLeft = true,
+                            progress = progress.value,
+                            direction = turnDirection,
+                            // 日程面/日记面均为可交互嵌入页（触摸交给内容），不盖整页点按层
+                            onTap = null,
+                            configurator = flipConfigurator,
+                            content = { pageContent(leftPage, true) },
+                            backContent = {
+                                // PREV 左页向右翻，背面=上一 spread 的右页
+                                pageContent(prevRightPage, false)
+                            },
+                        )
+                    }
 
                     // 右页：spread 第5页（周一中心=周一日记面，其余=D 日记面）
-                    HandbookPage(
-                        modifier = Modifier.weight(1f),
-                        isLeft = false,
-                        progress = progress.value,
-                        direction = turnDirection,
-                        onTap = null,
-                        configurator = flipConfigurator,
-                        content = { pageContent(rightPage, false) },
-                        backContent = {
-                            // NEXT 右页向左翻，背面=下一 spread 的左页
-                            pageContent(nextLeftPage, true)
-                        },
+                    Box(modifier = Modifier.weight(1f)) {
+                        val rightActive = handbookActiveRotation(false, progress.value, turnDirection, flipConfigurator)
+                        if (turnDirection != null && progress.value > 0.01f && rightActive != 0f) {
+                            FollowerPaper(isLeft = false, rotationY = flipConfigurator.followerRotation(rightActive), density = density)
+                        }
+                        HandbookPage(
+                            modifier = Modifier.fillMaxSize(),
+                            isLeft = false,
+                            progress = progress.value,
+                            direction = turnDirection,
+                            onTap = null,
+                            configurator = flipConfigurator,
+                            content = { pageContent(rightPage, false) },
+                            backContent = {
+                                // NEXT 右页向左翻，背面=下一 spread 的左页
+                                pageContent(nextLeftPage, true)
+                            },
+                        )
+                        // 开书封面：对照原版 frontRotation U = bookIsOpened ? -180 : -180*progress，
+                        // 右页尺寸、绕书脊（左缘）翻到左侧；过 90° 硬切隐藏，动画结束由 bookIsOpen 摘掉
+                        if (!bookIsOpen) {
+                            val coverRot = -180f * openProgress.value
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer {
+                                        rotationY = coverRot
+                                        cameraDistance = 40f * density
+                                        transformOrigin = TransformOrigin(0f, 0.5f)
+                                        alpha = if (-coverRot <= 90f) 1f else 0f
+                                    }
+                                    .shadow(
+                                        elevation = 10.dp,
+                                        shape = handbookPageShape(false),
+                                        clip = false,
+                                        ambientColor = Color(0xFFC5BBB6),
+                                        spotColor = Color(0xFFC5BBB6),
+                                    )
+                                    .clip(handbookPageShape(false))
+                                    .background(Color.White),
+                            ) {
+                                Image(
+                                    painter = painterResource(yearCoverRes(rightPage.date.year)),
+                                    contentDescription = "封面",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.matchParentSize(),
+                                )
+                            }
+                        }
+                    }
+                }
+                // 开启动画期间吞掉书页一切触摸（对照原版 gestureEnable=false），封面翻完即撤
+                if (isOpening) {
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .pointerInput(Unit) {
+                                awaitPointerEventScope {
+                                    while (true) {
+                                        val down = awaitFirstDown(requireUnconsumed = false)
+                                        down.consume()
+                                    }
+                                }
+                            },
                     )
                 }
             }
@@ -691,12 +767,7 @@ private fun BookShelfSheet(
                                 .background(GoaldayDesign.BookBoardLight)
                                 .clickableNoRipple { onPickYear(year) },
                         ) {
-                            val coverRes = when (year) {
-                                2026 -> com.bf410.goaldaylocal.R.drawable.ic_2026_cover_2
-                                2025 -> com.bf410.goaldaylocal.R.drawable.ic_2025_cover
-                                2024 -> com.bf410.goaldaylocal.R.drawable.ic_2024_cover
-                                else -> com.bf410.goaldaylocal.R.drawable.ic_2023_cover
-                            }
+                            val coverRes = yearCoverRes(year)
                             Image(
                                 painter = painterResource(coverRes),
                                 contentDescription = "${year}年封面",
@@ -728,26 +799,11 @@ private fun HandbookPage(
     configurator: BookPageAnimationConfigurator? = null,
 ) {
     // 左页：左侧平、右侧圆；右页：左侧圆、右侧平
-    val pageShape = RoundedCornerShape(
-        topStart = if (isLeft) 0.dp else 10.dp,
-        topEnd = if (isLeft) 10.dp else 0.dp,
-        bottomEnd = if (isLeft) 10.dp else 0.dp,
-        bottomStart = if (isLeft) 0.dp else 10.dp,
-    )
+    val pageShape = handbookPageShape(isLeft)
 
     // 翻页时当前页绕书脊旋转
     // 对照原版6页曲线：优先用configurator.handbookPageRotationY取非线性幅度，fallback线性progress*180
-    val shouldRotate = when (direction) {
-        TurnDirection.NEXT -> !isLeft
-        TurnDirection.PREVIOUS -> isLeft
-        null -> false
-    }
-    val curveMag = configurator?.let { kotlin.math.abs(it.handbookPageRotationY(direction, progress)) }
-        ?: (progress * 180f)
-    val rotationY = if (shouldRotate) {
-        val sign = if (isLeft) 1f else -1f
-        curveMag * sign
-    } else 0f
+    val rotationY = handbookActiveRotation(isLeft, progress, direction, configurator)
     val absRotation = kotlin.math.abs(rotationY)
     // 正面可见条件：rotationY 绝对值 <= 90°；背面可见条件：> 90°
     val frontAlpha = if (absRotation <= 90f) 1f else 0f
@@ -839,6 +895,76 @@ private fun HandbookPage(
             }
         }
     }
+}
+
+/** 书页圆角：左页左侧平、右侧圆；右页反之（对照原版 cornerRadius=10dp）。 */
+private fun handbookPageShape(isLeft: Boolean): RoundedCornerShape = RoundedCornerShape(
+    topStart = if (isLeft) 0.dp else 10.dp,
+    topEnd = if (isLeft) 10.dp else 0.dp,
+    bottomEnd = if (isLeft) 10.dp else 0.dp,
+    bottomStart = if (isLeft) 0.dp else 10.dp,
+)
+
+/**
+ * 主动页旋转角：NEXT 转右页（负角向左翻）、PREVIOUS 转左页（正角向右翻），其余 0。
+ * 幅度对照原版 6 页曲线（configurator.handbookPageRotationY），无配置器时 fallback 线性。
+ */
+private fun handbookActiveRotation(
+    isLeft: Boolean,
+    progress: Float,
+    direction: TurnDirection?,
+    configurator: BookPageAnimationConfigurator?,
+): Float {
+    val shouldRotate = when (direction) {
+        TurnDirection.NEXT -> !isLeft
+        TurnDirection.PREVIOUS -> isLeft
+        null -> false
+    }
+    if (!shouldRotate) return 0f
+    val curveMag = configurator?.let { kotlin.math.abs(it.handbookPageRotationY(direction, progress)) }
+        ?: (progress * 180f)
+    return curveMag * (if (isLeft) 1f else -1f)
+}
+
+/**
+ * 联动衬纸：翻页时垫在主动页之下的白色纸层，以 FOLLOW_FACTOR 跟随剥离。
+ * 无内容、无手势（对照原版 RenderPages 中间纸层）；静止时不组合，稳态零像素变化。
+ */
+@Composable
+private fun FollowerPaper(isLeft: Boolean, rotationY: Float, density: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer {
+                this.rotationY = rotationY
+                // 对照原版 BaseBookViewKt：cameraDistance = 40 × density
+                this.cameraDistance = 40f * density
+                this.transformOrigin = if (isLeft) {
+                    TransformOrigin(1f, 0.5f)
+                } else {
+                    TransformOrigin(0f, 0.5f)
+                }
+                // 与主动页一致的 Alpha 硬切
+                this.alpha = if (kotlin.math.abs(rotationY) <= 90f) 1f else 0f
+            }
+            .shadow(
+                elevation = 10.dp,
+                shape = handbookPageShape(isLeft),
+                clip = false,
+                ambientColor = Color(0xFFC5BBB6),
+                spotColor = Color(0xFFC5BBB6),
+            )
+            .clip(handbookPageShape(isLeft))
+            .background(Color.White),
+    )
+}
+
+/** 年度书封面资源（对照原版 BookConstant + BookShelfManager.bookCoverMapping，与书架弹层一致）。 */
+private fun yearCoverRes(year: Int): Int = when (year) {
+    2026 -> com.bf410.goaldaylocal.R.drawable.ic_2026_cover_2
+    2025 -> com.bf410.goaldaylocal.R.drawable.ic_2025_cover
+    2024 -> com.bf410.goaldaylocal.R.drawable.ic_2024_cover
+    else -> com.bf410.goaldaylocal.R.drawable.ic_2023_cover
 }
 
 @Composable

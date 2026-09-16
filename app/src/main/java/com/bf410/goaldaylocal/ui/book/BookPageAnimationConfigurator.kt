@@ -89,6 +89,52 @@ class BookPageAnimationConfigurator {
     }
 
     /**
+     * 对照原版 BaseBookViewKt.m31447t(BookOpenableView) + m31479U/V/W/X/Y/Z：
+     * 6 页联动旋转一次算出（front/pageOne/pageTwo/pageThree/pageFour/last）。
+     *
+     * - front(U)：bookIsOpen ? -180 : -180*progress（封面开书翻到左侧后常驻 -180）
+     * - pageOne(X)：(hasGesture && bookIsOpen) ? configurator : progress*-180
+     * - pageTwo(Z)：(hasGesture && bookIsOpen) ? configurator : progress*(26.5-180)
+     * - pageThree(Y)：(hasGesture && bookIsOpen) ? configurator : progress*-26.5
+     * - pageFour(W)/lastPage(V)：恒走 configurator（含空闲态 -180/-153.5/-26.5/0 层叠）
+     *
+     * 注意：[calculate] 首次调用会按 progress 位置锁定 isLeftSlide，
+     * 同一帧内 6 次调用 progress 一致，锁定结果一致，与原版逐行计算等价。
+     */
+    fun fullRotations(progress: Float, bookIsOpen: Boolean, hasGestureStart: Boolean): PageRotations {
+        val p = progress.coerceIn(0f, 1f)
+        val front = if (bookIsOpen) -180f else -180f * p
+        val pageOne = if (hasGestureStart && bookIsOpen) calculate("pageOne", p) else p * -180f
+        val pageTwo = if (hasGestureStart && bookIsOpen) calculate("pageTwo", p) else p * (26.5f - 180f)
+        val pageThree = if (hasGestureStart && bookIsOpen) calculate("pageThree", p) else p * -26.5f
+        val pageFour = calculate("pageFour", p)
+        val last = calculate("lastPage", p)
+        return PageRotations(
+            frontRotation = front,
+            pageOneRotation = pageOne,
+            pageTwoRotation = pageTwo,
+            pageThreeRotation = pageThree,
+            pageFourRotation = pageFour,
+            lastRotation = last,
+        )
+    }
+
+    companion object {
+        /**
+         * 联动纸张跟随系数 = 26.5/180（对照原版 pageThree 空闲角 -26.5°）。
+         * 翻页时非主动页以主动页旋转的该比例跟随剥离，既有层叠纸感，
+         * 静止时 progress=0 → 跟随角=0（与主动页完全重合，稳态像素零变化）。
+         */
+        const val FOLLOW_FACTOR = 26.5f / 180f
+    }
+
+    /**
+     * 翻页联动跟随角：白色衬纸层以主动页旋转的 [FOLLOW_FACTOR] 跟随。
+     * max 跟随 ±26.5° 恰为原版 pageThree 空闲层叠角。
+     */
+    fun followerRotation(activeRotation: Float): Float = activeRotation * FOLLOW_FACTOR
+
+    /**
      * 对照原版 6-page 曲线，映射到单页 0°→±180° 的完整翻转。
      * - NEXT（左滑）使用 pageThree 左滑曲线，progress 0→1。
      * - PREVIOUS（右滑）使用 pageTwo 右滑曲线，并对 progress 做 1-x 反转，
