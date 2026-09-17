@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 自研：日记添加小组件 AppWidgetProvider 元数据（previewImage 改用自研启动图标，去除原版 ic_widget_small）。 -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/diary_add_widget_info_desc"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="86400000"
+    android:initialLayout="@layout/diary_add_widget"
+    android:previewLayout="@layout/diary_add_widget"
+    android:previewImage="@drawable/ic_launcher_foreground"
+    android:widgetCategory="home_screen" />

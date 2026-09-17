@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 自研：日记小组件锁定态挂锁图标（替代原版 ic_unlock.png；本地版无 VIP 锁，仅结构对等） -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF252525"
+        android:pathData="M6,11 h12 a1,1 0 0 1 1,1 v7 a1,1 0 0 1 -1,1 H6 a1,1 0 0 1 -1,-1 v-7 a1,1 0 0 1 1,-1 z" />
+    <path
+        android:strokeColor="#FF252525"
+        android:strokeWidth="2"
+        android:fillColor="#00000000"
+        android:pathData="M8.5,11 V7.6 a3.5,3.5 0 0 1 7,0 V11" />
+</vector>

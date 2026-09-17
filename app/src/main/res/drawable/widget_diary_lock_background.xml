@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 自研：日记小组件锁定态半透明白色遮罩（替代原版 app_widget_lock_background） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#CCFFFFFF" />
+    <corners android:radius="16dp" />
+</shape>

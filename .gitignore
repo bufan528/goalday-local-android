@@ -80,3 +80,26 @@ screen_now.raw
 build5.err
 build7.err
 gadget_config.json
+
+# Root-level scratch: notes / logs / dumps / archives / media.
+# No tracked project file uses these extensions at the repo root.
+/*.txt
+/*.md
+!/README.md
+/*.zip
+/*.aab
+/*.idsg
+/*.mov
+/*.jpg
+/*.jpeg
+/*.gif
+
+# Local helper scripts and unpacked extras (kept off repo)
+/scripts/
+/apk_ext/
+/apk_extract_ref/
+/apk_zip_work/
+
+# Build safety: the app keeps only its own source package and resources
+app/src/main/java/com/yalantis/
+app/src/main/java/com/google/

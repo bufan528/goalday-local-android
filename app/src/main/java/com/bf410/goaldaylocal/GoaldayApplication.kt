@@ -9,7 +9,7 @@ class GoaldayApplication : Application() {
         super.onCreate()
         appContext = applicationContext
         MMKV.initialize(this)
-        com.first.goalday.basemodule.utils.FontUtils.init()
+        // 字号档位由 Compose 自研体系管理；旧 FontUtils 初始化调用已移除。
     }
 
     companion object {
