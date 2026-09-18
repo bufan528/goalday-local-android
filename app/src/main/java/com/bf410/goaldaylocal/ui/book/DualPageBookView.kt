@@ -213,9 +213,9 @@ fun DualPageBookView(
                 turnProgress = progress.value,
                 turnDirection = turnDirection,
                 handbookMode = true,
-                weekStartDate = page.date,
-                // 书内日程面可交互（对照原版书内嵌 ScheduleFragment）：空槽行内新增/点条目改名/点日期列跳主界面
-                editable = true,
+                weekStartDate = page.date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
+                // 书内日程面只读预览（不可新增/改名/跳转）
+                editable = false,
                 onAddEntry = { date, text ->
                     viewModel.addScheduleFromHandbook(text, date.monthValue, date.dayOfMonth)
                 },

@@ -58,6 +58,8 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -112,13 +114,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -156,7 +161,7 @@ private fun rememberToday(): LocalDate {
 }
 
 /**
- * 原版主界面 1:1 复刻（对照 com.first.goalday v2.5.7 实机截图与逆向布局）。
+ * 原版主界面 1:1 复刻（对照原版真机截图与布局）。
  *
  * 信息架构：
  * - 顶部文字 Tab："N周 ▼"(周选择器，弹周历) | "记录"(选中时显示"M月D日") | "清单"，bg #E5DAD4
@@ -693,6 +698,25 @@ private fun WeekScheduleView(
     val poolItemOrigins = remember { androidx.compose.runtime.mutableStateMapOf<String, Offset>() }
     // 右侧任务池折叠开关（对照原版 fragment_schedule 的 bg_arrow 圆钮）
     var poolCollapsed by rememberSaveable { mutableStateOf(false) }
+    // 右池行内改名：点条目聚焦改名（清空失焦=删除），长按拖拽排期
+    var poolEditingItem by remember { mutableStateOf<String?>(null) }
+    var poolEditValue by remember { mutableStateOf(TextFieldValue()) }
+    val poolEditFocus = remember { FocusRequester() }
+    val poolKeyboard = LocalSoftwareKeyboardController.current
+    fun commitPoolEdit() {
+        val original = poolEditingItem ?: return
+        val text = poolEditValue.text.trim()
+        poolEditingItem = null
+        if (text.isBlank()) {
+            viewModel.removeListPageItem(original)
+        } else if (text != original) {
+            viewModel.renameListPageItem(original, text)
+        }
+        poolKeyboard?.hide()
+    }
+    LaunchedEffect(poolEditingItem) {
+        if (poolEditingItem != null) runCatching { poolEditFocus.requestFocus() }
+    }
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
 
@@ -773,14 +797,14 @@ private fun WeekScheduleView(
                                     fontSize = 18.sp,
                                     lineHeight = 21.sp,
                                     fontWeight = if (isToday) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isToday) Color.White else GoaldayDesign.adaptiveInkPrimary,
+                                    color = if (isToday) Color(0xFFFDFBF7) else if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkPrimary else Color.Black,
                                 )
                                 Spacer(Modifier.height(4.dp))
                                 Box(
                                     Modifier
                                         .width(15.dp)
                                         .height(1.dp)
-                                        .background(if (isToday) Color.White else Color(0xFFB3000000)),
+                                        .background(if (isToday) Color(0xFFFDFBF7) else if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkMuted else Color.Black),
                                 )
                                 Spacer(Modifier.height(4.dp))
                                 Text(
@@ -788,7 +812,7 @@ private fun WeekScheduleView(
                                     fontSize = 12.sp,
                                     lineHeight = 14.sp,
                                     fontWeight = if (isToday) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isToday) Color.White else GoaldayDesign.adaptiveInkMuted,
+                                    color = if (isToday) Color(0xFFFDFBF7) else if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkMuted else Color.Black,
                                 )
                             }
                         }
@@ -848,14 +872,18 @@ private fun WeekScheduleView(
                                             }
                                             Spacer(Modifier.width(10.dp))
                                             Box(Modifier.weight(1f).clickable { onEditEntry(entry) }) {
-                                                // 固定/自适应均为单行截断；自适应以不限槽数展示全部条目
+                                                // 固定单行截断；自适应多行换行、不限槽数展示全部
                                                 Text(
                                                     (if (entry.timeText.isNotBlank()) entry.timeText + "  " else "") + entry.title,
                                                     fontSize = 17.sp,
                                                     lineHeight = 23.sp,
-                                                    color = if (entry.completed) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                                                    color = if (LocalGoaldayDarkMode.current) {
+                                                        if (entry.completed) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary
+                                                    } else {
+                                                        Color(0xFF333333)
+                                                    },
                                                     textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
-                                                    maxLines = 1,
+                                                    maxLines = if (fixed) 1 else Int.MAX_VALUE,
                                                     overflow = TextOverflow.Clip,
                                                 )
                                             }
@@ -1009,7 +1037,9 @@ private fun WeekScheduleView(
                 .onGloballyPositioned { poolOrigin = it.boundsInWindow().topLeft },
         ) {
             val currentBook = uiState.books.getOrNull(uiState.selectedBookIndex)
-            // 顶卡通栏居中：圆点 10dp + 标题 20sp + 下拉箭头
+            // 顶卡通栏居中：圆点 10dp + 标题 20sp + 下拉箭头；点按弹出清单下拉（当前项打勾）
+            var showTopicPopup by remember { mutableStateOf(false) }
+            Box(Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1017,10 +1047,7 @@ private fun WeekScheduleView(
                     .clip(RoundedCornerShape(8.dp))
                     .background(if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White)
                     .border(0.7.dp, MainTabDivider.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                    .clickable {
-                        val next = (uiState.selectedBookIndex + 1) % uiState.books.size.coerceAtLeast(1)
-                        viewModel.openBook(next)
-                    }
+                    .clickable { showTopicPopup = true }
                     .padding(horizontal = 8.dp, vertical = 3.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -1050,60 +1077,88 @@ private fun WeekScheduleView(
                     modifier = Modifier.size(18.dp),
                 )
             }
+            DropdownMenu(
+                expanded = showTopicPopup,
+                onDismissRequest = { showTopicPopup = false },
+                containerColor = if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White,
+                modifier = Modifier
+                    .width(220.dp)
+                    .heightIn(max = 400.dp),
+            ) {
+                uiState.books.forEachIndexed { index, book ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    Modifier
+                                        .size(10.dp)
+                                        .background(book.color, CircleShape),
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    book.title,
+                                    fontSize = 16.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                if (index == uiState.selectedBookIndex) {
+                                    Text("✓", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = GoaldayDesign.adaptiveInkPrimary)
+                                }
+                            }
+                        },
+                        onClick = {
+                            viewModel.selectBook(index)
+                            poolCollapsed = false
+                            showTopicPopup = false
+                            val guideKey = "pool_drag_guide_shown"
+                            if (!MMKV.defaultMMKV().decodeBool(guideKey, false)) {
+                                MMKV.defaultMMKV().encode(guideKey, true)
+                                android.widget.Toast.makeText(context, "长按右侧清单事件，可以拖动到左侧日程哦。", android.widget.Toast.LENGTH_LONG).show()
+                            }
+                        },
+                    )
+                }
+            }
+            }
             Spacer(Modifier.height(10.dp))
             LazyColumn(Modifier.weight(1f)) {
-                // 右栏 = 当前清单条目全集（对照原版周 Tab：未完成=橙方块，
-                // 完成=橙勾框+灰字删除线；点击/拖拽条目 → 排入左侧选中日期）
+                // 右栏 = 当前清单条目全集；点按行内改名（清空失焦即删除），长按拖拽排入左侧选中日期
                 val targetPage = currentBook?.pages?.filterIsInstance<TargetPage>()?.firstOrNull()
                 val listItems = if (targetPage != null && currentBook != null) {
-                    (targetPage.items + diaryStore.customPageItems(currentBook.id, targetPage.title)).distinct()
+                    val hidden = diaryStore.hiddenPageItems(currentBook.id, targetPage.title)
+                    ((targetPage.items - hidden) + diaryStore.customPageItems(currentBook.id, targetPage.title)).distinct()
                 } else {
                     uiState.todayPlanItems
                 }
                 items(listItems, key = { it }) { poolItem ->
                         val itemChecked = targetPage != null && viewModel.isChecked(targetPage.title, poolItem)
+                        // 初挂载会先回调一次未聚焦：得过焦点之后才允许失焦提交
+                        var poolRowHadFocus by remember(poolItem) { mutableStateOf(false) }
                         val poolInner: @Composable RowScope.() -> Unit = {
-                            if (itemChecked) {
-                                Box(
-                                    modifier = Modifier
-                                        .padding(top = 3.dp)
-                                        .size(17.dp)
-                                        .border(1.6.dp, Color.Transparent, RoundedCornerShape(4.dp))
-                                        .background(GoaldayDesign.Pink, RoundedCornerShape(4.dp)),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text("✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                                }
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .padding(top = 10.dp)
-                                        .size(5.dp)
-                                        .background(currentBook?.color ?: PoolBullet, CircleShape),
-                                )
-                            }
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 10.dp)
+                                    .size(5.dp)
+                                    .background(currentBook?.color ?: PoolBullet, CircleShape),
+                            )
                             Spacer(Modifier.width(6.dp))
-                            // 对照原版周视图 item_schedule_target：20sp 级单行截断（条目多行换行仅展开态）；
-                            // 实测原版渲染墨迹≈17sp，取 17sp/23sp 对齐（含 7dp 上下内距）
+                            // 右池：未完成黑字，完成22%黑、无删除线；固定单行，自适应最多3行
                             Text(
                                 poolItem,
                                 fontSize = 17.sp,
                                 lineHeight = 23.sp,
-                                color = if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
-                                textDecoration = if (itemChecked) TextDecoration.LineThrough else TextDecoration.None,
-                                maxLines = 1,
+                                color = if (LocalGoaldayDarkMode.current) {
+                                    if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary
+                                } else {
+                                    if (itemChecked) Color(0x36000000) else Color.Black
+                                },
+                                textDecoration = TextDecoration.None,
+                                maxLines = if (adaptiveMode) 3 else 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
-                        val addPoolToSchedule = {
-                            InteractionFeedback.click(context)
-                            viewModel.addScheduleFromHandbook(
-                                poolItem,
-                                selectedDate.monthValue,
-                                selectedDate.dayOfMonth,
-                            )
-                        }
-                        // 条目行：点击排期 + 长按拖拽排期（删除走清单页左滑与条目编辑器）
+                        // 条目行：点按行内改名（清空失焦即删除）+ 长按拖拽排期
                         val dragContext = context
                         val dragEnable = true
                         Row(
@@ -1121,6 +1176,7 @@ private fun WeekScheduleView(
                                     .pointerInput(dragEnable) {
                                         detectDragGesturesAfterLongPress(
                                             onDragStart = { touch ->
+                                                if (poolEditingItem == poolItem) commitPoolEdit()
                                                 draggingItem = poolItem
                                                 val origin = poolItemOrigins[poolItem] ?: poolOrigin
                                                 dragFingerWindow = Offset(origin.x + touch.x, origin.y + touch.y)
@@ -1152,11 +1208,43 @@ private fun WeekScheduleView(
                                             },
                                         )
                                     }
-                                    .clickable(onClick = addPoolToSchedule),
                             ) {
-                                // Top 对齐+padding 使圆点/勾选中心落在首行字心（行高23sp）
-                                Row(verticalAlignment = Alignment.Top) {
-                                    poolInner()
+                                if (poolEditingItem == poolItem) {
+                                    BasicTextField(
+                                        value = poolEditValue,
+                                        onValueChange = { poolEditValue = it },
+                                        singleLine = true,
+                                        textStyle = TextStyle(fontSize = 17.sp, lineHeight = 23.sp, color = GoaldayDesign.adaptiveInkPrimary),
+                                        cursorBrush = SolidColor(TodayCoral),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .focusRequester(poolEditFocus)
+                                            .onFocusChanged {
+                                                if (it.isFocused) {
+                                                    poolRowHadFocus = true
+                                                } else if (poolRowHadFocus && poolEditingItem == poolItem) {
+                                                    poolRowHadFocus = false
+                                                    commitPoolEdit()
+                                                }
+                                            },
+                                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                        keyboardActions = KeyboardActions(onDone = { commitPoolEdit() }),
+                                    )
+                                } else {
+                                    // 点按行内改名（外层只处理长按拖拽）；Top 对齐使圆点落在首行字心
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                if (poolEditingItem != poolItem) {
+                                                    poolEditingItem = poolItem
+                                                    poolEditValue = TextFieldValue(poolItem, TextRange(poolItem.length))
+                                                }
+                                            },
+                                        verticalAlignment = Alignment.Top,
+                                    ) {
+                                        poolInner()
+                                    }
                                 }
                             }
                         }
@@ -1164,7 +1252,7 @@ private fun WeekScheduleView(
                 if (listItems.isEmpty()) {
                     item {
                         Text(
-                            "点击右上专题切换清单，点条目即可排入左侧选中日期",
+                            "长按右侧清单条目，可以拖动到左侧选中日期",
                             fontSize = 13.sp,
                             lineHeight = 18.sp,
                             color = GoaldayDesign.adaptiveInkMuted,

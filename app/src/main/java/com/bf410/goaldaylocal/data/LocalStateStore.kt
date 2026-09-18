@@ -172,6 +172,15 @@ class LocalStateStore(
         mmkv.encode(pageItemsKey(bookId, pageTitle), array.toString())
     }
 
+    fun hiddenPageItems(bookId: String, pageTitle: String): Set<String> =
+        decodeStringList(hiddenItemsKey(bookId, pageTitle)).toSet()
+
+    fun setHiddenPageItem(bookId: String, pageTitle: String, item: String, hidden: Boolean) {
+        val current = hiddenPageItems(bookId, pageTitle).toMutableSet()
+        if (hidden) current.add(item) else current.remove(item)
+        encodeStringList(hiddenItemsKey(bookId, pageTitle), current.toList())
+    }
+
     fun weeklyTheme(bookId: String): String =
         mmkv.decodeString(weeklyThemeKey(bookId), "") ?: ""
 
@@ -330,6 +339,9 @@ class LocalStateStore(
 
     private fun pageItemsKey(bookId: String, pageTitle: String): String =
         "page_items_${bookId}_${pageTitle.hashCode()}"
+
+    private fun hiddenItemsKey(bookId: String, pageTitle: String): String =
+        "hidden_items_${bookId}_${pageTitle.hashCode()}"
 
     private fun weeklyThemeKey(bookId: String): String = "week_theme_$bookId"
 

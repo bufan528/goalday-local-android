@@ -5,8 +5,8 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * 书芯单页：日期 + 是否日程面（月历视图）。
- * isSchedule=true 渲染该日月历页，false 渲染该日日记页。
+ * 书芯单页：日期 + 是否日程面。
+ * isSchedule=true 渲染周日程页，false 渲染该日日记页。
  */
 data class DayPage(
     val date: LocalDate,
@@ -14,11 +14,14 @@ data class DayPage(
 )
 
 /**
- * 循环日历页面状态。真机原版行为：
+ * 循环日历页面状态：
  *
- * 每个摊开页 = 同一天 D：左页 = D 的月历视图（isSchedule=true），
- * 右页 = D 的日记（isSchedule=false）。翻一页 = D±1 天，左右始终同一天。
- * 10 页环形缓冲：pages[4]=左月历，pages[5]=右日记；前后各留 4 页供翻页背面落点。
+ * 10 页环形缓冲，开书可见 spread = 第 4/5 页（左/右）。页表由中心日期重建：
+ * - 从中心向后退 6 页、向前进 4 页；
+ * - 周一那天会产生相邻两页（周一，日程）+（周一，日记），
+ *   因此中心落在周一时 spread 为 [周一日程 | 周一日记]，其余中心为 [D-1 日记 | D 日记]；
+ * - 翻页步长：NEXT = 中心周日 +1 天否则 +2 天，
+ *   PREV = 中心周一 -1 天否则 -2 天；4 次翻页循环一周（+7 天）。
  */
 class CircularCalendarPageState(
     initialCenterDate: LocalDate = LocalDate.now(),
@@ -79,22 +82,47 @@ class CircularCalendarPageState(
         }
     }
 
-    private fun nextCenter(): LocalDate = center.plusDays(1)
+    private fun nextCenter(): LocalDate =
+        if (center.dayOfWeek == DayOfWeek.SUNDAY) center.plusDays(1) else center.plusDays(2)
 
-    private fun prevCenter(): LocalDate = center.minusDays(1)
+    private fun prevCenter(): LocalDate =
+        if (center.dayOfWeek == DayOfWeek.MONDAY) center.minusDays(1) else center.minusDays(2)
 
     private fun inRange(date: LocalDate): Boolean {
         val range = dateRange ?: return true
         return range.containsLocal(date)
     }
 
-    /** 环形缓冲：pages[4]=center 月历，pages[5]=center 日记；0..3 为前 4 天，6..9 为后 4 天 */
+    /** 页表重建：i=5..0 回退填页，再 6..9 前进填页；周一处相邻双页为 [日程 | 日记] */
     private fun rebuild() {
         val arr = arrayOfNulls<DayPage>(10)
-        arr[4] = DayPage(center, isSchedule = true)
-        arr[5] = DayPage(center, isSchedule = false)
-        for (k in 0..3) arr[k] = DayPage(center.minusDays((4 - k).toLong()), isSchedule = false)
-        for (k in 6..9) arr[k] = DayPage(center.plusDays((k - 5).toLong()), isSchedule = false)
+        var i = 5
+        var value = center
+        var mondayPending = false
+        while (i >= 0) {
+            arr[i] = if (value.dayOfWeek == DayOfWeek.MONDAY && mondayPending) {
+                DayPage(value, true)
+            } else {
+                DayPage(value, false)
+            }
+            if (value.dayOfWeek != DayOfWeek.MONDAY || mondayPending) {
+                value = value.minusDays(1)
+            } else {
+                mondayPending = true
+            }
+            i--
+        }
+        var forward = center.plusDays(1)
+        var mondayEmitted = true
+        for (k in 6..9) {
+            if (forward.dayOfWeek == DayOfWeek.MONDAY && mondayEmitted) {
+                arr[k] = DayPage(forward, true)
+                mondayEmitted = false
+            } else {
+                arr[k] = DayPage(forward, false)
+                forward = forward.plusDays(1)
+            }
+        }
         pages = MutableList(10) { idx -> arr[idx] ?: DayPage(center) }
     }
 

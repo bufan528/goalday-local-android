@@ -128,7 +128,7 @@ private val goaldayDarkColorScheme = darkColorScheme(
 )
 
 private enum class RootTab(val label: String, val icon: ImageVector) {
-    // MAIN = 原版主界面（周|记录|清单 + 底部三图标导航），对照 com.first.goalday 1:1
+    // MAIN = 原版主界面（周|记录|清单 + 底部三图标导航），对照原版真机 1:1
     MAIN("记录", Icons.Filled.Adjust),
     BOOK("手账", Icons.AutoMirrored.Filled.MenuBook),
     CALENDAR("日历", Icons.Filled.CalendarMonth),
