@@ -575,7 +575,7 @@ internal fun DiaryLinkedTargetStrip(
     onPickDone: (String) -> Unit,
     onPickTodo: (String) -> Unit,
 ) {
-    // 对照逆向 item_diary_target.xml：标题「今日完成」+奖励图标，空态文案，圆点+文本子项
+    // 对照原版 item_diary_target.xml：标题「今日完成」+奖励图标，空态文案，圆点+文本子项
     val done = doneItems.map(String::trim).filter(String::isNotBlank).distinct()
     val todo = todoItems.map(String::trim).filter(String::isNotBlank).filterNot { it in done }.distinct()
     Column(
@@ -609,7 +609,7 @@ internal fun DiaryLinkedTargetStrip(
             )
         }
         if (done.isEmpty() && todo.isEmpty()) {
-            // 空态文案：对照逆向 tv_empty
+            // 空态文案：对照原版 tv_empty
             Text(
                 "这里会自动记录清单中完成的事项。",
                 style = MaterialTheme.typography.bodySmall,
@@ -638,7 +638,7 @@ internal fun DiaryLinkedTargetStrip(
     }
 }
 
-// 对照逆向 item_diary_target_child.xml：5dip圆点, paddingStart=10dip, marginStart/End=8dip
+// 对照原版 item_diary_target_child.xml：5dip圆点, paddingStart=10dip, marginStart/End=8dip
 @Composable
 private fun DiaryLinkedTargetChildRow(
     text: String,
@@ -746,7 +746,7 @@ internal fun plainTextFromHtml(html: String): String =
         .filter(String::isNotBlank)
         .joinToString("\n")
 
-// 对照逆向 item_diary_text.xml：文字块 16sp、自适应色、行间距 2dp（lineHeight ≈ 18sp）
+// 对照原版 item_diary_text.xml：文字块 16sp、自适应色、行间距 2dp（lineHeight ≈ 18sp）
 @Composable
 internal fun diaryBlockTextStyle(block: DiaryEntryBlock): TextStyle {
     val base = MaterialTheme.typography.bodyMedium.copy(
@@ -999,7 +999,7 @@ private fun DiaryInBookRow(
     }
 }
 
-// 对照逆向 item_diary_target_in_book.xml / item_diary_topic_target_inbook.xml / item_diary_text.xml
+// 对照原版 item_diary_target_in_book.xml / item_diary_topic_target_inbook.xml / item_diary_text.xml
 @Composable
 internal fun DiaryTypedBlockPreview(
     blocks: List<DiaryEntryBlock>,
@@ -1251,7 +1251,7 @@ internal fun DiaryImageStrip(
     }
 }
 
-// 对照逆向 item_diary_img.xml：图片块水平内边距 paddingStart/End=5dip，高度自适应保持比例
+// 对照原版 item_diary_img.xml：图片块水平内边距 paddingStart/End=5dip，高度自适应保持比例
 @Composable
 internal fun DiaryImageTile(
     uri: String,

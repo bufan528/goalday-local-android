@@ -512,7 +512,7 @@ internal fun TargetDetailReplicaPage(
                             )
                         }
                         // P1-3：截止日期常驻显示（轻量信息），调度元信息已移到上方行
-                        // 对照逆向 item_target_detail.xml：deadline 标签 marginBottom=13.0dip
+                        // 对照原版 item_target_detail.xml：deadline 标签 marginBottom=13.0dip
                         meta.deadlineDay?.let {
                             Text(
                                 "截止 ${it}日",
@@ -624,7 +624,7 @@ internal fun TargetDetailReplicaPage(
                 }
             })
         }
-        // 对照逆向 activity_target_detail.xml：选中目标项后底部显示 46dp 操作栏
+        // 对照原版 activity_target_detail.xml：选中目标项后底部显示 46dp 操作栏
         selectedItem?.let { item ->
             TargetBottomActionBar(
                 selectedItem = item,
@@ -655,7 +655,7 @@ internal fun TargetDetailReplicaPage(
     }
 }
 
-// 对照逆向 activity_target_detail.xml cl_bottom_board：46dip 白底，
+// 对照原版 activity_target_detail.xml cl_bottom_board：46dip 白底，
 // 左侧日期标签（bg_target_detail_date, bgTint=#CFF6F6F6）+ 1dp 分隔线 + 置顶/完成/删除
 @Composable
 private fun TargetBottomActionBar(

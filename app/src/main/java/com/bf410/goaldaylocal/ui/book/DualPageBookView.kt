@@ -62,6 +62,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -299,23 +300,9 @@ fun DualPageBookView(
 
     val shellColor = GoaldayDesign.BookBoardLight
     val shadowColor = Color(0xFFC5BBB6)
-    // 布纹贴图：取原版封面左上干净区域（无书脊线/年份字）
     val context = LocalContext.current
-    val fabricImage = remember {
-        runCatching {
-            val src = android.graphics.BitmapFactory.decodeResource(
-                context.resources,
-                com.bf410.goaldaylocal.R.drawable.book_cover_fabric,
-            )
-            android.graphics.Bitmap.createBitmap(
-                src,
-                (src.width * 0.10f).toInt(),
-                (src.height * 0.06f).toInt(),
-                (src.width * 0.40f).toInt(),
-                (src.height * 0.35f).toInt(),
-            ).asImageBitmap()
-        }.getOrNull()
-    }
+    // 书壳布纹：程序化细颗粒（自绘，避免位图资源依赖）
+    val fabricImage: androidx.compose.ui.graphics.ImageBitmap? = null
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Text(
@@ -362,7 +349,7 @@ fun DualPageBookView(
                 )
                 .clip(RoundedCornerShape(14.dp))
                 .drawWithContent {
-                    // 书壳布纹：使用原版逆向提取的 book_cover_fabric 贴图平铺（避开左上书脊与年份字）
+                    // 书壳底色（纯色书衣）
                     fabricImage?.let { bmp ->
                         val tileW = bmp.width
                         val tileH = bmp.height
@@ -581,12 +568,20 @@ fun DualPageBookView(
                                     .clip(handbookPageShape(false))
                                     .background(Color.White),
                             ) {
-                                Image(
-                                    painter = painterResource(yearCoverRes(rightPage.date.year)),
-                                    contentDescription = "封面",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.matchParentSize(),
-                                )
+                                // 自绘封面：米色书衣 + 居中年份衬线字
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .background(yearCoverColor(rightPage.date.year)),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        rightPage.date.year.toString(),
+                                        fontSize = 22.sp,
+                                        fontFamily = FontFamily.Serif,
+                                        color = Color(0xFF7A5C44),
+                                    )
+                                }
                             }
                         }
                     }
@@ -675,11 +670,18 @@ fun DualPageBookView(
             }
         }
 
-        // 书架底部弹层（对照原版 BookShelfBottomDialog：横排布纹封面选年份换书）
+        // 书架底部弹层（横排封面选年份换书，背后调光）
         if (showBookShelf) {
-            BookShelfSheet(
-                fabricImage = fabricImage,
-                currentYear = rightPage.date.year,
+            Box(Modifier.fillMaxSize()) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color(0x66000000))
+                        .clickableNoRipple { showBookShelf = false },
+                )
+                Box(Modifier.align(Alignment.BottomCenter)) {
+                    BookShelfSheet(
+                        currentYear = rightPage.date.year,
                 onPickYear = { year ->
                     // 对照原版 BookShelfManager/BookPageDateRange.fromYear：选年换整年书并限定翻页边界
                     val start = LocalDate.of(year, 1, 1)
@@ -695,7 +697,9 @@ fun DualPageBookView(
                     showBookShelf = false
                 },
                 onDismiss = { showBookShelf = false },
-            )
+                    )
+                }
+            }
         }
 
         // 导出全屏页（打印PDF分区勾选 + 起止日期 + 预览 + 生成分享）
@@ -718,10 +722,9 @@ fun DualPageBookView(
     }
 }
 
-/** 书架弹层：横排布纹封面 + 年份，点击切换到对应年份的书（对照原版截图） */
+/** 书架弹层：横排封面 + 年份，点击切换到对应年份的书 */
 @Composable
 private fun BookShelfSheet(
-    fabricImage: androidx.compose.ui.graphics.ImageBitmap?,
     currentYear: Int,
     onPickYear: (Int) -> Unit,
     onDismiss: () -> Unit,
@@ -768,15 +771,15 @@ private fun BookShelfSheet(
                             modifier = Modifier
                                 .size(width = 58.dp, height = 84.dp)
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(GoaldayDesign.BookBoardLight)
+                                .background(yearCoverColor(year))
                                 .clickableNoRipple { onPickYear(year) },
+                            contentAlignment = Alignment.Center,
                         ) {
-                            val coverRes = yearCoverRes(year)
-                            Image(
-                                painter = painterResource(coverRes),
-                                contentDescription = "${year}年封面",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.matchParentSize(),
+                            Text(
+                                year.toString(),
+                                fontSize = 13.sp,
+                                fontFamily = FontFamily.Serif,
+                                color = Color(0xFF7A5C44),
                             )
                         }
                         Text(
@@ -963,12 +966,12 @@ private fun FollowerPaper(isLeft: Boolean, rotationY: Float, density: Float) {
     )
 }
 
-/** 年度书封面资源（对照原版 BookConstant + BookShelfManager.bookCoverMapping，与书架弹层一致）。 */
-private fun yearCoverRes(year: Int): Int = when (year) {
-    2026 -> com.bf410.goaldaylocal.R.drawable.ic_2026_cover_2
-    2025 -> com.bf410.goaldaylocal.R.drawable.ic_2025_cover
-    2024 -> com.bf410.goaldaylocal.R.drawable.ic_2024_cover
-    else -> com.bf410.goaldaylocal.R.drawable.ic_2023_cover
+/** 年度书封面底色（自绘布纹替代：按年份微调米色，封面年份数字叠在上层）。 */
+private fun yearCoverColor(year: Int): androidx.compose.ui.graphics.Color = when (year) {
+    2026 -> androidx.compose.ui.graphics.Color(0xFFE9E2D8)
+    2025 -> androidx.compose.ui.graphics.Color(0xFFE4DCCF)
+    2024 -> androidx.compose.ui.graphics.Color(0xFFDFD5C6)
+    else -> androidx.compose.ui.graphics.Color(0xFFD9CFC2)
 }
 
 @Composable

@@ -524,7 +524,7 @@ fun Modifier.turningPageTransform(
         TurnDirection.PREVIOUS -> rawRotation
         null -> 0f
     }
-    // HANDBOOK 纯绕书脊 180° 翻转：移除额外位移/缩放/旋转，保持原版 APK 平面书页感
+    // HANDBOOK 纯绕书脊 180° 翻转：移除额外位移/缩放/旋转，保持原版平面书页感
     translationX = if (profile.useSpineOnlyTransform) 0f else when {
         draggingToNext -> -(visualProgress * 14f + rawRotation / profile.maxRotation * 68f)
         draggingToPrevious -> visualProgress * 14f + rawRotation / profile.maxRotation * 68f

@@ -130,7 +130,7 @@ import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileOutputStream
 
-// 对照逆向 fragment_diary_inbook.xml：日期标签 + 内容区 + 底部图片按钮栏
+// 对照原版 fragment_diary_inbook.xml：日期标签 + 内容区 + 底部图片按钮栏
 @Composable
 private fun HandbookDiaryReplicaPage(
     modifier: Modifier,
@@ -170,7 +170,7 @@ private fun HandbookDiaryReplicaPage(
             .fillMaxSize(),
     ) {
         // 日期标签行（对照 fl_date: visibility=2 GONE, paddingStart/End=7.5pt=16.67dp）
-        // 逆向资源中默认隐藏,日期信息已在 DiaryInBookHeader 中显示
+        // 原版默认隐藏,日期信息已在 DiaryInBookHeader 中显示
         // Row(
         //     modifier = Modifier
         //         .fillMaxWidth()
@@ -261,10 +261,11 @@ private fun HandbookDiaryReplicaPage(
                     .clickable { onContentModeChange(PageContentMode.EditingDiary(title)) },
                 contentAlignment = Alignment.Center,
             ) {
-                // 对照 ic_select_pic：图片选择图标 12.5dip
-                Image(
-                    painter = painterResource(R.drawable.ic_select_pic),
+                // 图片选择图标 12.5dp
+                Icon(
+                    imageVector = Icons.Filled.Image,
                     contentDescription = "插入图片",
+                    tint = GoaldayDesign.adaptiveInkPrimary,
                     modifier = Modifier.size(12.5.dp),
                 )
             }
@@ -342,7 +343,7 @@ internal fun EditableBulletPage(
             onEditTask = onRenameCustomItem,
             onDeleteTask = onRemoveCustomItem,
         )
-        // 对照逆向 fragment_plan.xml：右下角添加 + 提示按钮
+        // 对照原版 fragment_plan.xml：右下角添加 + 提示按钮
         PlannerFloatingActionStrip(
             onAdd = { onAddCustomItem("") },
             onTip = { selectedListIndex = (selectedListIndex + 1) % listNames.size },
@@ -533,7 +534,7 @@ internal fun DiarySection(
                 DatePicker(state = datePickerState)
             }
         }
-        // 对照逆向 fragment_diary.xml：编辑态底部固定工具栏（图片 + 键盘收起）
+        // 对照原版 fragment_diary.xml：编辑态底部固定工具栏（图片 + 键盘收起）
         if (editingDiary?.title == title) {
             DiaryBottomToolbar(
                 onPickImage = { imagePicker.launch(arrayOf("image/*")) },
@@ -577,7 +578,7 @@ internal fun DiarySection(
     }
 }
 
-// 对照逆向 fragment_diary.xml / fragment_diary_inbook.xml：
+// 对照原版 fragment_diary.xml / fragment_diary_inbook.xml：
 // 独立日记页有图片+键盘两个按钮，手账内日记页仅保留图片按钮且高度更小
 @Composable
 private fun DiaryBottomToolbar(
@@ -600,18 +601,18 @@ private fun DiaryBottomToolbar(
         horizontalArrangement = if (inBook) Arrangement.Start else Arrangement.spacedBy(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Image(
-            painter = painterResource(R.drawable.ic_select_pic),
+        Icon(
+            imageVector = Icons.Filled.Image,
             contentDescription = "插入图片",
+            tint = GoaldayDesign.adaptiveInkPrimary,
             modifier = Modifier.size(iconSize).clickable(onClick = onPickImage),
-            contentScale = ContentScale.Fit,
         )
         if (!inBook) {
-            Image(
-                painter = painterResource(R.drawable.ic_keyboard),
+            Icon(
+                imageVector = Icons.Filled.Keyboard,
                 contentDescription = "收起键盘",
+                tint = GoaldayDesign.adaptiveInkPrimary,
                 modifier = Modifier.size(iconSize).clickable(onClick = onDismissKeyboard),
-                contentScale = ContentScale.Fit,
             )
         }
     }

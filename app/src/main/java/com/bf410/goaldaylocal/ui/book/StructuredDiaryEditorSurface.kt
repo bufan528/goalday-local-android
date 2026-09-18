@@ -866,7 +866,7 @@ private fun DiaryPromptCell(
  * - 独立页高度 46dp（fragment_diary.xml fl_bottom_bar=46dip），书内页高度 23dp（fragment_diary_inbook.xml fl_bottom_bar=23dip）
  * - 按钮容器：独立页 25dp，书内页 23dp（apktool误显示为pt，实际为dip）
  * - 图标大小：独立页 24dp，书内页 12.5dp
- * - 书内页图片按钮使用原版图标 ic_select_pic
+ * - 书内页图片按钮使用系统图标
  * - 背景 #E5DAD4（TabBarBg）
  * - 左侧图片 + 键盘按钮
  */
@@ -900,21 +900,12 @@ private fun DiaryEditorBottomBar(
                     .clickable { onAddImage() },
                 contentAlignment = Alignment.Center,
             ) {
-                if (isInBook) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_select_pic),
-                        contentDescription = "插入图片",
-                        tint = Color.Unspecified,
-                        modifier = Modifier.size(iconSize),
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Image,
-                        contentDescription = "插入图片",
-                        tint = GoaldayDesign.adaptiveInkPrimary,
-                        modifier = Modifier.size(iconSize),
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Image,
+                    contentDescription = "插入图片",
+                    tint = GoaldayDesign.adaptiveInkPrimary,
+                    modifier = Modifier.size(iconSize),
+                )
             }
             Box(
                 modifier = Modifier

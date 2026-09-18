@@ -226,7 +226,7 @@ private fun BoardRow(
     onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
 ) {
-    // 对照逆向 item_plan_item.xml：SwipeRevealLayout 左滑露出编辑(黑底)+删除(#ED8888)按钮
+    // 对照原版 item_plan_item.xml：SwipeRevealLayout 左滑露出编辑(黑底)+删除(#ED8888)按钮
     var swipeOffset by remember(task.id) { mutableStateOf(0f) }
     val density = LocalDensity.current
     val revealWidth = with(density) { 100.dp.toPx() } // 2×50dip=100dp（pt 是解码器对 dip 的误标）

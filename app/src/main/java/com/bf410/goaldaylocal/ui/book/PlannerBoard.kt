@@ -130,7 +130,7 @@ import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileOutputStream
 
-// 对照逆向 fragment_plan.xml：右下角独立浮动按钮，添加按钮在上(marginBottom=93dp)，提示按钮在下(marginBottom=32dp)
+// 对照原版 fragment_plan.xml：右下角独立浮动按钮，添加按钮在上(marginBottom=93dp)，提示按钮在下(marginBottom=32dp)
 @Composable
 internal fun PlannerFloatingActionStrip(
     onAdd: () -> Unit,

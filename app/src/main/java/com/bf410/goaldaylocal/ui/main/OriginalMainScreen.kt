@@ -55,7 +55,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
@@ -600,8 +600,6 @@ data class SwipeAction(
     val label: String,
     val bg: Color,
     val icon: ImageVector,
-    // 原版 plan_edit/plan_trash PNG（白图，只能站深底）；有值时优先用图（放onAction前以保trailing写法）
-    val iconRes: Int? = null,
     val onAction: () -> Unit,
 )
 
@@ -640,21 +638,12 @@ private fun SwipeableActionsRow(
                         },
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (action.iconRes != null) {
-                        Image(
-                            painter = painterResource(action.iconRes),
-                            contentDescription = action.label,
-                            modifier = Modifier.width(50.dp),
-                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
-                        )
-                    } else {
-                        Icon(
-                            imageVector = action.icon,
-                            contentDescription = action.label,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
+                    Icon(
+                        imageVector = action.icon,
+                        contentDescription = action.label,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
+                    )
                 }
             }
         }
@@ -1815,7 +1804,7 @@ private fun TopicListView(
                             )
                             if (book.id.startsWith("custom_")) {
                                 add(
-                                    SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete, iconRes = com.bf410.goaldaylocal.R.drawable.plan_trash) {
+                                    SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete) {
                                         pendingDeleteBook = book
                                     },
                                 )
@@ -1890,10 +1879,10 @@ private fun TopicListView(
                         .clickable { showAddSheet = true },
                     contentAlignment = Alignment.Center,
                 ) {
-                    // 对照原版 iv_add：src=plan_add 原图
-                    Image(
-                        painter = androidx.compose.ui.res.painterResource(com.bf410.goaldaylocal.R.drawable.plan_add),
+                    Icon(
+                        imageVector = Icons.Filled.Add,
                         contentDescription = "新建清单",
+                        tint = GoaldayDesign.adaptiveInkPrimary,
                         modifier = Modifier.size(22.dp),
                     )
                 }
@@ -1904,11 +1893,10 @@ private fun TopicListView(
                         .clickable { onOpenInspiration() },
                     contentAlignment = Alignment.Center,
                 ) {
-                    // 对照原版 iv_tip：src=plan_tip 原图 tint 白
-                    Image(
-                        painter = androidx.compose.ui.res.painterResource(com.bf410.goaldaylocal.R.drawable.plan_tip),
+                    Icon(
+                        imageVector = Icons.Filled.Lightbulb,
                         contentDescription = "灵感",
-                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White),
+                        tint = Color.White,
                         modifier = Modifier.size(20.dp),
                     )
                 }

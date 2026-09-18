@@ -677,16 +677,16 @@ private fun BookRootSegmentChip(
     }
 }
 
-// 原版底部三图标导航（对照原版 MainTabFragment：ic_tab_setting/ic_tab_calendar/ic_tab_book 黑色描边原图，bg #E5DAD4，高 56dp）
+// 原版底部三图标导航（黑色描边：靶心/日历/书本自绘图标，bg #E5DAD4，高 56dp）
 @Composable
 private fun GoaldayBottomNavOriginal(
     selected: RootTab,
     onSelect: (RootTab) -> Unit,
 ) {
     val items = listOf(
-        RootTab.MAIN to com.bf410.goaldaylocal.R.drawable.ic_tab_setting,
-        RootTab.CALENDAR to com.bf410.goaldaylocal.R.drawable.ic_tab_calendar,
-        RootTab.BOOK to com.bf410.goaldaylocal.R.drawable.ic_tab_book,
+        RootTab.MAIN to @Composable { NavTargetIcon() },
+        RootTab.CALENDAR to @Composable { NavCalendarIcon() },
+        RootTab.BOOK to @Composable { NavBookIcon() },
     )
     Row(
         modifier = Modifier
@@ -696,7 +696,7 @@ private fun GoaldayBottomNavOriginal(
             .height(56.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        items.forEach { (item, iconRes) ->
+        items.forEach { (item, icon) ->
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -705,13 +705,66 @@ private fun GoaldayBottomNavOriginal(
                 contentAlignment = Alignment.Center,
             ) {
                 // 原版真机三图标恒为黑色描边，不随选中变灰
-                Image(
-                    painter = androidx.compose.ui.res.painterResource(iconRes),
-                    contentDescription = item.label,
-                    modifier = Modifier.size(24.dp),
-                )
+                icon()
             }
         }
+    }
+}
+
+// 底部导航自绘图标：24dp 黑色描边
+@Composable
+private fun NavTargetIcon() {
+    androidx.compose.foundation.Canvas(Modifier.size(24.dp)) {
+        val r = size.minDimension / 2f - 1.dp.toPx()
+        drawCircle(Color.Black, radius = r, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
+        drawCircle(Color.Black, radius = 3.2.dp.toPx())
+    }
+}
+
+@Composable
+private fun NavCalendarIcon() {
+    androidx.compose.foundation.Canvas(Modifier.size(24.dp)) {
+        val ink = Color.Black
+        val sw = 2.dp.toPx()
+        drawRoundRect(
+            ink,
+            topLeft = androidx.compose.ui.geometry.Offset(3.dp.toPx(), 4.dp.toPx()),
+            size = androidx.compose.ui.geometry.Size(size.width - 6.dp.toPx(), size.height - 7.dp.toPx()),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.5.dp.toPx()),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(sw),
+        )
+        drawLine(ink, androidx.compose.ui.geometry.Offset(8.5.dp.toPx(), 2.dp.toPx()), androidx.compose.ui.geometry.Offset(8.5.dp.toPx(), 6.dp.toPx()), sw)
+        drawLine(ink, androidx.compose.ui.geometry.Offset(15.5.dp.toPx(), 2.dp.toPx()), androidx.compose.ui.geometry.Offset(15.5.dp.toPx(), 6.dp.toPx()), sw)
+        listOf(11f, 14.8f).forEach { y ->
+            listOf(8.5f, 12f, 15.5f).forEach { x ->
+                drawCircle(ink, radius = 1.3.dp.toPx(), center = androidx.compose.ui.geometry.Offset(x.dp.toPx(), y.dp.toPx()))
+            }
+        }
+    }
+}
+
+@Composable
+private fun NavBookIcon() {
+    androidx.compose.foundation.Canvas(Modifier.size(24.dp)) {
+        val ink = Color.Black
+        val sw = 2.dp.toPx()
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(12.dp.toPx(), 6.dp.toPx())
+            cubicTo(9.dp.toPx(), 4.6.dp.toPx(), 6.dp.toPx(), 4.6.dp.toPx(), 4.dp.toPx(), 5.2.dp.toPx())
+            lineTo(4.dp.toPx(), 18.dp.toPx())
+            cubicTo(6.dp.toPx(), 17.4.dp.toPx(), 9.dp.toPx(), 17.4.dp.toPx(), 12.dp.toPx(), 18.8.dp.toPx())
+            cubicTo(15.dp.toPx(), 17.4.dp.toPx(), 18.dp.toPx(), 17.4.dp.toPx(), 20.dp.toPx(), 18.dp.toPx())
+            lineTo(20.dp.toPx(), 5.2.dp.toPx())
+            cubicTo(18.dp.toPx(), 4.6.dp.toPx(), 15.dp.toPx(), 4.6.dp.toPx(), 12.dp.toPx(), 6.dp.toPx())
+            close()
+        }
+        drawPath(path, ink, style = androidx.compose.ui.graphics.drawscope.Stroke(sw))
+        drawLine(
+            ink,
+            androidx.compose.ui.geometry.Offset(12.dp.toPx(), 6.dp.toPx()),
+            androidx.compose.ui.geometry.Offset(12.dp.toPx(), 18.8.dp.toPx()),
+            sw,
+        )
     }
 }
 

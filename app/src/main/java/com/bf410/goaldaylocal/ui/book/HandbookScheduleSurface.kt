@@ -87,7 +87,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.delay
 
-// 逆向 item_schedule_item_in_book.xml：pt 是解码器对 dip 的误标，直接使用原始 dip 值
+// 原版 item_schedule_item_in_book.xml：pt 是解码器对 dip 的误标，直接使用原始 dip 值
 private val InBookScheduleColumnPaddingVertical = 3.5.dp
 private val InBookScheduleSlotHeight = 12.dp
 
@@ -178,7 +178,7 @@ internal fun HandbookReplicaPage(
     var saveHint by remember(pageIndex) { mutableStateOf("") }
     var boardMode by remember(pageIndex, startInMonthBoard) { mutableStateOf(if (startInMonthBoard) ScheduleBoardMode.MONTH else ScheduleBoardMode.SPREAD) }
     var spreadOrigin by remember(pageIndex) { mutableStateOf(Offset.Zero) }
-    // 对照逆向 pop_repeat.xml：新增日程时的重复模式
+    // 对照原版 pop_repeat.xml：新增日程时的重复模式
     var repeatRuleForNewSchedule by rememberSaveable(pageIndex) { mutableStateOf("") }
     var repeatIntervalForNewSchedule by rememberSaveable(pageIndex) { mutableStateOf(1) }
     var showRepeatPicker by rememberSaveable(pageIndex) { mutableStateOf(false) }
@@ -261,11 +261,11 @@ internal fun HandbookReplicaPage(
                 )
             }
         }
-        // 对照逆向 fragment_schedule_inbook.xml：书页日程容器无右上角 chip 工具栏，
+        // 对照原版 fragment_schedule_inbook.xml：书页日程容器无右上角 chip 工具栏，
         // 仅保留 NoTouchConstraintLayout + 日期标签 + RecyclerView 结构。
-        // 对照逆向 fragment_schedule_inbook.xml + item_schedule_item_in_book.xml：
+        // 对照原版 fragment_schedule_inbook.xml + item_schedule_item_in_book.xml：
         // 简单垂直列表，每行一天：24.5dp 日期列 + 2 列 x3 行目标槽
-        // 对照逆向 fragment_schedule_inbook.xml: RecyclerView 无水平 margin（start/end to parent）
+        // 对照原版 fragment_schedule_inbook.xml: RecyclerView 无水平 margin（start/end to parent）
         if (boardMode == ScheduleBoardMode.SPREAD) {
             val scheduleScrollState = rememberScrollState()
             Column(
@@ -437,16 +437,10 @@ private fun ScheduleStatusDot(color: Color) {
 }
 
 /**
- * 手账内页纸张纹理：叠加原版 APK 的 paper_texture_lined 纹理，低透明度避免干扰内容阅读。
- * 与 handbookPaperRuling 配合使用，先铺渐变/纹理再画横线。
+ * 手账内页纸张纹理：已移除位图纹理依赖，保留渐变底 + 横线即可。
+ * 与 handbookPaperRuling 配合使用，先铺渐变再画横线。
  */
-internal fun Modifier.handbookPaperTexture(alpha: Float = 0.12f): Modifier = composed {
-    paint(
-        painter = painterResource(R.drawable.paper_texture_lined),
-        contentScale = ContentScale.Crop,
-        alpha = alpha,
-    )
-}
+internal fun Modifier.handbookPaperTexture(alpha: Float = 0.12f): Modifier = this
 
 /**
  * 手账内页横线：模拟信纸/笔记本 ruled page。
@@ -832,7 +826,7 @@ private fun HandbookQuickAddRow(
                         .padding(horizontal = GoaldayDesign.Space1 + 2.dp, vertical = 2.dp),
                 )
             }
-            // 对照逆向 pop_repeat.xml：重复模式选择按钮
+            // 对照原版 pop_repeat.xml：重复模式选择按钮
             Text(
                 repeatLabel.ifBlank { "不重复" },
                 color = if (repeatLabel.isBlank()) GoaldayDesign.adaptiveInkSecondary else GoaldayDesign.Pink,
@@ -923,7 +917,7 @@ private fun DaySpreadEditableSection(
             .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=24.5dip = 24.5dp
+        // 对照原版 item_schedule_item_in_book.xml: FrameLayout layout_width=24.5dip = 24.5dp
         Column(
             modifier = Modifier
                 .width(24.5.dp)
@@ -1335,7 +1329,7 @@ private fun HandbookMoveTargetButton(
     )
 }
 
-// 对照逆向 pop_repeat.xml：5 选项重复模式弹窗，左侧勾选图标 + 右侧标题
+// 对照原版 pop_repeat.xml：5 选项重复模式弹窗，左侧勾选图标 + 右侧标题
 @Composable
 private fun RepeatModePickerDialog(
     selectedRule: String,
@@ -1392,7 +1386,7 @@ private fun RepeatModePickerDialog(
     )
 }
 
-// 对照逆向 item_schedule_item_in_book.xml：
+// 对照原版 item_schedule_item_in_book.xml：
 // 24.5dp 日期列 + 2列(weight=1) x 3行(12dp) 目标槽
 @Composable
 private fun ScheduleDayRow(
@@ -1416,7 +1410,7 @@ private fun ScheduleDayRow(
         // 行高由 3 个 12dip 槽 + 上下 3.5dip padding 决定，约 43dp。
         modifier = Modifier.fillMaxWidth(),
     ) {
-        // 左侧日期列（对照逆向 item_schedule_item_in_book.xml: FrameLayout layout_width=24.5dip = 24.5dp）：
+        // 左侧日期列（对照原版 item_schedule_item_in_book.xml: FrameLayout layout_width=24.5dip = 24.5dp）：
         // 日期 9sp 在上半区底部（marginBottom=2dp），"—" 9sp 垂直居中，周几 6sp 在下半区顶部（marginTop=2dp）
         Box(
             modifier = Modifier.width(24.5.dp).fillMaxHeight(),
@@ -1482,7 +1476,7 @@ private fun ScheduleTargetColumn(
     ) {
         for (i in 0 until 3) {
             val entry = entries.getOrNull(i)
-            // 对照逆向 item_schedule_item_in_book.xml: layout_height=12dip
+            // 对照原版 item_schedule_item_in_book.xml: layout_height=12dip
             ScheduleTargetSlot(
                 entry = entry,
                 onToggleCompleted = onToggleCompleted,

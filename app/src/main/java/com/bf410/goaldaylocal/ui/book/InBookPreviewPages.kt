@@ -28,11 +28,16 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -78,12 +83,12 @@ import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import java.time.LocalDate
 import java.time.YearMonth
 
-// 逆向 item_schedule_item_in_book.xml：pt 是解码器对 dip 的误标，直接使用原始 dip 值
+// 原版 item_schedule_item_in_book.xml：pt 是解码器对 dip 的误标，直接使用原始 dip 值
 private val InBookScheduleColumnPaddingVertical = 3.5.dp
 private val InBookScheduleSlotHeight = 12.dp
 
 // ============================================================
-// 书内静态预览页面 — 对照逆向 fragment_*_inbook.xml + item_*_inbook.xml
+// 书内静态预览页面 — 对照原版 fragment_*_inbook.xml + item_*_inbook.xml
 // 原版书内页面使用 NoTouchConstraintLayout (clickable=false)，
 // 大部分控件 visibility=GONE，只保留最简内容列表。
 //
@@ -93,7 +98,7 @@ private val InBookScheduleSlotHeight = 12.dp
 // 所有 pt 值直接作为 dp 使用，不做 ×2.222 换算。
 // ============================================================
 
-// 勾选框：使用逆向资源中的原版图标（ic_box_empty / ic_box_full）
+// 勾选框：自绘（空框/满框+勾），对照原版 9dp 勾选框尺寸
 // 对照 item_schedule_item_in_book.xml: 9dp 勾选框
 // 对照 item_target_detail.xml: wrap_content (约 20dp)
 @Composable
@@ -111,12 +116,29 @@ private fun InBookCheckbox(
             },
         contentAlignment = Alignment.Center,
     ) {
-        Image(
-            painter = painterResource(if (checked) R.drawable.ic_box_full else R.drawable.ic_box_empty),
-            contentDescription = if (checked) "已完成" else "未完成",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit,
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(
+                    width = (size.dp * 0.12f).coerceAtLeast(0.8.dp),
+                    color = if (checked) Color.Transparent else GoaldayDesign.InkMuted,
+                    shape = RoundedCornerShape(2.dp),
+                )
+                .background(
+                    if (checked) GoaldayDesign.Pink else Color.Transparent,
+                    RoundedCornerShape(2.dp),
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (checked) {
+                Text(
+                    "✓",
+                    fontSize = (size * 0.7f).sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                )
+            }
+        }
     }
 }
 
@@ -662,11 +684,11 @@ internal fun InBookPlanPreview(
                     .clickable { showTipDialog = true },
                 contentAlignment = Alignment.Center,
             ) {
-                Image(
-                    painter = painterResource(R.drawable.plan_tip),
+                Icon(
+                    imageVector = Icons.Filled.Lightbulb,
                     contentDescription = "提示",
+                    tint = Color.White,
                     modifier = Modifier.size(24.dp),
-                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White),
                 )
             }
 
@@ -681,9 +703,10 @@ internal fun InBookPlanPreview(
                     .clickable { showAddDialog = true },
                 contentAlignment = Alignment.Center,
             ) {
-                Image(
-                    painter = painterResource(R.drawable.plan_add),
+                Icon(
+                    imageVector = Icons.Filled.Add,
                     contentDescription = "添加计划",
+                    tint = GoaldayDesign.adaptiveInkPrimary,
                     modifier = Modifier.size(24.dp),
                 )
             }
@@ -1170,10 +1193,11 @@ internal fun InBookDiaryPreview(
                     .clickable { onAddImage() },
                 contentAlignment = Alignment.Center,
             ) {
-                // ic_select_pic: 12.5dip × 12.5dip
-                Image(
-                    painter = painterResource(R.drawable.ic_select_pic),
+                // 图片插入图标 12.5dp
+                Icon(
+                    imageVector = Icons.Filled.Image,
                     contentDescription = "插入图片",
+                    tint = GoaldayDesign.adaptiveInkPrimary,
                     modifier = Modifier.size(selectPicIconSize),
                 )
             }
@@ -1530,11 +1554,11 @@ internal fun InBookTargetPreview(
                         .clickable { showTipDialog = true },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.plan_tip),
+                    Icon(
+                        imageVector = Icons.Filled.Lightbulb,
                         contentDescription = "提示",
+                        tint = Color.White,
                         modifier = Modifier.size(24.dp),
-                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White),
                     )
                 }
 
@@ -1549,9 +1573,10 @@ internal fun InBookTargetPreview(
                         .clickable { showAddDialog = true },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.plan_add),
+                    Icon(
+                        imageVector = Icons.Filled.Add,
                         contentDescription = "添加目标",
+                        tint = GoaldayDesign.adaptiveInkPrimary,
                         modifier = Modifier.size(24.dp),
                     )
                 }

@@ -335,7 +335,7 @@ object GoaldayDesign {
             end = Offset(680f, 420f),
         ) else PaperGradient
 
-    // 日记模块专用自适应色（对照逆向硬编码色值）
+    // 日记模块专用自适应色（对照原版硬编码色值）
     val DiarySectionInk: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xFFD4C4B0) else Color(0xFF2C2C2C)
     val DiaryTimeInk: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xFF9E9E9E) else Color(0xFFCBCBCB)
     val DiaryTargetBackground: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xFF3D342C) else Color.White
@@ -343,7 +343,7 @@ object GoaldayDesign {
     val DiaryTargetChildDot: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xFF8A8175) else Color(0xFFC5BBB6)
     val ScheduleDateColumnSeparator: Color @Composable get() = if (LocalGoaldayDarkMode.current) Color(0xFF5A4E42) else Color(0xFFC5BBB6)
 
-    // 字体族 token：封面/大标题用衬线（宋体感）建立手账氛围，正文用苹方（对齐原版 PingFang SC）
+    // 字体族 token：封面/大标题用衬线（宋体感）建立手账氛围，正文用系统默认
     val DisplayFontFamily: FontFamily get() = FontFamily.Serif
-    val BodyFontFamily: FontFamily get() = FontFamily(Font(R.font.pingfang_sc))
+    val BodyFontFamily: FontFamily get() = FontFamily.Default
 }
