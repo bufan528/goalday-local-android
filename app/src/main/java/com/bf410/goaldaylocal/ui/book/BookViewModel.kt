@@ -400,7 +400,7 @@ class BookViewModel(
         _uiState.update { it.copy(schedulePreviewEntries = yearEntriesForAnchor()) }
     }
 
-    fun addScheduleFromHandbook(item: String, month: Int, day: Int, repeatRule: String = "", repeatInterval: Int = 1) {
+    fun addScheduleFromHandbook(item: String, month: Int, day: Int, repeatRule: String = "", repeatInterval: Int = 1, colorArgb: Int? = null) {
         val title = item.trim()
         if (title.isBlank()) return
         val year = store.calendarAnchorYear()
@@ -422,6 +422,7 @@ class BookViewModel(
             note = currentBook().title,
             repeatRule = repeatRule,
             repeatInterval = repeatInterval.coerceAtLeast(1),
+            colorArgb = colorArgb,
         )
         syncEditableContent()
     }

@@ -18,6 +18,8 @@ data class ScheduleEntry(
     val repeatEndDate: String = "",
     val repeatGroupId: String = "",
     val completed: Boolean = false,
+    /** 清单专题色（ARGB），有值=专题关联条目；null=普通条目 */
+    val colorArgb: Int? = null,
 ) {
     val status: ScheduleStatus
         get() = if (completed) ScheduleStatus.DONE else ScheduleStatus.PLANNED

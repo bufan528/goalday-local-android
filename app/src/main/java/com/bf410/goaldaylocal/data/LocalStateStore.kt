@@ -92,6 +92,7 @@ class LocalStateStore(
                         completed = decodeScheduleStatus(item).let { status ->
                             status == ScheduleStatus.DONE
                         },
+                        colorArgb = if (item.has("colorArgb")) item.optInt("colorArgb").takeIf { it != 0 } else null,
                     )
                 }.getOrNull()?.let(::add)
             }
@@ -102,22 +103,22 @@ class LocalStateStore(
         val array = JSONArray()
         entries.forEach { entry ->
             val safeDate = safeScheduleDate(entry.year, entry.month, entry.day)
-            array.put(
-                JSONObject()
-                    .put("id", entry.id)
-                    .put("title", entry.title)
-                    .put("year", safeDate.year)
-                    .put("month", safeDate.month)
-                    .put("day", safeDate.day)
-                    .put("note", entry.note)
-                    .put("timeText", entry.timeText)
-                    .put("repeatRule", entry.repeatRule)
-                    .put("repeatInterval", entry.repeatInterval)
-                    .put("repeatEndDate", entry.repeatEndDate)
-                    .put("repeatGroupId", entry.repeatGroupId)
-                    .put("status", entry.status.name)
-                    .put("completed", entry.completed),
-            )
+            val json = JSONObject()
+                .put("id", entry.id)
+                .put("title", entry.title)
+                .put("year", safeDate.year)
+                .put("month", safeDate.month)
+                .put("day", safeDate.day)
+                .put("note", entry.note)
+                .put("timeText", entry.timeText)
+                .put("repeatRule", entry.repeatRule)
+                .put("repeatInterval", entry.repeatInterval)
+                .put("repeatEndDate", entry.repeatEndDate)
+                .put("repeatGroupId", entry.repeatGroupId)
+                .put("status", entry.status.name)
+                .put("completed", entry.completed)
+            if (entry.colorArgb != null) json.put("colorArgb", entry.colorArgb)
+            array.put(json)
         }
         mmkv.encode(KEY_SCHEDULES, array.toString())
     }

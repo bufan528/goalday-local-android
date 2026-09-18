@@ -32,6 +32,7 @@ class ScheduleRepository private constructor(
         repeatEndDate: String = "",
         repeatGroupId: String = "",
         status: ScheduleStatus = ScheduleStatus.PLANNED,
+        colorArgb: Int? = null,
     ): ScheduleEntry {
         val safeDate = safeScheduleDate(year, month, day)
         val entry = ScheduleEntry(
@@ -47,6 +48,7 @@ class ScheduleRepository private constructor(
             repeatEndDate = repeatEndDate,
             repeatGroupId = repeatGroupId,
             completed = status == ScheduleStatus.DONE,
+            colorArgb = colorArgb,
         )
         saveEntries(entries() + entry)
         return entry

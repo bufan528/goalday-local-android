@@ -841,18 +841,31 @@ private fun WeekScheduleView(
                                             verticalAlignment = if (fixed) Alignment.CenterVertically else Alignment.Top,
                                         ) {
                                             // 勾选框：独立clickable,不与文本区抢事件
+                                            // 专题关联条目圆角方+专题色，普通条目圆环（环色默认#333333）
+                                            val entryTint = entry.colorArgb?.let { Color(it) } ?: Color(0xFF333333)
+                                            val entryBoxShape = if (entry.colorArgb != null) RoundedCornerShape(4.dp) else CircleShape
                                             Box(
                                                 modifier = Modifier
                                                     .padding(top = if (fixed) 0.dp else 2.dp)
                                                     .size(18.dp)
                                                     .border(
-                                                        1.8.dp,
-                                                        if (entry.completed) Color.Transparent else EntryCircle,
-                                                        CircleShape,
+                                                        1.5.dp,
+                                                        if (entry.completed) {
+                                                            Color.Transparent
+                                                        } else if (LocalGoaldayDarkMode.current) {
+                                                            EntryCircle
+                                                        } else {
+                                                            entryTint
+                                                        },
+                                                        entryBoxShape,
                                                     )
                                                     .background(
-                                                        if (entry.completed) GoaldayDesign.Pink else Color.Transparent,
-                                                        CircleShape,
+                                                        if (entry.completed) {
+                                                            if (LocalGoaldayDarkMode.current) GoaldayDesign.Pink else entryTint
+                                                        } else {
+                                                            Color.Transparent
+                                                        },
+                                                        entryBoxShape,
                                                     )
                                                     .clickable {
                                                         InteractionFeedback.click(context)
@@ -1065,7 +1078,7 @@ private fun WeekScheduleView(
                 Box(
                     Modifier
                         .size(10.dp)
-                        .background(currentBook?.color ?: PoolBullet, RoundedCornerShape(2.dp)),
+                        .background(currentBook?.color ?: PoolBullet, CircleShape),
                 )
                 Spacer(Modifier.width(8.dp))
                     Text(
@@ -1206,7 +1219,7 @@ private fun WeekScheduleView(
                                                 val item = draggingItem
                                                 if (target != null && item != null) {
                                                     InteractionFeedback.click(dragContext)
-                                                    viewModel.addScheduleFromHandbook(item, target.monthValue, target.dayOfMonth)
+                                                    viewModel.addScheduleFromHandbook(item, target.monthValue, target.dayOfMonth, colorArgb = currentBook?.color?.toArgb())
                                                 }
                                                 draggingItem = null
                                                 dropTarget = null
@@ -1742,8 +1755,6 @@ private fun TopicListView(
                     val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
                     val done = page?.items?.count { store.isChecked(book.id, page.title, it) } ?: 0
                     val total = page?.items?.size ?: 0
-                    // 对照原版真机：当前选中清单的圆点为方块，其余为圆点
-                    val isSelectedBook = uiState.books.getOrNull(uiState.selectedBookIndex)?.id == book.id
                     // 左滑操作层（对照原版清单卡片左滑：黑色信息 + 红色删除）
                     SwipeableActionsRow(
                         actions = buildList {
@@ -1776,7 +1787,7 @@ private fun TopicListView(
                                     .size(10.dp)
                                     .background(
                                         book.color,
-                                        if (isSelectedBook) RoundedCornerShape(2.dp) else CircleShape,
+                                        CircleShape,
                                     ),
                             )
                             Spacer(Modifier.width(16.dp))
