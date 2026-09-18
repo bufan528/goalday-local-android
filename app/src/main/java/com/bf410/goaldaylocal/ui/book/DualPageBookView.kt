@@ -394,7 +394,7 @@ fun DualPageBookView(
                                     down.consume()
                                     continue
                                 }
-                                val startX = down.position.x
+                                var startX = down.position.x
                                 val startY = down.position.y
                                 val velocityTracker = VelocityTracker()
                                 velocityTracker.resetTracking()
@@ -452,7 +452,24 @@ fun DualPageBookView(
                                         // 之前width*0.45偏敏感9%，改回width/2与原版一致。
                                         val singlePage = (width / 2f).coerceAtLeast(1f)
                                         val rawProgress = abs(change.position.x - startX) / singlePage
-                                        val newProgress = rawProgress.coerceIn(0f, 1f)
+                                        if (rawProgress >= 1f) {
+                                            // 单手势连续翻页：走满一页即进位，起点前移带余量继续跟手
+                                            val canMore = when (turnDir) {
+                                                TurnDirection.NEXT -> pageState.canGoNext()
+                                                TurnDirection.PREVIOUS -> pageState.canGoPrevious()
+                                                null -> false
+                                            }
+                                            if (canMore) {
+                                                when (turnDir) {
+                                                    TurnDirection.NEXT -> pageState.goNextPage()
+                                                    TurnDirection.PREVIOUS -> pageState.goPreviousPage()
+                                                    null -> {}
+                                                }
+                                                turnCount++
+                                                startX = change.position.x
+                                            }
+                                        }
+                                        val newProgress = (abs(change.position.x - startX) / singlePage).coerceIn(0f, 1f)
                                         dragJobHolder[0]?.cancel()
                                         dragJobHolder[0] = scope.launch { progress.snapTo(newProgress) }
                                     }
