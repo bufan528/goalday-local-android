@@ -227,6 +227,7 @@ object MainUiBridge {
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun OriginalMainScreen(
     bookViewModel: BookViewModel,
@@ -316,6 +317,34 @@ fun OriginalMainScreen(
         }
     }
 
+    // 可见 Tab 页（对照原版 ViewPager2 页组；顺序/显隐可配）
+    val visibleTabs = remember(tabOrder, tabVisibility) {
+        tabOrder.filter { tabVisibility[it] == true }.ifEmpty { listOf(MainSubTab.WEEK) }
+    }
+    var poolDragging by remember { mutableStateOf(false) }
+    val mainPagerState = androidx.compose.foundation.pager.rememberPagerState(
+        initialPage = visibleTabs.indexOf(currentSubTab).coerceAtLeast(0),
+        pageCount = { visibleTabs.size },
+    )
+    // 点选 → 翻到对应页
+    LaunchedEffect(subTabIndex, visibleTabs) {
+        val target = visibleTabs.indexOf(currentSubTab).coerceAtLeast(0)
+        if (target != mainPagerState.currentPage) {
+            mainPagerState.scrollToPage(target)
+        }
+    }
+    // 横滑落定 → 切换选中（同点选收尾：退行内编辑、退出直编态）
+    LaunchedEffect(mainPagerState) {
+        snapshotFlow { mainPagerState.settledPage }.collect { settled ->
+            val tab = visibleTabs.getOrNull(settled) ?: return@collect
+            if (tab.ordinal != subTabIndex) {
+                editingDate = null
+                diaryDirectEdit = false
+                subTabIndex = tab.ordinal
+            }
+        }
+    }
+
     Column(Modifier.fillMaxSize().background(MainContentBg)) {
         if (!listDetailExpanded) {
             OriginalTopTabBar(
@@ -336,19 +365,14 @@ fun OriginalMainScreen(
                 tabOrder = tabOrder,
             )
         }
-        // Tab 切换方向滑动（对照原版 ViewPager2 滑动切换的直觉：往左切页从右滑入）
-        // 退出页整屏滑出，避免残留纹理在屏幕边缘露出；clipToBounds 兜底裁剪
-        AnimatedContent(
-            targetState = currentSubTab,
+        // 主子 Tab 横滑切换（对照原版 ViewPager2；池拖拽时禁滑）
+        androidx.compose.foundation.pager.HorizontalPager(
+            state = mainPagerState,
+            userScrollEnabled = !poolDragging,
             modifier = Modifier.fillMaxSize().clipToBounds(),
-            transitionSpec = {
-                val forward = targetState.ordinal >= initialState.ordinal
-                (slideInHorizontally(tween(240)) { full -> if (forward) full else -full } + fadeIn(tween(200))) togetherWith
-                    (slideOutHorizontally(tween(240)) { full -> if (forward) -full else full } + fadeOut(tween(180)))
-            },
-            label = "mainTabContent",
-        ) { pageTab ->
-            when (pageTab) {
+            key = { visibleTabs[it] },
+        ) { pageIndex ->
+            when (val pageTab = visibleTabs.getOrElse(pageIndex) { MainSubTab.WEEK }) {
                 MainSubTab.WEEK -> WeekScheduleView(
                     uiState = uiState,
                     viewModel = bookViewModel,
@@ -359,6 +383,7 @@ fun OriginalMainScreen(
                     onFinishEdit = { editingDate = null },
                     onSelectDate = { selectedDate = it },
                     onEditEntry = { editingEntry = it },
+                    onPoolDragging = { poolDragging = it },
                 )
                 MainSubTab.MONTH -> MonthScheduleView(
                     uiState = uiState,
@@ -686,6 +711,7 @@ private fun WeekScheduleView(
     onFinishEdit: () -> Unit,
     onSelectDate: (LocalDate) -> Unit,
     onEditEntry: (ScheduleEntry) -> Unit = {},
+    onPoolDragging: (Boolean) -> Unit = {},
 ) {
     val today = rememberToday()
     val context = LocalContext.current
@@ -694,8 +720,9 @@ private fun WeekScheduleView(
     var quickInput by remember(editingDate) { mutableStateOf("") }
     val dividerColor = MainTabDivider
     val diaryStore = remember { LocalStateStore(MMKV.defaultMMKV()) }
-    // 长按拖拽：池条目 → 日期行排期
+    // 长按拖拽：池条目 → 日期行排期（拖拽时上报告知外层禁掉横滑切页）
     var draggingItem by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(draggingItem) { onPoolDragging(draggingItem != null) }
     var dropTarget by remember { mutableStateOf<LocalDate?>(null) }
     val rowBounds = remember { androidx.compose.runtime.mutableStateMapOf<Long, Rect>() }
     // 池容器在窗口中的原点（把条目局部坐标换算为窗口坐标）
