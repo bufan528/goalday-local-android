@@ -205,32 +205,20 @@ internal fun InBookSchedulePreview(
         val headerPadding = 10.dp
         val headerMainSize = if (isLeftPage) 11.sp else 12.sp
         val headerSubSize = if (isLeftPage) 9.sp else 10.sp
+        // 右上小标签：月日程（对照原版 fragment_schedule_inbook.xml 右上角 월간 일정）
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    start = if (isLeftPage) headerPadding else 0.dp,
-                    top = headerPadding,
-                    end = if (isLeftPage) 0.dp else headerPadding,
-                ),
-            contentAlignment = if (isLeftPage) Alignment.TopStart else Alignment.TopEnd,
+                .padding(top = headerPadding, end = headerPadding),
+            contentAlignment = Alignment.TopEnd,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = dateLabelMain,
-                    fontSize = headerMainSize,
-                    lineHeight = headerMainSize,
-                    color = tabDividerColor,
-                    fontFamily = GoaldayDesign.BodyFontFamily,
-                )
-                Text(
-                    text = " | $dateLabelSub",
-                    fontSize = headerSubSize,
-                    lineHeight = headerMainSize,
-                    color = tabDividerColor,
-                    fontFamily = GoaldayDesign.BodyFontFamily,
-                )
-            }
+            Text(
+                text = "月日程",
+                fontSize = 10.sp,
+                lineHeight = headerMainSize,
+                color = tabDividerColor,
+                fontFamily = GoaldayDesign.BodyFontFamily,
+            )
         }
         // 0.5dp 分割线（仅 schedule 页有，对照 BookViewExampleKt L774-L776）
         // 位置在页眉文字下缘（原版线在 header 下方，不能穿过文字）
@@ -241,27 +229,67 @@ internal fun InBookSchedulePreview(
                 .height(0.5.dp)
                 .background(tabDividerColor.copy(alpha = 0.6f)),
         )
-        // 书内周视图：7 行等高，与原版 RecyclerView 每项占 parent/7 一致
+        // 书内左页 = 整月日历（3 列分栏，选中日 D 橙色空心圈高亮），对照原版月日程面
         if (weekStartDate != null) {
+            val D = weekStartDate
+            val ym = YearMonth.of(D.year, D.month)
+            val daysInMonth = ym.lengthOfMonth()
+            val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 28.dp + 0.5.dp + 3.dp),
+                    .padding(top = 28.dp + 0.5.dp + 6.dp),
             ) {
-                weekDays.forEach { weekDay ->
-                    InBookScheduleDayRow(
-                        modifier = Modifier.weight(1f),
-                        day = weekDay.day,
-                        weekday = weekDay.weekday,
-                        entries = weekDay.entries,
-                        pageTitle = page.title,
-                        isChecked = isChecked,
-                        date = weekDay.date,
-                        editable = editable,
-                        onAddEntry = onAddEntry,
-                        onRenameEntry = onRenameEntry,
-                        onOpenDay = onOpenDay,
+                Row(
+                    modifier = Modifier.padding(start = 12.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "${D.monthValue}月${D.dayOfMonth}日",
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF3A2E26),
                     )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = weekdayNames.getOrElse(D.dayOfWeek.value - 1) { "" },
+                        fontSize = 14.sp,
+                        color = Color(0xFF3A2E26),
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                ) {
+                    val col1 = (1..10).toList()
+                    val col2 = (11..20).toList()
+                    val col3 = (21..daysInMonth).toList()
+                    listOf(col1, col2, col3).forEach { colDays ->
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(11.dp),
+                        ) {
+                            colDays.forEach { day ->
+                                val isSel = day == D.dayOfMonth
+                                Box(
+                                    modifier = if (isSel) Modifier
+                                        .size(23.dp)
+                                        .border(1.3.dp, GoaldayDesign.Pink, CircleShape)
+                                    else Modifier.size(23.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = "$day",
+                                        fontSize = 11.sp,
+                                        color = if (isSel) GoaldayDesign.Pink else Color(0xFF8A7F78),
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         } else {
@@ -1247,6 +1275,14 @@ internal fun InBookDiaryEditorPage(
             )
             Text(
                 text = " | " + weekdayNames.getOrElse(date.dayOfWeek.value - 1) { "" },
+                fontSize = if (isLeftPage) 9.sp else 10.sp,
+                lineHeight = if (isLeftPage) 11.sp else 12.sp,
+                color = tabDividerColor,
+                fontFamily = GoaldayDesign.BodyFontFamily,
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = "日记",
                 fontSize = if (isLeftPage) 9.sp else 10.sp,
                 lineHeight = if (isLeftPage) 11.sp else 12.sp,
                 color = tabDividerColor,

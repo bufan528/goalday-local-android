@@ -213,7 +213,7 @@ fun DualPageBookView(
                 turnProgress = progress.value,
                 turnDirection = turnDirection,
                 handbookMode = true,
-                weekStartDate = page.date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
+                weekStartDate = page.date,
                 // 书内日程面可交互（对照原版书内嵌 ScheduleFragment）：空槽行内新增/点条目改名/点日期列跳主界面
                 editable = true,
                 onAddEntry = { date, text ->
