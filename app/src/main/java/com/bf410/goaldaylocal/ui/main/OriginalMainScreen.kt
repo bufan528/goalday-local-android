@@ -211,16 +211,19 @@ object MainUiBridge {
     internal var tick by androidx.compose.runtime.mutableIntStateOf(0)
     internal var date: LocalDate? = null
     internal var targetTab: MainSubTab? = null
+    internal var directEdit: Boolean = false
 
-    internal fun go(date: LocalDate, tab: MainSubTab) {
+    internal fun go(date: LocalDate, tab: MainSubTab, directEdit: Boolean = false) {
         this.date = date
         this.targetTab = tab
+        this.directEdit = directEdit
         tick++
     }
 
     fun consume() {
         date = null
         targetTab = null
+        directEdit = false
     }
 }
 
@@ -277,13 +280,15 @@ fun OriginalMainScreen(
     LaunchedEffect(openWeekPickerTick) {
         if (openWeekPickerTick > 0) showWeekPicker = true
     }
-    // 书内点页 → 跳到对应日期与 Tab（对照原版 EventBus 行为）
+    // 书内点页 → 跳到对应日期与 Tab（对照原版 EventBus 行为）；书内日记直达编辑态（无提问、有输入 hint）
+    var diaryDirectEdit by remember { mutableStateOf(false) }
     LaunchedEffect(MainUiBridge.tick) {
         val target = MainUiBridge.date
         val tab = MainUiBridge.targetTab
         if (target != null && tab != null) {
             selectedDate = target
             subTabIndex = tab.ordinal
+            diaryDirectEdit = MainUiBridge.directEdit
             MainUiBridge.consume()
         }
     }
@@ -322,6 +327,7 @@ fun OriginalMainScreen(
                 weekAdaptive = scheduleAdaptive,
                 onSelect = {
                     editingDate = null
+                    diaryDirectEdit = false
                     subTabIndex = it.ordinal
                 },
                 onManageTabs = { showTabManage = true },
@@ -369,6 +375,7 @@ fun OriginalMainScreen(
                     selectedDate = selectedDate,
                     entries = uiState.schedulePreviewEntries,
                     onSelectDate = { selectedDate = it },
+                    directEdit = diaryDirectEdit,
                 )
                 MainSubTab.LIST -> TopicListView(
                     uiState = uiState,
@@ -1427,6 +1434,7 @@ private fun RecordDiaryPager(
     selectedDate: LocalDate,
     entries: List<ScheduleEntry>,
     onSelectDate: (LocalDate) -> Unit,
+    directEdit: Boolean = false,
 ) {
     var anchorDate by remember { mutableStateOf(selectedDate) }
     val pagerState = rememberPagerState(initialPage = DIARY_PAGER_CENTER, pageCount = { DIARY_PAGER_SIZE })
@@ -1455,6 +1463,7 @@ private fun RecordDiaryPager(
             selectedDate = diaryPagerDate(anchorDate, page),
             entries = entries,
             onEditorFocusChanged = { editorFocused = it },
+            directEdit = directEdit,
         )
     }
 }
@@ -1464,6 +1473,7 @@ private fun RecordDiaryView(
     selectedDate: LocalDate,
     entries: List<ScheduleEntry>,
     onEditorFocusChanged: (Boolean) -> Unit = {},
+    directEdit: Boolean = false,
 ) {
     val store = remember { LocalStateStore(MMKV.defaultMMKV()) }
     // 提示语轮换：点提示语切下一条，按天持久化（书内页同步读取同一偏移，同一天同一条）
@@ -1552,7 +1562,7 @@ private fun RecordDiaryView(
                 }
                 Spacer(Modifier.height(10.dp))
             }
-            if (prompt.isNotBlank()) {
+            if (prompt.isNotBlank() && !directEdit) {
                 Text(
                     prompt,
                     fontSize = 16.sp,
@@ -1584,6 +1594,19 @@ private fun RecordDiaryView(
                         editorFocused = it.isFocused
                         onEditorFocusChanged(it.isFocused)
                     },
+                decorationBox = { inner ->
+                    Box {
+                        if (text.isEmpty()) {
+                            Text(
+                                "点击输入",
+                                fontSize = 16.sp,
+                                lineHeight = 24.sp,
+                                color = GoaldayDesign.adaptiveInkMuted,
+                            )
+                        }
+                        inner()
+                    }
+                },
             )
             // 已插入的图片
             imagePaths.forEach { path ->

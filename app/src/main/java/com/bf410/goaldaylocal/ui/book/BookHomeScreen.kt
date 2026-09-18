@@ -1067,11 +1067,12 @@ private fun BookDetailView(
                 viewModel = viewModel,
                 onBack = onBackToLibrary,
                 onOpenDate = { date, isSchedule ->
-                    // 对照原版：点书页跳回主界面（日程页→周 Tab，日记页→记录 Tab）
+                    // 对照原版：点书页跳回主界面（日程页→周 Tab，日记页→记录 Tab直编态）
                     com.bf410.goaldaylocal.ui.main.MainUiBridge.go(
                         date,
                         if (isSchedule) com.bf410.goaldaylocal.ui.main.MainSubTab.WEEK
                         else com.bf410.goaldaylocal.ui.main.MainSubTab.RECORD,
+                        !isSchedule,
                     )
                     onBackToLibrary()
                 },

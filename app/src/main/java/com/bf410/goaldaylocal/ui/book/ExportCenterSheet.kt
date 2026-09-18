@@ -16,10 +16,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,14 +68,15 @@ internal fun ExportCenterSheet(
     scheduleEntries: List<ScheduleEntry>,
     weeklyTheme: String,
     onDismiss: () -> Unit,
+    fullscreen: Boolean = false,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val now = LocalDate.now()
     var includeSchedule by remember { mutableStateOf(true) }
     var includeDiary by remember { mutableStateOf(true) }
-    var startDate by remember { mutableStateOf(LocalDate.of(now.year, 1, 1)) }
-    var endDate by remember { mutableStateOf(LocalDate.of(now.year, 12, 31)) }
+    var startDate by remember { mutableStateOf<LocalDate?>(null) }
+    var endDate by remember { mutableStateOf<LocalDate?>(null) }
     var generating by remember { mutableStateOf(false) }
     var progressDone by remember { mutableStateOf(0) }
     var progressTotal by remember { mutableStateOf(0) }
@@ -82,144 +86,209 @@ internal fun ExportCenterSheet(
     androidx.compose.runtime.DisposableEffect(Unit) {
         onDispose { runJob?.cancel() }
     }
+    val rangeValid = startDate != null && endDate != null && !startDate!!.isAfter(endDate)
     // 预览页表（截断 30，正式生成用不限长的同一顺序）
     val previewItems = remember(startDate, endDate, includeSchedule, includeDiary) {
-        buildExportItems(startDate, endDate, includeSchedule, includeDiary, previewCap = true)
+        val s = startDate
+        val e = endDate
+        if (s == null || e == null || s.isAfter(e)) emptyList()
+        else buildExportItems(s, e, includeSchedule, includeDiary, previewCap = true)
     }
     val fullCount = remember(startDate, endDate, includeSchedule, includeDiary) {
-        buildExportItems(startDate, endDate, includeSchedule, includeDiary, previewCap = false).size
+        val s = startDate
+        val e = endDate
+        if (s == null || e == null || s.isAfter(e)) 0
+        else buildExportItems(s, e, includeSchedule, includeDiary, previewCap = false).size
     }
-    val rangeValid = !startDate.isAfter(endDate)
     val canGenerate = !generating && rangeValid && (includeSchedule || includeDiary) && fullCount > 0
 
-    fun pickDate(current: LocalDate, onPicked: (LocalDate) -> Unit) {
+    fun pickDate(current: LocalDate?, onPicked: (LocalDate) -> Unit) {
+        val base = current ?: LocalDate.now()
         DatePickerDialog(
             context,
             { _, year, month, day -> onPicked(LocalDate.of(year, month + 1, day)) },
-            current.year,
-            current.monthValue - 1,
-            current.dayOfMonth,
+            base.year,
+            base.monthValue - 1,
+            base.dayOfMonth,
         ).show()
     }
 
-    Surface(color = Color_White) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)) {
+    fun startGenerate() {
+        val s = startDate
+        val e = endDate
+        if (!canGenerate || s == null || e == null) return
+        runJob = scope.launch {
+            generating = true
+            progressDone = 0
+            resultUri = withContext(Dispatchers.Default) {
+                runCatching {
+                    generateExportPdfQueued(
+                        context = context,
+                        startDate = s,
+                        endDate = e,
+                        includeSchedule = includeSchedule,
+                        includeDiary = includeDiary,
+                        diaryTextFor = diaryTextFor,
+                        scheduleEntries = scheduleEntries,
+                        weeklyTheme = weeklyTheme,
+                        onProgress = { done, total ->
+                            progressDone = done
+                            progressTotal = total
+                        },
+                    )
+                }.getOrNull()
+            }
+            generating = false
+        }
+    }
+
+    Surface(color = GoaldayDesign.AppBg) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+        ) {
             Box(Modifier.fillMaxWidth()) {
                 Text(
-                    "导出中心",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    "取消",
+                    fontSize = 16.sp,
+                    color = Color_Blue,
+                    modifier = Modifier.align(Alignment.CenterStart).clickable { onDismiss() },
+                )
+                Text(
+                    "设置选项",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
                     color = GoaldayDesign.InkPrimary,
                     modifier = Modifier.align(Alignment.Center),
                 )
                 Text(
-                    "取消",
-                    fontSize = 15.sp,
-                    color = Color_Blue,
-                    modifier = Modifier.align(Alignment.CenterEnd).clickable { onDismiss() },
+                    if (generating) "生成中…" else "确定",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GoaldayDesign.MorandiCoral,
+                    modifier = Modifier.align(Alignment.CenterEnd).clickable { startGenerate() },
                 )
             }
             Spacer(Modifier.height(16.dp))
 
             Text("打印PDF", fontSize = 13.sp, color = GoaldayDesign.InkMuted)
             Spacer(Modifier.height(8.dp))
-            defaultExportCheckables().forEach { item ->
-                val checked = when (item.id) {
-                    EXPORT_SCHEDULE_ID -> includeSchedule
-                    else -> includeDiary
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color_SurfaceSoft)
-                        .clickable {
-                            if (item.id == EXPORT_SCHEDULE_ID) includeSchedule = !includeSchedule
-                            else includeDiary = !includeDiary
-                        }
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
+            val checkables = defaultExportCheckables()
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color_White),
+            ) {
+                checkables.forEachIndexed { ci, item ->
+                    val checked = when (item.id) {
+                        EXPORT_SCHEDULE_ID -> includeSchedule
+                        else -> includeDiary
+                    }
+                    Row(
                         modifier = Modifier
-                            .padding(end = 10.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(if (checked) GoaldayDesign.Pink else Color.Transparent)
-                            .padding(horizontal = 5.dp, vertical = 1.dp),
+                            .fillMaxWidth()
+                            .clickable {
+                                if (item.id == EXPORT_SCHEDULE_ID) includeSchedule = !includeSchedule
+                                else includeDiary = !includeDiary
+                            }
+                            .padding(horizontal = 14.dp, vertical = 13.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(
-                            if (checked) "✓" else "○",
-                            fontSize = 13.sp,
-                            color = if (checked) Color.White else GoaldayDesign.adaptiveInkMuted,
+                        Text(item.title, fontSize = 16.sp, color = GoaldayDesign.InkPrimary)
+                        if (checked) {
+                            Text("✓", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                        }
+                    }
+                    if (ci < checkables.lastIndex) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp)
+                                .height(0.7.dp)
+                                .background(GoaldayDesign.InkMuted.copy(alpha = 0.25f)),
                         )
                     }
-                    Text(item.title, fontSize = 14.sp, color = GoaldayDesign.InkPrimary)
                 }
-                Spacer(Modifier.height(8.dp))
             }
+            Spacer(Modifier.height(16.dp))
 
             Text("时间", fontSize = 13.sp, color = GoaldayDesign.InkMuted)
             Spacer(Modifier.height(8.dp))
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color_SurfaceSoft)
-                    .clickable { pickDate(startDate) { startDate = it } }
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text("起始日期", fontSize = 14.sp, color = GoaldayDesign.InkPrimary)
-                Text(startDate.toString(), fontSize = 14.sp, color = GoaldayDesign.adaptiveInkMuted)
+            @Composable
+            fun DateRow(label: String, date: LocalDate?, onPick: (LocalDate) -> Unit) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { pickDate(date, onPick) }
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(label, fontSize = 16.sp, color = GoaldayDesign.InkPrimary)
+                    Box(
+                        Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(GoaldayDesign.InkMuted.copy(alpha = 0.55f))
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                    ) {
+                        Text(
+                            date?.toString() ?: "选择日期",
+                            fontSize = 14.sp,
+                            color = Color.White,
+                        )
+                    }
+                }
             }
-            Spacer(Modifier.height(8.dp))
-            Row(
-                modifier = Modifier
+            Column(
+                Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color_SurfaceSoft)
-                    .clickable { pickDate(endDate) { endDate = it } }
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color_White),
             ) {
-                Text("结束日期", fontSize = 14.sp, color = GoaldayDesign.InkPrimary)
-                Text(endDate.toString(), fontSize = 14.sp, color = GoaldayDesign.adaptiveInkMuted)
+                DateRow("开始", startDate) { startDate = it }
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp)
+                        .height(0.7.dp)
+                        .background(GoaldayDesign.InkMuted.copy(alpha = 0.25f)),
+                )
+                DateRow("结束", endDate) { endDate = it }
             }
             Spacer(Modifier.height(16.dp))
 
-            // 预览分区（对照 PLACEHOLDER 分区 + PreviewItem 逐页表；预览截断 30 页）
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("预览", fontSize = 13.sp, color = GoaldayDesign.InkMuted)
-                Text(
-                    if (!rangeValid) "起止日期非法" else "共 $fullCount 页",
-                    fontSize = 12.sp,
-                    color = GoaldayDesign.adaptiveInkMuted,
-                )
-            }
+            // 预览分区
+            Text("预览", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = GoaldayDesign.InkPrimary)
             Spacer(Modifier.height(8.dp))
-            if (!rangeValid) {
-                Text("起始日期不能晚于结束日期", fontSize = 13.sp, color = GoaldayDesign.Pink)
-            } else if (previewItems.isEmpty()) {
-                Text(
-                    "该范围暂无可导出页面（至少勾选一项内容）",
-                    fontSize = 13.sp,
-                    color = GoaldayDesign.adaptiveInkMuted,
-                )
-            } else {
-                androidx.compose.foundation.lazy.LazyColumn(
-                    modifier = Modifier
+            if (previewItems.isEmpty()) {
+                Box(
+                    Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 240.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color_SurfaceSoft),
+                        .height(300.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color_White),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    items(previewItems.size) { index ->
-                        val item = previewItems[index]
+                    Text(
+                        "请选择时间范围和内容类型",
+                        fontSize = 14.sp,
+                        color = GoaldayDesign.adaptiveInkMuted,
+                    )
+                }
+            } else {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color_White)
+                        .padding(vertical = 6.dp),
+                ) {
+                    previewItems.forEachIndexed { index, item ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -250,51 +319,6 @@ internal fun ExportCenterSheet(
                 }
             }
             Spacer(Modifier.height(16.dp))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (canGenerate) GoaldayDesign.InkPrimary else Color_SurfaceSoft)
-                    .clickable(enabled = canGenerate) {
-                        runJob = scope.launch {
-                            generating = true
-                            progressDone = 0
-                            resultUri = withContext(Dispatchers.Default) {
-                                runCatching {
-                                    generateExportPdfQueued(
-                                        context = context,
-                                        startDate = startDate,
-                                        endDate = endDate,
-                                        includeSchedule = includeSchedule,
-                                        includeDiary = includeDiary,
-                                        diaryTextFor = diaryTextFor,
-                                        scheduleEntries = scheduleEntries,
-                                        weeklyTheme = weeklyTheme,
-                                        onProgress = { done, total ->
-                                            progressDone = done
-                                            progressTotal = total
-                                        },
-                                    )
-                                }.getOrNull()
-                            }
-                            generating = false
-                        }
-                    }
-                    .padding(vertical = 14.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    when {
-                        generating -> "生成中 $progressDone/$progressTotal…"
-                        !canGenerate -> "生成 PDF"
-                        else -> "生成 PDF（$fullCount 页）"
-                    },
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (canGenerate || generating) Color.White else GoaldayDesign.adaptiveInkMuted,
-                )
-            }
 
             if (resultUri != null) {
                 Spacer(Modifier.height(12.dp))

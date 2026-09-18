@@ -132,13 +132,6 @@ fun DualPageBookView(
     val prevSpread = pageState.prevSpread()
     val nextLeftPage = nextSpread.first
     val prevRightPage = prevSpread.second
-    // 对照原版真机：开书/翻页后屏顶短暂显示月标题（"9月"中心≈屏高20.3%），2.5s 后隐去
-    var showMonthTitle by remember { mutableStateOf(true) }
-    LaunchedEffect(turnCount) {
-        showMonthTitle = true
-        kotlinx.coroutines.delay(2500)
-        showMonthTitle = false
-    }
 
     val schedulePage = book.pages.filterIsInstance<SchedulePage>().firstOrNull()
         ?: SchedulePage("日程页", emptyList())
@@ -325,16 +318,14 @@ fun DualPageBookView(
     }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        if (showMonthTitle) {
-            Text(
-                "${rightPage.date.monthValue}月",
-                fontSize = 18.sp,
-                color = GoaldayDesign.adaptiveInkPrimary,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 167.dp),
-            )
-        }
+        Text(
+            "${rightPage.date.monthValue}月",
+            fontSize = 18.sp,
+            color = GoaldayDesign.adaptiveInkPrimary,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 167.dp),
+        )
         val configuration = LocalConfiguration.current
         val screenWidthDp = configuration.screenWidthDp.dp
         // 真机dump修正（2026-09-15 BookActivity hierarchy 904x2316）：
@@ -520,8 +511,8 @@ fun DualPageBookView(
                             isLeft = true,
                             progress = progress.value,
                             direction = turnDirection,
-                            // 日程面/日记面均为可交互嵌入页（触摸交给内容），不盖整页点按层
-                            onTap = null,
+                            // 点左页回主界面（日程面→周，日记面→记录）
+                            onTap = { onOpenDate(leftPage.date, leftPage.isSchedule) },
                             configurator = flipConfigurator,
                             content = { pageContent(leftPage, true) },
                             backContent = {
@@ -542,7 +533,7 @@ fun DualPageBookView(
                             isLeft = false,
                             progress = progress.value,
                             direction = turnDirection,
-                            onTap = null,
+                            onTap = { onOpenDate(rightPage.date, rightPage.isSchedule) },
                             configurator = flipConfigurator,
                             content = { pageContent(rightPage, false) },
                             backContent = {
@@ -690,25 +681,21 @@ fun DualPageBookView(
             )
         }
 
-        // 导出中心弹层（对照原版 PrintPage：内容筛选+起止日期+真PDF+分享）
+        // 导出全屏页（打印PDF分区勾选 + 起止日期 + 预览 + 生成分享）
         if (showExportSheet) {
-            Box(Modifier.fillMaxSize()) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color(0x66000000))
-                        .clickableNoRipple { showExportSheet = false },
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(GoaldayDesign.AppBg),
+            ) {
+                ExportCenterSheet(
+                    diaryTextFor = { date ->
+                        diaryStore.diaryText(DiaryStoreBookId, date.toString())
+                    },
+                    scheduleEntries = uiState.schedulePreviewEntries,
+                    weeklyTheme = uiState.weeklyTheme,
+                    onDismiss = { showExportSheet = false },
                 )
-                Box(Modifier.align(Alignment.BottomCenter)) {
-                    ExportCenterSheet(
-                        diaryTextFor = { date ->
-                            diaryStore.diaryText(DiaryStoreBookId, date.toString())
-                        },
-                        scheduleEntries = uiState.schedulePreviewEntries,
-                        weeklyTheme = uiState.weeklyTheme,
-                        onDismiss = { showExportSheet = false },
-                    )
-                }
             }
         }
     }
