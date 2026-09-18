@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.data.BackupManager
 import com.bf410.goaldaylocal.data.BackupSnapshot
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+import com.bf410.goaldaylocal.ui.replica.LocalGoaldayDarkMode
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -80,6 +81,7 @@ fun SettingsScreen(
     onShowGuide: () -> Unit = {},
     onFontSizeChange: (String) -> Unit = {},
     onDarkModeChange: (String) -> Unit = {},
+    onBack: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val manager = remember { BackupManager(context) }
@@ -162,7 +164,7 @@ fun SettingsScreen(
             .background(GoaldayDesign.adaptiveAppBg),
     ) {
         // 顶部 toolbar_normal：返回箭头 + 标题（18sp 加粗）
-        SettingsToolbar()
+        SettingsToolbar(onBack = onBack)
 
         // ScrollView 内容区，padding=20dp
         Column(
@@ -394,7 +396,7 @@ fun SettingsScreen(
 
 // 顶部 toolbar_normal：返回箭头 + 标题（18sp 加粗）
 @Composable
-private fun SettingsToolbar() {
+private fun SettingsToolbar(onBack: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -406,7 +408,9 @@ private fun SettingsToolbar() {
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = "返回",
             tint = GoaldayDesign.adaptiveInkPrimary,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier
+                .size(24.dp)
+                .clickable(onClick = onBack),
         )
         Spacer(Modifier.width(12.dp))
         Text(
@@ -571,6 +575,14 @@ private fun SettingsDivider() {
     )
 }
 
+// 分段控件配色：浅色白底+米色选中黑字，深色沿用现有暗色+品牌橙
+private val SegmentGroupBg: Color
+    @Composable get() = if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveSurfaceSoft else Color.White
+private val SegmentSelectedBg: Color
+    @Composable get() = if (LocalGoaldayDarkMode.current) GoaldayDesign.Pink else GoaldayDesign.MorandiBeige
+private val SegmentSelectedFg: Color
+    @Composable get() = if (LocalGoaldayDarkMode.current) Color.White else Color.Black
+
 // 字体大小切换行：标题"字体大小" + 三按钮组（小/中/大，38x38dp，bg_setting_fontsize_menu 背景）
 @Composable
 private fun FontSizeToggleRow(
@@ -595,7 +607,7 @@ private fun FontSizeToggleRow(
         Row(
             modifier = Modifier
                 .background(
-                    GoaldayDesign.adaptiveSurfaceSoft,
+                    SegmentGroupBg,
                     RoundedCornerShape(GoaldayDesign.RadiusS),
                 ),
         ) {
@@ -605,7 +617,7 @@ private fun FontSizeToggleRow(
                     modifier = Modifier
                         .size(width = 38.dp, height = 38.dp)
                         .background(
-                            if (active) GoaldayDesign.Pink else Color.Transparent,
+                            if (active) SegmentSelectedBg else Color.Transparent,
                             RoundedCornerShape(GoaldayDesign.RadiusS),
                         )
                         .clickable { onSelected(option) },
@@ -615,7 +627,7 @@ private fun FontSizeToggleRow(
                         option.label,
                         fontSize = option.previewSp.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (active) Color.White else GoaldayDesign.adaptiveInkPrimary,
+                        color = if (active) SegmentSelectedFg else GoaldayDesign.adaptiveInkPrimary,
                     )
                 }
             }
@@ -646,7 +658,7 @@ private fun ImageSizeToggleRow(
         Row(
             modifier = Modifier
                 .background(
-                    GoaldayDesign.adaptiveSurfaceSoft,
+                    SegmentGroupBg,
                     RoundedCornerShape(GoaldayDesign.RadiusS),
                 ),
         ) {
@@ -656,7 +668,7 @@ private fun ImageSizeToggleRow(
                     modifier = Modifier
                         .size(width = 57.dp, height = 35.dp)
                         .background(
-                            if (active) GoaldayDesign.Pink else Color.Transparent,
+                            if (active) SegmentSelectedBg else Color.Transparent,
                             RoundedCornerShape(GoaldayDesign.RadiusS),
                         )
                         .clickable { onSelected(option) },
@@ -666,7 +678,7 @@ private fun ImageSizeToggleRow(
                         option.label,
                         fontSize = option.previewSp.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (active) Color.White else GoaldayDesign.adaptiveInkPrimary,
+                        color = if (active) SegmentSelectedFg else GoaldayDesign.adaptiveInkPrimary,
                     )
                 }
             }
@@ -697,7 +709,7 @@ private fun DarkModeToggleRow(
         Row(
             modifier = Modifier
                 .background(
-                    GoaldayDesign.adaptiveSurfaceSoft,
+                    SegmentGroupBg,
                     RoundedCornerShape(GoaldayDesign.RadiusS),
                 ),
         ) {
@@ -707,7 +719,7 @@ private fun DarkModeToggleRow(
                     modifier = Modifier
                         .size(width = 57.dp, height = 35.dp)
                         .background(
-                            if (active) GoaldayDesign.Pink else Color.Transparent,
+                            if (active) SegmentSelectedBg else Color.Transparent,
                             RoundedCornerShape(GoaldayDesign.RadiusS),
                         )
                         .clickable { onSelected(option) },
@@ -717,7 +729,7 @@ private fun DarkModeToggleRow(
                         option.label,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (active) Color.White else GoaldayDesign.adaptiveInkPrimary,
+                        color = if (active) SegmentSelectedFg else GoaldayDesign.adaptiveInkPrimary,
                         maxLines = 1,
                         textAlign = TextAlign.Center,
                     )

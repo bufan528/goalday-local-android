@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -736,14 +737,20 @@ private fun WeekScheduleView(
     ) {
     Row(Modifier.fillMaxSize()) {
         // 左侧：周日期列（今日黑底圆角白字；任意一天点空白进入行内新增）
-        LazyColumn(
-            state = listState,
-            // 对照原版真机：左列表首行距顶栏约 21dp（原版 14 文本 y284 = 顶栏底216 + 行内13 + 顶隙55）
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 18.dp),
+        // 固定态 7 行等高铺满且不可滑（行高=可用高/7），自适应态内容撑高可滑
+        BoxWithConstraints(
             modifier = Modifier
                 // 右侧池固定 177dp（对照 fragment_schedule.xml 池面板宽），左侧占剩余
                 .weight(1f)
                 .fillMaxHeight(),
+        ) {
+            val dayH = (maxHeight - 18.dp) / 7
+        LazyColumn(
+            state = listState,
+            userScrollEnabled = adaptiveMode,
+            // 对照原版真机：左列表首行距顶栏约 21dp（原版 14 文本 y284 = 顶栏底216 + 行内13 + 顶隙55）
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 18.dp),
+            modifier = Modifier.fillMaxSize(),
         ) {
             items(weekDays, key = { it.toEpochDay() }) { date ->
                 val entries = uiState.schedulePreviewEntries
@@ -754,6 +761,7 @@ private fun WeekScheduleView(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .then(if (adaptiveMode) Modifier else Modifier.height(dayH))
                         .onGloballyPositioned { rowBounds[date.toEpochDay()] = it.boundsInWindow() }
                         .background(
                             if (dropTarget == date) WeekBandBg else Color.Transparent,
@@ -1016,7 +1024,8 @@ private fun WeekScheduleView(
                     }
                 }
             }
-            item { Spacer(Modifier.height(90.dp)) }
+            if (adaptiveMode) item { Spacer(Modifier.height(90.dp)) }
+        }
         }
 
         if (!poolCollapsed) {

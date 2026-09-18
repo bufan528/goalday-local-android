@@ -367,9 +367,9 @@ fun GoaldayApp(startTarget: String? = null) {
                 }
             },
             bottomBar = {
-                // 原版底部三图标导航：● 记录主页 / 日历 / 书本（沉浸式手账时隐藏）
+                // 原版底部三图标导航：● 记录主页 / 日历 / 书本（沉浸式手账、设置页时隐藏）
                 val immersiveBook = tab == RootTab.BOOK && bookSurface == BookRootSurface.BOOK && bookEntryMode != BookEntryMode.PLANNER
-                if (!immersiveBook) {
+                if (!immersiveBook && tab != RootTab.SETTINGS) {
                     GoaldayBottomNavOriginal(
                         selected = tab,
                         onSelect = { item ->
@@ -511,6 +511,7 @@ fun GoaldayApp(startTarget: String? = null) {
                             onShowGuide = { showGuide = true },
                             onFontSizeChange = { fontSizeKey = it },
                             onDarkModeChange = { darkModePref = it },
+                            onBack = { navigateBackInsideApp() },
                         )
                     }
                 }
