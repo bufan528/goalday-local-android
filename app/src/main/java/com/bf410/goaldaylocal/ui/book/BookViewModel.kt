@@ -691,6 +691,15 @@ class BookViewModel(
         removeCustomBookById(currentBook.id)
     }
 
+    /** 清单 Tab 长按/详情更多里重命名自建清单（预设示例不可改名） */
+    fun renameListBook(bookId: String, title: String) {
+        val trimmed = title.trim()
+        if (trimmed.isBlank() || !bookId.startsWith("custom_")) return
+        val target = allBooks().firstOrNull { it.id == bookId } ?: return
+        store.updateCustomBook(target.copy(title = trimmed))
+        refreshBooks(selectBookId = target.id, openBook = false)
+    }
+
     /** 按删除清单 Tab 里左滑删除的指定自建清单（预设示例清单不可删） */
     fun removeCustomBookById(bookId: String) {
         if (!bookId.startsWith("custom_")) return

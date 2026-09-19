@@ -1315,7 +1315,7 @@ private fun WeekScheduleView(
                         value = addItemText,
                         onValueChange = { addItemText = it },
                         singleLine = true,
-                        textStyle = TextStyle(fontSize = 16.sp, color = GoaldayDesign.adaptiveInkPrimary),
+                        textStyle = TextStyle(fontSize = 20.sp, lineHeight = 26.sp, color = GoaldayDesign.adaptiveInkPrimary),
                         cursorBrush = SolidColor(TodayCoral),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1341,7 +1341,8 @@ private fun WeekScheduleView(
                                 Box {
                                     if (addItemText.isEmpty()) {
                                         Text(
-                                            "添加条目到当前清单",
+                                            // 占位须塞进 177dp 池宽：短文案不断尾
+                                            "添加新条目",
                                             fontSize = 15.sp,
                                             color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.7f),
                                             maxLines = 1,
@@ -1769,6 +1770,7 @@ private fun buildStructuredDiary(date: LocalDate, entries: List<ScheduleEntry>, 
 // region 清单 Tab —— 专题卡片列表 + FAB（仅本 Tab 显示，对照原版）
 
 @Composable
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 private fun TopicListView(
     uiState: BookUiState,
     viewModel: BookViewModel,
@@ -1782,6 +1784,9 @@ private fun TopicListView(
     var revision by remember { mutableIntStateOf(0) }
     val listContext = LocalContext.current
     var pendingDeleteBook by remember { mutableStateOf<TopicBook?>(null) }
+    // 长按卡片/详情更多的操作表（对照原版长按列表弹出选择框：打开/改名/删除）
+    var sheetBookId by remember { mutableStateOf<String?>(null) }
+    var renameBookId by remember { mutableStateOf<String?>(null) }
     // 新建清单弹层（对照原版 +FAB 的 PlanAddBottomDialog：名称+颜色+完成）
     var showAddSheet by remember { mutableStateOf(false) }
 
@@ -1820,7 +1825,13 @@ private fun TopicListView(
                                 .heightIn(min = 49.dp)
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(GoaldayDesign.adaptiveSurface)
-                                .clickable { onExpandBook(book.id) }
+                                .combinedClickable(
+                                    onClick = { onExpandBook(book.id) },
+                                    onLongClick = {
+                                        InteractionFeedback.haptic(listContext)
+                                        sheetBookId = book.id
+                                    },
+                                )
                                 .padding(start = 13.dp, end = 14.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -1861,6 +1872,7 @@ private fun TopicListView(
                     revision = revision,
                     onToggle = { revision++ },
                     onBack = { onExpandBook(null) },
+                    onMoreClick = { sheetBookId = book.id },
                 )
             }
         }
@@ -1936,6 +1948,116 @@ private fun TopicListView(
             )
         }
 
+        // 长按/更多的操作表：打开 + 重命名/删除（自建清单；对照原版长按选择框）
+        val sheetBook = uiState.books.firstOrNull { it.id == sheetBookId }
+        if (sheetBook != null) {
+            ModalBottomSheet(
+                onDismissRequest = { sheetBookId = null },
+                dragHandle = null,
+                containerColor = if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White,
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 28.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(10.dp).background(sheetBook.color, CircleShape))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            sheetBook.title,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = GoaldayDesign.adaptiveInkPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "打开",
+                        fontSize = 16.sp,
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onExpandBook(sheetBook.id)
+                                sheetBookId = null
+                            }
+                            .padding(vertical = 12.dp),
+                    )
+                    if (sheetBook.id.startsWith("custom_")) {
+                        Text(
+                            "重命名",
+                            fontSize = 16.sp,
+                            color = GoaldayDesign.adaptiveInkPrimary,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    renameBookId = sheetBook.id
+                                    sheetBookId = null
+                                }
+                                .padding(vertical = 12.dp),
+                        )
+                        Text(
+                            "删除",
+                            fontSize = 16.sp,
+                            color = TodayCoral,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    pendingDeleteBook = sheetBook
+                                    sheetBookId = null
+                                }
+                                .padding(vertical = 12.dp),
+                        )
+                    }
+                }
+            }
+        }
+
+        // 重命名弹层（仅自建清单；预设示例不可改名）
+        val renameBook = uiState.books.firstOrNull { it.id == renameBookId }
+        if (renameBook != null) {
+            var renameText by remember(renameBook.id) { mutableStateOf(renameBook.title) }
+            AlertDialog(
+                onDismissRequest = { renameBookId = null },
+                title = { Text("重命名清单", fontSize = 17.sp, fontWeight = FontWeight.SemiBold) },
+                text = {
+                    BasicTextField(
+                        value = renameText,
+                        onValueChange = { renameText = it },
+                        singleLine = true,
+                        textStyle = TextStyle(fontSize = 17.sp, color = GoaldayDesign.adaptiveInkPrimary),
+                        cursorBrush = SolidColor(TodayCoral),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                },
+                confirmButton = {
+                    Text(
+                        "保存",
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clickable {
+                                InteractionFeedback.click(listContext)
+                                viewModel.renameListBook(renameBook.id, renameText)
+                                renameBookId = null
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    )
+                },
+                dismissButton = {
+                    Text(
+                        "取消",
+                        modifier = Modifier
+                            .clickable { renameBookId = null }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    )
+                },
+            )
+        }
+
         if (showAddSheet) {
             TopicAddSheet(
                 onCreate = { title, color ->
@@ -1958,6 +2080,7 @@ private fun TopicDetailSimple(
     revision: Int,
     onToggle: () -> Unit,
     onBack: () -> Unit,
+    onMoreClick: () -> Unit = {},
 ) {
     val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
     val dividerColor = MainTabDivider
@@ -2019,7 +2142,14 @@ private fun TopicDetailSimple(
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
             )
-            Text("···", fontSize = 16.sp, color = GoaldayDesign.adaptiveInkPrimary)
+            Text(
+                "···",
+                fontSize = 16.sp,
+                color = GoaldayDesign.adaptiveInkPrimary,
+                modifier = Modifier
+                    .clickable { onMoreClick() }
+                    .padding(start = 14.dp),
+            )
         }
         LazyColumn(
             // 行自带左右边距（对照原版勾选框起 27dp、内容尾 27dp、分隔线边距 20dp）
