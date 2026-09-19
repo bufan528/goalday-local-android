@@ -235,6 +235,7 @@ fun OriginalMainScreen(
     onOpenBook: () -> Unit,
     onOpenInspiration: () -> Unit,
     onOpenSettings: () -> Unit,
+    onListDetailExpandedChange: (Boolean) -> Unit = {},
 ) {
     val uiState by bookViewModel.uiState.collectAsState()
     var subTabIndex by rememberSaveable { mutableIntStateOf(MainSubTab.WEEK.ordinal) }
@@ -305,6 +306,8 @@ fun OriginalMainScreen(
     // 对照原版清单展开态（o_listexp）：详情是全屏页，不带主 Tab 栏；
     // 展开时藏起顶部 Tab 栏，详情自带顶栏（TopicDetailSimple）。
     val listDetailExpanded = currentSubTab == MainSubTab.LIST && expandedBookId != null
+    // 清单详情全屏时通知应用层藏起底部导航（对照原版详情页无底栏）
+    LaunchedEffect(listDetailExpanded) { onListDetailExpandedChange(listDetailExpanded) }
 
     // 对照原版真机：状态栏与顶栏同色（米色延伸到状态栏区）+ 黑色状态栏图标；
     // 清单详情全屏时顶栏为内容底色。
@@ -1946,7 +1949,7 @@ private fun TopicListView(
     }
 }
 
-/** 清单详情：‹ 返回 + 色块 + 标题 + ···；编号条目 + 珊瑚描边方形勾选框 + 虚线分隔（对照原版截图） */
+/** 清单详情：返回 + 色点 + 标题 + 更多；编号 + 圆形勾选 + 虚线分隔（对照原版详情页取证） */
 @Composable
 private fun TopicDetailSimple(
     book: TopicBook,
@@ -1958,9 +1961,34 @@ private fun TopicDetailSimple(
 ) {
     val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
     val dividerColor = MainTabDivider
+    val detailContext = LocalContext.current
+    // 勾选切换（对照原版点勾选框切换；正文行内直接编辑下轮再做，本轮整行点按保持可切换）
+    fun toggleItem(item: String, pageTitle: String, checked: Boolean) {
+        InteractionFeedback.click(detailContext)
+        InteractionFeedback.haptic(detailContext, 30L)
+        store.setChecked(book.id, pageTitle, item, !checked)
+        // 完成日期戳（对照原版勾选后行下显示的日期章）
+        store.setCheckedDate(
+            book.id,
+            pageTitle,
+            item,
+            if (!checked) LocalDate.now().toString() else "",
+        )
+        // 联动任务池：勾选进池（可拖去排期），取消勾选移出（同一 (bookId, 页题) 存储）
+        if (page != null) {
+            val pool = store.todayPlanItems(book.id, pageTitle)
+            store.saveTodayPlanItems(
+                book.id,
+                pageTitle,
+                if (!checked) (pool + item).distinct() else pool.filterNot { it == item },
+            )
+            viewModel.refreshSchedulePreview()
+        }
+        onToggle()
+    }
     Column(Modifier.fillMaxSize()) {
-        // 对照原版展开态顶栏（o_listexp）：全屏页无主 Tab 栏，顶栏为内容底色；
-        // 返回黑 chevron + 本书色方块 + 22sp 级标题 + 右侧更多。
+        // 对照原版展开态顶栏：全屏页无主 Tab 栏，顶栏为内容底色；
+        // 返回 chevron + 本书色圆点 + 20sp 标题 + 右侧更多。
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1978,8 +2006,8 @@ private fun TopicDetailSimple(
             )
             Box(
                 Modifier
-                    .size(11.dp)
-                    .background(book.color, RoundedCornerShape(2.dp)),
+                    .size(10.dp)
+                    .background(book.color, CircleShape),
             )
             Spacer(Modifier.width(8.dp))
             Text(
@@ -1994,82 +2022,72 @@ private fun TopicDetailSimple(
             Text("···", fontSize = 16.sp, color = GoaldayDesign.adaptiveInkPrimary)
         }
         LazyColumn(
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+            // 行自带左右边距（对照原版勾选框起 27dp、内容尾 27dp、分隔线边距 20dp）
+            contentPadding = PaddingValues(vertical = 0.dp),
         ) {
             // key 带上 revision：勾选写入的是 MMKV（非 Compose 观测状态），
             // revision 变化时换 key 强制重建 item，重读 isChecked 刷新勾选框
             itemsIndexed(page?.items ?: emptyList(), key = { _, item -> "$revision-$item" }) { index, item ->
-                val detailContext = LocalContext.current
                 val checked = store.isChecked(book.id, page?.title ?: "", item)
                 val checkedDateText = if (checked) store.checkedDate(book.id, page?.title ?: "", item) else ""
                 Column {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                InteractionFeedback.click(detailContext)
-                                InteractionFeedback.haptic(detailContext, 30L)
-                                store.setChecked(book.id, page?.title ?: "", item, !checked)
-                                // 完成日期戳（对照原版勾选后行下显示的日期 chip）
-                                store.setCheckedDate(
-                                    book.id,
-                                    page?.title ?: "",
-                                    item,
-                                    if (!checked) LocalDate.now().toString() else "",
-                                )
-                                // 联动任务池：勾选进池（可拖去排期），取消勾选移出（同一 (bookId, 页题) 存储）
-                                if (page != null) {
-                                    val pool = store.todayPlanItems(book.id, page.title)
-                                    store.saveTodayPlanItems(
-                                        book.id,
-                                        page.title,
-                                        if (!checked) (pool + item).distinct() else pool.filterNot { it == item },
-                                    )
-                                    viewModel.refreshSchedulePreview()
-                                }
-                                onToggle()
-                            }
-                            .padding(vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                            .clickable { toggleItem(item, page?.title ?: "", checked) }
+                            .padding(start = 27.dp, end = 27.dp, top = 20.dp, bottom = 20.dp),
+                        verticalAlignment = Alignment.Top,
                     ) {
+                        // 对照原版勾选框：圆形，空心书色环；完成后书色填充 + 白勾
                         Box(
                             modifier = Modifier
+                                .padding(top = 3.dp)
                                 .size(20.dp)
-                                .border(2.dp, if (checked) Color.Transparent else book.color, RoundedCornerShape(4.dp))
-                                .background(if (checked) GoaldayDesign.Pink else Color.Transparent, RoundedCornerShape(4.dp)),
+                                .border(1.5.dp, book.color, CircleShape)
+                                .background(if (checked) book.color else Color.Transparent, CircleShape),
                             contentAlignment = Alignment.Center,
                         ) {
                             if (checked) {
                                 Text("✓", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
-                        Spacer(Modifier.width(14.dp))
+                        Spacer(Modifier.width(10.dp))
                         Text(
-                            "${index + 1}  $item",
-                            fontSize = 18.sp,
-                            lineHeight = 25.sp,
+                            "${index + 1}",
+                            fontSize = 20.sp,
+                            lineHeight = 28.sp,
                             color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                         )
-                    }
-                    if (checked && checkedDateText.isNotBlank()) {
-                        // 完成日期戳：原版勾选后行下弹出的橙色圆角日期 chip
-                        Box(
-                            modifier = Modifier
-                                .padding(start = 31.dp, bottom = 8.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(GoaldayDesign.Pink.copy(alpha = 0.75f))
-                                .padding(horizontal = 10.dp, vertical = 3.dp),
-                        ) {
+                        Spacer(Modifier.width(8.dp))
+                        Column(Modifier.weight(1f)) {
                             Text(
-                                checkedDateText,
-                                fontSize = 12.sp,
-                                color = Color.White,
+                                item,
+                                fontSize = 20.sp,
+                                lineHeight = 28.sp,
+                                color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                             )
+                            if (checked && checkedDateText.isNotBlank()) {
+                                // 完成日期章：对照原版勾选后行下弹出的书色圆角日期（点章可跳当日日记，下轮接）
+                                Box(
+                                    modifier = Modifier
+                                        .padding(top = 8.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(book.color)
+                                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                                ) {
+                                    Text(
+                                        checkedDateText,
+                                        fontSize = 13.sp,
+                                        color = Color.White,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
                 Box(
                     Modifier
+                        .padding(horizontal = 20.dp)
                         .fillMaxWidth()
                         .height(1.dp)
                         .drawBehind {

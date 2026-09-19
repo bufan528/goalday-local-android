@@ -185,6 +185,8 @@ fun GoaldayApp(startTarget: String? = null) {
     var calendarFocusDay by rememberSaveable { mutableStateOf<Int?>(null) }
     // 主界面周选择器触发器：底部日历图标在 MAIN 下递增
     var mainWeekPickerTick by remember { mutableIntStateOf(0) }
+    // 清单详情展开态（对照原版详情全屏页无底栏）：主界面上报，底栏据此隐藏
+    var mainListDetailExpanded by remember { mutableStateOf(false) }
     // 书内点页 → 跳回原版式主界面（日期与 Tab 由 OriginalMainScreen 消费桥接）
     LaunchedEffect(com.bf410.goaldaylocal.ui.main.MainUiBridge.tick) {
         if (com.bf410.goaldaylocal.ui.main.MainUiBridge.date != null) {
@@ -367,9 +369,10 @@ fun GoaldayApp(startTarget: String? = null) {
                 }
             },
             bottomBar = {
-                // 原版底部三图标导航：● 记录主页 / 日历 / 书本（沉浸式手账、设置页时隐藏）
+                // 原版底部三图标导航：● 记录主页 / 日历 / 书本（沉浸式手账、设置页、清单详情全屏时隐藏）
                 val immersiveBook = tab == RootTab.BOOK && bookSurface == BookRootSurface.BOOK && bookEntryMode != BookEntryMode.PLANNER
-                if (!immersiveBook && tab != RootTab.SETTINGS) {
+                val listDetailFullscreen = tab == RootTab.MAIN && mainListDetailExpanded
+                if (!immersiveBook && tab != RootTab.SETTINGS && !listDetailFullscreen) {
                     GoaldayBottomNavOriginal(
                         selected = tab,
                         onSelect = { item ->
@@ -490,6 +493,7 @@ fun GoaldayApp(startTarget: String? = null) {
                         RootTab.MAIN -> OriginalMainScreen(
                             bookViewModel = bookViewModel,
                             openWeekPickerTick = mainWeekPickerTick,
+                            onListDetailExpandedChange = { mainListDetailExpanded = it },
                             onOpenBook = {
                                 tab = RootTab.BOOK
                                 bookSurface = BookRootSurface.BOOK
