@@ -555,9 +555,96 @@ class BookViewModel(
         syncEditableContent()
     }
 
+    /** 条目改色（对照原版周底栏选色：专题色，无值=默认） */
+    fun updateScheduleColorFromHandbook(entryId: String, colorArgb: Int?) {
+        if (entryId.isBlank()) return
+        scheduleRepository.saveEntries(scheduleRepository.entries().map { entry ->
+            if (entry.id == entryId) entry.copy(colorArgb = colorArgb) else entry
+        })
+        syncEditableContent()
+    }
+
     fun deleteScheduleFromHandbook(entryId: String) {
         if (entryId.isBlank()) return
         scheduleRepository.saveEntries(scheduleRepository.entries().filterNot { it.id == entryId })
+        syncEditableContent()
+    }
+
+    /** 周多选置顶（对照原版周底栏置顶：选中条目在本日排最前） */
+    fun pinScheduleEntries(entryIds: Set<String>, pinned: Boolean) {
+        if (entryIds.isEmpty()) return
+        scheduleRepository.saveEntries(scheduleRepository.entries().map { entry ->
+            if (entry.id in entryIds) entry.copy(pinned = pinned) else entry
+        })
+        syncEditableContent()
+    }
+
+    /** 重复条目作用域（对照原版 pop_repeat）：仅此日程 / 所有未来 */
+    enum class RepeatScope { ONLY_THIS, ALL_FUTURE }
+
+    /** 作用域请求：批量删除或单条改期时，若命中重复序列先弹框确认 */
+    data class RepeatScopeRequest(
+        val targetIds: Set<String>,
+        val isMove: Boolean,
+        val moveMonth: Int = 0,
+        val moveDay: Int = 0,
+    )
+
+    private fun epochDayOf(entry: ScheduleEntry): Long =
+        runCatching { LocalDate.of(entry.year, entry.month, entry.day).toEpochDay() }.getOrElse { 0L }
+
+    fun repeatGroupSiblings(entry: ScheduleEntry): List<ScheduleEntry> {
+        if (entry.repeatGroupId.isBlank()) return listOf(entry)
+        return scheduleRepository.entries().filter { it.repeatGroupId == entry.repeatGroupId }
+    }
+
+    fun isRepeatingEntry(entry: ScheduleEntry): Boolean =
+        entry.repeatRule.isNotBlank() ||
+            (entry.repeatGroupId.isNotBlank() && repeatGroupSiblings(entry).size > 1)
+
+    /** 按作用域删除（批量）：ALL_FUTURE 展开同组今日及以后，其余仅删自身 */
+    fun deleteScheduleWithScope(targetIds: Set<String>, scope: RepeatScope) {
+        if (targetIds.isEmpty()) return
+        val all = scheduleRepository.entries()
+        val byId = all.associateBy { it.id }
+        val deleteIds = mutableSetOf<String>()
+        targetIds.forEach { id ->
+            val target = byId[id] ?: return@forEach
+            if (scope == RepeatScope.ALL_FUTURE && target.repeatGroupId.isNotBlank()) {
+                val tDay = epochDayOf(target)
+                all.filter { it.repeatGroupId == target.repeatGroupId && epochDayOf(it) >= tDay }
+                    .forEach { deleteIds.add(it.id) }
+            } else {
+                deleteIds.add(id)
+            }
+        }
+        scheduleRepository.saveEntries(all.filterNot { it.id in deleteIds })
+        syncEditableContent()
+    }
+
+    /** 按作用域改期（单条）：ALL_FUTURE 把同组今日及以后整体平移同样天数 */
+    fun moveScheduleDayWithScope(targetId: String, month: Int, day: Int, scope: RepeatScope) {
+        val year = store.calendarAnchorYear()
+        val safeMonth = month.coerceIn(1, 12)
+        val maxDay = YearMonth.of(year, safeMonth).lengthOfMonth()
+        val safeDay = day.coerceIn(1, maxDay)
+        val newDate = LocalDate.of(year, safeMonth, safeDay)
+        val all = scheduleRepository.entries()
+        val target = all.firstOrNull { it.id == targetId } ?: return
+        val deltas = mutableMapOf<String, Long>()
+        if (scope == RepeatScope.ALL_FUTURE && target.repeatGroupId.isNotBlank()) {
+            val tDay = epochDayOf(target)
+            val delta = newDate.toEpochDay() - tDay
+            all.filter { it.repeatGroupId == target.repeatGroupId && epochDayOf(it) >= tDay }
+                .forEach { deltas[it.id] = delta }
+        } else {
+            deltas[targetId] = newDate.toEpochDay() - epochDayOf(target)
+        }
+        scheduleRepository.saveEntries(all.map { entry ->
+            val delta = deltas[entry.id] ?: return@map entry
+            val shifted = LocalDate.ofEpochDay(epochDayOf(entry) + delta)
+            entry.copy(year = shifted.year, month = shifted.monthValue, day = shifted.dayOfMonth, completed = false)
+        })
         syncEditableContent()
     }
 

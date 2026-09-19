@@ -136,6 +136,7 @@ class LocalStateStore(
                             status == ScheduleStatus.DONE
                         },
                         colorArgb = if (item.has("colorArgb")) item.optInt("colorArgb").takeIf { it != 0 } else null,
+                        pinned = item.optBoolean("pinned", false),
                     )
                 }.getOrNull()?.let(::add)
             }
@@ -160,6 +161,7 @@ class LocalStateStore(
                 .put("repeatGroupId", entry.repeatGroupId)
                 .put("status", entry.status.name)
                 .put("completed", entry.completed)
+                .put("pinned", entry.pinned)
             if (entry.colorArgb != null) json.put("colorArgb", entry.colorArgb)
             array.put(json)
         }

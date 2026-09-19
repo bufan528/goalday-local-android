@@ -249,6 +249,17 @@ fun OriginalMainScreen(
     var editingDate by remember { mutableStateOf<LocalDate?>(null) }
     // 清单详情（提升到主界面层以便系统返回拦截）
     var expandedBookId by rememberSaveable { mutableStateOf<String?>(null) }
+    // 改期作用域确认（对照原版 pop_repeat：命中重复序列先选仅此/未来）
+    var repeatScopeRequest by remember { mutableStateOf<BookViewModel.RepeatScopeRequest?>(null) }
+    fun executeRepeatScope(request: BookViewModel.RepeatScopeRequest, scope: BookViewModel.RepeatScope) {
+        if (request.isMove) {
+            val id = request.targetIds.firstOrNull()
+            if (id != null) bookViewModel.moveScheduleDayWithScope(id, request.moveMonth, request.moveDay, scope)
+        } else {
+            bookViewModel.deleteScheduleWithScope(request.targetIds, scope)
+        }
+        repeatScopeRequest = null
+    }
     // 日程条目编辑弹层（点/长按条目唤出：编辑标题/时间/移动/删除，对照原版 item_target_detail）
     var editingEntry by remember { mutableStateOf<ScheduleEntry?>(null) }
     // Tab 显隐（对照原版长按顶栏的 dialog_tab_manage，月默认隐藏）
@@ -271,13 +282,17 @@ fun OriginalMainScreen(
     }
     var showTabManage by remember { mutableStateOf(false) }
 
-    // 系统返回：清单详情/行内编辑/条目编辑优先返回上一级，其余交给应用级返回
+    // 系统返回：清单详情/行内编辑/条目编辑/作用域框优先返回上一级，其余交给应用级返回
     androidx.activity.compose.BackHandler(
-        enabled = editingDate != null || expandedBookId != null || editingEntry != null,
+        enabled = editingDate != null || expandedBookId != null || editingEntry != null ||
+            repeatScopeRequest != null,
     ) {
-        editingDate = null
-        expandedBookId = null
-        editingEntry = null
+        when {
+            repeatScopeRequest != null -> repeatScopeRequest = null
+            editingEntry != null -> editingEntry = null
+            editingDate != null -> editingDate = null
+            else -> expandedBookId = null
+        }
     }
 
     LaunchedEffect(Unit) { bookViewModel.refreshSchedulePreview() }
@@ -454,7 +469,112 @@ fun OriginalMainScreen(
             viewModel = bookViewModel,
             allEntries = uiState.schedulePreviewEntries,
             onDismiss = { editingEntry = null },
+            onRequestRepeatScope = { request -> repeatScopeRequest = request },
         )
+    }
+    repeatScopeRequest?.let { request ->
+        RepeatScopeSheet(
+            isMove = request.isMove,
+            onPick = { scope ->
+                executeRepeatScope(request, scope)
+                if (request.isMove) editingEntry = null
+            },
+            onDismiss = { repeatScopeRequest = null },
+        )
+    }
+}
+
+/** 改期作用域确认（对照原版 pop_repeat：命中重复序列时选仅此/未来；行高 44dp） */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RepeatScopeSheet(
+    isMove: Boolean,
+    onPick: (BookViewModel.RepeatScope) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        dragHandle = null,
+        containerColor = if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(start = 15.dp, end = 15.dp, top = 8.dp, bottom = 28.dp),
+        ) {
+            @Composable
+            fun ScopeRow(label: String, scope: BookViewModel.RepeatScope) {
+                Text(
+                    label,
+                    fontSize = 16.sp,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onPick(scope) }
+                        .padding(vertical = 14.dp),
+                )
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(0.7.dp)
+                        .background(GoaldayDesign.adaptiveDivider.copy(alpha = 0.6f)),
+                )
+            }
+            ScopeRow("仅此日程", BookViewModel.RepeatScope.ONLY_THIS)
+            if (isMove) {
+                ScopeRow("更改所有未来日程的时间", BookViewModel.RepeatScope.ALL_FUTURE)
+            } else {
+                ScopeRow("删除所有未来日程", BookViewModel.RepeatScope.ALL_FUTURE)
+            }
+        }
+    }
+}
+
+/** 周底色板（对照原版周底栏选色：行内编辑与池拖放时浮于底部，点选新条目颜色） */
+@Composable
+private fun WeekColorBar(
+    modifier: Modifier = Modifier,
+    bookColor: Color,
+    activeArgb: Int?,
+    onPick: (Int?) -> Unit,
+) {
+    val defaultArgb = bookColor.toArgb()
+    val barContext = LocalContext.current
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        EntryColorChoices.forEach { argb ->
+            val resolved = argb ?: defaultArgb
+            val isSelected = (activeArgb ?: defaultArgb) == resolved
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(Color(resolved))
+                    .border(
+                        width = if (isSelected) 2.dp else 0.dp,
+                        color = if (isSelected) GoaldayDesign.adaptiveInkPrimary else Color.Transparent,
+                        shape = CircleShape,
+                    )
+                    .clickable {
+                        InteractionFeedback.click(barContext)
+                        onPick(argb)
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (argb == null) {
+                    Box(
+                        Modifier
+                            .size(22.dp)
+                            .border(1.2.dp, Color.White.copy(alpha = 0.85f), CircleShape),
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -608,6 +728,16 @@ data class SwipeAction(
     val onAction: () -> Unit,
 )
 
+/** 日程条目选色（对照原版周底栏色板；null=默认色） */
+private val EntryColorChoices: List<Int?> = listOf(
+    null,
+    0xFFF79941.toInt(),
+    0xFFF66061.toInt(),
+    0xFFBBD1AD.toInt(),
+    0xFF8FA8F0.toInt(),
+    0xFFC9A8F0.toInt(),
+)
+
 /**
  * 行左滑露出操作层（对照原版 SwipeRevealLayout，item_target_detail / item_plan_item）：
  * 内容行向左拖动露出右侧操作按钮，超过一半松手保持展开，否则弹回。
@@ -729,6 +859,9 @@ private fun WeekScheduleView(
     var poolCollapsed by rememberSaveable { mutableStateOf(false) }
     // 右池行内改名：点条目聚焦改名（清空失焦=删除），长按拖拽排期
     var poolEditingItem by remember { mutableStateOf<String?>(null) }
+    // 新增/拖放条目颜色（对照原版周底栏选色；null=清单默认色）
+    var newEntryColorArgb by remember { mutableStateOf<Int?>(null) }
+    var dropColorArgb by remember { mutableStateOf<Int?>(null) }
     var poolEditValue by remember { mutableStateOf(TextFieldValue()) }
     val poolEditFocus = remember { FocusRequester() }
     val poolKeyboard = LocalSoftwareKeyboardController.current
@@ -786,7 +919,7 @@ private fun WeekScheduleView(
             items(weekDays, key = { it.toEpochDay() }) { date ->
                 val entries = uiState.schedulePreviewEntries
                     .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
-                    .sortedWith(compareBy({ it.timeText }, { it.id }))
+                    .sortedWith(compareBy({ !it.pinned }, { it.timeText }, { it.id }))
                 val isToday = date == today
                 val isEditing = editingDate == date
                 Column(
@@ -966,6 +1099,7 @@ private fun WeekScheduleView(
                                                             quickInput,
                                                             date.monthValue,
                                                             date.dayOfMonth,
+                                                            colorArgb = newEntryColorArgb,
                                                         )
                                                     }
                                                     quickInput = ""
@@ -1222,14 +1356,16 @@ private fun WeekScheduleView(
                                                 val item = draggingItem
                                                 if (target != null && item != null) {
                                                     InteractionFeedback.click(dragContext)
-                                                    viewModel.addScheduleFromHandbook(item, target.monthValue, target.dayOfMonth, colorArgb = currentBook?.color?.toArgb())
+                                                    viewModel.addScheduleFromHandbook(item, target.monthValue, target.dayOfMonth, colorArgb = dropColorArgb ?: currentBook?.color?.toArgb())
                                                 }
                                                 draggingItem = null
                                                 dropTarget = null
+                                                dropColorArgb = null
                                             },
                                             onDragCancel = {
                                                 draggingItem = null
                                                 dropTarget = null
+                                                dropColorArgb = null
                                             },
                                         )
                                     }
@@ -1385,6 +1521,18 @@ private fun WeekScheduleView(
         ) {
             Text(label, fontSize = 15.sp, color = GoaldayDesign.adaptiveInkPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
+    }
+    // 底色板：行内编辑或池拖放时浮于底部（对照原版周底栏选色；顶起键盘）
+    if (editingDate != null || draggingItem != null) {
+        val currentArgb = if (draggingItem != null) dropColorArgb else newEntryColorArgb
+        WeekColorBar(
+            modifier = Modifier.align(Alignment.BottomCenter).imePadding(),
+            bookColor = uiState.books.getOrNull(uiState.selectedBookIndex)?.color ?: PoolBullet,
+            activeArgb = currentArgb,
+            onPick = { picked ->
+                if (draggingItem != null) dropColorArgb = picked else newEntryColorArgb = picked
+            },
+        )
     }
     } // Box
 }
@@ -2571,6 +2719,7 @@ private fun EntryEditSheet(
     viewModel: BookViewModel,
     allEntries: List<ScheduleEntry>,
     onDismiss: () -> Unit,
+    onRequestRepeatScope: (BookViewModel.RepeatScopeRequest) -> Unit = {},
 ) {
     val entryDate = remember(entry.id) { LocalDate.of(entry.year, entry.month, entry.day) }
     val weekDays = remember(entry.id) {
@@ -2644,6 +2793,60 @@ private fun EntryEditSheet(
                 },
             )
             Spacer(Modifier.height(12.dp))
+            // 颜色与置顶（对照原版周底栏选色/置顶：专题色，无值=默认；置顶排本日最前）
+            var pinnedNow by remember(entry.id) { mutableStateOf(entry.pinned) }
+            var colorNow by remember(entry.id) { mutableStateOf(entry.colorArgb) }
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                EntryColorChoices.forEach { argb ->
+                    val isSelected = colorNow == argb
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(argb?.let { Color(it) } ?: Color.Transparent)
+                            .border(
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveDivider,
+                                shape = CircleShape,
+                            )
+                            .clickable {
+                                colorNow = argb
+                                viewModel.updateScheduleColorFromHandbook(entry.id, argb)
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (argb == null) {
+                            Box(
+                                Modifier
+                                    .size(20.dp)
+                                    .border(1.2.dp, GoaldayDesign.adaptiveInkMuted, CircleShape),
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (pinnedNow) TodayBlack else fieldBg)
+                        .clickable {
+                            pinnedNow = !pinnedNow
+                            viewModel.pinScheduleEntries(setOf(entry.id), pinnedNow)
+                        }
+                        .padding(horizontal = 12.dp, vertical = 7.dp),
+                ) {
+                    Text(
+                        if (pinnedNow) "取消置顶" else "置顶",
+                        fontSize = 13.sp,
+                        color = if (pinnedNow) Color.White else GoaldayDesign.adaptiveInkPrimary,
+                    )
+                }
+            }
+            Spacer(Modifier.height(12.dp))
             // 移动到本周其他天
             Text(
                 "移动到",
@@ -2665,8 +2868,20 @@ private fun EntryEditSheet(
                                 if (isCurrent) TodayBlack else fieldBg,
                             )
                             .clickable(enabled = !isCurrent) {
-                                viewModel.moveScheduleDayFromHandbook(entry.id, day.monthValue, day.dayOfMonth)
-                                onDismiss()
+                                if (viewModel.isRepeatingEntry(entry)) {
+                                    onDismiss()
+                                    onRequestRepeatScope(
+                                        BookViewModel.RepeatScopeRequest(
+                                            targetIds = setOf(entry.id),
+                                            isMove = true,
+                                            moveMonth = day.monthValue,
+                                            moveDay = day.dayOfMonth,
+                                        ),
+                                    )
+                                } else {
+                                    viewModel.moveScheduleDayFromHandbook(entry.id, day.monthValue, day.dayOfMonth)
+                                    onDismiss()
+                                }
                             }
                             .padding(vertical = 9.dp),
                         contentAlignment = Alignment.Center,
@@ -2702,7 +2917,7 @@ private fun EntryEditSheet(
                     )
                 }
                 Spacer(Modifier.weight(1f))
-                // 删除（红字，对照原版危险操作）
+                // 删除（红字，对照原版危险操作；重复条目先选作用域）
                 Text(
                     "删除",
                     fontSize = 15.sp,
@@ -2712,8 +2927,17 @@ private fun EntryEditSheet(
                         .clickable {
                             InteractionFeedback.click(sheetContext)
                             InteractionFeedback.haptic(sheetContext)
-                            viewModel.deleteScheduleFromHandbook(entry.id)
-                            // 同步清理该日日记「今日完成」段（与勾选联动共用同一存储）
+                            if (viewModel.isRepeatingEntry(entry)) {
+                                onDismiss()
+                                onRequestRepeatScope(
+                                    BookViewModel.RepeatScopeRequest(
+                                        targetIds = setOf(entry.id),
+                                        isMove = false,
+                                    ),
+                                )
+                            } else {
+                                viewModel.deleteScheduleFromHandbook(entry.id)
+                                // 同步清理该日日记「今日完成」段（与勾选联动共用同一存储）
                             val remaining = allEntries.filter {
                                 it.id != entry.id &&
                                     it.year == entry.year && it.month == entry.month && it.day == entry.day
@@ -2729,6 +2953,7 @@ private fun EntryEditSheet(
                                 ),
                             )
                             onDismiss()
+                            }
                         }
                         .padding(horizontal = 12.dp, vertical = 7.dp),
                 )
@@ -2927,7 +3152,7 @@ private fun MonthScheduleView(
         items(monthDays, key = { it.toEpochDay() }) { date ->
             val entries = uiState.schedulePreviewEntries
                 .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
-                .sortedWith(compareBy({ it.timeText }, { it.id }))
+                .sortedWith(compareBy({ !it.pinned }, { it.timeText }, { it.id }))
             val isToday = date == today
             Row(
                 modifier = Modifier

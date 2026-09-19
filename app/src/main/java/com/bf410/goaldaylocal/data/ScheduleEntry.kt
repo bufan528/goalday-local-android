@@ -20,6 +20,8 @@ data class ScheduleEntry(
     val completed: Boolean = false,
     /** 清单专题色（ARGB），有值=专题关联条目；null=普通条目 */
     val colorArgb: Int? = null,
+    /** 周多选置顶（对照原版周底栏置顶）：置顶条目排本日最前 */
+    val pinned: Boolean = false,
 ) {
     val status: ScheduleStatus
         get() = if (completed) ScheduleStatus.DONE else ScheduleStatus.PLANNED

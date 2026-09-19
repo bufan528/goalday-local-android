@@ -193,7 +193,7 @@ internal fun InBookSchedulePreview(
             val date = weekStartDate.plusDays(offset.toLong())
             val entries = schedulePreviewEntries.filter {
                 it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth
-            }.sortedWith(compareBy({ it.timeText }))
+            }.sortedWith(compareBy({ !it.pinned }, { it.timeText }))
             ScheduleWeekDay(
                 day = date.dayOfMonth,
                 weekday = weekdayNames.getOrElse(date.dayOfWeek.value - 1) { "" },
