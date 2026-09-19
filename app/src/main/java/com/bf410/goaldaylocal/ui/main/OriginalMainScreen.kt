@@ -56,6 +56,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
@@ -1149,7 +1150,9 @@ private fun WeekScheduleView(
                 val targetPage = currentBook?.pages?.filterIsInstance<TargetPage>()?.firstOrNull()
                 val listItems = if (targetPage != null && currentBook != null) {
                     val hidden = diaryStore.hiddenPageItems(currentBook.id, targetPage.title)
-                    ((targetPage.items - hidden) + diaryStore.customPageItems(currentBook.id, targetPage.title)).distinct()
+                    val merged = ((targetPage.items - hidden) + diaryStore.customPageItems(currentBook.id, targetPage.title)).distinct()
+                    // 置顶顺序与详情页一致
+                    diaryStore.applyPageItemOrder(currentBook.id, targetPage.title, merged)
                 } else {
                     uiState.todayPlanItems
                 }
@@ -2089,6 +2092,35 @@ private fun TopicDetailSimple(
     val showCompleted = store.detailShowCompleted(book.id)
     val showNumbers = store.detailShowNumbers(book.id)
     val showDates = store.detailShowDates(book.id)
+    val pageTitle = page?.title ?: ""
+    // 底部操作栏选中态：长按行选中，再次长按取消（对照原版选中后出底栏）
+    var selectedDetailItem by remember { mutableStateOf<String?>(null) }
+    var renameDetailItem by remember { mutableStateOf<String?>(null) }
+    fun selectDetailItem(item: String) {
+        InteractionFeedback.haptic(detailContext)
+        selectedDetailItem = if (selectedDetailItem == item) null else item
+    }
+    // 日期改期（对照原版底栏日期钮：选定日期记为完成时间并勾选）
+    fun assignDetailItemDate(item: String, dateText: String) {
+        store.setChecked(book.id, pageTitle, item, true)
+        store.setCheckedDate(book.id, pageTitle, item, dateText)
+        val pool = store.todayPlanItems(book.id, pageTitle)
+        store.saveTodayPlanItems(book.id, pageTitle, (pool + item).distinct())
+        viewModel.refreshSchedulePreview()
+        onToggle()
+    }
+    fun pickDetailItemDate(item: String) {
+        val init = runCatching {
+            store.checkedDate(book.id, pageTitle, item).ifBlank { LocalDate.now().toString() }.let(LocalDate::parse)
+        }.getOrElse { LocalDate.now() }
+        android.app.DatePickerDialog(
+            detailContext,
+            { _, year, month, day -> assignDetailItemDate(item, LocalDate.of(year, month + 1, day).toString()) },
+            init.year,
+            init.monthValue - 1,
+            init.dayOfMonth,
+        ).show()
+    }
     Column(Modifier.fillMaxSize()) {
         // 对照原版展开态顶栏：全屏页无主 Tab 栏，顶栏为内容底色；
         // 返回 chevron + 本书色圆点 + 20sp 标题 + 右侧更多。
@@ -2175,6 +2207,7 @@ private fun TopicDetailSimple(
             }
         }
         LazyColumn(
+            modifier = Modifier.weight(1f),
             // 行自带左右边距（对照原版勾选框起 27dp、内容尾 27dp、分隔线边距 20dp）
             contentPadding = PaddingValues(vertical = 0.dp),
         ) {
@@ -2182,18 +2215,34 @@ private fun TopicDetailSimple(
             // revision 变化时换 key 强制重建 item，重读 isChecked 刷新勾选框；
             // 显示选项同样带进 key，否则 key 命中会跳过重组、开关看着没反应；
             // 关掉“显示已完成”时过滤掉已勾选项
-            val visibleItems = (page?.items ?: emptyList()).filter { item ->
-                showCompleted || !store.isChecked(book.id, page?.title ?: "", item)
+            val baseItems = viewModel.detailBaseItems(book, pageTitle)
+            val orderedItems = store.applyPageItemOrder(book.id, pageTitle, baseItems)
+            val visibleItems = orderedItems.filter { item ->
+                showCompleted || !store.isChecked(book.id, pageTitle, item)
             }
             val displayFlags = "${if (showCompleted) 1 else 0}${if (showNumbers) 1 else 0}${if (showDates) 1 else 0}"
             itemsIndexed(visibleItems, key = { _, item -> "$revision-$displayFlags-$item" }) { index, item ->
-                val checked = store.isChecked(book.id, page?.title ?: "", item)
-                val checkedDateText = if (checked) store.checkedDate(book.id, page?.title ?: "", item) else ""
-                Column {
+                val checked = store.isChecked(book.id, pageTitle, item)
+                val checkedDateText = if (checked) store.checkedDate(book.id, pageTitle, item) else ""
+                // 左滑露出编辑/删除（对照原版 SwipeRevealLayout 黑编辑+红删除）；点按切换勾选，长按选中出底栏
+                SwipeableActionsRow(
+                    actions = listOf(
+                        SwipeAction("编辑", Color(0xFF252525), Icons.Filled.Edit) {
+                            renameDetailItem = item
+                        },
+                        SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete) {
+                            InteractionFeedback.haptic(detailContext)
+                            viewModel.removeListPageItemIn(book, pageTitle, item)
+                            if (selectedDetailItem == item) selectedDetailItem = null
+                            onToggle()
+                        },
+                    ),
+                    onContentClick = { toggleItem(item, pageTitle, checked) },
+                    onContentLongClick = { selectDetailItem(item) },
+                ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { toggleItem(item, page?.title ?: "", checked) }
                             .padding(start = 27.dp, end = 27.dp, top = 20.dp, bottom = 20.dp),
                         verticalAlignment = Alignment.Top,
                     ) {
@@ -2262,6 +2311,121 @@ private fun TopicDetailSimple(
                         },
                 )
             }
+        }
+        // 底部选中操作栏（对照原版详情底栏 46dp：日期改期 | 删除/置顶/完成）
+        val selectedItem = selectedDetailItem
+        if (selectedItem != null) {
+            val selChecked = store.isChecked(book.id, pageTitle, selectedItem)
+            val selDateText = store.checkedDate(book.id, pageTitle, selectedItem).ifBlank { LocalDate.now().toString() }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp)
+                    .background(if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White)
+                    .drawBehind {
+                        drawLine(
+                            color = dividerColor.copy(alpha = 0.5f),
+                            start = Offset(0f, 0f),
+                            end = Offset(size.width, 0f),
+                            strokeWidth = 0.7.dp.toPx(),
+                        )
+                    }
+                    .padding(start = 16.dp, end = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    selDateText,
+                    fontSize = 17.sp,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                    maxLines = 1,
+                    modifier = Modifier.clickable { pickDetailItemDate(selectedItem) },
+                )
+                Spacer(Modifier.weight(1f))
+                Box(
+                    Modifier
+                        .width(1.dp)
+                        .height(22.dp)
+                        .background(Color(0xFFD3CDC6)),
+                )
+                @Composable
+                fun BoardIcon(
+                    image: androidx.compose.ui.graphics.vector.ImageVector,
+                    label: String,
+                    tint: Color = GoaldayDesign.adaptiveInkPrimary,
+                    onTap: () -> Unit,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 56.dp, height = 46.dp)
+                            .clickable {
+                                InteractionFeedback.click(detailContext)
+                                onTap()
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(imageVector = image, contentDescription = label, tint = tint, modifier = Modifier.size(22.dp))
+                    }
+                }
+                BoardIcon(Icons.Filled.Delete, "删除") {
+                    InteractionFeedback.haptic(detailContext)
+                    viewModel.removeListPageItemIn(book, pageTitle, selectedItem)
+                    selectedDetailItem = null
+                    onToggle()
+                }
+                BoardIcon(Icons.Filled.KeyboardArrowUp, "置顶") {
+                    InteractionFeedback.haptic(detailContext)
+                    viewModel.moveDetailPageItemToTop(book, pageTitle, selectedItem)
+                    onToggle()
+                }
+                BoardIcon(Icons.Filled.Check, "完成") {
+                    toggleItem(selectedItem, pageTitle, selChecked)
+                }
+            }
+        }
+        // 行内改名弹层（对照原版行点按编辑；模板条目转自定义+隐藏原条目）
+        val renameTarget = renameDetailItem
+        if (renameTarget != null) {
+            var renameText by remember(renameTarget) { mutableStateOf(renameTarget) }
+            AlertDialog(
+                onDismissRequest = { renameDetailItem = null },
+                title = { Text("重命名条目", fontSize = 17.sp, fontWeight = FontWeight.SemiBold) },
+                text = {
+                    BasicTextField(
+                        value = renameText,
+                        onValueChange = { renameText = it },
+                        singleLine = true,
+                        textStyle = TextStyle(fontSize = 17.sp, color = GoaldayDesign.adaptiveInkPrimary),
+                        cursorBrush = SolidColor(TodayCoral),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                },
+                confirmButton = {
+                    Text(
+                        "保存",
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clickable {
+                                InteractionFeedback.click(detailContext)
+                                viewModel.renameListPageItemIn(book, pageTitle, renameTarget, renameText)
+                                if (selectedDetailItem == renameTarget && renameText.trim().isNotBlank()) {
+                                    selectedDetailItem = renameText.trim()
+                                }
+                                renameDetailItem = null
+                                onToggle()
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    )
+                },
+                dismissButton = {
+                    Text(
+                        "取消",
+                        modifier = Modifier
+                            .clickable { renameDetailItem = null }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    )
+                },
+            )
         }
     }
 }

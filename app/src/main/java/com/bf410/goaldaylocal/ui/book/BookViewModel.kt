@@ -195,18 +195,25 @@ class BookViewModel(
      *  不能走 removeCustomPageItem（currentPage 作键），否则删除会写进别的页，池里条目永远不消失。
      *  模板自带条目无法抹除，记隐藏集隐藏。 */
     fun removeListPageItem(item: String) {
-        val normalized = item.trim()
-        if (normalized.isBlank()) return
         val book = currentBook()
         val page = book.pages.filterIsInstance<TargetPage>().firstOrNull() ?: return
-        store.saveCustomPageItems(book.id, page.title, removeExactItem(store.customPageItems(book.id, page.title), normalized))
-        if (normalized in page.items) {
-            store.setHiddenPageItem(book.id, page.title, normalized, true)
+        removeListPageItemIn(book, page.title, item)
+    }
+
+    /** 按书删除清单条目（供清单详情页用：展开的书不一定是当前池选中的书） */
+    fun removeListPageItemIn(book: TopicBook, pageTitle: String, item: String) {
+        val normalized = item.trim()
+        if (normalized.isBlank()) return
+        store.saveCustomPageItems(book.id, pageTitle, removeExactItem(store.customPageItems(book.id, pageTitle), normalized))
+        val templateItems = book.pages.filterIsInstance<TargetPage>().firstOrNull()?.items ?: emptyList()
+        if (normalized in templateItems) {
+            store.setHiddenPageItem(book.id, pageTitle, normalized, true)
         }
-        store.saveTodayPlanItems(book.id, page.title, removeExactItem(store.todayPlanItems(book.id, page.title), normalized))
-        store.saveTodayCompletedItems(book.id, page.title, removeExactItem(store.todayCompletedItems(book.id, page.title), normalized))
-        store.setChecked(book.id, page.title, normalized, false)
-        store.setTargetItemMeta(book.id, page.title, normalized, TargetItemMeta())
+        store.saveTodayPlanItems(book.id, pageTitle, removeExactItem(store.todayPlanItems(book.id, pageTitle), normalized))
+        store.saveTodayCompletedItems(book.id, pageTitle, removeExactItem(store.todayCompletedItems(book.id, pageTitle), normalized))
+        store.setChecked(book.id, pageTitle, normalized, false)
+        store.setTargetItemMeta(book.id, pageTitle, normalized, TargetItemMeta())
+        store.savePageItemOrder(book.id, pageTitle, store.pageItemOrder(book.id, pageTitle).filterNot { it == normalized })
         val cleanedSchedules = scheduleRepository.entries().filterNot { entry ->
             entry.title == normalized && entry.note == book.title
         }
@@ -217,36 +224,63 @@ class BookViewModel(
 
     /** 主屏清单池行内改名：自定义条目直接改名并迁移勾选/备注/日程；模板条目转存为自定义并隐藏原条目。 */
     fun renameListPageItem(oldItem: String, newItem: String) {
-        val trimmed = newItem.trim()
         val book = currentBook()
         val page = book.pages.filterIsInstance<TargetPage>().firstOrNull() ?: return
+        renameListPageItemIn(book, page.title, oldItem, newItem)
+    }
+
+    /** 按书改名清单条目（供清单详情页用） */
+    fun renameListPageItemIn(book: TopicBook, pageTitle: String, oldItem: String, newItem: String) {
+        val trimmed = newItem.trim()
         if (trimmed.isBlank()) {
-            removeListPageItem(oldItem)
+            removeListPageItemIn(book, pageTitle, oldItem)
             return
         }
         if (trimmed == oldItem) return
-        val customs = store.customPageItems(book.id, page.title)
+        val customs = store.customPageItems(book.id, pageTitle)
+        val templateItems = book.pages.filterIsInstance<TargetPage>().firstOrNull()?.items ?: emptyList()
         if (oldItem in customs) {
-            store.saveCustomPageItems(book.id, page.title, renameExactItemDistinct(customs, oldItem, trimmed))
+            store.saveCustomPageItems(book.id, pageTitle, renameExactItemDistinct(customs, oldItem, trimmed))
         } else {
-            if (trimmed !in page.items) {
-                store.saveCustomPageItems(book.id, page.title, (customs + trimmed).distinct())
+            if (trimmed !in templateItems) {
+                store.saveCustomPageItems(book.id, pageTitle, (customs + trimmed).distinct())
             }
-            store.setHiddenPageItem(book.id, page.title, oldItem, true)
+            store.setHiddenPageItem(book.id, pageTitle, oldItem, true)
         }
-        store.saveTodayPlanItems(book.id, page.title, renameExactItemDistinct(store.todayPlanItems(book.id, page.title), oldItem, trimmed))
-        store.saveTodayCompletedItems(book.id, page.title, renameExactItemDistinct(store.todayCompletedItems(book.id, page.title), oldItem, trimmed))
-        if (store.isChecked(book.id, page.title, oldItem)) {
-            store.setChecked(book.id, page.title, trimmed, true)
-            store.setChecked(book.id, page.title, oldItem, false)
+        store.saveTodayPlanItems(book.id, pageTitle, renameExactItemDistinct(store.todayPlanItems(book.id, pageTitle), oldItem, trimmed))
+        store.saveTodayCompletedItems(book.id, pageTitle, renameExactItemDistinct(store.todayCompletedItems(book.id, pageTitle), oldItem, trimmed))
+        if (store.isChecked(book.id, pageTitle, oldItem)) {
+            store.setChecked(book.id, pageTitle, trimmed, true)
+            store.setChecked(book.id, pageTitle, oldItem, false)
         }
-        val meta = store.targetItemMeta(book.id, page.title, oldItem)
-        store.setTargetItemMeta(book.id, page.title, trimmed, meta)
-        store.setTargetItemMeta(book.id, page.title, oldItem, TargetItemMeta())
+        val meta = store.targetItemMeta(book.id, pageTitle, oldItem)
+        store.setTargetItemMeta(book.id, pageTitle, trimmed, meta)
+        store.setTargetItemMeta(book.id, pageTitle, oldItem, TargetItemMeta())
+        store.savePageItemOrder(
+            book.id,
+            pageTitle,
+            store.pageItemOrder(book.id, pageTitle).map { if (it == oldItem) trimmed else it },
+        )
         val renamedSchedules = scheduleRepository.entries().map { entry ->
             if (entry.title == oldItem && entry.note == book.title) entry.copy(title = trimmed) else entry
         }
         scheduleRepository.saveEntries(renamedSchedules)
+        _uiState.update { it.copy(checkedRevision = it.checkedRevision + 1L) }
+        syncEditableContent()
+    }
+
+    /** 清单详情有效条目（模板去隐藏 + 自定义追加，与主屏池同序，供详情与置顶共用） */
+    fun detailBaseItems(book: TopicBook, pageTitle: String): List<String> {
+        val templateItems = book.pages.filterIsInstance<TargetPage>().firstOrNull()?.items ?: emptyList()
+        val hidden = store.hiddenPageItems(book.id, pageTitle)
+        return ((templateItems - hidden) + store.customPageItems(book.id, pageTitle)).distinct()
+    }
+
+    /** 清单详情置顶：条目移到页内首位（对照原版详情底栏置顶） */
+    fun moveDetailPageItemToTop(book: TopicBook, pageTitle: String, item: String) {
+        val base = detailBaseItems(book, pageTitle)
+        if (item !in base) return
+        store.savePageItemOrder(book.id, pageTitle, listOf(item) + base.filterNot { it == item })
         _uiState.update { it.copy(checkedRevision = it.checkedRevision + 1L) }
         syncEditableContent()
     }

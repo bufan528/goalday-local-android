@@ -38,8 +38,7 @@ class LocalStateStore(
         mmkv.encode(checkKey(bookId, pageTitle, item) + "_date", dateText)
     }
 
-    /** 清单详情显示选项（对照原版更多菜单 target_detail_options，默认全开） */
-    fun detailShowCompleted(bookId: String): Boolean =
+    /** 清单详情显示选项（对照原版更多菜单 target_detail_options，默认全开） */    fun detailShowCompleted(bookId: String): Boolean =
         mmkv.decodeBool("detail_show_completed_$bookId", true)
 
     fun setDetailShowCompleted(bookId: String, value: Boolean) {
@@ -58,6 +57,28 @@ class LocalStateStore(
 
     fun setDetailShowDates(bookId: String, value: Boolean) {
         mmkv.encode("detail_show_dates_$bookId", value)
+    }
+
+    /** 清单页内条目顺序覆盖（对照原版置顶：置顶条目排最前；未覆盖的新条目追加在后） */
+    fun pageItemOrder(bookId: String, pageTitle: String): List<String> {
+        val raw = mmkv.decodeString("page_order_${bookId}_$pageTitle", "").orEmpty()
+        if (raw.isBlank()) return emptyList()
+        val array = runCatching { JSONArray(raw) }.getOrElse { JSONArray() }
+        return buildList {
+            repeat(array.length()) { add(array.optString(it)) }
+        }.filter { it.isNotBlank() }.distinct()
+    }
+
+    fun savePageItemOrder(bookId: String, pageTitle: String, order: List<String>) {
+        val array = JSONArray()
+        order.distinct().filter { it.isNotBlank() }.forEach { array.put(it) }
+        mmkv.encode("page_order_${bookId}_$pageTitle", array.toString())
+    }
+
+    fun applyPageItemOrder(bookId: String, pageTitle: String, items: List<String>): List<String> {
+        if (items.isEmpty()) return items
+        val order = pageItemOrder(bookId, pageTitle).filter { it in items }
+        return (order + (items - order.toSet())).distinct()
     }
 
     fun savedBookIds(): Set<String> = mmkv.decodeStringSet(KEY_SAVED_BOOKS, emptySet()) ?: emptySet()
