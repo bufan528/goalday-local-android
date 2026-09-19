@@ -396,11 +396,11 @@ private fun InBookScheduleDayRow(
                 },
             )
             .drawBehind {
-                // 每天底部一条分隔线，对照原版截图：线从页面最左缘贯穿到右缘
-                // 实测原版线色 ≈ #D9D2CF（C5BBB6 于白底上 alpha≈0.7 的效果）
-                val strokeWidth = 0.5.dp.toPx()
+                // 每天底部一条分隔线，对照原版截图：线从页面最左缘贯穿到右缘；
+                // 原版线接近实色（约#CBC4C0），0.75dp 不透明度 0.85
+                val strokeWidth = 0.75.dp.toPx()
                 drawLine(
-                    color = dateColumnColor.copy(alpha = 0.7f),
+                    color = dateColumnColor.copy(alpha = 0.85f),
                     start = Offset(x = 0f, y = size.height - strokeWidth / 2),
                     end = Offset(x = size.width, y = size.height - strokeWidth / 2),
                     strokeWidth = strokeWidth,

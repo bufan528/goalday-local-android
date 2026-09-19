@@ -371,7 +371,24 @@ fun DualPageBookView(
                             }
                             y += tileH
                         }
-                    } ?: drawRect(shellColor)
+                    } ?: run {
+                        drawRect(shellColor)
+                        // 程序化布纹：细密经纬线（对照原版封面织物感，自绘无位图依赖）
+                        val step = 3.dp.toPx()
+                        val warp = Color(0xFF8A7F73).copy(alpha = 0.055f)
+                        val weft = Color.White.copy(alpha = 0.06f)
+                        var ly = 0f
+                        while (ly < size.height) {
+                            drawLine(warp, Offset(0f, ly), Offset(size.width, ly), strokeWidth = 1f)
+                            drawLine(weft, Offset(0f, ly + step / 2), Offset(size.width, ly + step / 2), strokeWidth = 1f)
+                            ly += step
+                        }
+                        var lx = 0f
+                        while (lx < size.width) {
+                            drawLine(warp, Offset(lx, 0f), Offset(lx, size.height), strokeWidth = 1f)
+                            lx += step
+                        }
+                    }
                     drawContent()
                 }
                     .pointerInput(Unit) {
