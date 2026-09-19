@@ -517,6 +517,10 @@ fun GoaldayApp(startTarget: String? = null) {
                             onFontSizeChange = { fontSizeKey = it },
                             onDarkModeChange = { darkModePref = it },
                             onBack = { navigateBackInsideApp() },
+                            onOpenCalendar = {
+                                tab = RootTab.CALENDAR
+                                calendarFocusDay = null
+                            },
                         )
                     }
                 }

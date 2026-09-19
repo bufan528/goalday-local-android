@@ -38,6 +38,28 @@ class LocalStateStore(
         mmkv.encode(checkKey(bookId, pageTitle, item) + "_date", dateText)
     }
 
+    /** 清单详情显示选项（对照原版更多菜单 target_detail_options，默认全开） */
+    fun detailShowCompleted(bookId: String): Boolean =
+        mmkv.decodeBool("detail_show_completed_$bookId", true)
+
+    fun setDetailShowCompleted(bookId: String, value: Boolean) {
+        mmkv.encode("detail_show_completed_$bookId", value)
+    }
+
+    fun detailShowNumbers(bookId: String): Boolean =
+        mmkv.decodeBool("detail_show_numbers_$bookId", true)
+
+    fun setDetailShowNumbers(bookId: String, value: Boolean) {
+        mmkv.encode("detail_show_numbers_$bookId", value)
+    }
+
+    fun detailShowDates(bookId: String): Boolean =
+        mmkv.decodeBool("detail_show_dates_$bookId", true)
+
+    fun setDetailShowDates(bookId: String, value: Boolean) {
+        mmkv.encode("detail_show_dates_$bookId", value)
+    }
+
     fun savedBookIds(): Set<String> = mmkv.decodeStringSet(KEY_SAVED_BOOKS, emptySet()) ?: emptySet()
 
     fun saveBook(bookId: String) {

@@ -659,8 +659,8 @@ class BookViewModel(
         return lines.joinToString("\n").trimEnd()
     }
 
-    fun createCustomBook(title: String, subtitle: String, color: Color) {
-        val newBook = store.addCustomBook(title.trim(), subtitle.trim(), color)
+    fun createCustomBook(title: String, subtitle: String, color: Color, linkedToSchedule: Boolean = false) {
+        val newBook = store.addCustomBook(title.trim(), subtitle.trim(), color, linkedToSchedule)
         refreshBooks(selectBookId = newBook.id, openBook = true)
     }
 

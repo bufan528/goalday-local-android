@@ -116,7 +116,19 @@ internal fun ExportCenterSheet(
     fun startGenerate() {
         val s = startDate
         val e = endDate
-        if (!canGenerate || s == null || e == null) return
+        if (generating) return
+        // 条件不足时给反馈（对照原版空态官方文案思路，本地直接提示原因）
+        val reason = when {
+            s == null || e == null || !rangeValid -> "请先选择起止日期"
+            !includeSchedule && !includeDiary -> "请至少勾选一项导出内容"
+            fullCount <= 0 -> "所选范围没有可导出的内容"
+            else -> null
+        }
+        if (reason != null) {
+            android.widget.Toast.makeText(context, reason, android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (s == null || e == null || !canGenerate) return
         runJob = scope.launch {
             generating = true
             progressDone = 0

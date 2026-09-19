@@ -82,6 +82,7 @@ fun SettingsScreen(
     onFontSizeChange: (String) -> Unit = {},
     onDarkModeChange: (String) -> Unit = {},
     onBack: () -> Unit = {},
+    onOpenCalendar: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val manager = remember { BackupManager(context) }
@@ -177,19 +178,7 @@ fun SettingsScreen(
             // VIP 卡片图片位置：本地离线版无 VIP，替换为应用信息横幅
             AppInfoBanner(versionName = versionName, backupCount = snapshots.size)
 
-            // "账号" 分组标题（16sp #9E9E9E marginLeft=15dp）
-            SettingsGroupTitle("账号")
-            // 账号分组卡片（bg_setting_item 背景）
-            SettingsCard {
-                // 用户信息行（padding=15dp，文字16sp #252525 加粗，右侧箭头）
-                SettingsNavRow(
-                    title = "用户信息",
-                    onClick = {
-                        Toast.makeText(context, "用户信息开发中", Toast.LENGTH_SHORT).show()
-                    },
-                )
-                // 邀请码行（默认隐藏，对照原版 visibility="gone"）
-            }
+            // 本地离线版无账号体系：账号分组（含用户信息）隐藏，不留死按钮
 
             // "通用" 分组标题
             SettingsGroupTitle("通用")
@@ -214,12 +203,10 @@ fun SettingsScreen(
                     onClick = { showBackupDialog = true },
                 )
                 SettingsDivider()
-                // 导入日历行
+                // 导入日历行：跳到日历页做系统日历导入（对照原版 CalendarImport）
                 SettingsNavRow(
                     title = "导入日历",
-                    onClick = {
-                        Toast.makeText(context, "导入日历功能开发中", Toast.LENGTH_SHORT).show()
-                    },
+                    onClick = onOpenCalendar,
                 )
                 SettingsDivider()
                 // 深色模式行（保留现有功能逻辑）
@@ -263,14 +250,7 @@ fun SettingsScreen(
             SettingsGroupTitle("联系我们")
             // 联系我们分组卡片
             SettingsCard {
-                // 意见反馈行
-                SettingsNavRow(
-                    title = "用户反馈",
-                    onClick = {
-                        Toast.makeText(context, "反馈通道开发中", Toast.LENGTH_SHORT).show()
-                    },
-                )
-                SettingsDivider()
+                // 本地离线版无反馈通道：意见反馈行隐藏，不留死按钮
                 // 小红书行
                 SettingsNavRow(
                     title = "小红书",
@@ -284,24 +264,14 @@ fun SettingsScreen(
                 // 版本信息行：标题 + 版本号（#9E9E9E）
                 SettingsInfoRow(title = "版本信息", info = versionName)
                 SettingsDivider()
-                // 软件更新行：标题 + "点击后检查并更新到最新版"
-                SettingsInfoRow(title = "软件更新", info = "点击后检查并更新到最新版")
-                SettingsDivider()
-                // 隐私政策行
+                // 软件更新行：本地离线版点按即告知版本状态（无远端可查，不留“点了没反应”）
                 SettingsNavRow(
-                    title = "隐私政策",
+                    title = "软件更新",
                     onClick = {
-                        Toast.makeText(context, "隐私政策文档开发中", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "当前已是最新版本（$versionName）", Toast.LENGTH_SHORT).show()
                     },
                 )
-                SettingsDivider()
-                // 用户条款行
-                SettingsNavRow(
-                    title = "用户条款",
-                    onClick = {
-                        Toast.makeText(context, "用户条款文档开发中", Toast.LENGTH_SHORT).show()
-                    },
-                )
+                // 本地离线版无内嵌协议文档：隐私政策/用户条款隐藏，不留死按钮
             }
 
             // 底部 IPC 备案信息（12sp，居中，marginBottom=6dp）

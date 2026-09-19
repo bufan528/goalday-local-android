@@ -64,6 +64,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.animation.AnimatedContent
@@ -1823,6 +1824,7 @@ private fun TopicListView(
                                 color = GoaldayDesign.adaptiveInkPrimary,
                                 modifier = Modifier.weight(1f),
                                 maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                             Text(
                                 "$done/$total",
@@ -1845,7 +1847,6 @@ private fun TopicListView(
                     revision = revision,
                     onToggle = { revision++ },
                     onBack = { onExpandBook(null) },
-                    onMoreClick = { sheetBookId = book.id },
                 )
             }
         }
@@ -2033,9 +2034,9 @@ private fun TopicListView(
 
         if (showAddSheet) {
             TopicAddSheet(
-                onCreate = { title, color ->
+                onCreate = { title, color, linkedToSchedule ->
                     InteractionFeedback.click(listContext)
-                    viewModel.createCustomBook(title, "", color)
+                    viewModel.createCustomBook(title, "", color, linkedToSchedule)
                     showAddSheet = false
                 },
                 onDismiss = { showAddSheet = false },
@@ -2053,7 +2054,6 @@ private fun TopicDetailSimple(
     revision: Int,
     onToggle: () -> Unit,
     onBack: () -> Unit,
-    onMoreClick: () -> Unit = {},
 ) {
     val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
     val dividerColor = MainTabDivider
@@ -2082,6 +2082,13 @@ private fun TopicDetailSimple(
         }
         onToggle()
     }
+    // 更多菜单：对照原版 target_detail_options（显示已完成/序号/完成时间），存书级偏好
+    var showOptionsMenu by remember { mutableStateOf(false) }
+    var optionsTick by remember { mutableIntStateOf(0) }
+    optionsTick.let { }
+    val showCompleted = store.detailShowCompleted(book.id)
+    val showNumbers = store.detailShowNumbers(book.id)
+    val showDates = store.detailShowDates(book.id)
     Column(Modifier.fillMaxSize()) {
         // 对照原版展开态顶栏：全屏页无主 Tab 栏，顶栏为内容底色；
         // 返回 chevron + 本书色圆点 + 20sp 标题 + 右侧更多。
@@ -2115,22 +2122,71 @@ private fun TopicDetailSimple(
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
             )
-            Text(
-                "···",
-                fontSize = 16.sp,
-                color = GoaldayDesign.adaptiveInkPrimary,
-                modifier = Modifier
-                    .clickable { onMoreClick() }
-                    .padding(start = 14.dp),
-            )
+            Box {
+                Text(
+                    "···",
+                    fontSize = 16.sp,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                    modifier = Modifier
+                        .clickable { showOptionsMenu = true }
+                        .padding(start = 14.dp),
+                )
+                DropdownMenu(
+                    expanded = showOptionsMenu,
+                    onDismissRequest = { showOptionsMenu = false },
+                    containerColor = if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White,
+                    modifier = Modifier.width(220.dp),
+                ) {
+                    @Composable
+                    fun DetailOptionRow(label: String, enabled: Boolean, onToggleOption: () -> Unit) {
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        label,
+                                        fontSize = 16.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    if (enabled) {
+                                        Text("✓", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = GoaldayDesign.adaptiveInkPrimary)
+                                    }
+                                }
+                            },
+                            onClick = {
+                                InteractionFeedback.click(detailContext)
+                                onToggleOption()
+                                optionsTick++
+                                showOptionsMenu = false
+                            },
+                        )
+                    }
+                    DetailOptionRow("显示已完成", showCompleted) {
+                        store.setDetailShowCompleted(book.id, !showCompleted)
+                    }
+                    DetailOptionRow("显示序号", showNumbers) {
+                        store.setDetailShowNumbers(book.id, !showNumbers)
+                    }
+                    DetailOptionRow("显示完成时间和日记", showDates) {
+                        store.setDetailShowDates(book.id, !showDates)
+                    }
+                }
+            }
         }
         LazyColumn(
             // 行自带左右边距（对照原版勾选框起 27dp、内容尾 27dp、分隔线边距 20dp）
             contentPadding = PaddingValues(vertical = 0.dp),
         ) {
             // key 带上 revision：勾选写入的是 MMKV（非 Compose 观测状态），
-            // revision 变化时换 key 强制重建 item，重读 isChecked 刷新勾选框
-            itemsIndexed(page?.items ?: emptyList(), key = { _, item -> "$revision-$item" }) { index, item ->
+            // revision 变化时换 key 强制重建 item，重读 isChecked 刷新勾选框；
+            // 显示选项同样带进 key，否则 key 命中会跳过重组、开关看着没反应；
+            // 关掉“显示已完成”时过滤掉已勾选项
+            val visibleItems = (page?.items ?: emptyList()).filter { item ->
+                showCompleted || !store.isChecked(book.id, page?.title ?: "", item)
+            }
+            val displayFlags = "${if (showCompleted) 1 else 0}${if (showNumbers) 1 else 0}${if (showDates) 1 else 0}"
+            itemsIndexed(visibleItems, key = { _, item -> "$revision-$displayFlags-$item" }) { index, item ->
                 val checked = store.isChecked(book.id, page?.title ?: "", item)
                 val checkedDateText = if (checked) store.checkedDate(book.id, page?.title ?: "", item) else ""
                 Column {
@@ -2155,13 +2211,15 @@ private fun TopicDetailSimple(
                             }
                         }
                         Spacer(Modifier.width(10.dp))
-                        Text(
-                            "${index + 1}",
-                            fontSize = 20.sp,
-                            lineHeight = 28.sp,
-                            color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
-                        )
-                        Spacer(Modifier.width(8.dp))
+                        if (showNumbers) {
+                            Text(
+                                "${index + 1}",
+                                fontSize = 20.sp,
+                                lineHeight = 28.sp,
+                                color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
                         Column(Modifier.weight(1f)) {
                             Text(
                                 item,
@@ -2169,7 +2227,7 @@ private fun TopicDetailSimple(
                                 lineHeight = 28.sp,
                                 color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
                             )
-                            if (checked && checkedDateText.isNotBlank()) {
+                            if (showDates && checked && checkedDateText.isNotBlank()) {
                                 // 完成日期章：对照原版勾选后行下弹出的书色圆角日期（点章可跳当日日记，下轮接）
                                 Box(
                                     modifier = Modifier
@@ -2215,7 +2273,7 @@ private fun TopicDetailSimple(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopicAddSheet(
-    onCreate: (String, Color) -> Unit,
+    onCreate: (String, Color, Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val dark = LocalGoaldayDarkMode.current
@@ -2230,6 +2288,8 @@ private fun TopicAddSheet(
     )
     var name by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(palette.first()) }
+    // 对照原版新建清单弹层：关联到日程开关
+    var linked by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -2295,6 +2355,22 @@ private fun TopicAddSheet(
                 }
             }
             Spacer(Modifier.height(18.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "关联到日程",
+                    fontSize = 15.sp,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = linked,
+                    onCheckedChange = { linked = it },
+                )
+            }
+            Spacer(Modifier.height(10.dp))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "取消",
@@ -2309,7 +2385,7 @@ private fun TopicAddSheet(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .background(if (name.trim().isBlank()) GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.4f) else TodayBlack)
-                        .clickable(enabled = name.trim().isNotBlank()) { onCreate(name.trim(), selected) }
+                        .clickable(enabled = name.trim().isNotBlank()) { onCreate(name.trim(), selected, linked) }
                         .padding(horizontal = 22.dp, vertical = 9.dp),
                 ) {
                     Text("完成", fontSize = 14.sp, color = Color.White)
@@ -2761,6 +2837,7 @@ private fun MonthScheduleView(
                                 color = GoaldayDesign.adaptiveInkPrimary,
                                 textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                                 maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }

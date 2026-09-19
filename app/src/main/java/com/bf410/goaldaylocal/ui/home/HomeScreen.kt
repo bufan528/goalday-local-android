@@ -684,6 +684,7 @@ private fun TimelineDayRow(
                             style = MaterialTheme.typography.labelSmall,
                             textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                             maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         )
                     }
                 }

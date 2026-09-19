@@ -1766,7 +1766,7 @@ private fun TargetScheduledEntryRow(
                 .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space1),
         )
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text(entry.title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+            Text(entry.title, color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             val repeatLabel = targetScheduleRepeatLabel(entry)
             Text(
                 listOf(entry.note.ifBlank { "Goalday 本地日程" }, repeatLabel)
