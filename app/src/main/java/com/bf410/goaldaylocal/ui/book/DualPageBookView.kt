@@ -271,8 +271,9 @@ fun DualPageBookView(
         }
     }
 
-    // 对照原版：动画时长自适应，progress>0.5 时 100ms，否则 300ms，线性 easing
-    fun settle(complete: Boolean) {
+    // 对照原版：动画时长自适应，progress>0.5 时 100ms，否则 300ms，线性 easing；
+    // 手势中走满已进位时松手只收尾动画，不再重复进位（否则一次长滑跳两跨页）
+    fun settle(complete: Boolean, alreadyAdvanced: Boolean = false) {
         if (isAnimating) return
         scope.launch {
             isAnimating = true
@@ -280,10 +281,12 @@ fun DualPageBookView(
             val spec = tween<Float>(if (currentProgress > 0.5f) 100 else 300, easing = LinearEasing)
             if (complete) {
                 progress.animateTo(1f, spec)
-                when (turnDirection) {
-                    TurnDirection.NEXT -> pageState.goNextPage()
-                    TurnDirection.PREVIOUS -> pageState.goPreviousPage()
-                    null -> {}
+                if (!alreadyAdvanced) {
+                    when (turnDirection) {
+                        TurnDirection.NEXT -> pageState.goNextPage()
+                        TurnDirection.PREVIOUS -> pageState.goPreviousPage()
+                        null -> {}
+                    }
                 }
                 turnCount++
                 progress.snapTo(0f)
@@ -388,6 +391,8 @@ fun DualPageBookView(
                                 velocityTracker.addPointerInputChange(down)
 
                                 var turnDir: TurnDirection? = null
+                                // 本次手势走满进位过（松手 settle 只收尾，不重复进位）
+                                var advancedInGesture = false
                                 var finished = false
                                 // 对照原版 ComposeModifiersKt.horizontalSwipeGesture：
                                 // detectHorizontalDragGestures 内部走系统 touchSlop + 水平锁定，
@@ -410,7 +415,7 @@ fun DualPageBookView(
                                             TurnDirection.PREVIOUS -> !opposing && (progress.value > flipThreshold || velocity > 560f)
                                             null -> false
                                         }
-                                        settle(complete)
+                                        settle(complete, advancedInGesture)
                                         finished = true
                                         break
                                     }
@@ -453,6 +458,7 @@ fun DualPageBookView(
                                                     null -> {}
                                                 }
                                                 turnCount++
+                                                advancedInGesture = true
                                                 startX = change.position.x
                                             }
                                         }
