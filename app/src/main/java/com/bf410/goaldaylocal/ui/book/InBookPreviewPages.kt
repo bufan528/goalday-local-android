@@ -1043,12 +1043,18 @@ internal fun InBookDiaryPreview(
             }
         }
         // 内容区：对照 fragment_diary_inbook.xml RecyclerView
-        // marginTop=5dip, marginBottom=30dip, marginStart/End=7.5dip
+        // marginTop=5dip, marginBottom=30dip, marginStart/End=7.5dip；
+        // 右页起始再让出书脊阴影（约14dp），否则首字被压住（对照原版右页文字不起边）
         val diaryMarginH = 7.5.dp
         Box(
             modifier = Modifier
                 .weight(1f)
-                .padding(top = 5.dp, bottom = 30.dp, start = diaryMarginH, end = diaryMarginH)
+                .padding(
+                    top = 5.dp,
+                    bottom = 30.dp,
+                    start = if (diaryIsLeftPage) diaryMarginH else 16.dp,
+                    end = diaryMarginH,
+                )
         ) {
             val contentScroll = if (handbookMode) Modifier else Modifier.verticalScroll(rememberScrollState())
             val moodItems = remember(diary.moodTags) {
@@ -1281,7 +1287,8 @@ internal fun InBookDiaryEditorPage(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(start = 7.5.dp, end = 7.5.dp, top = 5.dp, bottom = 30.dp),
+                // 右页起始让出书脊阴影，首字不被压住（对照阅读态同值）
+                .padding(start = if (isLeftPage) 7.5.dp else 16.dp, end = 7.5.dp, top = 5.dp, bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp),
         ) {
             // 今日完成橙卡（对照原版书右页置顶卡片）

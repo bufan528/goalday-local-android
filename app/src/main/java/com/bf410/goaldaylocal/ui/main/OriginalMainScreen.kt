@@ -936,25 +936,6 @@ private fun WeekScheduleView(
                                             }
                                         }
                                     }
-                                    // 对照原版：今天第一个空槽显示随机引导提示语（schedule_empty_hints）
-                                    slotIndex == 0 && isToday && entries.isEmpty() -> {
-                                        val hint = remember {
-                                            val arr = context.resources.getStringArray(
-                                                com.bf410.goaldaylocal.R.array.schedule_empty_hints,
-                                            )
-                                            if (arr.isNotEmpty()) arr[kotlin.random.Random.nextInt(arr.size)] else ""
-                                        }
-                                        if (hint.isNotEmpty()) {
-                                            Text(
-                                                hint,
-                                                fontSize = 17.sp,
-                                                lineHeight = 23.sp,
-                                                color = GoaldayDesign.adaptiveInkMuted,
-                                                maxLines = if (fixed) 1 else 2,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                        }
-                                    }
                                     // 行内新增：输入框出现在下一个空槽位（对照原版槽位 EditText）
                                     isEditing && slotIndex == editingSlot -> {
                                         BasicTextField(
@@ -1006,7 +987,26 @@ private fun WeekScheduleView(
                                 }
                             }
                         }
-                        if (adaptiveMode) {
+                        // 对照原版：今天空行提示横跨任务区整宽、单行截断（非编辑态才展示；编辑走槽位输入框）
+                        if (isToday && entries.isEmpty() && !isEditing) {
+                            val todayHint = remember {
+                                val arr = context.resources.getStringArray(
+                                    com.bf410.goaldaylocal.R.array.schedule_empty_hints,
+                                )
+                                if (arr.isNotEmpty()) arr[kotlin.random.Random.nextInt(arr.size)] else ""
+                            }
+                            if (todayHint.isNotEmpty()) {
+                                Text(
+                                    todayHint,
+                                    fontSize = 17.sp,
+                                    lineHeight = 23.sp,
+                                    color = GoaldayDesign.adaptiveInkMuted,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        } else if (adaptiveMode) {
                             // 自适应模式（对照原版 item_schedule_item_adaptive）：每行 2 格、格 minHeight 33dp、无 6 槽上限
                             val cellCount = maxOf(
                                 entries.size,
@@ -1194,8 +1194,8 @@ private fun WeekScheduleView(
                             // 右池：未完成黑字，完成22%黑、无删除线；固定单行，自适应最多3行
                             Text(
                                 poolItem,
-                                fontSize = 17.sp,
-                                lineHeight = 23.sp,
+                                fontSize = 20.sp,
+                                lineHeight = 26.sp,
                                 color = if (LocalGoaldayDarkMode.current) {
                                     if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary
                                 } else {
@@ -1262,7 +1262,7 @@ private fun WeekScheduleView(
                                         value = poolEditValue,
                                         onValueChange = { poolEditValue = it },
                                         singleLine = true,
-                                        textStyle = TextStyle(fontSize = 17.sp, lineHeight = 23.sp, color = GoaldayDesign.adaptiveInkPrimary),
+                                        textStyle = TextStyle(fontSize = 20.sp, lineHeight = 26.sp, color = GoaldayDesign.adaptiveInkPrimary),
                                         cursorBrush = SolidColor(TodayCoral),
                                         modifier = Modifier
                                             .fillMaxWidth()

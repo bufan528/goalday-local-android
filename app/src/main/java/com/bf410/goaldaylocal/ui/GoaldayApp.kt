@@ -226,7 +226,8 @@ fun GoaldayApp(startTarget: String? = null) {
         else -> systemDark
     }
     // 通过 deep-link 入口（handbook/diary）启动时直接跳过引导，方便验证手账页
-    var showGuide by remember(startTarget) { mutableStateOf(startTarget == null && !mmkv.decodeBool(KEY_GUIDE_SEEN, false)) }
+    // 对照原版直进主界面：首启不再自动弹指南遮罩（指南仍可从设置页手动打开）
+    var showGuide by remember(startTarget) { mutableStateOf(false) }
 
     // 新 IA：主界面是唯一根。非主界面都允许返回（edge 手势同理）
     val canGoBackInsideApp = tab != RootTab.MAIN
