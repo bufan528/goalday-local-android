@@ -771,6 +771,9 @@ private fun WeekScheduleView(
                 .fillMaxHeight(),
         ) {
             val dayH = (maxHeight - 18.dp) / 7
+            // 任务区定宽：左栏宽 - 日期列 43dp - 间距 4dp - 右边距 12dp；
+            // 条目全宽纵排，不用 weight（wrap 容器里 weight 会塌成内容宽、字被竖排截断）
+            val taskAreaWidth = (maxWidth - 43.dp - 4.dp - 12.dp).coerceAtLeast(0.dp)
         LazyColumn(
             state = listState,
             userScrollEnabled = adaptiveMode,
@@ -807,7 +810,11 @@ private fun WeekScheduleView(
                         }
                         .padding(start = 0.dp, top = 5.dp, end = 12.dp, bottom = 5.dp),
                 ) {
-                    Row(verticalAlignment = Alignment.Top) {
+                    Row(
+                        // 整行占满列宽，否则内部 weight 列塌成内容宽、格子不等宽
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Top,
+                    ) {
                         // 日期列：对照原版真机 43dp 宽（fl_day 113px），内容居中→数字中心≈21.5dp、
                         // 今天胶囊33dp居中溢出列两侧（原版[14,100]px）；非今天不占固定高度
                         Column(
@@ -851,12 +858,13 @@ private fun WeekScheduleView(
                             }
                         }
                         Spacer(Modifier.width(4.dp))
-                        // 日程区：固定模式=原版 2×3 槽（槽高 31dp，真机行高 271px=103dp=3×31+上下5）；自适应模式=行数随内容增长
+                        // 日程区：固定/自适应都是条目全宽纵排（对照布局与真机）
                         val editingSlot = if (isEditing) entries.size else -1
                         val renderCell: @Composable (Int, Boolean) -> Unit = { slotIndex, fixed ->
                             val entry = entries.getOrNull(slotIndex)
                             Box(
-                                modifier = if (fixed) Modifier.height(31.dp) else Modifier.heightIn(min = 33.dp),
+                                // 格子占满列宽；固定态单槽最小 31dp（对照 cW 行高）
+                                modifier = Modifier.fillMaxWidth().then(if (fixed) Modifier.heightIn(min = 31.dp) else Modifier.heightIn(min = 33.dp)),
                                 contentAlignment = Alignment.CenterStart,
                             ) {
                                 when {
@@ -922,8 +930,8 @@ private fun WeekScheduleView(
                                                 // 固定单行截断；自适应多行换行、不限槽数展示全部
                                                 Text(
                                                     (if (entry.timeText.isNotBlank()) entry.timeText + "  " else "") + entry.title,
-                                                    fontSize = 17.sp,
-                                                    lineHeight = 23.sp,
+                                                    fontSize = 20.sp,
+                                                    lineHeight = 26.sp,
                                                     color = if (LocalGoaldayDarkMode.current) {
                                                         if (entry.completed) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary
                                                     } else {
@@ -1003,61 +1011,26 @@ private fun WeekScheduleView(
                                     color = GoaldayDesign.adaptiveInkMuted,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier.width(taskAreaWidth),
                                 )
                             }
                         } else if (adaptiveMode) {
-                            // 自适应模式（对照原版 item_schedule_item_adaptive）：每行 2 格、格 minHeight 33dp、无 6 槽上限
+                            // 自适应模式：条目全宽纵排、格 minHeight 33dp
                             val cellCount = maxOf(
                                 entries.size,
                                 if (isEditing) entries.size + 1 else -1,
                                 if (isToday && entries.isEmpty()) 1 else -1,
                             ).coerceAtLeast(1)
-                            // 对照原版 item_schedule_item_adaptive：展开态行 minHeight（真机空行254px）
-                            Column(Modifier.heightIn(min = 87.dp)) {
-                                repeat((cellCount + 1) / 2) { row ->
-                                    Row(Modifier.fillMaxWidth()) {
-                                        Box(Modifier.weight(1f)) { renderCell(row * 2, false) }
-                                        Box(Modifier.weight(1f)) { renderCell(row * 2 + 1, false) }
-                                    }
-                                }
+                            // 对照原版 item_schedule_item_adaptive：单垂直容器纵排、展开态行 minHeight（真机空行254px）
+                            Column(Modifier.width(taskAreaWidth).heightIn(min = 87.dp)) {
+                                repeat(cellCount) { index -> renderCell(index, false) }
                             }
                         } else {
-                            // 固定模式：2列×3行共6槽，单槽高31dp，单行截断
-                            Row(Modifier.fillMaxWidth().heightIn(min = 93.dp)) {
-                                Column(Modifier.weight(1f)) {
-                                    repeat(3) { renderCell(it, true) }
-                                }
-                                Column(Modifier.weight(1f)) {
-                                    repeat(3) { renderCell(it + 3, true) }
-                                }
-                            }
-                            // 槽位已满时的兜底输入行（原版 6 槽满后新增走详情页）
-                            if (isEditing && editingSlot >= 6) {
-                            BasicTextField(
-                                value = quickInput,
-                                onValueChange = { quickInput = it },
-                                singleLine = true,
-                                textStyle = TextStyle(fontSize = 15.sp, color = GoaldayDesign.adaptiveInkPrimary),
-                                cursorBrush = SolidColor(TodayCoral),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 2.dp)
-                                    .focusRequester(focusRequester),
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                keyboardActions = KeyboardActions(
-                                    onDone = {
-                                        if (quickInput.isNotBlank()) {
-                                            viewModel.addScheduleFromHandbook(
-                                                quickInput,
-                                                date.monthValue,
-                                                date.dayOfMonth,
-                                            )
-                                        }
-                                        quickInput = ""
-                                    },
-                                ),
-                            )
+                            // 固定模式：条目全宽纵排、一行一条（对照原版真机：复选+单行正文占满任务区宽，不分两列）
+                            Column(Modifier.width(taskAreaWidth).heightIn(min = 93.dp)) {
+                                entries.forEachIndexed { index, _ -> renderCell(index, true) }
+                                // 行内新增输入框跟在末条之后（对照原版槽位 EditText）
+                                if (isEditing) renderCell(entries.size, true)
                             }
                         }
                     }
@@ -1968,10 +1941,10 @@ private fun TopicListView(
                             fontSize = 17.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = GoaldayDesign.adaptiveInkPrimary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f),
+                                )
                     }
                     Spacer(Modifier.height(8.dp))
                     Text(
