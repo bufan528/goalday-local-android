@@ -261,7 +261,7 @@ fun DualPageBookView(
     }
 
     // 对照原版：动画时长自适应，progress>0.5 时 100ms，否则 300ms，线性 easing；
-    // 手势中走满已进位时松手只收尾动画，不再重复进位（否则一次长滑跳两跨页）
+    // 单手势最多进一位，进位只发生在松手 settle（手势中途不提前进位）
     fun settle(complete: Boolean, alreadyAdvanced: Boolean = false) {
         if (isAnimating) return
         scope.launch {
@@ -398,8 +398,6 @@ fun DualPageBookView(
                                 velocityTracker.addPointerInputChange(down)
 
                                 var turnDir: TurnDirection? = null
-                                // 本次手势走满进位过（松手 settle 只收尾，不重复进位）
-                                var advancedInGesture = false
                                 var finished = false
                                 // 对照原版 ComposeModifiersKt.horizontalSwipeGesture：
                                 // detectHorizontalDragGestures 内部走系统 touchSlop + 水平锁定，
@@ -422,7 +420,7 @@ fun DualPageBookView(
                                             TurnDirection.PREVIOUS -> !opposing && (progress.value > flipThreshold || velocity > 560f)
                                             null -> false
                                         }
-                                        settle(complete, advancedInGesture)
+                                        settle(complete)
                                         finished = true
                                         break
                                     }
@@ -449,26 +447,9 @@ fun DualPageBookView(
                                     if (turnDir != null) {
                                         // 单页宽=整壳宽/2（原版AnimationBookWidth=屏宽*0.47≈单页），
                                         // 之前width*0.45偏敏感9%，改回width/2与原版一致。
+                                        // 对照原版：一次手势只判一次、最多进一位（单进位），走满不提前进位，
+                                        // 松手 settle 时按阈值/甩速决定进位或回弹。
                                         val singlePage = (width / 2f).coerceAtLeast(1f)
-                                        val rawProgress = abs(change.position.x - startX) / singlePage
-                                        if (rawProgress >= 1f) {
-                                            // 单手势连续翻页：走满一页即进位，起点前移带余量继续跟手
-                                            val canMore = when (turnDir) {
-                                                TurnDirection.NEXT -> pageState.canGoNext()
-                                                TurnDirection.PREVIOUS -> pageState.canGoPrevious()
-                                                null -> false
-                                            }
-                                            if (canMore) {
-                                                when (turnDir) {
-                                                    TurnDirection.NEXT -> pageState.goNextPage()
-                                                    TurnDirection.PREVIOUS -> pageState.goPreviousPage()
-                                                    null -> {}
-                                                }
-                                                turnCount++
-                                                advancedInGesture = true
-                                                startX = change.position.x
-                                            }
-                                        }
                                         val newProgress = (abs(change.position.x - startX) / singlePage).coerceIn(0f, 1f)
                                         dragJobHolder[0]?.cancel()
                                         dragJobHolder[0] = scope.launch { progress.snapTo(newProgress) }
