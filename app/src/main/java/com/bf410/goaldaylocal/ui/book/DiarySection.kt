@@ -383,10 +383,9 @@ internal fun DiarySection(
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = structured.date.toEpochMillis())
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) {
-            runCatching {
-                context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            structured = structured.withImageUri(uri.toString())
+            // 物理复制后存绝对路径（content 直链重启即失效，见 DiaryImageStore）
+            val stored = copyDiaryImageToPrivateDir(context, uri, structured.dateIso) ?: uri.toString()
+            structured = structured.withImageUri(stored)
             onDiaryChange(structured.toRaw())
             onContentModeChange(PageContentMode.EditingDiary(title))
         }

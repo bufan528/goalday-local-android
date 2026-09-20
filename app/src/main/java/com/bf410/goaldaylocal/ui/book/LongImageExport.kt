@@ -831,8 +831,13 @@ internal fun renderDiaryLongImage(
     val width = 1080
     val padding = 72f
     val contentWidth = width - padding * 2
-    val exportImageUris = (state.imageBlockUris + state.legacyImageUris).distinct()
-    val estimatedHeight = 1600 + exportImageUris.take(6).size * 360 + state.toRaw().length.coerceAtMost(2200)
+    // 记录页存的是无前缀裸路径（# 图片段），同样视为图片；展示层永不打路径原文
+    val bareImagePaths = state.photoText.lines().map(String::trim).filter { it.isBareDiaryFilePath() }
+    val photoDescText = state.photoText.lines().map(String::trim)
+        .filter { it.isNotBlank() && !it.isBareDiaryFilePath() }
+        .joinToString("\n")
+    val exportImageUris = (state.imageBlockUris + state.legacyImageUris + bareImagePaths).distinct()
+    val estimatedHeight = 1600 + exportImageUris.take(9).size * 360 + state.toRaw().length.coerceAtMost(2200)
     val scratch = Bitmap.createBitmap(width, estimatedHeight.coerceAtLeast(2200), Bitmap.Config.ARGB_8888)
     val canvas = Canvas(scratch)
     canvas.drawColor(GoaldayDesign.ExportCanvasPaper.toArgb())
@@ -869,8 +874,8 @@ internal fun renderDiaryLongImage(
     y = drawExportSection(canvas, "工作任务", state.workTasks.ifBlank { "记录待推进的任务。" }, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
     y = drawExportSection(canvas, "小幸福", state.smallJoy.ifBlank { "记录今天值得保留的一刻。" }, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
     y = drawExportSection(canvas, "可改进", state.canImprove.ifBlank { "记录下一次可以优化的地方。" }, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
-    if (state.photoText.isNotBlank()) {
-        y = drawExportSection(canvas, "图片描述", state.photoText, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
+    if (photoDescText.isNotBlank()) {
+        y = drawExportSection(canvas, "图片描述", photoDescText, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
     }
     if (state.richHtml.isNotBlank()) {
         y = drawExportSection(canvas, "富文本记录", plainTextFromHtml(state.richHtml), padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
@@ -898,6 +903,12 @@ internal fun renderDiaryLongImage(
         canvas.drawText("图片 ${index + 1}", padding, y + 32f, labelPaint)
         y += 52f
         y = drawExportImage(context, canvas, uri, padding, y, contentWidth, cardPaint)
+    }
+    bareImagePaths.take(6).forEachIndexed { index, path ->
+        y += 12f
+        canvas.drawText("图片 ${index + 1}", padding, y + 32f, labelPaint)
+        y += 52f
+        y = drawExportImage(context, canvas, path, padding, y, contentWidth, cardPaint)
     }
     val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFFB7A893.toInt()
@@ -942,9 +953,20 @@ private fun drawExportImage(
     width: Float,
     fallbackPaint: Paint,
 ): Float {
+    // 裸文件路径走 File 解码（含 file:// 前缀剥离 + 降采样防大图 OOM），其余走 contentResolver
     val source = runCatching {
-        context.contentResolver.openInputStream(Uri.parse(uri))?.use { stream ->
-            BitmapFactory.decodeStream(stream)
+        val bare = uri.trim().removePrefix("file://")
+        val f = java.io.File(bare)
+        if (f.exists() && f.isFile) {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(f.absolutePath, bounds)
+            var sample = 1
+            while ((bounds.outWidth / sample) > 1080 || (bounds.outHeight / sample) > 1080) sample *= 2
+            BitmapFactory.decodeFile(f.absolutePath, BitmapFactory.Options().apply { inSampleSize = sample })
+        } else {
+            context.contentResolver.openInputStream(Uri.parse(uri))?.use { stream ->
+                BitmapFactory.decodeStream(stream)
+            }
         }
     }.getOrNull()
     val maxHeight = 320f

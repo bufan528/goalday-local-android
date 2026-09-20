@@ -423,10 +423,10 @@ fun ActivePageLayer(
     val diaryContext = LocalContext.current
     val diaryImagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) {
-            runCatching {
-                diaryContext.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            val updated = StructuredDiary.fromRaw(diaryDraft).withImageUri(uri.toString())
+            // 物理复制后存绝对路径（content 直链重启即失效，见 DiaryImageStore）
+            val base = StructuredDiary.fromRaw(diaryDraft)
+            val stored = copyDiaryImageToPrivateDir(diaryContext, uri, base.dateIso) ?: uri.toString()
+            val updated = base.withImageUri(stored)
             onDiaryChange(updated.toRaw())
         }
     }
