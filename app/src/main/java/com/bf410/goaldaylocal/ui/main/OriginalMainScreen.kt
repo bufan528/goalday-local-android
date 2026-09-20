@@ -81,7 +81,6 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -326,16 +325,7 @@ fun OriginalMainScreen(
     // 清单详情全屏时通知应用层藏起底部导航（对照原版详情页无底栏）
     LaunchedEffect(listDetailExpanded) { onListDetailExpandedChange(listDetailExpanded) }
 
-    // 对照原版真机：状态栏与顶栏同色（米色延伸到状态栏区）+ 黑色状态栏图标；
-    // 清单详情全屏时顶栏为内容底色。
-    val statusBarColor = if (listDetailExpanded) MainContentBg else MainTabBarBg
-    val mainWindow = (LocalContext.current as? android.app.Activity)?.window
-    SideEffect {
-        mainWindow?.let { w ->
-            w.statusBarColor = statusBarColor.toArgb()
-            androidx.core.view.WindowInsetsControllerCompat(w, w.decorView).isAppearanceLightStatusBars = true
-        }
-    }
+    // 对照原版全屏沉浸：系统栏由 MainActivity 统一隐藏（滑边临时唤出），此处不再染色状态栏。
 
     // 可见 Tab 页（对照原版 ViewPager2 页组；顺序/显隐可配）
     val visibleTabs = remember(tabOrder, tabVisibility) {

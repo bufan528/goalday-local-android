@@ -343,9 +343,9 @@ fun GoaldayApp(startTarget: String? = null) {
         Scaffold(
             containerColor = if (isDark) GoaldayDesign.DarkAppBg else GoaldayDesign.AppBg,
             topBar = {
-                // 原版化导航：MAIN 自带 周|记录|清单 顶栏；其余界面保留旧顶部 Tab 作为次级导航
+                // 原版化导航：MAIN 自带 周|记录|清单 顶栏；设置页对照原版全屏无 Tab（同底栏处理）
                 val immersiveBook = tab == RootTab.BOOK && bookSurface == BookRootSurface.BOOK && bookEntryMode != BookEntryMode.PLANNER
-                if (!immersiveBook && tab != RootTab.MAIN) {
+                if (!immersiveBook && tab != RootTab.MAIN && tab != RootTab.SETTINGS) {
                     val visibleTabs = tabConfigs
                         .filter { it.visible && it.tab != RootTab.MAIN }
                         .map { it.tab }

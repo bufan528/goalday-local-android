@@ -38,6 +38,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -364,15 +365,14 @@ fun SettingsScreen(
     }
 }
 
-// 顶部 toolbar_normal：返回箭头 + 标题（18sp 加粗）
+// 顶部 toolbar_normal：返回箭头 + 居中标题（18sp 加粗，对照原版标题居中）
 @Composable
 private fun SettingsToolbar(onBack: () -> Unit = {}) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(GoaldayDesign.adaptiveAppBg)
             .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -380,14 +380,15 @@ private fun SettingsToolbar(onBack: () -> Unit = {}) {
             tint = GoaldayDesign.adaptiveInkPrimary,
             modifier = Modifier
                 .size(24.dp)
+                .align(Alignment.CenterStart)
                 .clickable(onClick = onBack),
         )
-        Spacer(Modifier.width(12.dp))
         Text(
             "设置",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = GoaldayDesign.adaptiveInkPrimary,
+            modifier = Modifier.align(Alignment.Center),
         )
     }
 }
@@ -573,22 +574,36 @@ private fun FontSizeToggleRow(
             color = GoaldayDesign.adaptiveInkPrimary,
             modifier = Modifier.weight(1f),
         )
-        // bg_setting_fontsize_menu 背景容器
+        // bg_setting_fontsize_menu 背景容器：白底细边框 + 段间分隔线（对照原版三段式）
         Row(
             modifier = Modifier
+                .border(
+                    width = GoaldayDesign.Hairline,
+                    color = GoaldayDesign.adaptiveDivider,
+                    shape = RoundedCornerShape(GoaldayDesign.RadiusS),
+                )
                 .background(
                     SegmentGroupBg,
                     RoundedCornerShape(GoaldayDesign.RadiusS),
-                ),
+                )
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS)),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            options.forEach { option ->
+            options.forEachIndexed { index, option ->
                 val active = option.key == selected
+                if (index != 0) {
+                    Box(
+                        modifier = Modifier
+                            .width(GoaldayDesign.Hairline)
+                            .height(38.dp)
+                            .background(GoaldayDesign.adaptiveDivider),
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .size(width = 38.dp, height = 38.dp)
                         .background(
                             if (active) SegmentSelectedBg else Color.Transparent,
-                            RoundedCornerShape(GoaldayDesign.RadiusS),
                         )
                         .clickable { onSelected(option) },
                     contentAlignment = Alignment.Center,
@@ -627,19 +642,33 @@ private fun ImageSizeToggleRow(
         )
         Row(
             modifier = Modifier
+                .border(
+                    width = GoaldayDesign.Hairline,
+                    color = GoaldayDesign.adaptiveDivider,
+                    shape = RoundedCornerShape(GoaldayDesign.RadiusS),
+                )
                 .background(
                     SegmentGroupBg,
                     RoundedCornerShape(GoaldayDesign.RadiusS),
-                ),
+                )
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS)),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            options.forEach { option ->
+            options.forEachIndexed { index, option ->
                 val active = option.key == selected
+                if (index != 0) {
+                    Box(
+                        modifier = Modifier
+                            .width(GoaldayDesign.Hairline)
+                            .height(35.dp)
+                            .background(GoaldayDesign.adaptiveDivider),
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .size(width = 57.dp, height = 35.dp)
                         .background(
                             if (active) SegmentSelectedBg else Color.Transparent,
-                            RoundedCornerShape(GoaldayDesign.RadiusS),
                         )
                         .clickable { onSelected(option) },
                     contentAlignment = Alignment.Center,
@@ -678,19 +707,33 @@ private fun DarkModeToggleRow(
         )
         Row(
             modifier = Modifier
+                .border(
+                    width = GoaldayDesign.Hairline,
+                    color = GoaldayDesign.adaptiveDivider,
+                    shape = RoundedCornerShape(GoaldayDesign.RadiusS),
+                )
                 .background(
                     SegmentGroupBg,
                     RoundedCornerShape(GoaldayDesign.RadiusS),
-                ),
+                )
+                .clip(RoundedCornerShape(GoaldayDesign.RadiusS)),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            options.forEach { option ->
+            options.forEachIndexed { index, option ->
                 val active = option.key == selected
+                if (index != 0) {
+                    Box(
+                        modifier = Modifier
+                            .width(GoaldayDesign.Hairline)
+                            .height(35.dp)
+                            .background(GoaldayDesign.adaptiveDivider),
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .size(width = 57.dp, height = 35.dp)
                         .background(
                             if (active) SegmentSelectedBg else Color.Transparent,
-                            RoundedCornerShape(GoaldayDesign.RadiusS),
                         )
                         .clickable { onSelected(option) },
                     contentAlignment = Alignment.Center,

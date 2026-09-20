@@ -68,8 +68,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.app.Activity
 import android.graphics.Rect
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -242,17 +240,8 @@ fun DualPageBookView(
     // 把书页左右边缘排除在系统返回手势之外，确保全宽翻页热区可用
     val view = LocalView.current
 
-    // 书页全屏沉浸：对照原版 BookActivity，阅读态隐藏状态栏与导航栏，滑边临时唤出，离开书页恢复
-    DisposableEffect(Unit) {
-        val window = (view.context as? Activity)?.window
-        val insetsController = window?.let { WindowInsetsControllerCompat(it, it.decorView) }
-        insetsController?.hide(WindowInsetsCompat.Type.systemBars())
-        insetsController?.systemBarsBehavior =
-            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        onDispose {
-            insetsController?.show(WindowInsetsCompat.Type.systemBars())
-        }
-    }
+    // 全屏沉浸由 MainActivity 统一处理（对照原版各页均无系统栏）；此处不再重复隐藏/恢复，
+    // 避免离书时把栏唤出（之前 onDispose 的 show() 会破坏主界面沉浸）。
     var bookBounds by remember { mutableStateOf<Rect?>(null) }
     DisposableEffect(bookBounds) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
