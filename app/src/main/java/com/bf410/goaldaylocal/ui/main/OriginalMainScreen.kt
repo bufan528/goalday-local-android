@@ -1062,7 +1062,7 @@ private fun WeekScheduleView(
                                             }
                                             Spacer(Modifier.width(10.dp))
                                             Box(Modifier.weight(1f).clickable { onEditEntry(entry) }) {
-                                                // 固定单行截断；自适应多行换行、不限槽数展示全部
+                                                // 固定单行省略；自适应多行换行、不限槽数展示全部（对照原版 20dip 黑色 END 省略）
                                                 Text(
                                                     (if (entry.timeText.isNotBlank()) entry.timeText + "  " else "") + entry.title,
                                                     fontSize = 20.sp,
@@ -1070,11 +1070,11 @@ private fun WeekScheduleView(
                                                     color = if (LocalGoaldayDarkMode.current) {
                                                         if (entry.completed) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary
                                                     } else {
-                                                        Color(0xFF333333)
+                                                        Color.Black
                                                     },
                                                     textDecoration = if (entry.completed) TextDecoration.LineThrough else TextDecoration.None,
                                                     maxLines = if (fixed) 1 else Int.MAX_VALUE,
-                                                    overflow = TextOverflow.Clip,
+                                                    overflow = TextOverflow.Ellipsis,
                                                 )
                                             }
                                         }
@@ -1085,7 +1085,7 @@ private fun WeekScheduleView(
                                             value = quickInput,
                                             onValueChange = { quickInput = it },
                                             singleLine = true,
-                                            textStyle = TextStyle(fontSize = 15.sp, color = GoaldayDesign.adaptiveInkPrimary),
+                                            textStyle = TextStyle(fontSize = 20.sp, lineHeight = 26.sp, color = GoaldayDesign.adaptiveInkPrimary),
                                             cursorBrush = SolidColor(TodayCoral),
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -1117,7 +1117,8 @@ private fun WeekScheduleView(
                                                         if (quickInput.isEmpty()) {
                                                             Text(
                                                                 "写下你现在最想完成的",
-                                                                fontSize = 15.sp,
+                                                                fontSize = 20.sp,
+                                                                lineHeight = 26.sp,
                                                                 color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.75f),
                                                                 maxLines = 1,
                                                             )
@@ -1142,8 +1143,8 @@ private fun WeekScheduleView(
                             if (todayHint.isNotEmpty()) {
                                 Text(
                                     todayHint,
-                                    fontSize = 17.sp,
-                                    lineHeight = 23.sp,
+                                    fontSize = 20.sp,
+                                    lineHeight = 26.sp,
                                     color = GoaldayDesign.adaptiveInkMuted,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
