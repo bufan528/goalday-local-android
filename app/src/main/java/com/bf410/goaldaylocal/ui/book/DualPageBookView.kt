@@ -153,13 +153,9 @@ fun DualPageBookView(
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: android.net.Uri? ->
         val date = pendingImageDate
         if (uri != null && date != null) {
-            runCatching {
-                pickerContext.contentResolver.takePersistableUriPermission(
-                    uri,
-                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION,
-                )
-            }
-            saveDiaryState(date, diaryStateOf(date).withImageUri(uri.toString()))
+            // 物理复制后存绝对路径（content 直链重启即失效，见 DiaryImageStore）
+            val stored = copyDiaryImageToPrivateDir(pickerContext, uri, date.toString()) ?: uri.toString()
+            saveDiaryState(date, diaryStateOf(date).withImageUri(stored))
         }
     }
 
@@ -180,12 +176,22 @@ fun DualPageBookView(
     var bookIsOpen by remember { mutableStateOf(false) }
     val openProgress = remember { Animatable(0f) }
     var isOpening by remember { mutableStateOf(true) }
+    // 开书动画可重播：换书/切年时重置封面再走一遍（对照原版切书重调 performOpenAnimation）
+    fun replayOpenAnimation() {
+        if (isAnimating) return
+        scope.launch {
+            bookIsOpen = false
+            isOpening = true
+            openProgress.snapTo(0f)
+            kotlinx.coroutines.delay(800)
+            openProgress.animateTo(1f, tween(450, easing = LinearEasing))
+            bookIsOpen = true
+            kotlinx.coroutines.delay(10)
+            isOpening = false
+        }
+    }
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(800)
-        openProgress.animateTo(1f, tween(450, easing = LinearEasing))
-        bookIsOpen = true
-        kotlinx.coroutines.delay(10)
-        isOpening = false
+        replayOpenAnimation()
     }
     // 释放阈值双态：闭合→首页 0.5，页→页 0.3（对照原版 e0；开启动画期间手势已锁，闭合态只影响首翻）
     val flipThreshold = if (bookIsOpen) 0.3f else 0.5f
@@ -539,44 +545,45 @@ fun DualPageBookView(
                                 pageContent(nextLeftPage, true)
                             },
                         )
-                        // 开书封面：对照原版 frontRotation U = bookIsOpened ? -180 : -180*progress，
-                        // 右页尺寸、绕书脊（左缘）翻到左侧；过 90° 硬切隐藏，动画结束由 bookIsOpen 摘掉
-                        if (!bookIsOpen) {
-                            val coverRot = -180f * openProgress.value
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .graphicsLayer {
-                                        rotationY = coverRot
-                                        cameraDistance = 40f * density
-                                        transformOrigin = TransformOrigin(0f, 0.5f)
-                                        alpha = if (-coverRot <= 90f) 1f else 0f
-                                    }
-                                    .shadow(
-                                        elevation = 10.dp,
-                                        shape = handbookPageShape(false),
-                                        clip = false,
-                                        ambientColor = Color(0xFFC5BBB6),
-                                        spotColor = Color(0xFFC5BBB6),
-                                    )
-                                    .clip(handbookPageShape(false))
-                                    .background(Color.White),
-                            ) {
-                                // 自绘封面：米色书衣 + 居中年份衬线字
-                                Box(
-                                    modifier = Modifier
-                                        .matchParentSize()
-                                        .background(yearCoverColor(rightPage.date.year)),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        rightPage.date.year.toString(),
-                                        fontSize = 22.sp,
-                                        fontFamily = FontFamily.Serif,
-                                        color = Color(0xFF7A5C44),
-                                    )
-                                }
+                    }
+                }
+                // 开书封面：对照原版 frontRotation U = bookIsOpened ? -180 : -180*progress，
+                // 全幅盖住双页、绕书脊（中线）翻开；过 90° 硬切隐藏，动画结束由 bookIsOpen 摘掉
+                if (!bookIsOpen) {
+                    val coverRot = -180f * openProgress.value
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .padding(start = 3.dp, end = 3.dp, top = 6.dp, bottom = 6.dp)
+                            .graphicsLayer {
+                                rotationY = coverRot
+                                cameraDistance = 40f * density
+                                transformOrigin = TransformOrigin(0.5f, 0.5f)
+                                alpha = if (-coverRot <= 90f) 1f else 0f
                             }
+                            .shadow(
+                                elevation = 10.dp,
+                                shape = RoundedCornerShape(10.dp),
+                                clip = false,
+                                ambientColor = Color(0xFFC5BBB6),
+                                spotColor = Color(0xFFC5BBB6),
+                            )
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color.White),
+                    ) {
+                        // 自绘封面：米色书衣 + 居中年份衬线字
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(yearCoverColor(rightPage.date.year)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                rightPage.date.year.toString(),
+                                fontSize = 22.sp,
+                                fontFamily = FontFamily.Serif,
+                                color = Color(0xFF7A5C44),
+                            )
                         }
                     }
                 }
@@ -689,6 +696,8 @@ fun DualPageBookView(
                     pageState.jumpToDate(start)
                     turnCount++
                     showBookShelf = false
+                    // 换书重播开场（对照原版切书重调 performOpenAnimation）
+                    replayOpenAnimation()
                 },
                 onDismiss = { showBookShelf = false },
                     )
@@ -836,9 +845,10 @@ private fun HandbookPage(
             .drawWithContent {
                 drawContent()
                 if (rotationY == 0f) {
-                    // 书脊凹槽阴影：对照原版实机像素，左页右缘保持纯白，右页左缘（屏幕中线）最深，向右约18dp雾化到全白
+                    // 书脊凹槽阴影：左页右缘保持纯白，右页左缘（屏幕中线）最深，向右雾化到全白；
+                    // 宽度收至正文起始处（右页正文 start=16dp），避免压住首字
                     if (!isLeft) {
-                        val gutterWidth = 20.dp.toPx()
+                        val gutterWidth = 16.dp.toPx()
                         drawRect(
                             brush = Brush.horizontalGradient(
                                 0f to Color(0xFFE0DEDB),
