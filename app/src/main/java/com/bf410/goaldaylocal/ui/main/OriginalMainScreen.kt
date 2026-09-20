@@ -127,6 +127,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.ui.InteractionFeedback
+import com.bf410.goaldaylocal.ui.KeepImmersiveInDialog
 import com.bf410.goaldaylocal.data.LocalStateStore
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.TargetPage
@@ -496,6 +497,7 @@ private fun RepeatScopeSheet(
         Column(
             modifier = Modifier.padding(start = 15.dp, end = 15.dp, top = 8.dp, bottom = 28.dp),
         ) {
+            KeepImmersiveInDialog()
             @Composable
             fun ScopeRow(label: String, scope: BookViewModel.RepeatScope) {
                 Text(
@@ -2183,7 +2185,10 @@ private fun TopicListView(
             AlertDialog(
                 onDismissRequest = { pendingDeleteBook = null },
                 title = { Text("删除清单", fontSize = 17.sp, fontWeight = FontWeight.SemiBold) },
-                text = { Text("确定删除「${book.title}」吗？其中的条目与记录会一并删除，无法恢复。") },
+                text = {
+                    KeepImmersiveInDialog()
+                    Text("确定删除「${book.title}」吗？其中的条目与记录会一并删除，无法恢复。")
+                },
                 confirmButton = {
                     Text(
                         "删除",
@@ -2221,6 +2226,7 @@ private fun TopicListView(
                 Column(
                     modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 28.dp),
                 ) {
+                    KeepImmersiveInDialog()
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.size(10.dp).background(sheetBook.color, CircleShape))
                         Spacer(Modifier.width(8.dp))
@@ -2285,6 +2291,7 @@ private fun TopicListView(
                 onDismissRequest = { renameBookId = null },
                 title = { Text("重命名清单", fontSize = 17.sp, fontWeight = FontWeight.SemiBold) },
                 text = {
+                    KeepImmersiveInDialog()
                     BasicTextField(
                         value = renameText,
                         onValueChange = { renameText = it },
@@ -2691,6 +2698,7 @@ private fun TopicDetailSimple(
                 onDismissRequest = { renameDetailItem = null },
                 title = { Text("重命名条目", fontSize = 17.sp, fontWeight = FontWeight.SemiBold) },
                 text = {
+                    KeepImmersiveInDialog()
                     BasicTextField(
                         value = renameText,
                         onValueChange = { renameText = it },
@@ -2764,6 +2772,7 @@ private fun TopicAddSheet(
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+            KeepImmersiveInDialog()
             Text(
                 "新建清单",
                 fontSize = 17.sp,
@@ -2904,6 +2913,7 @@ private fun EntryEditSheet(
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+            KeepImmersiveInDialog()
             Text(
                 "${entryDate.monthValue}月${entryDate.dayOfMonth}日 · ${weekdayName(entryDate)}",
                 fontSize = 13.sp,
@@ -3227,6 +3237,7 @@ private fun TabManageSheet(
         shape = RoundedCornerShape(topStart = 35.dp, topEnd = 35.dp),
     ) {
         Column(Modifier.fillMaxWidth()) {
+            KeepImmersiveInDialog()
             // 拖拽手柄：对照原版59×8dp/marginTop12/#F0F0F0/6dp圆角
             Box(
                 Modifier
@@ -3678,6 +3689,7 @@ private fun WeekPickerSheet(
         var monthAnchor by remember { mutableStateOf(YearMonth.from(selectedDate)) }
         val weekFields = WeekFields.ISO
 
+        KeepImmersiveInDialog()
         Column(Modifier.padding(horizontal = 16.dp)) {
             Row(
                 Modifier.fillMaxWidth(),
