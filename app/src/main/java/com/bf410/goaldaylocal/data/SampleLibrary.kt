@@ -1,20 +1,25 @@
 package com.bf410.goaldaylocal.data
 
 import androidx.compose.ui.graphics.Color
-import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
-import java.time.LocalDate
 
 object SampleLibrary {
-    private val currentYear: Int = LocalDate.now().year
-
+    // 首屏种子对照原版开库两专题（日程指南 F1A5B6 / 清单指南 334F46，条目逐字照搬）。
+    // 注意：book id 与 TargetPage 名保持不变，存量勾选/隐藏/排序按 (bookId, pageTitle) 存取，改名会孤儿化用户数据。
     val books = listOf(
         TopicBook(
             id = "goalday-2026",
-            title = "$currentYear GOALDAY",
-            subtitle = "月度日程与日记手账",
-            color = GoaldayDesign.TopicMoss,
+            title = "日程指南",
+            subtitle = "使用指南",
+            color = Color(0xFFF1A5B6),
             pages = listOf(
-                TargetPage("年度目标", listOf("坚持每日手账记录", "完成一次半程马拉松", "读完 12 本书", "学完一门在线课程")),
+                TargetPage(
+                    "年度目标",
+                    listOf(
+                        "左侧周计划：点击任意空白处开始编辑",
+                        "右侧清单：点击“·标题”切换清单列表",
+                        "长按拖动：可以将事件从右侧清单拖放到左侧日程",
+                    ),
+                ),
                 PlanPage("年度计划", listOf("每月第一天复盘上月完成情况", "每周日晚上规划下周日程", "每季度更新目标进度")),
             ) + (1..12).flatMap { month ->
                 listOf(
@@ -35,24 +40,29 @@ object SampleLibrary {
         ),
         TopicBook(
             id = "weekly-review",
-            title = "周复盘",
-            subtitle = "极简三步法",
-            color = GoaldayDesign.TopicRose,
+            title = "清单指南",
+            subtitle = "使用指南",
+            color = Color(0xFF334F46),
             pages = listOf(
-                TargetPage("回顾页", listOf("给完成和未完成的目标打分", "总结效果、效率和产出", "找到真正影响结果的原因")),
+                TargetPage(
+                    "回顾页",
+                    listOf(
+                        "🟠清单列表指南🟠",
+                        "创建新列表：点击“➕”新建空白清单，点击“💡”导入清单模板",
+                        "更改信息/删除列表：长按列表弹出选择框",
+                        "关联到日程：打开时，清单中“含时间的事件”会自动同步到日程中，修改清单或日程中的内容双向同步；关闭后，事件不再同步到日程中，在日程页面拖动时，清单中的事件会被删除",
+                        "🟡清单内容指南🟡",
+                        "创建新事件：点击空白处或键盘上的“换行”",
+                        "删除事件：点击键盘上方的“🗑️”",
+                        "置顶事件：点击键盘上方的“️⬆️”",
+                        "完成或取消完成事件：点击事件前或键盘上方的“☑️”",
+                        "事件的时间：点击完成时会自动记录时间，并且在日记中生成卡片，点击下方的时间戳，会直接跳转到日记页",
+                        "更改时间：点击键盘上方的“时间”，灰色代表未来未完成的，有颜色的代表过去已完成的",
+                        "更多设置：点击右上角“···”",
+                    ),
+                ),
                 SchedulePage("下周页", listOf("周日晚上 20:30 写好下周计划", "把要完成的计划拖进日程", "留出 1 个恢复能量的空白时段")),
                 DiaryPage("记录页", "这周最值得保留的方法是什么？"),
-            ),
-        ),
-        TopicBook(
-            id = "life-list",
-            title = "人生体验清单",
-            subtitle = "慢慢完成的 100 件事",
-            color = GoaldayDesign.TopicAmber,
-            pages = listOf(
-                TargetPage("体验页", listOf("看一次极光", "海边看一次日出", "做一本相册", "记录生活 vlog", "参加一次音乐节")),
-                PlanPage("拆解页", listOf("选一个 30 天内可完成的体验", "列出预算、时间、同行人", "把准备动作放进本月计划")),
-                DiaryPage("感受页", "如果今年只完成一件人生体验，它会是什么？"),
             ),
         ),
     )
