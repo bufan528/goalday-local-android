@@ -498,7 +498,9 @@ fun DualPageBookView(
                 // 对照原版 RenderPages 6 页联动：每侧主动页之后垫一张白色衬纸，
                 // 以主动页旋转的 FOLLOW_FACTOR(26.5/180) 跟随剥离；静止 progress=0 时跟随角=0
                 // （与主动页完全重合，稳态像素零变化），仅翻页中显出纸张层叠。
-                Row(
+                // 闭合期不组合双页（对照原版首帧只有竖书；遮罩兜底，双保险无泄露）。
+                val showClosedCover = !bookIsOpen && openProgress.value <= 0f
+                if (!showClosedCover) Row(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(start = 3.dp, end = 3.dp, top = 6.dp, bottom = 6.dp),
@@ -547,42 +549,88 @@ fun DualPageBookView(
                         )
                     }
                 }
-                // 开书封面：对照原版 frontRotation U = bookIsOpened ? -180 : -180*progress，
-                // 全幅盖住双页、绕书脊（中线）翻开；过 90° 硬切隐藏，动画结束由 bookIsOpen 摘掉
-                if (!bookIsOpen) {
-                    val coverRot = -180f * openProgress.value
+                // 开书两阶段（对照原版分镜：闭合竖书首帧 → 前封面绕左书脊翻开露双页）：
+                // A. 闭合态：书脊条 + 半幅前封面，居中（progress==0 时展示）；
+                // B. 翻开：同一前封面绕自身左缘（书脊）转到 -180°，过 90° 硬切隐藏；
+                // 动画结束由 bookIsOpen 摘掉。两阶段封面同尺寸同底色，交接无跳变。
+                val coverPanelW = spreadWidth / 2
+                val coverPanelH = spreadHeight
+                if (showClosedCover) {
+                    // 闭合期遮住下方双页（对照原版首帧只有竖书、无内页泄露）
                     Box(
                         modifier = Modifier
                             .matchParentSize()
-                            .padding(start = 3.dp, end = 3.dp, top = 6.dp, bottom = 6.dp)
-                            .graphicsLayer {
-                                rotationY = coverRot
-                                cameraDistance = 40f * density
-                                transformOrigin = TransformOrigin(0.5f, 0.5f)
-                                alpha = if (-coverRot <= 90f) 1f else 0f
-                            }
-                            .shadow(
-                                elevation = 10.dp,
-                                shape = RoundedCornerShape(10.dp),
-                                clip = false,
-                                ambientColor = Color(0xFFC5BBB6),
-                                spotColor = Color(0xFFC5BBB6),
-                            )
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color.White),
+                            .background(GoaldayDesign.AppBg),
+                    )
+                    Box(
+                        modifier = Modifier.matchParentSize(),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        // 自绘封面：米色书衣 + 居中年份衬线字
+                        Row(
+                            modifier = Modifier
+                                .shadow(
+                                    elevation = 10.dp,
+                                    shape = RoundedCornerShape(10.dp),
+                                    clip = false,
+                                    ambientColor = shadowColor,
+                                    spotColor = shadowColor,
+                                )
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(yearCoverColor(rightPage.date.year)),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            // 书脊条：深色织物 + 合页线
+                            Box(
+                                modifier = Modifier
+                                    .width(6.dp)
+                                    .height(coverPanelH)
+                                    .background(Color(0xFFD9D0C5)),
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .width(1.dp)
+                                    .height(coverPanelH)
+                                    .background(Color(0xFFB9AFA2)),
+                            )
+                            BookCoverFace(
+                                year = rightPage.date.year,
+                                width = coverPanelW,
+                                height = coverPanelH,
+                            )
+                        }
+                    }
+                }
+                if (!bookIsOpen && openProgress.value > 0f) {
+                    val coverRot = -180f * openProgress.value
+                    Box(
+                        modifier = Modifier.matchParentSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Box(
                             modifier = Modifier
-                                .matchParentSize()
-                                .background(yearCoverColor(rightPage.date.year)),
-                            contentAlignment = Alignment.Center,
+                                // 与闭合态前封面同位（书脊条半宽偏移），交接无跳变
+                                .offset(x = 3.5.dp)
+                                .size(width = coverPanelW, height = coverPanelH)
+                                .graphicsLayer {
+                                    rotationY = coverRot
+                                    cameraDistance = 40f * density
+                                    transformOrigin = TransformOrigin(0f, 0.5f)
+                                    alpha = if (-coverRot <= 90f) 1f else 0f
+                                }
+                                .shadow(
+                                    elevation = 10.dp,
+                                    shape = RoundedCornerShape(10.dp),
+                                    clip = false,
+                                    ambientColor = shadowColor,
+                                    spotColor = shadowColor,
+                                )
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color.White),
                         ) {
-                            Text(
-                                rightPage.date.year.toString(),
-                                fontSize = 22.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = Color(0xFF7A5C44),
+                            BookCoverFace(
+                                year = rightPage.date.year,
+                                width = coverPanelW,
+                                height = coverPanelH,
                             )
                         }
                     }
@@ -968,6 +1016,28 @@ private fun FollowerPaper(isLeft: Boolean, rotationY: Float, density: Float) {
             .clip(handbookPageShape(isLeft))
             .background(Color.White),
     )
+}
+
+/** 自绘前封面：米色书衣 + 居中年份衬线字（闭合态与翻开态共用，保证交接无跳变）。 */
+@Composable
+private fun BookCoverFace(
+    year: Int,
+    width: androidx.compose.ui.unit.Dp,
+    height: androidx.compose.ui.unit.Dp,
+) {
+    Box(
+        modifier = Modifier
+            .size(width = width, height = height)
+            .background(yearCoverColor(year)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            year.toString(),
+            fontSize = 22.sp,
+            fontFamily = FontFamily.Serif,
+            color = Color(0xFF7A5C44),
+        )
+    }
 }
 
 /** 年度书封面底色（自绘布纹替代：按年份微调米色，封面年份数字叠在上层）。 */
