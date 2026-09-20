@@ -336,11 +336,16 @@ fun OriginalMainScreen(
         initialPage = visibleTabs.indexOf(currentSubTab).coerceAtLeast(0),
         pageCount = { visibleTabs.size },
     )
-    // 点选 → 翻到对应页
+    // 点选 → 滑到对应页（对照原版 ViewPager2 smoothScroll，有滑感而非瞬切）
     LaunchedEffect(subTabIndex, visibleTabs) {
         val target = visibleTabs.indexOf(currentSubTab).coerceAtLeast(0)
         if (target != mainPagerState.currentPage) {
-            mainPagerState.scrollToPage(target)
+            runCatching {
+                mainPagerState.animateScrollToPage(
+                    target,
+                    animationSpec = tween(durationMillis = 300),
+                )
+            }
         }
     }
     // 横滑落定 → 切换选中（同点选收尾：退行内编辑、退出直编态）
@@ -615,19 +620,18 @@ private fun OriginalTopTabBar(
         visible.forEachIndexed { index, tabItem ->
             if (index > 0) TabDividerText()
             val slotWidth = if (tabItem == MainSubTab.LIST) 85.dp else 95.dp
+            // 整格可点（对照原版容器分发：点格内空白同样切换，之前只有文字裸区可点）
+            val slotClick: () -> Unit = {
+                // 对照原版 FlexibleTabContainer.selectTab：首次点=选中周 Tab，再点=展开/切换视图
+                if (tabItem == MainSubTab.WEEK && selected == MainSubTab.WEEK) onWeekClick() else onSelect(tabItem)
+            }
             Box(
-                modifier = Modifier.width(slotWidth).fillMaxHeight(),
+                modifier = Modifier.width(slotWidth).fillMaxHeight()
+                    .combinedClickable(onClick = slotClick, onLongClick = onManageTabs),
                 contentAlignment = Alignment.Center,
             ) {
                 when (tabItem) {
                     MainSubTab.WEEK -> Row(
-                        modifier = Modifier.combinedClickable(
-                            onClick = {
-                                // 对照原版 FlexibleTabContainer.selectTab：首次点=选中周 Tab，再点=展开/切换视图
-                                if (selected == MainSubTab.WEEK) onWeekClick() else onSelect(MainSubTab.WEEK)
-                            },
-                            onLongClick = onManageTabs,
-                        ),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         val weekNum = selectedDate.get(WeekFields.ISO.weekOfWeekBasedYear())
@@ -651,13 +655,12 @@ private fun OriginalTopTabBar(
                             WeekTriangle(expanded = weekAdaptive)
                         }
                     }
-                    MainSubTab.MONTH -> TabLabel("月", selected == MainSubTab.MONTH, onLongPress = onManageTabs) { onSelect(MainSubTab.MONTH) }
+                    MainSubTab.MONTH -> TabLabel("月", selected == MainSubTab.MONTH)
                     MainSubTab.RECORD -> TabLabel(
                         text = if (selected == MainSubTab.RECORD) "${selectedDate.monthValue}月${selectedDate.dayOfMonth}日" else "记录",
                         selected = selected == MainSubTab.RECORD,
-                        onLongPress = onManageTabs,
-                    ) { onSelect(MainSubTab.RECORD) }
-                    MainSubTab.LIST -> TabLabel("清单", selected == MainSubTab.LIST, onLongPress = onManageTabs) { onSelect(MainSubTab.LIST) }
+                    )
+                    MainSubTab.LIST -> TabLabel("清单", selected == MainSubTab.LIST)
                 }
             }
         }
@@ -693,7 +696,8 @@ private fun WeekTriangle(expanded: Boolean) {
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun TabLabel(text: String, selected: Boolean, onLongPress: () -> Unit = {}, onClick: () -> Unit) {
+private fun TabLabel(text: String, selected: Boolean) {
+    // 纯展示文字，点击由外层整格接管（对照原版容器分发）
     Text(
         text,
         fontSize = 18.sp,
@@ -706,7 +710,6 @@ private fun TabLabel(text: String, selected: Boolean, onLongPress: () -> Unit = 
             // 对照原版color_tab_main未选中态#36000000
             Color(0x36000000)
         },
-        modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongPress),
     )
 }
 
@@ -912,11 +915,13 @@ private fun SwipeableActionsRow(
                         },
                         onDragEnd = {
                             scope.launch {
-                                if (reveal.value > maxRevealPx / 2) reveal.animateTo(maxRevealPx) else reveal.animateTo(0f)
+                                // 对照原版 SwipeRevealLayout 线性跟手：tween 线性回弹，无 spring 超调
+                                val spec = tween<Float>(durationMillis = 180)
+                                if (reveal.value > maxRevealPx / 2) reveal.animateTo(maxRevealPx, spec) else reveal.animateTo(0f, spec)
                             }
                         },
                         onDragCancel = {
-                            scope.launch { reveal.animateTo(0f) }
+                            scope.launch { reveal.animateTo(0f, tween(durationMillis = 180)) }
                         },
                     )
                 }
@@ -2410,14 +2415,19 @@ private fun TopicDetailSimple(
                 .padding(start = 14.dp, end = 16.dp, top = 14.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                "‹",
-                fontSize = 22.sp,
-                color = GoaldayDesign.adaptiveInkPrimary,
+            // 返回触区放大到 48dp（对照原版 toolbar_normal 大手势区），字形不变
+            Box(
                 modifier = Modifier
-                    .clickable { onBack() }
-                    .padding(end = 14.dp),
-            )
+                    .size(48.dp)
+                    .clickable { onBack() },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    "‹",
+                    fontSize = 22.sp,
+                    color = GoaldayDesign.adaptiveInkPrimary,
+                )
+            }
             Box(
                 Modifier
                     .size(10.dp)
@@ -2434,14 +2444,19 @@ private fun TopicDetailSimple(
                 maxLines = 1,
             )
             Box {
-                Text(
-                    "···",
-                    fontSize = 16.sp,
-                    color = GoaldayDesign.adaptiveInkPrimary,
+                // 更多触区放大到 48dp，字形不变
+                Box(
                     modifier = Modifier
-                        .clickable { showOptionsMenu = true }
-                        .padding(start = 14.dp),
-                )
+                        .size(48.dp)
+                        .clickable { showOptionsMenu = true },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "···",
+                        fontSize = 16.sp,
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                    )
+                }
                 DropdownMenu(
                     expanded = showOptionsMenu,
                     onDismissRequest = { showOptionsMenu = false },
@@ -3458,6 +3473,9 @@ private fun MonthScheduleView(
                     .padding(top = 10.dp),
             ) {
                 val currentBook = uiState.books.getOrNull(uiState.selectedBookIndex)
+                // 月池顶卡点按弹清单下拉（对照原版与周池同行为；之前是直接轮切，不可定向选）
+                var showMonthTopicPopup by remember { mutableStateOf(false) }
+                Box(Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier
                         .padding(horizontal = 12.dp)
@@ -3465,33 +3483,71 @@ private fun MonthScheduleView(
                         .clip(RoundedCornerShape(8.dp))
                         .background(if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White)
                         .border(0.7.dp, MainTabDivider.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                        .clickable {
-                            val next = (uiState.selectedBookIndex + 1) % uiState.books.size.coerceAtLeast(1)
-                            viewModel.openBook(next)
-                        }
+                        .clickable { showMonthTopicPopup = true }
                         .padding(horizontal = 10.dp, vertical = 9.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
                         Modifier
-                            .size(12.dp)
-                            .background(PoolBullet, RoundedCornerShape(3.dp)),
+                            .size(10.dp)
+                            .background(currentBook?.color ?: PoolBullet, CircleShape),
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        "选择清单",
+                        currentBook?.title ?: "选择清单",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = GoaldayDesign.adaptiveInkPrimary,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f, fill = false),
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
+                    Spacer(Modifier.width(10.dp))
                     Icon(
                         Icons.Filled.ExpandMore,
                         contentDescription = "切换清单",
                         tint = GoaldayDesign.adaptiveInkMuted,
                         modifier = Modifier.size(18.dp),
                     )
+                }
+                DropdownMenu(
+                    expanded = showMonthTopicPopup,
+                    onDismissRequest = { showMonthTopicPopup = false },
+                    containerColor = if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White,
+                    modifier = Modifier
+                        .width(220.dp)
+                        .heightIn(max = 400.dp),
+                ) {
+                    uiState.books.forEachIndexed { index, book ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        Modifier
+                                            .size(10.dp)
+                                            .background(book.color, CircleShape),
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        book.title,
+                                        fontSize = 16.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    if (index == uiState.selectedBookIndex) {
+                                        Text("✓", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = GoaldayDesign.adaptiveInkPrimary)
+                                    }
+                                }
+                            },
+                            onClick = {
+                                viewModel.selectBook(index)
+                                monthPoolCollapsed = false
+                                showMonthTopicPopup = false
+                            },
+                        )
+                    }
+                }
                 }
                 Spacer(Modifier.height(10.dp))
                 LazyColumn(Modifier.weight(1f)) {
@@ -3569,7 +3625,8 @@ private fun MonthScheduleView(
                             .clickable { monthPoolCollapsed = true },
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("›", fontSize = 17.sp, color = GoaldayDesign.adaptiveInkPrimary)
+                        // 与周池统一用自绘箭头（对照原版 bg_arrow）
+                        ChevronGlyph(mirrored = false, color = GoaldayDesign.adaptiveInkPrimary)
                     }
                 }
             }
@@ -3586,10 +3643,10 @@ private fun MonthScheduleView(
                         .size(43.dp)
                         .background(MainTabBarBg, CircleShape)
                         .clickable { monthPoolCollapsed = false },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("‹", fontSize = 17.sp, color = GoaldayDesign.adaptiveInkPrimary)
-                }
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        ChevronGlyph(mirrored = true, color = GoaldayDesign.adaptiveInkPrimary)
+                    }
             }
         }
     }
