@@ -53,10 +53,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
@@ -730,6 +727,131 @@ data class SwipeAction(
     val icon: ImageVector,
     val onAction: () -> Unit,
 )
+
+/** 自绘描线图标（对照原版位图箭头/灯泡/操作栏图标：2dp 圆头描边，自绘无位图依赖）。 */
+@Composable
+private fun ChevronGlyph(
+    mirrored: Boolean,
+    color: Color,
+    size: androidx.compose.ui.unit.Dp = 17.dp,
+) {
+    Canvas(Modifier.size(size)) {
+        val s = size.toPx()
+        val sw = 2.dp.toPx()
+        val round = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = sw,
+            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+            join = androidx.compose.ui.graphics.StrokeJoin.Round,
+        )
+        val x0 = if (mirrored) s * 0.66f else s * 0.34f
+        val x1 = if (mirrored) s * 0.34f else s * 0.66f
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(x0, s * 0.24f)
+            lineTo(x1, s * 0.5f)
+            lineTo(x0, s * 0.76f)
+        }
+        drawPath(path, color, style = round)
+    }
+}
+
+@Composable
+private fun OutlineBulbGlyph(
+    tint: Color,
+    size: androidx.compose.ui.unit.Dp = 20.dp,
+) {
+    Canvas(Modifier.size(size)) {
+        val s = size.toPx()
+        val u = s / 20f
+        val sw = 1.8.dp.toPx()
+        val round = androidx.compose.ui.graphics.drawscope.Stroke(width = sw, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+        // 灯头圆
+        drawCircle(tint, radius = 5.4f * u, center = Offset(10f * u, 7.6f * u), style = round)
+        // 灯颈与底座线
+        drawLine(tint, Offset(7.6f * u, 12.2f * u), Offset(7.6f * u, 14.4f * u), sw, androidx.compose.ui.graphics.StrokeCap.Round)
+        drawLine(tint, Offset(12.4f * u, 12.2f * u), Offset(12.4f * u, 14.4f * u), sw, androidx.compose.ui.graphics.StrokeCap.Round)
+        drawLine(tint, Offset(8.2f * u, 15.4f * u), Offset(11.8f * u, 15.4f * u), sw, androidx.compose.ui.graphics.StrokeCap.Round)
+        drawLine(tint, Offset(8.8f * u, 17f * u), Offset(11.2f * u, 17f * u), sw, androidx.compose.ui.graphics.StrokeCap.Round)
+        // 放射线（左上/上/右上）
+        drawLine(tint, Offset(4.8f * u, 5f * u), Offset(3.4f * u, 3.6f * u), sw, androidx.compose.ui.graphics.StrokeCap.Round)
+        drawLine(tint, Offset(10f * u, 1.8f * u), Offset(10f * u, 0.8f * u), sw, androidx.compose.ui.graphics.StrokeCap.Round)
+        drawLine(tint, Offset(15.2f * u, 5f * u), Offset(16.6f * u, 3.6f * u), sw, androidx.compose.ui.graphics.StrokeCap.Round)
+    }
+}
+
+@Composable
+private fun OutlineTrashGlyph(
+    tint: Color,
+    size: androidx.compose.ui.unit.Dp = 22.dp,
+) {
+    Canvas(Modifier.size(size)) {
+        val s = size.toPx()
+        val u = s / 22f
+        val sw = 1.9.dp.toPx()
+        val cap = androidx.compose.ui.graphics.StrokeCap.Round
+        // 盖 + 提手
+        drawLine(tint, Offset(6.5f * u, 5f * u), Offset(15.5f * u, 5f * u), sw, cap)
+        drawLine(tint, Offset(9.5f * u, 5f * u), Offset(9.5f * u, 3.2f * u), sw, cap)
+        drawLine(tint, Offset(12.5f * u, 5f * u), Offset(12.5f * u, 3.2f * u), sw, cap)
+        drawLine(tint, Offset(9.5f * u, 3.2f * u), Offset(12.5f * u, 3.2f * u), sw, cap)
+        // 筐体
+        drawLine(tint, Offset(7f * u, 5f * u), Offset(8f * u, 18.5f * u), sw, cap)
+        drawLine(tint, Offset(15f * u, 5f * u), Offset(14f * u, 18.5f * u), sw, cap)
+        drawLine(tint, Offset(8f * u, 18.5f * u), Offset(14f * u, 18.5f * u), sw, cap)
+        // 筐内竖线
+        drawLine(tint, Offset(10.2f * u, 8f * u), Offset(10.2f * u, 16f * u), sw * 0.8f, cap)
+        drawLine(tint, Offset(11.8f * u, 8f * u), Offset(11.8f * u, 16f * u), sw * 0.8f, cap)
+    }
+}
+
+@Composable
+private fun OutlineUpGlyph(
+    tint: Color,
+    size: androidx.compose.ui.unit.Dp = 22.dp,
+) {
+    Canvas(Modifier.size(size)) {
+        val s = size.toPx()
+        val sw = 2.dp.toPx()
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(s * 0.3f, s * 0.64f)
+            lineTo(s * 0.5f, s * 0.36f)
+            lineTo(s * 0.7f, s * 0.64f)
+        }
+        drawPath(
+            path,
+            tint,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = sw,
+                cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                join = androidx.compose.ui.graphics.StrokeJoin.Round,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun OutlineCheckGlyph(
+    tint: Color,
+    size: androidx.compose.ui.unit.Dp = 22.dp,
+) {
+    Canvas(Modifier.size(size)) {
+        val s = size.toPx()
+        val sw = 2.2.dp.toPx()
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(s * 0.26f, s * 0.54f)
+            lineTo(s * 0.45f, s * 0.72f)
+            lineTo(s * 0.76f, s * 0.3f)
+        }
+        drawPath(
+            path,
+            tint,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = sw,
+                cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                join = androidx.compose.ui.graphics.StrokeJoin.Round,
+            ),
+        )
+    }
+}
 
 /** 日程条目选色（对照原版周底栏色板；null=默认色） */
 private val EntryColorChoices: List<Int?> = listOf(
@@ -1501,11 +1623,8 @@ private fun WeekScheduleView(
                         .clickable { poolCollapsed = !poolCollapsed },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        if (poolCollapsed) "‹" else "›",
-                        fontSize = 17.sp,
-                        color = GoaldayDesign.adaptiveInkPrimary,
-                    )
+                    // 自绘描线箭头（对照原版 bg_arrow 内 8×15dp 位图箭头）
+                    ChevronGlyph(mirrored = poolCollapsed, color = GoaldayDesign.adaptiveInkPrimary)
                 }
             }
         }
@@ -1523,7 +1642,7 @@ private fun WeekScheduleView(
                         .clickable { poolCollapsed = false },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("‹", fontSize = 17.sp, color = GoaldayDesign.adaptiveInkPrimary)
+                    ChevronGlyph(mirrored = true, color = GoaldayDesign.adaptiveInkPrimary)
                 }
             }
         }
@@ -2059,12 +2178,8 @@ private fun TopicListView(
                         .clickable { onOpenInspiration() },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Lightbulb,
-                        contentDescription = "灵感",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp),
-                    )
+                    // 自绘描线灯泡（对照原版 iv_tip 描线灯泡）
+                    OutlineBulbGlyph(tint = Color.White)
                 }
             }
         }
@@ -2523,10 +2638,10 @@ private fun TopicDetailSimple(
                 )
                 @Composable
                 fun BoardIcon(
-                    image: androidx.compose.ui.graphics.vector.ImageVector,
                     label: String,
                     tint: Color = GoaldayDesign.adaptiveInkPrimary,
                     onTap: () -> Unit,
+                    icon: @Composable () -> Unit,
                 ) {
                     Box(
                         modifier = Modifier
@@ -2537,22 +2652,29 @@ private fun TopicDetailSimple(
                             },
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(imageVector = image, contentDescription = label, tint = tint, modifier = Modifier.size(22.dp))
+                        icon()
                     }
                 }
-                BoardIcon(Icons.Filled.Delete, "删除") {
+                // 自绘描线图标（对照原版详情底栏 ic_trash/ic_top/ic_complete 位图）
+                BoardIcon("删除", onTap = {
                     InteractionFeedback.haptic(detailContext)
                     viewModel.removeListPageItemIn(book, pageTitle, selectedItem)
                     selectedDetailItem = null
                     onToggle()
+                }) {
+                    OutlineTrashGlyph(tint = GoaldayDesign.adaptiveInkPrimary)
                 }
-                BoardIcon(Icons.Filled.KeyboardArrowUp, "置顶") {
+                BoardIcon("置顶", onTap = {
                     InteractionFeedback.haptic(detailContext)
                     viewModel.moveDetailPageItemToTop(book, pageTitle, selectedItem)
                     onToggle()
+                }) {
+                    OutlineUpGlyph(tint = GoaldayDesign.adaptiveInkPrimary)
                 }
-                BoardIcon(Icons.Filled.Check, "完成") {
+                BoardIcon("完成", onTap = {
                     toggleItem(selectedItem, pageTitle, selChecked)
+                }) {
+                    OutlineCheckGlyph(tint = GoaldayDesign.adaptiveInkPrimary)
                 }
             }
         }
