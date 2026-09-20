@@ -48,15 +48,20 @@ internal val JOURNAL_PROMPTS = listOf(
 )
 
 /**
- * 当日灵感提示语：按日期取模稳定映射（同一天在记录 Tab 与书内页看到同一条）。
- * 对照原版 JournalPrompts.m30967a 的随机取法：原版每次绑定随机一条；开发版按日期稳定，
- * 避免滚动/重组时提示语闪变；点提示语可轮换（offset 按天持久化，两面同步，见任务 8）。
+ * 当日灵感提示语：按日期取模稳定映射 + 轮换偏移。
+ * 对照原版 JournalPrompts.m30967a 的随机取法：原版每次绑定随机一条；记录 Tab 无手动轮换
+ * 记录时以随机初始偏移起算（randomPromptOffset，remember 保证重组不重抽、不闪变），点提示语
+ * 可轮换（offset 按天持久化，两面同步）；书内页仍读持久化偏移、无记录时取日期稳定条。
  */
 internal fun journalPromptFor(date: LocalDate, extraOffset: Int = 0): String {
     if (JOURNAL_PROMPTS.isEmpty()) return ""
     val base = Math.floorMod(date.toEpochDay().toInt(), JOURNAL_PROMPTS.size)
     return JOURNAL_PROMPTS[Math.floorMod(base + extraOffset, JOURNAL_PROMPTS.size)]
 }
+
+/** 对照原版每次绑定随机一条：无手动轮换记录时的随机初始偏移（重组不重抽，不闪变）。 */
+internal fun randomPromptOffset(): Int =
+    if (JOURNAL_PROMPTS.isEmpty()) 0 else kotlin.random.Random.nextInt(JOURNAL_PROMPTS.size)
 
 /** 提示语轮换偏移的按天存储键（记录 Tab 点选轮换，书内页同步读取）。 */
 internal fun diaryPromptOffsetKey(date: LocalDate): String = "diary_prompt_offset_" + date.toString()

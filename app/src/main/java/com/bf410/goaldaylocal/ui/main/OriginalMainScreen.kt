@@ -139,6 +139,7 @@ import com.bf410.goaldaylocal.ui.book.BookUiState
 import com.bf410.goaldaylocal.ui.book.BookViewModel
 import com.bf410.goaldaylocal.ui.book.diaryPromptOffsetKey
 import com.bf410.goaldaylocal.ui.book.journalPromptFor
+import com.bf410.goaldaylocal.ui.book.randomPromptOffset
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.LocalGoaldayDarkMode
 import com.tencent.mmkv.MMKV
@@ -147,6 +148,8 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.WeekFields
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -1585,7 +1588,8 @@ internal fun diaryPagerDate(anchor: LocalDate, page: Int, center: Int = DIARY_PA
  * 对照原版 DiaryScrollFragment（纵向 ViewPager2 + DiaryScrollAdapter 5 页窗口）：
  * - 纵滑逐天浏览历史日记，每页即当日完整编辑器（对照 createFragment 按日期 new DiaryFragment）；
  * - 落定后锚点跟随到落定日并无动画回正到中心页，再同步选中日期
- *  （对照 onPageSelected 500ms 后 setCurrentItem(2,false) + 日期事件；Compose 落定即完成，无需延迟）；
+ *  （对照 onPageSelected 500ms 后 setCurrentItem(2,false) + 日期事件；collectLatest + delay 500ms
+ *  合并快速连滑，与原版一致）；
  * - 外部跳日期（周表选日/书内跳转）时锚点重置并回正（对照 m31002b + ConstantViewModel 日期事件）；
  * - 编辑态（键盘工具栏出现）锁定纵滑翻页，阅读滚动不受影响（对照原版编辑态 setUserInputEnabled(false)）。
  * 注：原版 paging/DiaryPagingSource 经查无任何调用（死代码），日期按日历算术生成即可，无需 Paging3。
@@ -1602,8 +1606,10 @@ private fun RecordDiaryPager(
     val pagerState = rememberPagerState(initialPage = DIARY_PAGER_CENTER, pageCount = { DIARY_PAGER_SIZE })
     var editorFocused by remember { mutableStateOf(false) }
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }.collect { settled ->
+        snapshotFlow { pagerState.settledPage }.collectLatest { settled ->
             if (settled != DIARY_PAGER_CENTER) {
+                // 对照原版落定 500ms 后回正：快滑合并，只处理最后一次落定
+                delay(500)
                 anchorDate = diaryPagerDate(anchorDate, settled)
                 onSelectDate(anchorDate)
                 pagerState.scrollToPage(DIARY_PAGER_CENTER)
@@ -1638,9 +1644,12 @@ private fun RecordDiaryView(
     directEdit: Boolean = false,
 ) {
     val store = remember { LocalStateStore(MMKV.defaultMMKV()) }
-    // 提示语轮换：点提示语切下一条，按天持久化（书内页同步读取同一偏移，同一天同一条）
+    // 提示语轮换：点提示语切下一条，按天持久化（书内页同步读取同一偏移，同一天同一条）；
+    // 无手动轮换记录时随机初始偏移，对照原版每次绑定随机一条（remember 保证重组不重抽、不闪变）
     var promptOffset by remember(selectedDate) {
-        mutableStateOf(MMKV.defaultMMKV().decodeInt(diaryPromptOffsetKey(selectedDate), 0))
+        val key = diaryPromptOffsetKey(selectedDate)
+        val mmkv = MMKV.defaultMMKV()
+        mutableStateOf(if (mmkv.containsKey(key)) mmkv.decodeInt(key, 0) else randomPromptOffset())
     }
     val prompt = remember(selectedDate, promptOffset) { journalPromptFor(selectedDate, promptOffset) }
     // 编辑器只展示用户正文；「今日完成」等结构化段落由系统维护
