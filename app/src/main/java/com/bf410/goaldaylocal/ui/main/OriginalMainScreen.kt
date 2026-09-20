@@ -1442,7 +1442,7 @@ private fun WeekScheduleView(
                                     .background(currentBook?.color ?: PoolBullet, CircleShape),
                             )
                             Spacer(Modifier.width(6.dp))
-                            // 右池：未完成黑字，完成22%黑、无删除线；固定单行，自适应最多3行
+                            // 右池：未完成黑字，完成22%黑、无删除线；最多3行自适应（固定态也不再强制单行，保证长标题可读）
                             Text(
                                 poolItem,
                                 fontSize = 20.sp,
@@ -1453,7 +1453,7 @@ private fun WeekScheduleView(
                                     if (itemChecked) Color(0x36000000) else Color.Black
                                 },
                                 textDecoration = TextDecoration.None,
-                                maxLines = if (adaptiveMode) 3 else 1,
+                                maxLines = 3,
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
@@ -1464,9 +1464,9 @@ private fun WeekScheduleView(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .alpha(if (draggingItem == poolItem) 0.35f else 1f)
-                                // 对照原版 item_schedule_target：上下内距 7dp（单行截断）
+                                // 对照原版 item_schedule_target：上下内距 7dp；多行时圆点顶对齐首行
                                 .padding(start = 17.dp, end = 14.dp, top = 7.dp, bottom = 7.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                            verticalAlignment = Alignment.Top,
                         ) {
                             Box(
                                 modifier = Modifier

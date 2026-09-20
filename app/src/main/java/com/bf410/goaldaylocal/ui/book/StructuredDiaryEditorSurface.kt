@@ -156,14 +156,7 @@ internal fun StructuredDiaryEditor(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-            if (state.blocks.isEmpty() && state.photoText.isBlank() && state.richHtml.isBlank()) {
-                Text(
-                    "写下你现在最想完成的",
-                    fontSize = 12.sp,
-                    lineHeight = 17.sp,
-                    color = GoaldayDesign.InkMuted.copy(alpha = 0.75f),
-                )
-            }
+            // 对照原版空白日记页：纯白，不打任何提示文案（添加行保留为唯一入口）
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text(
                     "+ 文字",
