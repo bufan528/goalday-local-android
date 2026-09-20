@@ -879,6 +879,25 @@ private fun WeekScheduleView(
     LaunchedEffect(poolEditingItem) {
         if (poolEditingItem != null) runCatching { poolEditFocus.requestFocus() }
     }
+    // 池空区点按建空条（对照原版池空区点按建空条）：新建行聚焦输入，空白提交=丢弃，有字=新增
+    var poolCreatingNew by remember { mutableStateOf(false) }
+    var poolNewValue by remember { mutableStateOf(TextFieldValue()) }
+    var poolNewHadFocus by remember { mutableStateOf(false) }
+    val poolNewFocus = remember { FocusRequester() }
+    fun commitPoolNew() {
+        if (!poolCreatingNew) return
+        val text = poolNewValue.text.trim()
+        poolCreatingNew = false
+        poolNewHadFocus = false
+        if (text.isNotBlank()) {
+            InteractionFeedback.click(context)
+            viewModel.addListPageItem(text)
+        }
+        poolKeyboard?.hide()
+    }
+    LaunchedEffect(poolCreatingNew) {
+        if (poolCreatingNew) runCatching { poolNewFocus.requestFocus() }
+    }
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
 
@@ -1335,9 +1354,10 @@ private fun WeekScheduleView(
                                     .onGloballyPositioned { poolItemOrigins[poolItem] = it.boundsInWindow().topLeft }
                                     .pointerInput(dragEnable) {
                                         detectDragGesturesAfterLongPress(
-                                            onDragStart = { touch ->
-                                                if (poolEditingItem == poolItem) commitPoolEdit()
-                                                draggingItem = poolItem
+                                                onDragStart = { touch ->
+                                                    if (poolEditingItem == poolItem) commitPoolEdit()
+                                                    if (poolCreatingNew) commitPoolNew()
+                                                    draggingItem = poolItem
                                                 val origin = poolItemOrigins[poolItem] ?: poolOrigin
                                                 dragFingerWindow = Offset(origin.x + touch.x, origin.y + touch.y)
                                                 InteractionFeedback.haptic(dragContext)
@@ -1398,6 +1418,7 @@ private fun WeekScheduleView(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable {
+                                                if (poolCreatingNew) commitPoolNew()
                                                 if (poolEditingItem != poolItem) {
                                                     poolEditingItem = poolItem
                                                     poolEditValue = TextFieldValue(poolItem, TextRange(poolItem.length))
@@ -1422,50 +1443,45 @@ private fun WeekScheduleView(
                         )
                     }
                 }
-                // 尾部新增条目（对照原版：清单尾部直接输入添加）
-                item {
-                    var addItemText by remember { mutableStateOf("") }
-                    BasicTextField(
-                        value = addItemText,
-                        onValueChange = { addItemText = it },
-                        singleLine = true,
-                        textStyle = TextStyle(fontSize = 20.sp, lineHeight = 26.sp, color = GoaldayDesign.adaptiveInkPrimary),
-                        cursorBrush = SolidColor(TodayCoral),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 9.dp),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                if (addItemText.isNotBlank()) {
-                                    InteractionFeedback.click(context)
-                                    viewModel.addListPageItem(addItemText)
-                                }
-                                addItemText = ""
-                            },
-                        ),
-                        decorationBox = { inner ->
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    "+",
-                                    fontSize = 16.sp,
-                                    color = GoaldayDesign.adaptiveInkMuted,
-                                    modifier = Modifier.padding(end = 10.dp),
-                                )
-                                Box {
-                                    if (addItemText.isEmpty()) {
-                                        Text(
-                                            // 占位须塞进 177dp 池宽：短文案不断尾
-                                            "添加新条目",
-                                            fontSize = 15.sp,
-                                            color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.7f),
-                                            maxLines = 1,
-                                        )
+                // 空区点按建空条（对照原版池空区点按）：新建行聚焦输入，空白提交丢弃，有字新增
+                if (poolCreatingNew) {
+                    item(key = "pool_new_row") {
+                        BasicTextField(
+                            value = poolNewValue,
+                            onValueChange = { poolNewValue = it },
+                            singleLine = true,
+                            textStyle = TextStyle(fontSize = 20.sp, lineHeight = 26.sp, color = GoaldayDesign.adaptiveInkPrimary),
+                            cursorBrush = SolidColor(TodayCoral),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 17.dp, end = 14.dp, top = 7.dp, bottom = 7.dp)
+                                .focusRequester(poolNewFocus)
+                                .onFocusChanged {
+                                    if (it.isFocused) {
+                                        poolNewHadFocus = true
+                                    } else if (poolNewHadFocus && poolCreatingNew) {
+                                        commitPoolNew()
                                     }
-                                    inner()
+                                },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { commitPoolNew() }),
+                        )
+                    }
+                }
+                item(key = "pool_empty_tap") {
+                    // 池空区接住点按建空条；至少 120dp 保证短池也有可点空区
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 120.dp)
+                            .clickable {
+                                if (poolEditingItem != null) commitPoolEdit()
+                                if (!poolCreatingNew) {
+                                    poolNewValue = TextFieldValue("", TextRange.Zero)
+                                    poolNewHadFocus = false
+                                    poolCreatingNew = true
                                 }
-                            }
-                        },
+                            },
                     )
                 }
                 item { Spacer(Modifier.height(90.dp)) }
