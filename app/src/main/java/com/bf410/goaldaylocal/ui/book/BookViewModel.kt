@@ -666,6 +666,47 @@ class BookViewModel(
         syncEditableContent()
     }
 
+    /**
+     * 周条目编辑弹层设置重复（对照原版 fl_repeat）：落盘规则 + 按规则展开后续事项。
+     * 关掉重复时同组事项保留为普通条目（清规则与组号），删改重复条目走作用域确认。
+     */
+    fun setScheduleRepeatFromHandbook(entryId: String, repeatRule: String, repeatInterval: Int = 1) {
+        if (entryId.isBlank()) return
+        // 先记下组号：关重复要把同组事项一并转普通（update 会先清掉本条组号）
+        val groupIdBefore = scheduleRepository.entries().firstOrNull { it.id == entryId }?.repeatGroupId.orEmpty()
+        updateScheduleRepeatFromHandbook(entryId, repeatRule, repeatInterval)
+        var all = scheduleRepository.entries()
+        if (repeatRule.isBlank()) {
+            all = all.map { entry ->
+                if (entry.id == entryId || (groupIdBefore.isNotBlank() && entry.repeatGroupId == groupIdBefore)) {
+                    entry.copy(repeatRule = "", repeatGroupId = "")
+                } else {
+                    entry
+                }
+            }
+        } else {
+            val target = all.firstOrNull { it.id == entryId } ?: return
+            // 换规则先清掉旧序列兄弟（同组未来事项），再按新规则展开，避免新旧序列叠加
+            val groupId = target.repeatGroupId
+            if (groupId.isNotBlank()) {
+                all = all.filter { it.id == entryId || it.repeatGroupId != groupId }
+            }
+            val additions = com.bf410.goaldaylocal.ui.calendar.expandRepeatingScheduleEntry(target)
+                .filterNot { candidate ->
+                    all.any { saved ->
+                        saved.title == candidate.title &&
+                            saved.year == candidate.year &&
+                            saved.month == candidate.month &&
+                            saved.day == candidate.day &&
+                            saved.timeText == candidate.timeText
+                    }
+                }
+            if (additions.isNotEmpty()) all = all + additions
+        }
+        scheduleRepository.saveEntries(all)
+        syncEditableContent()
+    }
+
     fun moveScheduleDayFromHandbook(entryId: String, month: Int, day: Int) {
         if (entryId.isBlank()) return
         val year = store.calendarAnchorYear()

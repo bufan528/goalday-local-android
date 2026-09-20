@@ -2738,6 +2738,15 @@ private fun TopicAddSheet(
 
 // region 日程条目编辑弹层（对照原版点条目的编辑底栏：标题/时间/状态/移动/删除）
 
+/** 条目编辑弹层重复行文案（对照原版 fl_repeat：不重复/每天/每周/每月）。 */
+private fun repeatSheetLabel(rule: String): String =
+    when (rule) {
+        "daily" -> "每天"
+        "weekly" -> "每周"
+        "monthly" -> "每月"
+        else -> "不重复"
+    }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EntryEditSheet(
@@ -2753,6 +2762,8 @@ private fun EntryEditSheet(
     }
     var title by remember(entry.id) { mutableStateOf(entry.title) }
     var timeText by remember(entry.id) { mutableStateOf(entry.timeText) }
+    // 删改的作用域判定必须读最新快照：弹层内改了重复后 entry 参数已过期（对照作用域 dormant 根因）
+    val liveEntry = allEntries.firstOrNull { it.id == entry.id } ?: entry
     val dark = LocalGoaldayDarkMode.current
     val sheetContext = LocalContext.current
     val fieldBg = if (dark) Color(0xFF35312B) else Color(0xFFFBF7F1)
@@ -2818,6 +2829,64 @@ private fun EntryEditSheet(
                     }
                 },
             )
+            Spacer(Modifier.height(8.dp))
+            // 重复（对照原版 fl_repeat：不重复/每天/每周/每月；落盘展开后续事项，删改走作用域确认）
+            var repeatNow by remember(entry.id) { mutableStateOf(entry.repeatRule) }
+            var showRepeatMenu by remember { mutableStateOf(false) }
+            Box {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(fieldBg)
+                        .clickable { showRepeatMenu = true }
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "重复",
+                        fontSize = 15.sp,
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        repeatSheetLabel(repeatNow),
+                        fontSize = 15.sp,
+                        color = GoaldayDesign.adaptiveInkMuted,
+                    )
+                }
+                DropdownMenu(
+                    expanded = showRepeatMenu,
+                    onDismissRequest = { showRepeatMenu = false },
+                    containerColor = if (dark) Color(0xFF2C2722) else Color.White,
+                ) {
+                    listOf("" to "不重复", "daily" to "每天", "weekly" to "每周", "monthly" to "每月").forEach { (rule, label) ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        label,
+                                        fontSize = 16.sp,
+                                        maxLines = 1,
+                                        color = GoaldayDesign.adaptiveInkPrimary,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    if (rule == repeatNow) {
+                                        Text("✓", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = GoaldayDesign.adaptiveInkPrimary)
+                                    }
+                                }
+                            },
+                            onClick = {
+                                showRepeatMenu = false
+                                if (rule != repeatNow) {
+                                    repeatNow = rule
+                                    viewModel.setScheduleRepeatFromHandbook(entry.id, rule)
+                                }
+                            },
+                        )
+                    }
+                }
+            }
             Spacer(Modifier.height(12.dp))
             // 颜色与置顶（对照原版周底栏选色/置顶：专题色，无值=默认；置顶排本日最前）
             var pinnedNow by remember(entry.id) { mutableStateOf(entry.pinned) }
@@ -2894,7 +2963,7 @@ private fun EntryEditSheet(
                                 if (isCurrent) TodayBlack else fieldBg,
                             )
                             .clickable(enabled = !isCurrent) {
-                                if (viewModel.isRepeatingEntry(entry)) {
+                                if (viewModel.isRepeatingEntry(liveEntry)) {
                                     onDismiss()
                                     onRequestRepeatScope(
                                         BookViewModel.RepeatScopeRequest(
@@ -2953,7 +3022,7 @@ private fun EntryEditSheet(
                         .clickable {
                             InteractionFeedback.click(sheetContext)
                             InteractionFeedback.haptic(sheetContext)
-                            if (viewModel.isRepeatingEntry(entry)) {
+                            if (viewModel.isRepeatingEntry(liveEntry)) {
                                 onDismiss()
                                 onRequestRepeatScope(
                                     BookViewModel.RepeatScopeRequest(
