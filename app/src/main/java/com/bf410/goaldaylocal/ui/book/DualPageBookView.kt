@@ -344,13 +344,14 @@ fun DualPageBookView(
                     )
                 }
                 .shadow(
-                    elevation = 12.dp,
-                    shape = RoundedCornerShape(14.dp),
+                    // 对照原版 BookFlipConfig corner=10dp、壳阴影 10dp
+                    elevation = 10.dp,
+                    shape = RoundedCornerShape(10.dp),
                     clip = false,
                     ambientColor = shadowColor,
                     spotColor = shadowColor,
                 )
-                .clip(RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(10.dp))
                 .drawWithContent {
                     // 书壳底色（纯色书衣）
                     fabricImage?.let { bmp ->
