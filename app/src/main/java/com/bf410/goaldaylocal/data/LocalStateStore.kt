@@ -547,8 +547,9 @@ class LocalStateStore(
 private fun JSONObject.toStringList(key: String): List<String> {
     val array = optJSONArray(key) ?: JSONArray()
     return buildList {
-        repeat(array.length()) { index -> add(array.getString(index)) }
-    }
+        // 非字符串脏元素只跳过该元素：getString 抛异常会被外层 runCatching 吞掉整页
+        repeat(array.length()) { index -> add(array.optString(index)) }
+    }.filter { it.isNotBlank() }
 }
 
 private fun Color.toArgbCompat(): Int = toArgb()
