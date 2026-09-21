@@ -269,9 +269,10 @@ fun DualPageBookView(
     // 对照原版：动画时长自适应，progress>0.5 时 100ms，否则 300ms，线性 easing；
     // 单手势最多进一位，进位只发生在松手 settle（手势中途不提前进位）
     fun settle(complete: Boolean) {
+        // 守卫必须同步置位：调用方在主线程，若在 launch 内才置位，两次快速松手都会通过检查致双进位
         if (isAnimating) return
+        isAnimating = true
         scope.launch {
-            isAnimating = true
             val currentProgress = progress.value
             val spec = tween<Float>(if (currentProgress > 0.5f) 100 else 300, easing = LinearEasing)
             if (complete) {
