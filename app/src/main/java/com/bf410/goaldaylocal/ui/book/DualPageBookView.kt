@@ -385,7 +385,9 @@ fun DualPageBookView(
                     }
                     drawContent()
                 }
-                    .pointerInput(Unit) {
+                    .pointerInput(flipThreshold) {
+                        // key 跟随开合阈值：闭合态 0.5，开书后 0.3；key 不变闭包里阈值恒旧，
+                        // 首翻还按 0.5 判定。isAnimating/isOpening 是委托 state，读值实时，不受影响。
                         val width = size.width.toFloat()
                         pageWidthPx = width
                         awaitPointerEventScope {
