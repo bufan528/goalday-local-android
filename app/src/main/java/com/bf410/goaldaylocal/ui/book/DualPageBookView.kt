@@ -823,6 +823,7 @@ private fun BookShelfSheet(
                                 .size(width = 58.dp, height = 84.dp)
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(yearCoverColor(year))
+                                .coverWeave()
                                 .clickableNoRipple { onPickYear(year) },
                             contentAlignment = Alignment.Center,
                         ) {
@@ -1028,7 +1029,8 @@ private fun BookCoverFace(
     Box(
         modifier = Modifier
             .size(width = width, height = height)
-            .background(yearCoverColor(year)),
+            .background(yearCoverColor(year))
+            .coverWeave(),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -1046,6 +1048,25 @@ private fun yearCoverColor(year: Int): androidx.compose.ui.graphics.Color = when
     2025 -> androidx.compose.ui.graphics.Color(0xFFE4DCCF)
     2024 -> androidx.compose.ui.graphics.Color(0xFFDFD5C6)
     else -> androidx.compose.ui.graphics.Color(0xFFD9CFC2)
+}
+
+/** 程序化布纹：与书壳同配方经纬线（对照原版封面织物感，自绘无位图依赖），叠在底色上、年份字下。 */
+private fun Modifier.coverWeave(): Modifier = this.drawWithContent {
+    val step = 3.dp.toPx()
+    val warp = Color(0xFF8A7F73).copy(alpha = 0.055f)
+    val weft = Color.White.copy(alpha = 0.06f)
+    var ly = 0f
+    while (ly < size.height) {
+        drawLine(warp, Offset(0f, ly), Offset(size.width, ly), strokeWidth = 1f)
+        drawLine(weft, Offset(0f, ly + step / 2), Offset(size.width, ly + step / 2), strokeWidth = 1f)
+        ly += step
+    }
+    var lx = 0f
+    while (lx < size.width) {
+        drawLine(warp, Offset(lx, 0f), Offset(lx, size.height), strokeWidth = 1f)
+        lx += step
+    }
+    drawContent()
 }
 
 @Composable
