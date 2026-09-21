@@ -140,6 +140,14 @@ class CalendarViewModel(
         val all = scheduleRepository.entries()
         val target = all.firstOrNull { it.id == id }
         val targetGroupId = target?.repeatGroupId.orEmpty()
+        // 整组改期：同组兄弟按同样天数平移，否则改期后序列日期脱节（标题/时间同步但日期不动）
+        val targetOldDate = target?.let { runCatching { LocalDate.of(it.year, it.month, it.day) }.getOrNull() }
+        val newDate = runCatching { LocalDate.of(current.year, current.month, clampedDay) }.getOrNull()
+        val seriesDelta = if (applySeries && targetOldDate != null && newDate != null) {
+            newDate.toEpochDay() - targetOldDate.toEpochDay()
+        } else {
+            0L
+        }
         val updated = all.map { entry ->
             if (entry.id == id) {
                 entry.copy(
@@ -154,8 +162,16 @@ class CalendarViewModel(
                     repeatEndDate = repeatEndDate?.let(::normalizeRepeatEndDate) ?: entry.repeatEndDate,
                 )
             } else if (applySeries && targetGroupId.isNotBlank() && entry.repeatGroupId == targetGroupId) {
+                val shifted = if (seriesDelta != 0L) {
+                    runCatching { LocalDate.of(entry.year, entry.month, entry.day).plusDays(seriesDelta) }.getOrNull()
+                } else {
+                    null
+                }
                 entry.copy(
                     title = title.trim(),
+                    year = shifted?.year ?: entry.year,
+                    month = shifted?.monthValue ?: entry.month,
+                    day = shifted?.dayOfMonth ?: entry.day,
                     note = note.trim(),
                     timeText = timeText?.trim() ?: entry.timeText,
                     repeatRule = repeatRule ?: entry.repeatRule,

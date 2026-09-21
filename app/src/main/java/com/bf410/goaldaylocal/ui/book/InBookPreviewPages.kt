@@ -361,7 +361,8 @@ private fun InBookScheduleDayRow(
     val dateColumnColor = GoaldayDesign.ScheduleDateColumnSeparator
     // 书内可交互：行内编辑态 = (列, 槽, 文本)；行级 pointerInput 按坐标命中槽位开字段
     // （槽内 clickable 在书页 3D graphicsLayer 下不响应，行级手势经真机验证可用）
-    var edit by remember { mutableStateOf<Triple<Int, Int, String>?>(null) }
+    // 编辑态按日期 key：翻页复用行组合时旧编辑框不串到新日期
+    var edit by remember(date) { mutableStateOf<Triple<Int, Int, String>?>(null) }
     Row(
         modifier = modifier
             .fillMaxWidth()
