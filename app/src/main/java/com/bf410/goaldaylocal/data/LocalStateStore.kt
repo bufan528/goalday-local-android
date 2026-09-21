@@ -377,6 +377,29 @@ class LocalStateStore(
         saveCustomBooks(customBooks().filterNot { it.id == bookId })
     }
 
+    /**
+     * 对照原版开库完成态：清单指南 2/12（第 9/10 条预勾选，日期章 2023-08-31，见 o_guide_detail 取证）。
+     * 仅补写缺失键（containsKey 门卫），已有用户勾选/取消不动；一次标记防重复。
+     */
+    fun ensureGuideSeedChecks() {
+        if (mmkv.decodeBool("guide_seed_checks_v1", false)) return
+        val page = SampleLibrary.books.firstOrNull { it.id == "weekly-review" }
+            ?.pages?.filterIsInstance<TargetPage>()?.firstOrNull()
+        val items = page?.items ?: emptyList()
+        val seeds = listOf(items.getOrNull(8), items.getOrNull(9)).filterNotNull()
+        seeds.forEach { item ->
+            val key = checkKey("weekly-review", page?.title ?: "回顾页", item)
+            if (!mmkv.containsKey(key)) {
+                mmkv.encode(key, true)
+            }
+            val dateKey = key + "_date"
+            if (!mmkv.containsKey(dateKey)) {
+                mmkv.encode(dateKey, "2023-08-31")
+            }
+        }
+        mmkv.encode("guide_seed_checks_v1", true)
+    }
+
     private fun checkKey(bookId: String, pageTitle: String, item: String): String =
         "check_${bookId}_${pageTitle}_${item.hashCode()}"
 

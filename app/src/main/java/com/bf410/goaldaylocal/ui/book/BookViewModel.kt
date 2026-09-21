@@ -97,6 +97,7 @@ class BookViewModel(
     val uiState: StateFlow<BookUiState> = _uiState
 
     init {
+        store.ensureGuideSeedChecks()
         syncPageFromStore()
         syncEditableContent()
         viewModelScope.launch {
