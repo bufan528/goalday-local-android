@@ -1160,9 +1160,11 @@ class BookViewModel(
         }.sorted()
 
     private fun importTodayFromSchedule(): ScheduleImport {
-        val year = store.calendarAnchorYear()
-        val month = store.calendarAnchorMonth().coerceIn(1, 12)
-        val day = LocalDate.now().dayOfMonth
+        // “今天”必须用真实今天：锚点年月会随日历翻页走，混搭 today.day 会读写错日期桶
+        val today = LocalDate.now()
+        val year = today.year
+        val month = today.monthValue
+        val day = today.dayOfMonth
         val entries = scheduleRepository.entries()
             .filter { it.year == year && it.month == month && it.day == day }
             .sortedBy { it.title }
@@ -1174,9 +1176,10 @@ class BookViewModel(
     private fun upsertTodayScheduleEntry(item: String, completed: Boolean) {
         val normalized = item.trim()
         if (normalized.isBlank()) return
-        val year = store.calendarAnchorYear()
-        val month = store.calendarAnchorMonth().coerceIn(1, 12)
-        val day = LocalDate.now().dayOfMonth
+        val today = LocalDate.now()
+        val year = today.year
+        val month = today.monthValue
+        val day = today.dayOfMonth
         val existing = scheduleRepository.entries()
         var matched = false
         val updated = existing.map { entry ->
@@ -1204,9 +1207,10 @@ class BookViewModel(
     private fun removeTodayScheduleEntry(item: String) {
         val normalized = item.trim()
         if (normalized.isBlank()) return
-        val year = store.calendarAnchorYear()
-        val month = store.calendarAnchorMonth().coerceIn(1, 12)
-        val day = LocalDate.now().dayOfMonth
+        val today = LocalDate.now()
+        val year = today.year
+        val month = today.monthValue
+        val day = today.dayOfMonth
         val updated = scheduleRepository.entries().filterNot {
             it.year == year && it.month == month && it.day == day && it.title == normalized
         }
