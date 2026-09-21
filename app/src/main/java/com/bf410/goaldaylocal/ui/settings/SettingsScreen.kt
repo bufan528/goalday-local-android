@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -104,7 +105,11 @@ fun SettingsScreen(
     var pendingDelete by remember { mutableStateOf<BackupSnapshot?>(null) }
     var showBackupDialog by remember { mutableStateOf(false) }
 
-    val snapshots = remember(refreshTick) { manager.backupSnapshots() }
+    // 备份列表走 IO 线程读目录：remember 里直接调会卡主线程
+    var snapshots by remember { mutableStateOf(listOf<BackupSnapshot>()) }
+    LaunchedEffect(refreshTick) {
+        snapshots = withContext(Dispatchers.IO) { manager.backupSnapshots() }
+    }
 
     val fontOptions = remember {
         listOf(

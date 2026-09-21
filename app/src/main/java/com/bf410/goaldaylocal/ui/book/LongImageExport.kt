@@ -992,20 +992,29 @@ private fun drawExportImage(
             while ((bounds.outWidth / sample) > 1080 || (bounds.outHeight / sample) > 1080) sample *= 2
             BitmapFactory.decodeFile(f.absolutePath, BitmapFactory.Options().apply { inSampleSize = sample })
         } else {
+            // content 链同样降采样：流不可复位，先读字节再两次解码；坏图宽高为 0 时返回 null
             context.contentResolver.openInputStream(Uri.parse(uri))?.use { stream ->
-                BitmapFactory.decodeStream(stream)
+                val bytes = stream.readBytes()
+                if (bytes.isEmpty()) return@use null
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+                if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@use null
+                var sample = 1
+                while ((bounds.outWidth / sample) > 1080 || (bounds.outHeight / sample) > 1080) sample *= 2
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })
             }
         }
     }.getOrNull()
     val maxHeight = 320f
     val rect = RectF(x, y, x + width, y + maxHeight)
     canvas.drawRoundRect(rect, 22f, 22f, fallbackPaint)
-    if (source != null) {
+    if (source != null && source.width > 0 && source.height > 0) {
         val ratio = minOf(width / source.width, maxHeight / source.height)
         val drawWidth = source.width * ratio
         val drawHeight = source.height * ratio
         val dest = RectF(x + (width - drawWidth) / 2f, y + (maxHeight - drawHeight) / 2f, x + (width + drawWidth) / 2f, y + (maxHeight + drawHeight) / 2f)
         canvas.drawBitmap(source, null, dest, null)
+        source.recycle()
     }
     return y + maxHeight + 24f
 }
