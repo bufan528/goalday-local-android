@@ -286,6 +286,8 @@ class LocalStateStore(
         moveRawString(pageItemsKey(bookId, oldTitle), pageItemsKey(bookId, newTitle))
         moveRawString(todayPlanKey(bookId, oldTitle), todayPlanKey(bookId, newTitle))
         moveRawString(todayDoneKey(bookId, oldTitle), todayDoneKey(bookId, newTitle))
+        moveRawString(pageOrderKey(bookId, oldTitle), pageOrderKey(bookId, newTitle))
+        moveRawString(hiddenItemsKey(bookId, oldTitle), hiddenItemsKey(bookId, newTitle))
         checkedItems.distinct().forEach { item ->
             val oldKey = checkKey(bookId, oldTitle, item)
             if (mmkv.decodeBool(oldKey, false)) {
@@ -293,6 +295,7 @@ class LocalStateStore(
                 mmkv.removeValueForKey(oldKey)
             }
             moveRawString(targetMetaKey(bookId, oldTitle, item), targetMetaKey(bookId, newTitle, item))
+            moveRawString(oldKey + "_date", checkKey(bookId, newTitle, item) + "_date")
         }
     }
 
@@ -305,8 +308,11 @@ class LocalStateStore(
         mmkv.removeValueForKey(pageItemsKey(bookId, pageTitle))
         mmkv.removeValueForKey(todayPlanKey(bookId, pageTitle))
         mmkv.removeValueForKey(todayDoneKey(bookId, pageTitle))
+        mmkv.removeValueForKey(pageOrderKey(bookId, pageTitle))
+        mmkv.removeValueForKey(hiddenItemsKey(bookId, pageTitle))
         checkedItems.distinct().forEach { item ->
             mmkv.removeValueForKey(checkKey(bookId, pageTitle, item))
+            mmkv.removeValueForKey(checkKey(bookId, pageTitle, item) + "_date")
             mmkv.removeValueForKey(targetMetaKey(bookId, pageTitle, item))
         }
     }
@@ -408,6 +414,9 @@ class LocalStateStore(
 
     private fun pageItemsKey(bookId: String, pageTitle: String): String =
         "page_items_${bookId}_${pageTitle.hashCode()}"
+
+    private fun pageOrderKey(bookId: String, pageTitle: String): String =
+        "page_order_${bookId}_$pageTitle"
 
     private fun hiddenItemsKey(bookId: String, pageTitle: String): String =
         "hidden_items_${bookId}_${pageTitle.hashCode()}"
