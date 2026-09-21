@@ -268,7 +268,7 @@ fun DualPageBookView(
 
     // 对照原版：动画时长自适应，progress>0.5 时 100ms，否则 300ms，线性 easing；
     // 单手势最多进一位，进位只发生在松手 settle（手势中途不提前进位）
-    fun settle(complete: Boolean, alreadyAdvanced: Boolean = false) {
+    fun settle(complete: Boolean) {
         if (isAnimating) return
         scope.launch {
             isAnimating = true
@@ -276,12 +276,10 @@ fun DualPageBookView(
             val spec = tween<Float>(if (currentProgress > 0.5f) 100 else 300, easing = LinearEasing)
             if (complete) {
                 progress.animateTo(1f, spec)
-                if (!alreadyAdvanced) {
-                    when (turnDirection) {
-                        TurnDirection.NEXT -> pageState.goNextPage()
-                        TurnDirection.PREVIOUS -> pageState.goPreviousPage()
-                        null -> {}
-                    }
+                when (turnDirection) {
+                    TurnDirection.NEXT -> pageState.goNextPage()
+                    TurnDirection.PREVIOUS -> pageState.goPreviousPage()
+                    null -> {}
                 }
                 turnCount++
                 progress.snapTo(0f)
