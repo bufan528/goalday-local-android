@@ -37,6 +37,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import com.bf410.goaldaylocal.ui.KeepImmersiveInDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -717,7 +718,7 @@ internal fun InBookPlanPreview(
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text("添加计划") },
+            title = { KeepImmersiveInDialog(); Text("添加计划") },
             text = {
                 OutlinedTextField(
                     value = addDraft,
@@ -750,7 +751,7 @@ internal fun InBookPlanPreview(
         var editText by remember(currentItem) { mutableStateOf(currentItem) }
         AlertDialog(
             onDismissRequest = { editingItem = null },
-            title = { Text("编辑计划") },
+            title = { KeepImmersiveInDialog(); Text("编辑计划") },
             text = {
                 OutlinedTextField(
                     value = editText,
@@ -777,7 +778,7 @@ internal fun InBookPlanPreview(
     if (showTipDialog) {
         AlertDialog(
             onDismissRequest = { showTipDialog = false },
-            title = { Text("小贴士") },
+            title = { KeepImmersiveInDialog(); Text("小贴士") },
             text = {
                 Text(
                     "把想做的事写下来，就成功了一半。\n" +
@@ -1631,7 +1632,7 @@ internal fun InBookTargetPreview(
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text("添加目标") },
+            title = { KeepImmersiveInDialog(); Text("添加目标") },
             text = {
                 OutlinedTextField(
                     value = addDraft,
@@ -1664,7 +1665,7 @@ internal fun InBookTargetPreview(
         var editText by remember(currentItem) { mutableStateOf(currentItem) }
         AlertDialog(
             onDismissRequest = { editingItem = null },
-            title = { Text("编辑目标") },
+            title = { KeepImmersiveInDialog(); Text("编辑目标") },
             text = {
                 OutlinedTextField(
                     value = editText,
@@ -1691,7 +1692,7 @@ internal fun InBookTargetPreview(
     if (showTipDialog) {
         AlertDialog(
             onDismissRequest = { showTipDialog = false },
-            title = { Text("小贴士") },
+            title = { KeepImmersiveInDialog(); Text("小贴士") },
             text = {
                 Text(
                     "目标要具体可衡量，有截止日期。\n" +

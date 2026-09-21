@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.AlertDialog
+import com.bf410.goaldaylocal.ui.KeepImmersiveInDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -1345,7 +1346,7 @@ private fun RepeatModePickerDialog(
     )
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("重复模式", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) },
+        title = { KeepImmersiveInDialog(); Text("重复模式", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 options.forEach { (rule, label, interval) ->

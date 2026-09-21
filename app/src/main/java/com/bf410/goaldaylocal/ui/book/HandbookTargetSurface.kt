@@ -39,6 +39,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import com.bf410.goaldaylocal.ui.KeepImmersiveInDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -178,6 +179,7 @@ internal fun HandbookTargetReplicaPage(
             onDismissRequest = { showOptionsMenu = false },
             sheetState = sheetState,
         ) {
+            KeepImmersiveInDialog()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

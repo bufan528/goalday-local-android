@@ -73,6 +73,7 @@ import androidx.compose.material3.Text
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.AlertDialog
+import com.bf410.goaldaylocal.ui.KeepImmersiveInDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -349,7 +350,7 @@ private fun RenameTaskDialog(
     var text by remember { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("重命名任务") },
+        title = { KeepImmersiveInDialog(); Text("重命名任务") },
         text = {
             OutlinedTextField(
                 value = text,
