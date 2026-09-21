@@ -923,13 +923,14 @@ private fun HandbookPage(
                 }
             },
     ) {
-        // 正面内容
+        // 正面内容：跳转热区垫在内容之下（对照原版书内日记可写+空区点跳）：
+        // 内容里的可点控件（+文字/勾选/日期）优先吃点，空区落到热区再跳转；
+        // 热区盖在上层会吞掉日记一切点按（点+文字误跳主界面，dtap2 实锤）。
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer { alpha = frontAlpha },
         ) {
-            content()
             if (onTap != null) {
                 // 原版书页为 NoTouchConstraintLayout：点任意页面区域即跳转主界面（仅日程面）
                 Box(
@@ -938,6 +939,7 @@ private fun HandbookPage(
                         .clickableNoRipple { onTap() },
                 )
             }
+            content()
         }
         // 背面内容：仅翻页越过 90° 时才组合（静止时若常驻会盖在正面层之上拦截触摸）
         if (backAlpha > 0f) {

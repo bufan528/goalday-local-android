@@ -24,6 +24,7 @@ internal fun expandRepeatingScheduleEntry(entry: ScheduleEntry): List<ScheduleEn
             nextDate = { it.plusWeeks(interval.toLong()) },
         )
         "monthly" -> expandMonthly(entry, explicitEndDate, interval)
+        "yearly" -> expandYearly(entry, explicitEndDate, interval)
         else -> emptyList()
     }
 }
@@ -42,6 +43,27 @@ private fun expandDailyOrWeekly(
         .take(365)
         .map { date -> entry.copyForRepeatDate(date) }
         .toList()
+
+private fun expandYearly(
+    entry: ScheduleEntry,
+    explicitEndDate: LocalDate?,
+    interval: Int,
+): List<ScheduleEntry> {
+    val startDate = LocalDate.of(entry.year, entry.month, entry.day)
+    val maxItems = if (explicitEndDate == null) 5 else 36
+    return generateSequence(startDate.plusYears(interval.toLong())) { it.plusYears(interval.toLong()) }
+        .take(maxItems)
+        .mapNotNull { date ->
+            // 闰日顺延到当月末（如 2-29 → 2-28），与月展开同策略
+            val safe = date.withDayOfMonth(date.dayOfMonth.coerceAtMost(YearMonth.of(date.year, date.month).lengthOfMonth()))
+            if (explicitEndDate != null && safe.isAfter(explicitEndDate)) {
+                null
+            } else {
+                entry.copyForRepeatDate(safe)
+            }
+        }
+        .toList()
+}
 
 private fun expandMonthly(
     entry: ScheduleEntry,
