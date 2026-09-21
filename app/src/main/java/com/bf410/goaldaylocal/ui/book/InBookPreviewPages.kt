@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -1058,7 +1059,8 @@ internal fun InBookDiaryPreview(
                     end = diaryMarginH,
                 )
         ) {
-            val contentScroll = if (handbookMode) Modifier else Modifier.verticalScroll(rememberScrollState())
+            // 日记内容按日记 key 滚动位：翻页复用组合时不把旧滚动位带到新日期
+            val contentScroll = if (handbookMode) Modifier else Modifier.verticalScroll(remember(diary) { ScrollState(0) })
             val moodItems = remember(diary.moodTags) {
                 diary.moodTags.split(',', '，', ' ').map(String::trim).filter(String::isNotBlank)
             }
@@ -1288,7 +1290,8 @@ internal fun InBookDiaryEditorPage(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
+                // 滚动位按日期+左右页 key：翻页不把旧位带到新页
+                .verticalScroll(remember(date, isLeftPage) { ScrollState(0) })
                 // 右页起始让出书脊阴影，首字不被压住（对照阅读态同值）
                 .padding(start = if (isLeftPage) 7.5.dp else 16.dp, end = 7.5.dp, top = 5.dp, bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp),
