@@ -169,7 +169,7 @@ fun GoaldayApp(startTarget: String? = null) {
             if (startTarget == START_TARGET_DIARY || startTarget == START_TARGET_HANDBOOK) {
                 BookRootSurface.BOOK
             } else {
-                BookRootSurface.BOOK
+                BookRootSurface.HOME
             }
         )
     }
