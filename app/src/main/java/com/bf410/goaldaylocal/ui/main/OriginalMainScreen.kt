@@ -3608,12 +3608,17 @@ private fun MonthScheduleView(
                                 )
                             }
                             Spacer(Modifier.width(10.dp))
+                            // 月池条目与周池统一：20sp，完成22%黑、无删除线（对照原版池完成态）
                             Text(
                                 item,
-                                fontSize = 16.sp,
-                                lineHeight = 20.sp,
-                                color = if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
-                                textDecoration = if (itemChecked) TextDecoration.LineThrough else TextDecoration.None,
+                                fontSize = 20.sp,
+                                lineHeight = 26.sp,
+                                color = if (LocalGoaldayDarkMode.current) {
+                                    if (itemChecked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary
+                                } else {
+                                    if (itemChecked) Color(0x36000000) else Color.Black
+                                },
+                                textDecoration = TextDecoration.None,
                             )
                         }
                     }
