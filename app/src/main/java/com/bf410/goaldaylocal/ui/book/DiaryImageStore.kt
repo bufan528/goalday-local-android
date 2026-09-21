@@ -13,7 +13,11 @@ internal fun copyDiaryImageToPrivateDir(context: Context, uri: Uri, dateIso: Str
     return runCatching {
         val dir = java.io.File(context.filesDir, "diary_images").apply { mkdirs() }
         val stamp = dateIso.replace("-", "").ifBlank { "nodate" }
-        val file = java.io.File(dir, "b" + stamp + "_" + System.currentTimeMillis() + ".jpg")
+        // 同毫秒连选会互覆盖：补随机后缀；扩展名保留源格式，jpg 强制改名不影响解码但丢语义
+        val ext = context.contentResolver.getType(uri)
+            ?.substringAfterLast('/', "jpg")
+            ?.takeIf { it.matches(Regex("[A-Za-z0-9]+")) } ?: "jpg"
+        val file = java.io.File(dir, "b" + stamp + "_" + System.currentTimeMillis() + "_" + java.util.UUID.randomUUID().toString().take(8) + "." + ext)
         context.contentResolver.openInputStream(uri)?.use { input ->
             file.outputStream().use { output -> input.copyTo(output) }
         }

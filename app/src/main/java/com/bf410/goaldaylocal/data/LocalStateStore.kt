@@ -251,12 +251,11 @@ class LocalStateStore(
     fun targetItemMeta(bookId: String, pageTitle: String, item: String): TargetItemMeta {
         val raw = mmkv.decodeString(targetMetaKey(bookId, pageTitle, item), null) ?: return TargetItemMeta()
         val json = runCatching { JSONObject(raw) }.getOrNull() ?: return TargetItemMeta()
-        val maxDeadlineDay = java.time.YearMonth.now().lengthOfMonth()
+        // 读侧只做 1..31 合法性兜底：写入时已按锚点月钳制，这里不能再按 now() 月重钳，
+        // 否则切月后（如 31 日遇到 2 月）会把有效截止日改小
         return TargetItemMeta(
             note = json.optString("note"),
-            deadlineDay = json.optInt("deadlineDay", 0)
-                .takeIf { it > 0 }
-                ?.coerceIn(1, maxDeadlineDay),
+            deadlineDay = json.optInt("deadlineDay", 0).takeIf { it in 1..31 },
         )
     }
 
