@@ -127,6 +127,10 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.rememberCoroutineScope
 import java.io.File
 import java.io.FileOutputStream
 
@@ -159,11 +163,6 @@ private data class LongImageExportHistoryItem(
 
 private fun saveLongImagePreview(context: Context, preview: LongImagePreview): Uri? =
     saveBitmapToPictures(context, preview.bitmap, "${preview.filePrefix}_${System.currentTimeMillis()}.png")
-
-private fun shareLongImagePreview(context: Context, preview: LongImagePreview): Boolean {
-    val uri = saveLongImagePreview(context, preview) ?: return false
-    return shareLongImage(context, uri)
-}
 
 private enum class LongImageExportPreset(
     val label: String,
@@ -339,6 +338,9 @@ internal fun LongImagePreviewDialog(
     var selectedPreset by remember(preview) { mutableStateOf(LongImageExportPreset.LONG) }
     var shortcutMode by remember(preview) { mutableStateOf(loadLongImageShortcutMode()) }
     var exportHistory by remember(preview) { mutableStateOf(loadLongImageExportHistory()) }
+    // 保存/分享是大 bitmap 的 MediaStore IO，放 IO 线程做，免主线程 ANR；打印只是发打印任务，留主线程
+    val ioScope = rememberCoroutineScope()
+    var exporting by remember(preview) { mutableStateOf(false) }
     fun recordAction(message: String, action: String, detail: String = "") {
         actionHint = message
         appendLongImageExportHistory(preview, selectedPreset, action, detail)
@@ -354,6 +356,7 @@ internal fun LongImagePreviewDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
+        com.bf410.goaldaylocal.ui.KeepImmersiveInDialog()
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -512,18 +515,35 @@ internal fun LongImagePreviewDialog(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LongImageActionChip("保存", GoaldayDesign.Positive, Modifier.width(86.dp)) {
-                    val uri = saveLongImagePreview(context, preview)
-                    if (uri != null) {
-                        recordAction("已保存到相册", "保存", uri.lastPathSegment.orEmpty())
-                    } else {
-                        actionHint = "保存失败"
+                    if (exporting) return@LongImageActionChip
+                    exporting = true
+                    actionHint = "正在保存…"
+                    ioScope.launch(Dispatchers.IO) {
+                        val uri = saveLongImagePreview(context, preview)
+                        withContext(Dispatchers.Main) {
+                            exporting = false
+                            if (uri != null) {
+                                recordAction("已保存到相册", "保存", uri.lastPathSegment.orEmpty())
+                            } else {
+                                actionHint = "保存失败"
+                            }
+                        }
                     }
                 }
                 LongImageActionChip("分享", GoaldayDesign.RouteDiary, Modifier.width(86.dp)) {
-                    if (shareLongImagePreview(context, preview)) {
-                        recordAction("已打开分享", "分享", selectedPreset.description)
-                    } else {
-                        actionHint = "分享失败"
+                    if (exporting) return@LongImageActionChip
+                    exporting = true
+                    actionHint = "正在准备分享…"
+                    ioScope.launch(Dispatchers.IO) {
+                        val uri = saveLongImagePreview(context, preview)
+                        withContext(Dispatchers.Main) {
+                            exporting = false
+                            if (uri != null && shareLongImage(context, uri)) {
+                                recordAction("已打开分享", "分享", selectedPreset.description)
+                            } else {
+                                actionHint = "分享失败"
+                            }
+                        }
                     }
                 }
                 LongImageActionChip("打印", GoaldayDesign.adaptiveInkSecondary, Modifier.width(86.dp)) {
@@ -535,13 +555,21 @@ internal fun LongImagePreviewDialog(
                 }
                 if (shortcutMode != LongImageShortcutMode.DISABLED) {
                     LongImageActionChip("快捷", GoaldayDesign.Pink, Modifier.width(86.dp)) {
+                        if (exporting) return@LongImageActionChip
                         val shortcutPreset = shortcutMode.preset ?: selectedPreset
                         selectedPreset = shortcutPreset
-                        val uri = saveLongImagePreview(context, preview)
-                        if (uri != null) {
-                            recordAction("已按${shortcutMode.label}快捷保存", "快捷", shortcutMode.description)
-                        } else {
-                            actionHint = "快捷导出失败"
+                        exporting = true
+                        actionHint = "正在保存…"
+                        ioScope.launch(Dispatchers.IO) {
+                            val uri = saveLongImagePreview(context, preview)
+                            withContext(Dispatchers.Main) {
+                                exporting = false
+                                if (uri != null) {
+                                    recordAction("已按${shortcutMode.label}快捷保存", "快捷", shortcutMode.description)
+                                } else {
+                                    actionHint = "快捷导出失败"
+                                }
+                            }
                         }
                     }
                 }

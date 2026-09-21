@@ -665,7 +665,8 @@ class BookViewModel(
                 entry.copy(
                     repeatRule = repeatRule,
                     repeatInterval = repeatInterval.coerceAtLeast(1),
-                    repeatEndDate = "",
+                    // 非空规则保留原有截止日（日历侧可设）；关重复才清空，避免手账侧一碰规则就抹掉日历设的结束日
+                    repeatEndDate = if (repeatRule.isBlank()) "" else entry.repeatEndDate,
                     repeatGroupId = if (repeatRule.isBlank()) "" else entry.repeatGroupId.ifBlank { entry.id },
                 )
             } else {
