@@ -128,6 +128,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.ui.InteractionFeedback
 import com.bf410.goaldaylocal.ui.KeepImmersiveInDialog
+import com.bf410.goaldaylocal.ui.KeepImmersiveInPopup
 import com.bf410.goaldaylocal.data.LocalStateStore
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.data.TargetPage
@@ -1384,6 +1385,7 @@ private fun WeekScheduleView(
                     .width(220.dp)
                     .heightIn(max = 400.dp),
             ) {
+                KeepImmersiveInPopup()
                 uiState.books.forEachIndexed { index, book ->
                     DropdownMenuItem(
                         text = {
@@ -2470,6 +2472,7 @@ private fun TopicDetailSimple(
                     containerColor = if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White,
                     modifier = Modifier.width(220.dp),
                 ) {
+                    KeepImmersiveInPopup()
                     @Composable
                     fun DetailOptionRow(label: String, enabled: Boolean, onToggleOption: () -> Unit) {
                         DropdownMenuItem(
@@ -2997,6 +3000,7 @@ private fun EntryEditSheet(
                     onDismissRequest = { showRepeatMenu = false },
                     containerColor = if (dark) Color(0xFF2C2722) else Color.White,
                 ) {
+                    KeepImmersiveInPopup()
                     listOf("" to "不重复", "daily" to "每天", "weekly" to "每周", "monthly" to "每月").forEach { (rule, label) ->
                         DropdownMenuItem(
                             text = {
@@ -3529,6 +3533,7 @@ private fun MonthScheduleView(
                         .width(220.dp)
                         .heightIn(max = 400.dp),
                 ) {
+                    KeepImmersiveInPopup()
                     uiState.books.forEachIndexed { index, book ->
                         DropdownMenuItem(
                             text = {
