@@ -287,9 +287,18 @@ class BookViewModel(
     }
 
     fun addCustomPageItemWithDeadline(text: String, day: Int?) {
-        addCustomPageItem(text)
-        val resolvedDay = day ?: return
-        addItemToSchedule(text, resolvedDay)
+        // 有截止日只排截止日当天：复用 addCustomPageItem 会先排今天，再排截止日，一条变两条
+        if (day == null) {
+            addCustomPageItem(text)
+            return
+        }
+        if (!supportsCustomItems()) return
+        val trimmed = text.trim()
+        if (trimmed.isBlank()) return
+        val updated = (_uiState.value.customPageItems + trimmed).distinct()
+        store.saveCustomPageItems(currentBook().id, currentPage().title, updated)
+        _uiState.update { it.copy(customPageItems = updated) }
+        addItemToSchedule(trimmed, day)
     }
 
     fun applyInspirationTemplate(
