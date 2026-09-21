@@ -263,7 +263,13 @@ internal fun ReferencePlannerBoard(
     val poolSource = sourceItems.filterNot { it in todayItems }.distinct().take(8).map { BoardTask(id = "pool_$it", title = it) }
     val donePreview = doneItems.take(3).map { BoardTask(id = "done_$it", title = it, completed = true) }
     val allRight = (todayPool + poolSource + donePreview)
-    var selectedId by remember(allRight) { mutableStateOf(allRight.firstOrNull()?.id) }
+    // 选中态不跟数据 key：勾选/改名致列表内容一变就回跳首项；只在选中项消失时才回落首项
+    var selectedId by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(allRight) {
+        if (allRight.none { it.id == selectedId }) {
+            selectedId = allRight.firstOrNull()?.id
+        }
+    }
 
     if (editingTask != null) {
         RenameTaskDialog(

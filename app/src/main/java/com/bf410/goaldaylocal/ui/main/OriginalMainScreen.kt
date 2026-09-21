@@ -351,7 +351,8 @@ fun OriginalMainScreen(
         }
     }
     // 横滑落定 → 切换选中（同点选收尾：退行内编辑、退出直编态）
-    LaunchedEffect(mainPagerState) {
+    // key 带 visibleTabs：开关 Tab 后映射会变，不带会用旧表把落定页判到错 Tab
+    LaunchedEffect(mainPagerState, visibleTabs) {
         snapshotFlow { mainPagerState.settledPage }.collect { settled ->
             val tab = visibleTabs.getOrNull(settled) ?: return@collect
             if (tab.ordinal != subTabIndex) {
