@@ -758,9 +758,27 @@ internal fun renderHandbookScheduleLongImage(
     val width = 1080
     val padding = 72f
     val contentWidth = width - padding * 2
-    val estimatedHeight = 820 + days.size * 420
-    val bitmap = Bitmap.createBitmap(width, estimatedHeight, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
+    // 两遍绘制降峰值：先在 8px 占位图上走完纯文本排版拿精确高度，再按需分配；
+    // 原先按 420px/天高估常驻 + 末尾裁剪复制一份，31 天峰值约 60MB×2 是低端机主因
+    val measureBitmap = Bitmap.createBitmap(width, 8, Bitmap.Config.ARGB_8888)
+    val contentEndY = drawHandbookScheduleContent(Canvas(measureBitmap), year, month, days, entries, weeklyTheme, padding, contentWidth)
+    measureBitmap.recycle()
+    val exactHeight = (contentEndY + 72f).toInt().coerceAtLeast(8)
+    val bitmap = Bitmap.createBitmap(width, exactHeight, Bitmap.Config.ARGB_8888)
+    drawHandbookScheduleContent(Canvas(bitmap), year, month, days, entries, weeklyTheme, padding, contentWidth)
+    return bitmap
+}
+
+private fun drawHandbookScheduleContent(
+    canvas: Canvas,
+    year: Int,
+    month: Int,
+    days: List<Int>,
+    entries: List<ScheduleEntry>,
+    weeklyTheme: String,
+    padding: Float,
+    contentWidth: Float,
+): Float {
     canvas.drawColor(GoaldayDesign.ExportCanvasPaper.toArgb())
     val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = GoaldayDesign.ExportInkPrimary.toArgb()
@@ -828,7 +846,7 @@ internal fun renderHandbookScheduleLongImage(
     }
     y += 42f
     canvas.drawText("Goalday Local", padding, y, footerPaint)
-    return Bitmap.createBitmap(bitmap, 0, 0, width, (y + 72f).toInt().coerceAtMost(bitmap.height))
+    return y
 }
 
 internal fun exportDiaryLongImage(
