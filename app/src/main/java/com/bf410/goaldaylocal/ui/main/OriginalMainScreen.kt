@@ -1302,9 +1302,10 @@ private fun WeekScheduleView(
                                 repeat(cellCount) { index -> renderCell(index, false) }
                             }
                         } else {
-                            // 固定模式：条目全宽纵排、一行一条（对照原版真机：复选+单行正文占满任务区宽，不分两列）
+                            // 固定模式：条目全宽纵排、一行一条（对照原版真机：复选+单行正文占满任务区宽，不分两列）；
+                            // 最多显示 3 条（对照原版固定 6 槽：左 3 可见 + 右 3 被池浮层盖住，4+ 条数据保留但不可见）
                             Column(Modifier.width(taskAreaWidth).heightIn(min = 93.dp)) {
-                                entries.forEachIndexed { index, _ -> renderCell(index, true) }
+                                entries.take(3).forEachIndexed { index, _ -> renderCell(index, true) }
                                 // 行内新增输入框跟在末条之后（对照原版槽位 EditText）
                                 if (isEditing) renderCell(entries.size, true)
                             }
