@@ -1172,11 +1172,7 @@ private fun WeekScheduleView(
                                                         entryBoxShape,
                                                     )
                                                     .background(
-                                                        if (entry.completed) {
-                                                            if (LocalGoaldayDarkMode.current) GoaldayDesign.Pink else entryTint
-                                                        } else {
-                                                            Color.Transparent
-                                                        },
+                                                        if (entry.completed) entryTint else Color.Transparent,
                                                         entryBoxShape,
                                                     )
                                                     .clickable {
@@ -3636,7 +3632,7 @@ private fun MonthScheduleView(
                                     modifier = Modifier
                                         .size(17.dp)
                                         .border(1.6.dp, Color.Transparent, RoundedCornerShape(4.dp))
-                                        .background(GoaldayDesign.Pink, RoundedCornerShape(4.dp)),
+                                        .background(currentBook?.color ?: GoaldayDesign.Pink, RoundedCornerShape(4.dp)),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Text("✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -3733,7 +3729,7 @@ private fun WeekPickerSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = null,
-        containerColor = Color.White,
+        containerColor = if (LocalGoaldayDarkMode.current) Color(0xFF2C2722) else Color.White,
         scrimColor = Color.Black.copy(alpha = 0.58f),
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
@@ -3788,7 +3784,7 @@ private fun WeekPickerSheet(
                     Text(
                         it,
                         fontSize = 14.sp,
-                        color = Color(0xFFC9C9C9),
+                        color = if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkMuted else Color(0xFFC9C9C9),
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center,
                     )
@@ -3812,7 +3808,7 @@ private fun WeekPickerSheet(
                             Text(
                                 weekStart.get(weekFields.weekOfWeekBasedYear()).toString(),
                                 fontSize = 14.sp,
-                                color = Color(0xFFC9C9C9),
+                                color = if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkMuted else Color(0xFFC9C9C9),
                             )
                         }
                     }
@@ -3821,7 +3817,10 @@ private fun WeekPickerSheet(
                     Modifier
                         .width(1.dp)
                         .height(51.dp * 6)
-                        .background(Color(0xFFE3E3E3)),
+                        .background(
+                            if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.45f)
+                            else Color(0xFFE3E3E3),
+                        ),
                 )
                 Column(Modifier.weight(1f)) {
                     (0..5).map { firstMonday.plusWeeks(it.toLong()) }.forEach { weekStart ->
@@ -3854,7 +3853,9 @@ private fun WeekPickerSheet(
                                                 date.dayOfMonth.toString(),
                                                 fontSize = 16.sp,
                                                 fontWeight = if (isToday) FontWeight.SemiBold else FontWeight.Normal,
-                                                color = if (isToday) Color.White else Color(0xFFBDBDBD),
+                                                color = if (isToday) Color.White
+                                                else if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkMuted
+                                                else Color(0xFFBDBDBD),
                                             )
                                         }
                                     }

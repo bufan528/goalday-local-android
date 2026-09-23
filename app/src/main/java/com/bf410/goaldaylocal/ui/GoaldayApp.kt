@@ -723,17 +723,18 @@ private fun GoaldayBottomNavOriginal(
 // 底部导航自绘图标：24dp 黑色描边
 @Composable
 private fun NavTargetIcon() {
+    val ink = if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkPrimary else Color.Black
     androidx.compose.foundation.Canvas(Modifier.size(24.dp)) {
         val r = size.minDimension / 2f - 1.dp.toPx()
-        drawCircle(Color.Black, radius = r, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
-        drawCircle(Color.Black, radius = 3.2.dp.toPx())
+        drawCircle(ink, radius = r, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
+        drawCircle(ink, radius = 3.2.dp.toPx())
     }
 }
 
 @Composable
 private fun NavCalendarIcon() {
+    val ink = if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkPrimary else Color.Black
     androidx.compose.foundation.Canvas(Modifier.size(24.dp)) {
-        val ink = Color.Black
         val sw = 2.dp.toPx()
         drawRoundRect(
             ink,
@@ -754,8 +755,8 @@ private fun NavCalendarIcon() {
 
 @Composable
 private fun NavBookIcon() {
+    val ink = if (LocalGoaldayDarkMode.current) GoaldayDesign.adaptiveInkPrimary else Color.Black
     androidx.compose.foundation.Canvas(Modifier.size(24.dp)) {
-        val ink = Color.Black
         val sw = 2.dp.toPx()
         val path = androidx.compose.ui.graphics.Path().apply {
             moveTo(12.dp.toPx(), 6.dp.toPx())
