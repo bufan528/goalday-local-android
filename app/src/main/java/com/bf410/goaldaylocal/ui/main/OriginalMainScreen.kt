@@ -2355,7 +2355,7 @@ private fun TopicDetailSimple(
     val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
     val dividerColor = MainTabDivider
     val detailContext = LocalContext.current
-    // 勾选切换（对照原版点勾选框切换；正文行内直接编辑下轮再做，本轮整行点按保持可切换）
+    // 勾选切换（对照原版点勾选框切换；正文行内直接编辑，整行点按保持可切换）
     fun toggleItem(item: String, pageTitle: String, checked: Boolean) {
         InteractionFeedback.click(detailContext)
         InteractionFeedback.haptic(detailContext, 30L)
@@ -2367,6 +2367,19 @@ private fun TopicDetailSimple(
             item,
             if (!checked) LocalDate.now().toString() else "",
         )
+        // 首次完成提示（对照种子第13条“点击下方的时间戳，会直接跳转到日记页”，每书一次）
+        if (!checked) {
+            val toastKey = "detail_complete_hint_shown_" + book.id
+            val mmkv = MMKV.defaultMMKV()
+            if (!mmkv.decodeBool(toastKey, false)) {
+                mmkv.encode(toastKey, true)
+                android.widget.Toast.makeText(
+                    detailContext,
+                    "点击下方的时间戳，会直接跳转到日记页",
+                    android.widget.Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
         // 联动任务池：勾选进池（可拖去排期），取消勾选移出（同一 (bookId, 页题) 存储）
         if (page != null) {
             val pool = store.todayPlanItems(book.id, pageTitle)
@@ -2648,12 +2661,19 @@ private fun TopicDetailSimple(
                                 )
                             }
                             if (showDates && checked && checkedDateText.isNotBlank()) {
-                                // 完成日期章：对照原版勾选后行下弹出的书色圆角日期（点章可跳当日日记，下轮接）
+                                // 完成日期章：对照原版勾选后行下弹出的书色圆角日期，点章跳当日日记
                                 Box(
                                     modifier = Modifier
                                         .padding(top = 8.dp)
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(book.color)
+                                        .clickable {
+                                            InteractionFeedback.click(detailContext)
+                                            runCatching { LocalDate.parse(checkedDateText) }.getOrNull()?.let { diaryDate ->
+                                                MainUiBridge.go(diaryDate, MainSubTab.RECORD)
+                                                onBack()
+                                            }
+                                        }
                                         .padding(horizontal = 10.dp, vertical = 4.dp),
                                 ) {
                                     Text(
