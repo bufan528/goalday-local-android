@@ -2529,21 +2529,25 @@ private fun TopicDetailSimple(
             itemsIndexed(visibleItems, key = { _, item -> "$revision-$displayFlags-$item" }) { index, item ->
                 val checked = store.isChecked(book.id, pageTitle, item)
                 val checkedDateText = if (checked) store.checkedDate(book.id, pageTitle, item) else ""
+                // 行内直接改名（对照原版行内 EditText）：左滑编辑进行内态，Done/失焦落盘（清空=删）
+                val isEditingDetail = (renameDetailItem == item)
                 // 左滑露出编辑/删除（对照原版 SwipeRevealLayout 黑编辑+红删除）；点按切换勾选，长按选中出底栏
                 SwipeableActionsRow(
                     actions = listOf(
                         SwipeAction("编辑", Color(0xFF252525), Icons.Filled.Edit) {
+                            selectedDetailItem = null
                             renameDetailItem = item
                         },
                         SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete) {
                             InteractionFeedback.haptic(detailContext)
                             viewModel.removeListPageItemIn(book, pageTitle, item)
                             if (selectedDetailItem == item) selectedDetailItem = null
+                            if (renameDetailItem == item) renameDetailItem = null
                             onToggle()
                         },
                     ),
-                    onContentClick = { toggleItem(item, pageTitle, checked) },
-                    onContentLongClick = { selectDetailItem(item) },
+                    onContentClick = if (isEditingDetail) null else ({ toggleItem(item, pageTitle, checked) }),
+                    onContentLongClick = if (isEditingDetail) null else ({ selectDetailItem(item) }),
                 ) {
                     Row(
                         modifier = Modifier
@@ -2557,7 +2561,14 @@ private fun TopicDetailSimple(
                                 .padding(top = 3.dp)
                                 .size(20.dp)
                                 .border(1.5.dp, book.color, CircleShape)
-                                .background(if (checked) book.color else Color.Transparent, CircleShape),
+                                .background(if (checked) book.color else Color.Transparent, CircleShape)
+                                .then(
+                                    if (isEditingDetail) {
+                                        Modifier.clickable { toggleItem(item, pageTitle, checked) }
+                                    } else {
+                                        Modifier
+                                    },
+                                ),
                             contentAlignment = Alignment.Center,
                         ) {
                             if (checked) {
@@ -2575,12 +2586,67 @@ private fun TopicDetailSimple(
                             Spacer(Modifier.width(8.dp))
                         }
                         Column(Modifier.weight(1f)) {
-                            Text(
-                                item,
-                                fontSize = 20.sp,
-                                lineHeight = 28.sp,
-                                color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
-                            )
+                            if (isEditingDetail) {
+                                val detailFocusManager = LocalFocusManager.current
+                                val detailKeyboard = LocalSoftwareKeyboardController.current
+                                var detailField by remember(item) {
+                                    mutableStateOf(TextFieldValue(item, TextRange(item.length)))
+                                }
+                                var detailCommitted by remember(item) { mutableStateOf(false) }
+                                var detailHadFocus by remember(item) { mutableStateOf(false) }
+                                val detailFocusRequester = remember(item) { FocusRequester() }
+                                fun commitDetailRename() {
+                                    if (detailCommitted) return
+                                    detailCommitted = true
+                                    InteractionFeedback.click(detailContext)
+                                    viewModel.renameListPageItemIn(book, pageTitle, item, detailField.text)
+                                    val detailTrimmed = detailField.text.trim()
+                                    if (selectedDetailItem == item && detailTrimmed.isNotBlank()) {
+                                        selectedDetailItem = detailTrimmed
+                                    }
+                                    if (detailTrimmed.isBlank() && selectedDetailItem == item) {
+                                        selectedDetailItem = null
+                                    }
+                                    renameDetailItem = null
+                                    detailFocusManager.clearFocus()
+                                    detailKeyboard?.hide()
+                                    onToggle()
+                                }
+                                BasicTextField(
+                                    value = detailField,
+                                    onValueChange = { detailField = it },
+                                    singleLine = true,
+                                    textStyle = TextStyle(
+                                        fontSize = 20.sp,
+                                        lineHeight = 28.sp,
+                                        color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                                    ),
+                                    cursorBrush = SolidColor(book.color),
+                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                    keyboardActions = KeyboardActions(onDone = { commitDetailRename() }),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .focusRequester(detailFocusRequester)
+                                        .onFocusChanged { focusState ->
+                                            if (focusState.isFocused) {
+                                                detailHadFocus = true
+                                            } else if (detailHadFocus && renameDetailItem == item) {
+                                                commitDetailRename()
+                                            }
+                                        },
+                                )
+                                LaunchedEffect(item) {
+                                    detailFocusRequester.requestFocus()
+                                    detailKeyboard?.show()
+                                }
+                            } else {
+                                Text(
+                                    item,
+                                    fontSize = 20.sp,
+                                    lineHeight = 28.sp,
+                                    color = if (checked) GoaldayDesign.adaptiveInkMuted else GoaldayDesign.adaptiveInkPrimary,
+                                )
+                            }
                             if (showDates && checked && checkedDateText.isNotBlank()) {
                                 // 完成日期章：对照原版勾选后行下弹出的书色圆角日期（点章可跳当日日记，下轮接）
                                 Box(
@@ -2694,52 +2760,7 @@ private fun TopicDetailSimple(
                 }
             }
         }
-        // 行内改名弹层（对照原版行点按编辑；模板条目转自定义+隐藏原条目）
-        val renameTarget = renameDetailItem
-        if (renameTarget != null) {
-            var renameText by remember(renameTarget) { mutableStateOf(renameTarget) }
-            AlertDialog(
-                onDismissRequest = { renameDetailItem = null },
-                title = { Text("重命名条目", fontSize = 17.sp, fontWeight = FontWeight.SemiBold) },
-                text = {
-                    KeepImmersiveInDialog()
-                    BasicTextField(
-                        value = renameText,
-                        onValueChange = { renameText = it },
-                        singleLine = true,
-                        textStyle = TextStyle(fontSize = 17.sp, color = GoaldayDesign.adaptiveInkPrimary),
-                        cursorBrush = SolidColor(TodayCoral),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                },
-                confirmButton = {
-                    Text(
-                        "保存",
-                        color = GoaldayDesign.adaptiveInkPrimary,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .clickable {
-                                InteractionFeedback.click(detailContext)
-                                viewModel.renameListPageItemIn(book, pageTitle, renameTarget, renameText)
-                                if (selectedDetailItem == renameTarget && renameText.trim().isNotBlank()) {
-                                    selectedDetailItem = renameText.trim()
-                                }
-                                renameDetailItem = null
-                                onToggle()
-                            }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                    )
-                },
-                dismissButton = {
-                    Text(
-                        "取消",
-                        modifier = Modifier
-                            .clickable { renameDetailItem = null }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                    )
-                },
-            )
-        }
+        // 行内改名已移到行内 BasicTextField（对照原版行内 EditText），此处无弹层
     }
 }
 
