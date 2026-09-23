@@ -889,98 +889,6 @@ private fun HandbookQuickAddRow(
 }
 
 @Composable
-private fun DaySpreadEditableSection(
-    day: Int,
-    visibleDays: List<Int>,
-    entries: List<ScheduleEntry>,
-    editingId: String?,
-    editingText: String,
-    activeDrop: Boolean,
-    onBounds: (Rect) -> Unit,
-    onStartEdit: (ScheduleEntry) -> Unit,
-    onTextChange: (String) -> Unit,
-    onCommit: (ScheduleEntry) -> Unit,
-    onToggleCompleted: (ScheduleEntry) -> Unit,
-    onMoveEntryToDay: (ScheduleEntry, Int) -> Unit,
-    onEntryDragStart: (ScheduleEntry, Offset) -> Unit,
-    onEntryDrag: (Offset) -> Unit,
-    onEntryDragEnd: () -> Unit,
-    onEntryDragCancel: () -> Unit,
-) {
-    val visibleEntries = entries.take(6)
-    val slots = List(6) { index -> visibleEntries.getOrNull(index) }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(InBookScheduleSlotHeight * 3 + InBookScheduleColumnPaddingVertical * 2)
-            .background(if (activeDrop) GoaldayDesign.PinkSoft else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
-            .border(if (activeDrop) 0.9.dp else 0.dp, if (activeDrop) GoaldayDesign.Pink else Color.Transparent, RoundedCornerShape(GoaldayDesign.RadiusS))
-            .onGloballyPositioned { coordinates -> onBounds(coordinates.boundsInRoot()) },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // 对照原版 item_schedule_item_in_book.xml: FrameLayout layout_width=24.5dip = 24.5dp
-        Column(
-            modifier = Modifier
-                .width(24.5.dp)
-                .fillMaxHeight(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                day.toString().padStart(2, '0'),
-                style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.adaptiveInkPrimary,
-                fontWeight = FontWeight.Normal,
-                maxLines = 1,
-            )
-            Text("—", style = MaterialTheme.typography.labelSmall, color = GoaldayDesign.ScheduleDateColumnSeparator, maxLines = 1)
-            Text(
-                weekdayLabel(day, visibleDays),
-                style = MaterialTheme.typography.labelSmall,
-                color = GoaldayDesign.adaptiveInkMuted,
-                maxLines = 1,
-            )
-        }
-        Row(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                // 对照 item_schedule_item_in_book.xml: paddingVertical=3.5dip
-                .padding(vertical = InBookScheduleColumnPaddingVertical),
-        ) {
-            repeat(2) { columnIndex ->
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                ) {
-                    repeat(3) { rowIndex ->
-                        val slotIndex = columnIndex * 3 + rowIndex
-                        ReferenceScheduleTargetSlot(
-                            day = day,
-                            entry = slots[slotIndex],
-                            visibleDays = visibleDays,
-                            editingId = editingId,
-                            editingText = editingText,
-                            activeDrop = activeDrop && slotIndex == visibleEntries.size.coerceIn(0, 5),
-                            onStartEdit = onStartEdit,
-                            onTextChange = onTextChange,
-                            onCommit = onCommit,
-                            onToggleCompleted = onToggleCompleted,
-                            onMoveEntryToDay = onMoveEntryToDay,
-                            onEntryDragStart = onEntryDragStart,
-                            onEntryDrag = onEntryDrag,
-                            onEntryDragEnd = onEntryDragEnd,
-                            onEntryDragCancel = onEntryDragCancel,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun ReferenceScheduleTargetSlot(
     day: Int,
     entry: ScheduleEntry?,
@@ -1061,11 +969,6 @@ private fun ReferenceScheduleTargetSlot(
     }
 }
 
-private fun weekdayLabel(day: Int, visibleDays: List<Int>): String {
-    val labels = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
-    val index = visibleDays.indexOf(day).takeIf { it >= 0 } ?: 0
-    return labels[index % labels.size]
-}
 @Composable
 private fun EmptyHandbookSlot(
     label: String,
