@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.toArgb
 import com.tencent.mmkv.MMKV
 import org.json.JSONArray
 import org.json.JSONObject
+import java.security.MessageDigest
 import java.time.LocalDate
 import java.util.UUID
 
@@ -23,19 +24,34 @@ class LocalStateStore(
         mmkv.encode("page_$bookId", index)
     }
 
-    fun isChecked(bookId: String, pageTitle: String, item: String): Boolean =
-        mmkv.decodeBool(checkKey(bookId, pageTitle, item), false)
+    fun isChecked(bookId: String, pageTitle: String, item: String): Boolean {
+        val key = checkKey(bookId, pageTitle, item)
+        // 新键优先，旧 hashCode 键兜底（懒迁移：读到旧键后下次写回新键）
+        return if (mmkv.containsKey(key)) {
+            mmkv.decodeBool(key, false)
+        } else {
+            mmkv.decodeBool(checkKeyLegacy(bookId, pageTitle, item), false)
+        }
+    }
 
     fun setChecked(bookId: String, pageTitle: String, item: String, checked: Boolean) {
         mmkv.encode(checkKey(bookId, pageTitle, item), checked)
+        mmkv.removeValueForKey(checkKeyLegacy(bookId, pageTitle, item))
     }
 
     /** 完成日期（对照原版勾选后行下显示的日期戳，如 2026-09-06） */
-    fun checkedDate(bookId: String, pageTitle: String, item: String): String =
-        mmkv.decodeString(checkKey(bookId, pageTitle, item) + "_date", "").orEmpty()
+    fun checkedDate(bookId: String, pageTitle: String, item: String): String {
+        val key = checkDateKey(bookId, pageTitle, item)
+        return if (mmkv.containsKey(key)) {
+            mmkv.decodeString(key, "").orEmpty()
+        } else {
+            mmkv.decodeString(checkDateKeyLegacy(bookId, pageTitle, item), "").orEmpty()
+        }
+    }
 
     fun setCheckedDate(bookId: String, pageTitle: String, item: String, dateText: String) {
-        mmkv.encode(checkKey(bookId, pageTitle, item) + "_date", dateText)
+        mmkv.encode(checkDateKey(bookId, pageTitle, item), dateText)
+        mmkv.removeValueForKey(checkDateKeyLegacy(bookId, pageTitle, item))
     }
 
     /** 清单详情显示选项（对照原版更多菜单 target_detail_options，默认全开） */    fun detailShowCompleted(bookId: String): Boolean =
@@ -288,13 +304,19 @@ class LocalStateStore(
         moveRawString(pageOrderKey(bookId, oldTitle), pageOrderKey(bookId, newTitle))
         moveRawString(hiddenItemsKey(bookId, oldTitle), hiddenItemsKey(bookId, newTitle))
         checkedItems.distinct().forEach { item ->
-            val oldKey = checkKey(bookId, oldTitle, item)
-            if (mmkv.decodeBool(oldKey, false)) {
-                mmkv.encode(checkKey(bookId, newTitle, item), true)
-                mmkv.removeValueForKey(oldKey)
+            // 经公开读写函数走新键，旧 hashCode 键读到即迁走；旧页残留两格式都清
+            if (isChecked(bookId, oldTitle, item)) {
+                setChecked(bookId, newTitle, item, true)
             }
             moveRawString(targetMetaKey(bookId, oldTitle, item), targetMetaKey(bookId, newTitle, item))
-            moveRawString(oldKey + "_date", checkKey(bookId, newTitle, item) + "_date")
+            val dateText = checkedDate(bookId, oldTitle, item)
+            if (dateText.isNotBlank()) {
+                setCheckedDate(bookId, newTitle, item, dateText)
+            }
+            mmkv.removeValueForKey(checkKey(bookId, oldTitle, item))
+            mmkv.removeValueForKey(checkDateKey(bookId, oldTitle, item))
+            mmkv.removeValueForKey(checkKeyLegacy(bookId, oldTitle, item))
+            mmkv.removeValueForKey(checkDateKeyLegacy(bookId, oldTitle, item))
         }
     }
 
@@ -311,7 +333,9 @@ class LocalStateStore(
         mmkv.removeValueForKey(hiddenItemsKey(bookId, pageTitle))
         checkedItems.distinct().forEach { item ->
             mmkv.removeValueForKey(checkKey(bookId, pageTitle, item))
-            mmkv.removeValueForKey(checkKey(bookId, pageTitle, item) + "_date")
+            mmkv.removeValueForKey(checkDateKey(bookId, pageTitle, item))
+            mmkv.removeValueForKey(checkKeyLegacy(bookId, pageTitle, item))
+            mmkv.removeValueForKey(checkDateKeyLegacy(bookId, pageTitle, item))
             mmkv.removeValueForKey(targetMetaKey(bookId, pageTitle, item))
         }
     }
@@ -393,12 +417,15 @@ class LocalStateStore(
         val items = page?.items ?: emptyList()
         val seeds = listOf(items.getOrNull(8), items.getOrNull(9)).filterNotNull()
         seeds.forEach { item ->
+            // 存不存在看新旧两格式（升级用户旧键即存在，不覆盖用户选择）
             val key = checkKey("weekly-review", page?.title ?: "回顾页", item)
-            if (!mmkv.containsKey(key)) {
+            val legacyKey = checkKeyLegacy("weekly-review", page?.title ?: "回顾页", item)
+            if (!mmkv.containsKey(key) && !mmkv.containsKey(legacyKey)) {
                 mmkv.encode(key, true)
             }
             val dateKey = key + "_date"
-            if (!mmkv.containsKey(dateKey)) {
+            val legacyDateKey = legacyKey + "_date"
+            if (!mmkv.containsKey(dateKey) && !mmkv.containsKey(legacyDateKey)) {
                 mmkv.encode(dateKey, "2023-08-31")
             }
         }
@@ -406,7 +433,23 @@ class LocalStateStore(
     }
 
     private fun checkKey(bookId: String, pageTitle: String, item: String): String =
+        "check_${bookId}_${pageTitle}_${checkKeyDigest(item)}"
+
+    private fun checkDateKey(bookId: String, pageTitle: String, item: String): String =
+        checkKey(bookId, pageTitle, item) + "_date"
+
+    /** 旧 hashCode 键（懒迁移兜底读，写回时清掉） */
+    private fun checkKeyLegacy(bookId: String, pageTitle: String, item: String): String =
         "check_${bookId}_${pageTitle}_${item.hashCode()}"
+
+    /**
+     * 勾选键摘要：String.hashCode 碰撞（如 Aa/BB 同为 2112）会串勾选态，
+     * 改 SHA-256 定长 64 hex（不同文本不同键，长度固定不怕长文本）。
+     */
+    private fun checkKeyDigest(item: String): String = sha256Hex(item)
+
+    private fun checkDateKeyLegacy(bookId: String, pageTitle: String, item: String): String =
+        checkKeyLegacy(bookId, pageTitle, item) + "_date"
 
     private fun diaryKey(bookId: String, pageTitle: String): String =
         "diary_${bookId}_${pageTitle.hashCode()}"
@@ -553,3 +596,11 @@ private fun JSONObject.toStringList(key: String): List<String> {
 }
 
 private fun Color.toArgbCompat(): Int = toArgb()
+
+/** 勾选键 SHA-256 摘要（文件级可单测，不依赖 MMKV） */
+internal fun sha256Hex(input: String): String {
+    val digest = MessageDigest.getInstance("SHA-256").digest(input.toByteArray(Charsets.UTF_8))
+    return buildString(digest.size * 2) {
+        digest.forEach { b -> append(b.toInt().and(0xFF).toString(16).padStart(2, '0')) }
+    }
+}
