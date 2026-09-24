@@ -602,6 +602,45 @@ fun DualPageBookView(
                     }
                 }
                 if (!bookIsOpen && openProgress.value > 0f) {
+                    // 开场联动纸扇（对照原版 front+pageOne~Four 联动）：
+                    // 无手势开书页扇形走 fullRotations fallback（pageOne=-180p、pageTwo=-153.5p、
+                    // pageThree=-26.5p，与封面 -180p 同步，纯函数不污染翻页用的 configurator 状态）；
+                    // 纯纸色扇页（450ms 下内容不可读，不伪造内容），首尾各淡入淡出交棒静态纸边层。
+                    val openP = openProgress.value
+                    val fanAlpha = (openP / 0.1f).coerceIn(0f, 1f) * ((1f - openP) / 0.15f).coerceIn(0f, 1f)
+                    if (fanAlpha > 0f) {
+                        val openRots = flipConfigurator.fullRotations(openP, bookIsOpen = false, hasGestureStart = false)
+                        Box(
+                            modifier = Modifier.matchParentSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            listOf(openRots.pageOneRotation, openRots.pageTwoRotation, openRots.pageThreeRotation).forEach { fanRot ->
+                                if (fanRot != 0f) {
+                                    Box(
+                                        modifier = Modifier
+                                            // 落在右半幅（左缘即书脊），与封面同轴翻转
+                                            .offset(x = coverPanelW / 2)
+                                            .size(width = coverPanelW, height = coverPanelH)
+                                            .graphicsLayer {
+                                                rotationY = fanRot
+                                                cameraDistance = 40f * density
+                                                transformOrigin = TransformOrigin(0f, 0.5f)
+                                                alpha = fanAlpha
+                                            }
+                                            .shadow(
+                                                elevation = 4.dp,
+                                                shape = RoundedCornerShape(2.dp),
+                                                clip = false,
+                                                ambientColor = shadowColor,
+                                                spotColor = shadowColor,
+                                            )
+                                            .clip(RoundedCornerShape(2.dp))
+                                            .background(Color.White),
+                                    )
+                                }
+                            }
+                        }
+                    }
                     val coverRot = -180f * openProgress.value
                     Box(
                         modifier = Modifier.matchParentSize(),
