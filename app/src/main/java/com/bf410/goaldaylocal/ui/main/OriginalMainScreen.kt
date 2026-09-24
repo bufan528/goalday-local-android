@@ -1302,12 +1302,28 @@ private fun WeekScheduleView(
                                 repeat(cellCount) { index -> renderCell(index, false) }
                             }
                         } else {
-                            // 固定模式：条目全宽纵排、一行一条（对照原版真机：复选+单行正文占满任务区宽，不分两列）；
-                            // 最多显示 3 条（对照原版固定 6 槽：左 3 可见 + 右 3 被池浮层盖住，4+ 条数据保留但不可见）
-                            Column(Modifier.width(taskAreaWidth).heightIn(min = 93.dp)) {
-                                entries.take(3).forEachIndexed { index, _ -> renderCell(index, true) }
-                                // 行内新增输入框跟在末条之后（对照原版槽位 EditText）
-                                if (isEditing) renderCell(entries.size, true)
+                            // 固定模式：一行一条（对照原版真机：复选+单行正文，不分两列是池展开态）；
+                            // 池展开时左半只显示 3 条（右 3 槽被池浮层盖住）；
+                            // 池收起时左右两列各 3 槽全显（对照原版收起态左右 EditText，4+ 条不再隐藏）
+                            if (!poolCollapsed) {
+                                Column(Modifier.width(taskAreaWidth).heightIn(min = 93.dp)) {
+                                    entries.take(3).forEachIndexed { index, _ -> renderCell(index, true) }
+                                    // 行内新增输入框跟在末条之后（对照原版槽位 EditText）
+                                    if (isEditing) renderCell(entries.size, true)
+                                }
+                            } else {
+                                Column(Modifier.fillMaxWidth().heightIn(min = 93.dp)) {
+                                    Row(Modifier.fillMaxWidth()) {
+                                        Column(Modifier.weight(1f)) {
+                                            (0..2).forEach { index -> renderCell(index, true) }
+                                        }
+                                        Column(Modifier.weight(1f)) {
+                                            (3..5).forEach { index -> renderCell(index, true) }
+                                        }
+                                    }
+                                    // 行内新增输入框：6 槽未满落在格内对应空槽，只在占满时追在末槽之后
+                                    if (isEditing && entries.size >= 6) renderCell(entries.size, true)
+                                }
                             }
                         }
                     }
@@ -1517,7 +1533,9 @@ private fun WeekScheduleView(
                                     BasicTextField(
                                         value = poolEditValue,
                                         onValueChange = { poolEditValue = it },
-                                        singleLine = true,
+                                        // 多行编辑态全文可见（对照原版池点按编辑全文换行展示；Done 照常落盘）
+                                        singleLine = false,
+                                        maxLines = 5,
                                         textStyle = TextStyle(fontSize = 20.sp, lineHeight = 26.sp, color = GoaldayDesign.adaptiveInkPrimary),
                                         cursorBrush = SolidColor(TodayCoral),
                                         modifier = Modifier
