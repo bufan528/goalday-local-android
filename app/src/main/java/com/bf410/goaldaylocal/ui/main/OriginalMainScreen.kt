@@ -242,6 +242,8 @@ fun OriginalMainScreen(
 ) {
     val uiState by bookViewModel.uiState.collectAsState()
     var subTabIndex by rememberSaveable { mutableIntStateOf(MainSubTab.WEEK.ordinal) }
+    // 程序化导航目标（bridge/点选）：飞行中落定收集器见到旧落定页不回跳，到达即清
+    var pagerTargetTab by remember { mutableStateOf<MainSubTab?>(null) }
     var selectedDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
     var showWeekPicker by remember { mutableStateOf(false) }
     // 周视图模式（对照原版 MainViewModel.isCurrentScheduleViewExpanded：再点周Tab在固定2×3与自适应流式间切换）
@@ -282,6 +284,23 @@ fun OriginalMainScreen(
         mutableStateOf(valid)
     }
     var showTabManage by remember { mutableStateOf(false) }
+    var currentSubTab = MainSubTab.entries[subTabIndex.coerceIn(0, MainSubTab.entries.lastIndex)]
+    if (tabVisibility[currentSubTab] == false) {
+        // 回退到第一个可见 Tab（当前 Tab 被隐藏时，按用户自定顺序）
+        val firstVisible = tabOrder.firstOrNull { tabVisibility[it] == true } ?: MainSubTab.WEEK
+        currentSubTab = firstVisible
+        subTabIndex = firstVisible.ordinal
+    }
+    // 可见 Tab 页（对照原版 ViewPager2 页组；顺序/显隐可配；前移以便 bridge 导航直接驱 pager）
+    val visibleTabs = remember(tabOrder, tabVisibility) {
+        tabOrder.filter { tabVisibility[it] == true }.ifEmpty { listOf(MainSubTab.WEEK) }
+    }
+    var poolDragging by remember { mutableStateOf(false) }
+    // 注意：initialPage 只在首次组合生效；bridge 跨 surface 跳转靠下面 effect 滑过去
+    val mainPagerState = androidx.compose.foundation.pager.rememberPagerState(
+        initialPage = visibleTabs.indexOf(currentSubTab).coerceAtLeast(0),
+        pageCount = { visibleTabs.size },
+    )
 
     // 系统返回：清单详情/行内编辑/条目编辑/作用域框优先返回上一级，其余交给应用级返回
     androidx.activity.compose.BackHandler(
@@ -306,19 +325,18 @@ fun OriginalMainScreen(
         val target = MainUiBridge.date
         val tab = MainUiBridge.targetTab
         if (target != null && tab != null) {
+            // bridge 导航：先把页滑到位再切选中——落定收集器全程只看到一致态，
+            // 不存在“已切选中但页未到”的回跳窗口；取消（离页）则不消费，回来重播。
             selectedDate = target
-            subTabIndex = tab.ordinal
             diaryDirectEdit = MainUiBridge.directEdit
+            pagerTargetTab = tab
+            val idx = visibleTabs.indexOf(tab).coerceAtLeast(0)
+            if (idx != mainPagerState.currentPage) {
+                mainPagerState.animateScrollToPage(idx, animationSpec = tween(durationMillis = 300))
+            }
+            subTabIndex = tab.ordinal
             MainUiBridge.consume()
         }
-    }
-
-    var currentSubTab = MainSubTab.entries[subTabIndex.coerceIn(0, MainSubTab.entries.lastIndex)]
-    if (tabVisibility[currentSubTab] == false) {
-        // 回退到第一个可见 Tab（当前 Tab 被隐藏时，按用户自定顺序）
-        val firstVisible = tabOrder.firstOrNull { tabVisibility[it] == true } ?: MainSubTab.WEEK
-        currentSubTab = firstVisible
-        subTabIndex = firstVisible.ordinal
     }
 
     // 对照原版清单展开态（o_listexp）：详情是全屏页，不带主 Tab 栏；
@@ -329,36 +347,39 @@ fun OriginalMainScreen(
 
     // 对照原版全屏沉浸：系统栏由 MainActivity 统一隐藏（滑边临时唤出），此处不再染色状态栏。
 
-    // 可见 Tab 页（对照原版 ViewPager2 页组；顺序/显隐可配）
-    val visibleTabs = remember(tabOrder, tabVisibility) {
-        tabOrder.filter { tabVisibility[it] == true }.ifEmpty { listOf(MainSubTab.WEEK) }
-    }
-    var poolDragging by remember { mutableStateOf(false) }
-    val mainPagerState = androidx.compose.foundation.pager.rememberPagerState(
-        initialPage = visibleTabs.indexOf(currentSubTab).coerceAtLeast(0),
-        pageCount = { visibleTabs.size },
-    )
     // 点选 → 滑到对应页（对照原版 ViewPager2 smoothScroll，有滑感而非瞬切）
     LaunchedEffect(subTabIndex, visibleTabs) {
         val target = visibleTabs.indexOf(currentSubTab).coerceAtLeast(0)
-        if (target != mainPagerState.currentPage) {
+        if (target != mainPagerState.currentPage && visibleTabs.getOrNull(target) == currentSubTab) {
+            pagerTargetTab = currentSubTab
             runCatching {
                 mainPagerState.animateScrollToPage(
                     target,
                     animationSpec = tween(durationMillis = 300),
                 )
             }
+        } else {
+            pagerTargetTab = null
         }
     }
     // 横滑落定 → 切换选中（同点选收尾：退行内编辑、退出直编态）
     // key 带 visibleTabs：开关 Tab 后映射会变，不带会用旧表把落定页判到错 Tab
     LaunchedEffect(mainPagerState, visibleTabs) {
-        snapshotFlow { mainPagerState.settledPage }.collect { settled ->
+            snapshotFlow { mainPagerState.settledPage }.collect { settled ->
             val tab = visibleTabs.getOrNull(settled) ?: return@collect
             if (tab.ordinal != subTabIndex) {
+                // 非静息态一律不回跳：bridge 飞行守卫 / 正在滚动 / 当前页与落定页不一致
+                // （否则 fresh composition 初次落定 emission 会把 bridge 刚设好的 Tab 打回旧页）
+                if (pagerTargetTab != null || mainPagerState.isScrollInProgress ||
+                    mainPagerState.currentPage != settled
+                ) {
+                    return@collect
+                }
                 editingDate = null
                 diaryDirectEdit = false
                 subTabIndex = tab.ordinal
+            } else {
+                pagerTargetTab = null
             }
         }
     }
