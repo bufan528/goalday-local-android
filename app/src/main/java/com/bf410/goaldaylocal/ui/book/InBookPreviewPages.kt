@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.foundation.rememberScrollState
@@ -1252,10 +1253,7 @@ internal fun InBookDiaryEditorPage(
     onStateChange: (StructuredDiary) -> Unit,
     onAddImage: () -> Unit,
     scheduleEntries: List<ScheduleEntry> = emptyList(),
-    planItems: List<String> = emptyList(),
-    donePlanItems: List<String> = emptyList(),
-    onCompleteItem: (String) -> Unit = {},
-    onUncompleteItem: (String) -> Unit = {},
+    onToggleScheduleCompleted: (String) -> Unit = {},
 ) {
     val tabDividerColor = Color(0xFFC5BBB6)
     val weekdayNames = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
@@ -1296,116 +1294,74 @@ internal fun InBookDiaryEditorPage(
                 .padding(start = if (isLeftPage) 7.5.dp else 16.dp, end = 7.5.dp, top = 5.dp, bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp),
         ) {
-            // 今日完成橙卡（对照原版书右页置顶卡片）
-            scheduleEntries
-                .filter {
-                    it.completed &&
-                        it.year == date.year &&
-                        it.month == date.monthValue &&
-                        it.day == date.dayOfMonth
-                }
-                .forEach { doneEntry ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(GoaldayDesign.Pink, Color(0xFFF66061)),
-                                ),
-                            )
-                            .padding(horizontal = 11.dp, vertical = 9.dp),
-                    ) {
-                        Column {
-                            Text(
-                                doneEntry.title,
-                                fontSize = 13.sp,
-                                lineHeight = 17.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White,
-                            )
-                            if (doneEntry.note.isNotBlank()) {
-                                Text(
-                                    "@" + doneEntry.note,
-                                    fontSize = 10.sp,
-                                    lineHeight = 13.sp,
-                                    color = Color.White.copy(alpha = 0.75f),
-                                )
-                            }
-                        }
-                    }
-                }
-            // 内嵌目标打卡（对照原版 DiaryTargetAdapterInBook：勾选即完成，联动计划看板与"今日完成"卡片）
-            if (planItems.isNotEmpty() || donePlanItems.isNotEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(GoaldayDesign.DiaryTargetBackground)
-                        .border(0.5.dp, Color(0x4D000000), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                    verticalArrangement = Arrangement.spacedBy(3.dp),
-                ) {
+            // 今日完成块（对照原版 item_diary_target_in_book：9sp 标题 + 空态 + 当日完成子项；
+            // 数据源对照 DiaryViewModel state.targets = queryScheduleByCompletedWithoutTopic(当日)，
+            // 即当日完成的排期，而非滚动任务池——池子只活在主界面）
+            val doneToday = scheduleEntries.filter {
+                it.completed &&
+                    it.year == date.year &&
+                    it.month == date.monthValue &&
+                    it.day == date.dayOfMonth
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(GoaldayDesign.DiaryTargetBackground)
+                    .border(0.5.dp, Color(0x4D000000), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.CardGiftcard,
+                        contentDescription = null,
+                        tint = Color(0xFF503311),
+                        modifier = Modifier.size(12.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
                     Text(
-                        "今日目标 · 点击勾选",
+                        "今日完成",
                         fontSize = 9.sp,
                         color = Color(0xFF503311),
                         fontWeight = FontWeight.SemiBold,
                     )
-                    planItems.forEach { item ->
+                }
+                if (doneToday.isEmpty()) {
+                    // 空态文案：对照原版 tv_empty（本仓 PageSurface 同款既定文案）
+                    Text(
+                        "这里会自动记录清单中完成的事项。",
+                        fontSize = 9.sp,
+                        color = GoaldayDesign.adaptiveInkMuted,
+                    )
+                } else {
+                    doneToday.forEach { doneEntry ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(4.dp))
-                                .clickable { onCompleteItem(item) }
+                                .clickable { onToggleScheduleCompleted(doneEntry.id) }
                                 .padding(vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
+                            // 圆点跟条目色（对照原子任务颜色，无色默认 #333333），正文同色
+                            val dotColor = doneEntry.colorArgb?.let { Color(it) } ?: Color(0xFF333333)
                             Box(
                                 Modifier
-                                    .size(14.dp)
-                                    .border(1.2.dp, Color(0xFFB07A5A), CircleShape),
+                                    .size(8.dp)
+                                    .background(dotColor, CircleShape),
                             )
                             Spacer(Modifier.width(6.dp))
                             Text(
-                                item,
+                                doneEntry.title,
                                 fontSize = 10.sp,
                                 lineHeight = 14.sp,
-                                color = GoaldayDesign.InkPrimary,
-                                maxLines = 2,
-                            )
-                        }
-                    }
-                    donePlanItems.forEach { item ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { onUncompleteItem(item) }
-                                .padding(vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Box(
-                                Modifier
-                                    .size(14.dp)
-                                    .background(GoaldayDesign.Pink, CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text("✓", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                            }
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                item,
-                                fontSize = 10.sp,
-                                lineHeight = 14.sp,
-                                color = GoaldayDesign.InkMuted,
-                                textDecoration = TextDecoration.LineThrough,
+                                color = dotColor,
                                 maxLines = 2,
                             )
                         }
                     }
                 }
-                Spacer(Modifier.height(4.dp))
             }
             // 对照原版空白日记页：纯白、无提示语（一日一问只在记录 Tab 展示，书内不打原文）。
             StructuredDiaryEditor(
