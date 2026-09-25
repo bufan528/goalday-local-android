@@ -176,16 +176,20 @@ fun DualPageBookView(
     var bookIsOpen by remember { mutableStateOf(false) }
     val openProgress = remember { Animatable(0f) }
     var isOpening by remember { mutableStateOf(true) }
+    // 开场单通道：翻页 isAnimating 不挡开场，重复触发取消上一轮，避免切年时动画被吞
+    val openJobHolder = remember { arrayOfNulls<kotlinx.coroutines.Job>(1) }
     // 开书动画可重播：换书/切年时重置封面再走一遍（对照原版切书重调 performOpenAnimation）
     fun replayOpenAnimation() {
-        if (isAnimating) return
-        scope.launch {
+        openJobHolder[0]?.cancel()
+        openJobHolder[0] = scope.launch {
             bookIsOpen = false
             isOpening = true
             openProgress.snapTo(0f)
             kotlinx.coroutines.delay(800)
             openProgress.animateTo(1f, tween(450, easing = LinearEasing))
+            // 同帧提交开合态，消“已切未到”窗口
             bookIsOpen = true
+            openProgress.snapTo(1f)
             kotlinx.coroutines.delay(10)
             isOpening = false
         }
@@ -496,9 +500,10 @@ fun DualPageBookView(
                 // 对照原版 RenderPages 6 页联动：每侧主动页之后垫一张白色衬纸，
                 // 以主动页旋转的 FOLLOW_FACTOR(26.5/180) 跟随剥离；静止 progress=0 时跟随角=0
                 // （与主动页完全重合，稳态像素零变化），仅翻页中显出纸张层叠。
-                // 闭合期不组合双页（对照原版首帧只有竖书；遮罩兜底，双保险无泄露）。
+                // 闭合期/开场期不组合双页（对照原版首帧只有竖书；开场扇页只是覆盖层，底层提前平铺会泄露内容）。
+                // bookIsOpen 置位后才挂载可交互双页，开场全程只见封面+纸扇。
                 val showClosedCover = !bookIsOpen && openProgress.value <= 0f
-                if (!showClosedCover) Row(
+                if (bookIsOpen) Row(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(start = 3.dp, end = 3.dp, top = 6.dp, bottom = 6.dp),

@@ -423,6 +423,7 @@ fun OriginalMainScreen(
                     onSelectDate = { selectedDate = it },
                     onEditEntry = { editingEntry = it },
                     onPoolDragging = { poolDragging = it },
+                    onExpandAll = { scheduleAdaptive = true },
                 )
                 MainSubTab.MONTH -> MonthScheduleView(
                     uiState = uiState,
@@ -981,6 +982,7 @@ private fun WeekScheduleView(
     onSelectDate: (LocalDate) -> Unit,
     onEditEntry: (ScheduleEntry) -> Unit = {},
     onPoolDragging: (Boolean) -> Unit = {},
+    onExpandAll: () -> Unit = {},
 ) {
     val today = rememberToday()
     val context = LocalContext.current
@@ -1174,8 +1176,10 @@ private fun WeekScheduleView(
                                             verticalAlignment = if (fixed) Alignment.CenterVertically else Alignment.Top,
                                         ) {
                                             // 勾选框：独立clickable,不与文本区抢事件
-                                            // 专题关联条目圆角方+专题色，普通条目圆环（环色默认#333333）
-                                            val entryTint = entry.colorArgb?.let { Color(it) } ?: Color(0xFF333333)
+                                            // 专题关联条目圆角方+专题色，普通条目圆环（环色默认#333333，深色下跟随自适应墨色保证可见）
+                                            val isDarkRow = LocalGoaldayDarkMode.current
+                                            val entryTint = entry.colorArgb?.let { Color(it) }
+                                                ?: if (isDarkRow) GoaldayDesign.adaptiveInkPrimary else Color(0xFF333333)
                                             val entryBoxShape = if (entry.colorArgb != null) RoundedCornerShape(4.dp) else CircleShape
                                             Box(
                                                 modifier = Modifier
@@ -1308,7 +1312,7 @@ private fun WeekScheduleView(
                                     color = GoaldayDesign.adaptiveInkMuted,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.width(taskAreaWidth),
+                                    modifier = Modifier.fillMaxWidth().padding(start = 28.dp),
                                 )
                             }
                         } else if (adaptiveMode) {
@@ -1328,22 +1332,52 @@ private fun WeekScheduleView(
                             // 池收起时左右两列各 3 槽全显（对照原版收起态左右 EditText，4+ 条不再隐藏）
                             if (!poolCollapsed) {
                                 Column(Modifier.width(taskAreaWidth).heightIn(min = 93.dp)) {
-                                    entries.take(3).forEachIndexed { index, _ -> renderCell(index, true) }
+                                    // 固定展开态只显 3 条：编辑时预留一槽给输入框，避免第 4 格被定高裁掉看不见
+                                    val shownCount = if (isEditing) 2 else 3
+                                    entries.take(shownCount).forEachIndexed { index, _ -> renderCell(index, true) }
                                     // 行内新增输入框跟在末条之后（对照原版槽位 EditText）
                                     if (isEditing) renderCell(entries.size, true)
+                                    val hiddenCount = entries.size - shownCount
+                                    if (hiddenCount > 0) {
+                                        Text(
+                                            "+还有${hiddenCount}项·点标题展开",
+                                            fontSize = 12.sp,
+                                            lineHeight = 16.sp,
+                                            color = GoaldayDesign.adaptiveInkMuted,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.fillMaxWidth().padding(start = 28.dp, top = 2.dp).clickable { onExpandAll() },
+                                        )
+                                    }
                                 }
                             } else {
                                 Column(Modifier.fillMaxWidth().heightIn(min = 93.dp)) {
+                                    // 收起态左右双列 6 槽：编辑时只占 5 槽+输入框共 6 格，保证输入框可见
+                                    val leftRange = if (isEditing && entries.size >= 6) (0..1) else (0..2)
+                                    val rightRange = if (isEditing && entries.size >= 6) (2..4) else (3..5)
                                     Row(Modifier.fillMaxWidth()) {
                                         Column(Modifier.weight(1f)) {
-                                            (0..2).forEach { index -> renderCell(index, true) }
+                                            leftRange.forEach { index -> renderCell(index, true) }
                                         }
                                         Column(Modifier.weight(1f)) {
-                                            (3..5).forEach { index -> renderCell(index, true) }
+                                            rightRange.forEach { index -> renderCell(index, true) }
                                         }
                                     }
-                                    // 行内新增输入框：6 槽未满落在格内对应空槽，只在占满时追在末槽之后
-                                    if (isEditing && entries.size >= 6) renderCell(entries.size, true)
+                                    // 行内新增输入框：6 槽未满落在格内对应空槽，占满时已腾槽显示
+                                    if (isEditing) renderCell(entries.size, true)
+                                    val visibleCount = if (isEditing && entries.size >= 6) 5 else 6
+                                    val hiddenCount = entries.size - visibleCount
+                                    if (hiddenCount > 0) {
+                                        Text(
+                                            "+还有${hiddenCount}项·点标题展开",
+                                            fontSize = 12.sp,
+                                            lineHeight = 16.sp,
+                                            color = GoaldayDesign.adaptiveInkMuted,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.fillMaxWidth().padding(start = 28.dp, top = 2.dp).clickable { onExpandAll() },
+                                        )
+                                    }
                                 }
                             }
                         }
