@@ -1004,6 +1004,10 @@ private fun WeekScheduleView(
     val poolItemOrigins = remember { androidx.compose.runtime.mutableStateMapOf<String, Offset>() }
     // 右侧任务池折叠开关（对照原版 fragment_schedule 的 bg_arrow 圆钮）
     var poolCollapsed by rememberSaveable { mutableStateOf(false) }
+    // 自适应态给左侧让宽：点周标题展开看全量时自动收起任务池（左列 108dp→全宽，少换行）；回固定态保持收起，点 > 再展开池
+    LaunchedEffect(adaptiveMode) {
+        if (adaptiveMode) poolCollapsed = true
+    }
     // 右池行内改名：点条目聚焦改名（清空失焦=删除），长按拖拽排期
     var poolEditingItem by remember { mutableStateOf<String?>(null) }
     // 新增/拖放条目颜色（对照原版周底栏选色；null=清单默认色）
@@ -1064,7 +1068,7 @@ private fun WeekScheduleView(
     ) {
     Row(Modifier.fillMaxSize()) {
         // 左侧：周日期列（今日黑底圆角白字；任意一天点空白进入行内新增）
-        // 固定态 7 行等高铺满且不可滑（行高=可用高/7），自适应态内容撑高可滑
+        // 固定态 7 行等高铺满（行高=可用高/7），未超限不可滑；超限当天行增高+整周可滑；自适应态内容撑高可滑
         BoxWithConstraints(
             modifier = Modifier
                 // 右侧池固定 177dp（对照 fragment_schedule.xml 池面板宽），左侧占剩余
@@ -1075,23 +1079,34 @@ private fun WeekScheduleView(
             // 任务区定宽：左栏宽 - 日期列 43dp - 间距 4dp - 右边距 12dp；
             // 条目全宽纵排，不用 weight（wrap 容器里 weight 会塌成内容宽、字被竖排截断）
             val taskAreaWidth = (maxWidth - 43.dp - 4.dp - 12.dp).coerceAtLeast(0.dp)
+            // 固定态截断上限（展开 3 / 收起 6）；有任何一天超限则整周允许纵滑，否则保持固定等高不可滑
+            val fixedCap = if (poolCollapsed) 6 else 3
+            val weekHasOverflow = weekDays.any { d ->
+                uiState.schedulePreviewEntries.count {
+                    it.year == d.year && it.month == d.monthValue && it.day == d.dayOfMonth
+                } > fixedCap
+            }
         LazyColumn(
             state = listState,
-            userScrollEnabled = adaptiveMode,
+            userScrollEnabled = adaptiveMode || weekHasOverflow,
             // 对照原版真机：左列表首行距顶栏约 21dp（原版 14 文本 y284 = 顶栏底216 + 行内13 + 顶隙55）
             contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 18.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
             items(weekDays, key = { it.toEpochDay() }) { date ->
+                // 稳定排序只到时间：同键保持入库顺序（id 是随机串，排进去展示顺序随机跳变）
                 val entries = uiState.schedulePreviewEntries
                     .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
-                    .sortedWith(compareBy({ !it.pinned }, { it.timeText }, { it.id }))
+                    .sortedWith(compareBy({ !it.pinned }, { it.timeText }))
                 val isToday = date == today
                 val isEditing = editingDate == date
+                // 超限当天行增高（min 撑开，footer 可见）+ 整周可滑；未超限保持等高不可滑
+                val dayTotalCount = entries.size + (if (isEditing) 1 else 0)
+                val dayOverflow = dayTotalCount > fixedCap
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .then(if (adaptiveMode) Modifier else Modifier.height(dayH))
+                        .then(if (adaptiveMode || dayOverflow) Modifier.heightIn(min = dayH) else Modifier.height(dayH))
                         .onGloballyPositioned { rowBounds[date.toEpochDay()] = it.boundsInWindow() }
                         .background(
                             if (dropTarget == date) WeekBandBg else Color.Transparent,
@@ -3499,9 +3514,10 @@ private fun MonthScheduleView(
         contentPadding = PaddingValues(bottom = 90.dp),
     ) {
         items(monthDays, key = { it.toEpochDay() }) { date ->
+            // 稳定排序只到时间：同键保持入库顺序（与周视图/书内一致）
             val entries = uiState.schedulePreviewEntries
                 .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
-                .sortedWith(compareBy({ !it.pinned }, { it.timeText }, { it.id }))
+                .sortedWith(compareBy({ !it.pinned }, { it.timeText }))
             val isToday = date == today
             Row(
                 modifier = Modifier
