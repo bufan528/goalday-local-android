@@ -146,9 +146,12 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.WeekFields
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.saveable.Saver
 import java.util.Locale
 
 /** 跨午夜自动刷新的"今天"（对照原版行为：日期过期后界面自动切到新的一天，无需重启进程） */
@@ -244,7 +247,10 @@ fun OriginalMainScreen(
     var subTabIndex by rememberSaveable { mutableIntStateOf(MainSubTab.WEEK.ordinal) }
     // 程序化导航目标（bridge/点选）：飞行中落定收集器见到旧落定页不回跳，到达即清
     var pagerTargetTab by remember { mutableStateOf<MainSubTab?>(null) }
-    var selectedDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
+    // LocalDate 默认 saver 旋转重建会闪退：经 ISO 字符串持久化
+    var selectedDate by rememberSaveable(
+        stateSaver = Saver(save = { it.toString() }, restore = { LocalDate.parse(it) }),
+    ) { mutableStateOf(LocalDate.now()) }
     var showWeekPicker by remember { mutableStateOf(false) }
     // 周视图模式（对照原版 MainViewModel.isCurrentScheduleViewExpanded：再点周Tab在固定2×3与自适应流式间切换）
     var scheduleAdaptive by rememberSaveable { mutableStateOf(false) }
@@ -331,11 +337,16 @@ fun OriginalMainScreen(
             diaryDirectEdit = MainUiBridge.directEdit
             pagerTargetTab = tab
             val idx = visibleTabs.indexOf(tab).coerceAtLeast(0)
-            if (idx != mainPagerState.currentPage) {
-                mainPagerState.animateScrollToPage(idx, animationSpec = tween(durationMillis = 300))
+            // 隐藏当前 Tab 后目标索引可能越界：失败不消费，回来重播
+            val navigated = if (idx != mainPagerState.currentPage) {
+                runCatching {
+                    mainPagerState.animateScrollToPage(idx, animationSpec = tween(durationMillis = 300))
+                }.isSuccess
+            } else {
+                true
             }
             subTabIndex = tab.ordinal
-            MainUiBridge.consume()
+            if (navigated) MainUiBridge.consume()
         }
     }
 
@@ -1518,7 +1529,8 @@ private fun WeekScheduleView(
                 } else {
                     uiState.todayPlanItems
                 }
-                items(listItems, key = { it }) { poolItem ->
+                // key 带序号：同名条目跨源并存时不撞 key、不串行
+                itemsIndexed(listItems, key = { index, item -> "$index:$item" }) { _, poolItem ->
                         val itemChecked = targetPage != null && viewModel.isChecked(targetPage.title, poolItem)
                         // 初挂载会先回调一次未聚焦：得过焦点之后才允许失焦提交
                         var poolRowHadFocus by remember(poolItem) { mutableStateOf(false) }
@@ -1876,19 +1888,25 @@ private fun RecordDiaryView(
         store.setDiaryText(DIARY_BOOK_ID, selectedDate.toString(), buildStructuredDiary(selectedDate, entries, text, imagePaths))
     }
 
+    val ioScope = rememberCoroutineScope()
     val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia(),
     ) { uri ->
         if (uri != null) {
-            // 复制进应用私有目录，保证长期可读（对照原版本地图片方案）
-            runCatching {
-                val dir = java.io.File(context.filesDir, "diary_images").apply { mkdirs() }
-                val file = java.io.File(dir, "d" + selectedDate.toEpochDay() + "_" + System.currentTimeMillis() + ".jpg")
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    file.outputStream().use { output -> input.copyTo(output) }
+            // 复制进应用私有目录，保证长期可读（对照原版本地图片方案）；4K 图拷贝走 IO 线程防卡死
+            ioScope.launch {
+                val absPath = withContext(Dispatchers.IO) {
+                    runCatching {
+                        val dir = java.io.File(context.filesDir, "diary_images").apply { mkdirs() }
+                        val file = java.io.File(dir, "d" + selectedDate.toEpochDay() + "_" + System.currentTimeMillis() + ".jpg")
+                        context.contentResolver.openInputStream(uri)?.use { input ->
+                            file.outputStream().use { output -> input.copyTo(output) }
+                        }
+                        file.absolutePath.takeIf { file.exists() && file.length() > 0 }
+                    }.getOrNull()
                 }
-                if (file.exists() && file.length() > 0) {
-                    imagePaths = imagePaths + file.absolutePath
+                if (absPath != null) {
+                    imagePaths = imagePaths + absPath
                     saveAll()
                 }
             }

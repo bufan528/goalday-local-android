@@ -661,7 +661,7 @@ internal fun InBookPlanPreview(
                     Spacer(Modifier.height(6.dp))
                 }
             }
-            items(planItems.withIndex().toList(), key = { it.value.title }) { (index, item) ->
+            items(planItems.withIndex().toList(), key = { "${it.index}:${it.value.title}" }) { (index, item) ->
                 InBookPlanRow(
                     item = item,
                     index = index,

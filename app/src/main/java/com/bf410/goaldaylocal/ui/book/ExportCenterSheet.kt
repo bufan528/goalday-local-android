@@ -82,10 +82,17 @@ internal fun ExportCenterSheet(
     var progressTotal by remember { mutableStateOf(0) }
     var resultUri by remember { mutableStateOf<Uri?>(null) }
     var runJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
-    // 离开弹层取消未做完的渲染任务（对照队列取消）
-    androidx.compose.runtime.DisposableEffect(Unit) {
+    // 离开弹层取消未做完的渲染任务（对照队列取消）：key 跟随 runJob，否则闭包永远是初值 null
+    androidx.compose.runtime.DisposableEffect(runJob) {
         onDispose { runJob?.cancel() }
     }
+    // 导出范围上限：超出一季度（93 天）的逐页大图必 OOM，先拦住
+    val rangeDays = remember(startDate, endDate) {
+        val s = startDate
+        val e = endDate
+        if (s == null || e == null || s.isAfter(e)) 0 else java.time.temporal.ChronoUnit.DAYS.between(s, e).toInt() + 1
+    }
+    val rangeTooLarge = rangeDays > 93
     val rangeValid = startDate != null && endDate != null && !startDate!!.isAfter(endDate)
     // 预览页表（截断 30，正式生成用不限长的同一顺序）
     val previewItems = remember(startDate, endDate, includeSchedule, includeDiary) {
@@ -100,7 +107,7 @@ internal fun ExportCenterSheet(
         if (s == null || e == null || s.isAfter(e)) 0
         else buildExportItems(s, e, includeSchedule, includeDiary, previewCap = false).size
     }
-    val canGenerate = !generating && rangeValid && (includeSchedule || includeDiary) && fullCount > 0
+    val canGenerate = !generating && rangeValid && !rangeTooLarge && (includeSchedule || includeDiary) && fullCount > 0
 
     fun pickDate(current: LocalDate?, onPicked: (LocalDate) -> Unit) {
         val base = current ?: LocalDate.now()
@@ -120,6 +127,7 @@ internal fun ExportCenterSheet(
         // 条件不足时给反馈（对照原版空态官方文案思路，本地直接提示原因）
         val reason = when {
             s == null || e == null || !rangeValid -> "请先选择起止日期"
+            rangeTooLarge -> "所选范围太大，请控制在93天内"
             !includeSchedule && !includeDiary -> "请至少勾选一项导出内容"
             fullCount <= 0 -> "所选范围没有可导出的内容"
             else -> null
@@ -143,9 +151,12 @@ internal fun ExportCenterSheet(
                         diaryTextFor = diaryTextFor,
                         scheduleEntries = scheduleEntries,
                         weeklyTheme = weeklyTheme,
+                        // 进度回调跑在 Default 线程：抛回主线程再写 state，否则闪退
                         onProgress = { done, total ->
-                            progressDone = done
-                            progressTotal = total
+                            scope.launch {
+                                progressDone = done
+                                progressTotal = total
+                            }
                         },
                     )
                 }.getOrNull()
