@@ -1099,7 +1099,8 @@ private fun WeekScheduleView(
             }
         LazyColumn(
             state = listState,
-            userScrollEnabled = adaptiveMode || weekHasOverflow,
+            // 收起态双列多行撑高后也要能滑，否则长标题的后几行看不到
+            userScrollEnabled = adaptiveMode || weekHasOverflow || poolCollapsed,
             // 对照原版真机：左列表首行距顶栏约 21dp（原版 14 文本 y284 = 顶栏底216 + 行内13 + 顶隙55）
             contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 18.dp),
             modifier = Modifier.fillMaxSize(),
@@ -1111,13 +1112,15 @@ private fun WeekScheduleView(
                     .sortedWith(compareBy({ !it.pinned }, { it.timeText }))
                 val isToday = date == today
                 val isEditing = editingDate == date
-                // 超限当天行增高（min 撑开，footer 可见）+ 整周可滑；未超限保持等高不可滑
+                // 超限当天行增高（min 撑开，footer 可见）+ 整周可滑；未超限保持等高不可滑；
+                // 收起态一律增高：双列窄格单行省略看不清标题，改多行全文展示
                 val dayTotalCount = entries.size + (if (isEditing) 1 else 0)
                 val dayOverflow = dayTotalCount > fixedCap
+                val allowGrow = adaptiveMode || dayOverflow || poolCollapsed
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .then(if (adaptiveMode || dayOverflow) Modifier.heightIn(min = dayH) else Modifier.height(dayH))
+                        .then(if (allowGrow) Modifier.heightIn(min = dayH) else Modifier.height(dayH))
                         .onGloballyPositioned { rowBounds[date.toEpochDay()] = it.boundsInWindow() }
                         .background(
                             if (dropTarget == date) WeekBandBg else Color.Transparent,
@@ -1353,9 +1356,9 @@ private fun WeekScheduleView(
                                 repeat(cellCount) { index -> renderCell(index, false) }
                             }
                         } else {
-                            // 固定模式：一行一条（对照原版真机：复选+单行正文，不分两列是池展开态）；
-                            // 池展开时左半只显示 3 条（右 3 槽被池浮层盖住）；
-                            // 池收起时左右两列各 3 槽全显（对照原版收起态左右 EditText，4+ 条不再隐藏）
+                            // 固定模式（对照原版真机：复选+单行正文）；
+                            // 池展开时左半只显示 3 条（右 3 槽被池浮层盖住），单行省略；
+                            // 池收起时左右两列各 3 槽全显（对照原版收起态左右 EditText），窄格改多行全文展示
                             if (!poolCollapsed) {
                                 Column(Modifier.width(taskAreaWidth).heightIn(min = 93.dp)) {
                                     // 固定展开态只显 3 条：编辑时预留一槽给输入框，避免第 4 格被定高裁掉看不见
@@ -1378,15 +1381,20 @@ private fun WeekScheduleView(
                                 }
                             } else {
                                 Column(Modifier.fillMaxWidth().heightIn(min = 93.dp)) {
-                                    // 收起态左右双列 6 槽：编辑时只占 5 槽+输入框共 6 格，保证输入框可见
+                                    // 收起态左右双列 6 槽：窄格单行省略看不清标题，一律多行全文展示；
+                                    // 编辑时只占 5 槽+输入框共 6 格，保证输入框可见
                                     val leftRange = if (isEditing && entries.size >= 6) (0..1) else (0..2)
                                     val rightRange = if (isEditing && entries.size >= 6) (2..4) else (3..5)
                                     Row(Modifier.fillMaxWidth()) {
+                                        // 右列无内容时不占半宽，左列独占整宽少换行（4+ 条才需右列）
+                                        val showRightColumn = entries.size > 3
                                         Column(Modifier.weight(1f)) {
-                                            leftRange.forEach { index -> renderCell(index, true) }
+                                            leftRange.forEach { index -> renderCell(index, false) }
                                         }
-                                        Column(Modifier.weight(1f)) {
-                                            rightRange.forEach { index -> renderCell(index, true) }
+                                        if (showRightColumn) {
+                                            Column(Modifier.weight(1f)) {
+                                                rightRange.forEach { index -> renderCell(index, false) }
+                                            }
                                         }
                                     }
                                     // 行内新增输入框：6 槽未满落在格内对应空槽，占满时已腾槽显示
