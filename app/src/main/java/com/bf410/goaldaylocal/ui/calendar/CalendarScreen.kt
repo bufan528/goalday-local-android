@@ -131,7 +131,6 @@ fun CalendarScreen(
     }
 
     val maxDay = YearMonth.of(state.year, state.month).lengthOfMonth()
-    selectedDay = selectedDay.coerceIn(1, maxDay)
 
     LaunchedEffect(state.year, state.month) {
         selectedDay = selectedDay.coerceIn(1, maxDay)
@@ -162,6 +161,8 @@ fun CalendarScreen(
         .filter { it.year == state.year && it.month == state.month }
     val doneEntries = dayEntries.filter { it.completed }
     val todoEntries = dayEntries.filterNot { it.completed }
+    // 未分时段条目按位取：上/下/晚各取第 0/1/2 条，不按 drop 位错抢同一条
+    val unslottedEntries = todoEntries.filter { parseTimeSlot(it.note) == null }
     val monthTodoCount = monthEntries.count { !it.completed }
     val monthDoneCount = monthEntries.count { it.completed }
     val poolEntries = monthEntries
@@ -262,7 +263,7 @@ fun CalendarScreen(
                 "上",
                 slotKey = "上午",
                 assigned = todoEntries.firstOrNull { parseTimeSlot(it.note) == "上午" },
-                fallback = grabbedPoolEntry ?: todoEntries.firstOrNull { parseTimeSlot(it.note) == null },
+                fallback = grabbedPoolEntry ?: unslottedEntries.getOrNull(0),
                 dropReady = grabbedPoolEntry != null || draggingPoolEntry != null,
                 hover = activeDropSlot == "上午",
                 onZoneBounds = { rect -> dropSlotBounds["上午"] = rect },
@@ -276,7 +277,7 @@ fun CalendarScreen(
                 "下",
                 slotKey = "下午",
                 assigned = todoEntries.firstOrNull { parseTimeSlot(it.note) == "下午" },
-                fallback = grabbedPoolEntry ?: todoEntries.drop(1).firstOrNull { parseTimeSlot(it.note) == null },
+                fallback = grabbedPoolEntry ?: unslottedEntries.getOrNull(1),
                 dropReady = grabbedPoolEntry != null || draggingPoolEntry != null,
                 hover = activeDropSlot == "下午",
                 onZoneBounds = { rect -> dropSlotBounds["下午"] = rect },
@@ -290,7 +291,7 @@ fun CalendarScreen(
                 "晚",
                 slotKey = "晚上",
                 assigned = todoEntries.firstOrNull { parseTimeSlot(it.note) == "晚上" },
-                fallback = grabbedPoolEntry ?: todoEntries.drop(2).firstOrNull { parseTimeSlot(it.note) == null },
+                fallback = grabbedPoolEntry ?: unslottedEntries.getOrNull(2),
                 dropReady = grabbedPoolEntry != null || draggingPoolEntry != null,
                 hover = activeDropSlot == "晚上",
                 onZoneBounds = { rect -> dropSlotBounds["晚上"] = rect },

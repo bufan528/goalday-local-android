@@ -219,7 +219,7 @@ fun DualPageBookView(
                 // 书内日程面只读预览（不可新增/改名/跳转）
                 editable = false,
                 onAddEntry = { date, text ->
-                    viewModel.addScheduleFromHandbook(text, date.monthValue, date.dayOfMonth)
+                    viewModel.addScheduleFromHandbook(text, date.monthValue, date.dayOfMonth, year = date.year)
                 },
                 onRenameEntry = { entryId, newTitle ->
                     viewModel.updateScheduleTitleFromHandbook(entryId, newTitle)

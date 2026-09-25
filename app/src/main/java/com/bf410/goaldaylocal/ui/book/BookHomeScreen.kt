@@ -1257,7 +1257,7 @@ private fun BookDetailView(
                     onRestoreItemFromToday = viewModel::restoreItemFromToday,
                     onRestoreItemFromCompleted = viewModel::restoreItemFromCompleted,
                     onUpdateScheduleTitle = viewModel::updateScheduleTitleFromHandbook,
-                    onMoveScheduleDay = viewModel::moveScheduleDayFromHandbook,
+                    onMoveScheduleDay = { id, month, day -> viewModel.moveScheduleDayFromHandbook(id, month, day) },
                     onToggleScheduleCompleted = viewModel::toggleScheduleCompletedFromHandbook,
                     onUpdateTargetNote = viewModel::updateTargetItemNote,
                     onUpdateTargetDeadline = viewModel::updateTargetItemDeadline,

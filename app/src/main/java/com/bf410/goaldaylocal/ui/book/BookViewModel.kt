@@ -277,11 +277,12 @@ class BookViewModel(
         return ((templateItems - hidden) + store.customPageItems(book.id, pageTitle)).distinct()
     }
 
-    /** 清单详情置顶：条目移到页内首位（对照原版详情底栏置顶） */
+    /** 清单详情置顶：条目移到页内首位（对照原版详情底栏置顶；基于当前已排序列，连续置顶不掉位） */
     fun moveDetailPageItemToTop(book: TopicBook, pageTitle: String, item: String) {
         val base = detailBaseItems(book, pageTitle)
         if (item !in base) return
-        store.savePageItemOrder(book.id, pageTitle, listOf(item) + base.filterNot { it == item })
+        val ordered = store.applyPageItemOrder(book.id, pageTitle, base)
+        store.savePageItemOrder(book.id, pageTitle, listOf(item) + ordered.filterNot { it == item })
         _uiState.update { it.copy(checkedRevision = it.checkedRevision + 1L) }
         syncEditableContent()
     }
@@ -444,23 +445,24 @@ class BookViewModel(
         _uiState.update { it.copy(schedulePreviewEntries = yearEntriesForAnchor()) }
     }
 
-    fun addScheduleFromHandbook(item: String, month: Int, day: Int, repeatRule: String = "", repeatInterval: Int = 1, colorArgb: Int? = null) {
+    /** 手账侧新增排期：年份由调用方日期给（缺省回今年，不用日历锚点年，翻过别年日历后新增不再错年） */
+    fun addScheduleFromHandbook(item: String, month: Int, day: Int, repeatRule: String = "", repeatInterval: Int = 1, colorArgb: Int? = null, year: Int = 0) {
         val title = item.trim()
         if (title.isBlank()) return
-        val year = store.calendarAnchorYear()
+        val resolvedYear = if (year in 1970..2100) year else LocalDate.now().year
         val safeMonth = month.coerceIn(1, 12)
-        val maxDay = YearMonth.of(year, safeMonth).lengthOfMonth()
+        val maxDay = YearMonth.of(resolvedYear, safeMonth).lengthOfMonth()
         val safeDay = day.coerceIn(1, maxDay)
         val duplicated = scheduleRepository.entries().any { entry ->
             entry.title == title &&
-                entry.year == year &&
+                entry.year == resolvedYear &&
                 entry.month == safeMonth &&
                 entry.day == safeDay
         }
         if (duplicated) return
         scheduleRepository.addEntry(
             title = title,
-            year = year,
+            year = resolvedYear,
             month = safeMonth,
             day = safeDay,
             note = currentBook().title,
@@ -598,6 +600,7 @@ class BookViewModel(
         val isMove: Boolean,
         val moveMonth: Int = 0,
         val moveDay: Int = 0,
+        val moveYear: Int = 0,
     )
 
     private fun epochDayOf(entry: ScheduleEntry): Long =
@@ -632,15 +635,16 @@ class BookViewModel(
         syncEditableContent()
     }
 
-    /** 按作用域改期（单条）：ALL_FUTURE 把同组今日及以后整体平移同样天数 */
-    fun moveScheduleDayWithScope(targetId: String, month: Int, day: Int, scope: RepeatScope) {
-        val year = store.calendarAnchorYear()
-        val safeMonth = month.coerceIn(1, 12)
-        val maxDay = YearMonth.of(year, safeMonth).lengthOfMonth()
-        val safeDay = day.coerceIn(1, maxDay)
-        val newDate = LocalDate.of(year, safeMonth, safeDay)
+    /** 按作用域改期（单条）：ALL_FUTURE 把同组今日及以后整体平移同样天数；改期保留完成态 */
+    fun moveScheduleDayWithScope(targetId: String, year: Int, month: Int, day: Int, scope: RepeatScope) {
         val all = scheduleRepository.entries()
         val target = all.firstOrNull { it.id == targetId } ?: return
+        // 年优先用调用方给的日期年（跨年 12→1 不错年）；缺省回条目自身年，不用日历锚点年
+        val baseYear = if (year in 1970..2100) year else target.year
+        val safeMonth = month.coerceIn(1, 12)
+        val maxDay = YearMonth.of(baseYear, safeMonth).lengthOfMonth()
+        val safeDay = day.coerceIn(1, maxDay)
+        val newDate = LocalDate.of(baseYear, safeMonth, safeDay)
         val deltas = mutableMapOf<String, Long>()
         if (scope == RepeatScope.ALL_FUTURE && target.repeatGroupId.isNotBlank()) {
             val tDay = epochDayOf(target)
@@ -653,7 +657,7 @@ class BookViewModel(
         scheduleRepository.saveEntries(all.map { entry ->
             val delta = deltas[entry.id] ?: return@map entry
             val shifted = LocalDate.ofEpochDay(epochDayOf(entry) + delta)
-            entry.copy(year = shifted.year, month = shifted.monthValue, day = shifted.dayOfMonth, completed = false)
+            entry.copy(year = shifted.year, month = shifted.monthValue, day = shifted.dayOfMonth)
         })
         syncEditableContent()
     }
@@ -718,19 +722,21 @@ class BookViewModel(
         syncEditableContent()
     }
 
-    fun moveScheduleDayFromHandbook(entryId: String, month: Int, day: Int) {
+    /** 手账侧单条改期：年份缺省回条目自身年（不用日历锚点年），改期保留完成态 */
+    fun moveScheduleDayFromHandbook(entryId: String, month: Int, day: Int, year: Int = 0) {
         if (entryId.isBlank()) return
-        val year = store.calendarAnchorYear()
+        val all = scheduleRepository.entries()
+        val target = all.firstOrNull { it.id == entryId } ?: return
+        val baseYear = if (year in 1970..2100) year else target.year
         val safeMonth = month.coerceIn(1, 12)
-        val maxDay = YearMonth.of(year, safeMonth).lengthOfMonth()
+        val maxDay = YearMonth.of(baseYear, safeMonth).lengthOfMonth()
         val safeDay = day.coerceIn(1, maxDay)
-        val updated = scheduleRepository.entries().map { entry ->
+        val updated = all.map { entry ->
             if (entry.id == entryId) {
                 entry.copy(
-                    year = year,
+                    year = baseYear,
                     month = safeMonth,
                     day = safeDay,
-                    completed = false,
                 )
             } else {
                 entry
@@ -1227,10 +1233,11 @@ class BookViewModel(
         scheduleRepository.saveEntries(updated)
     }
 
+    /** 预览按锚点年±1 加载：跨年周（12.29-1.4）不断片，翻过别年日历后本周也不空白 */
     private fun yearEntriesForAnchor(): List<ScheduleEntry> {
         val year = store.calendarAnchorYear()
         return scheduleRepository.entries()
-            .filter { it.year == year }
+            .filter { it.year in (year - 1)..(year + 1) }
             .sortedWith(compareBy({ it.month }, { it.day }, { it.title.lowercase() }))
     }
 

@@ -103,6 +103,22 @@ fun InspirationScreen(
             addAll(selectedTemplateItems.map { InspirationDraftItem(it, selected = true) })
         }
     }
+    // 空选点导入旧逻辑静默丢弃还切页：先 toast 拦住，不切模式
+    fun importSelected(openHandbook: Boolean) {
+        val picked = draftItems.filter { it.selected }.map { it.text }
+        if (picked.isEmpty()) {
+            android.widget.Toast.makeText(context, "先勾选至少1条再导入", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        viewModel.applyInspirationToToday(picked)
+        android.widget.Toast.makeText(context, "已加入今日${picked.size}条", android.widget.Toast.LENGTH_SHORT).show()
+        if (openHandbook) {
+            mode = InspirationMode.FLIP
+            onOpenHandbook()
+        } else {
+            mode = InspirationMode.SAVE
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -217,15 +233,8 @@ fun InspirationScreen(
                     draftItems[i] = draftItems[i].copy(selected = !draftItems[i].selected)
                 }
             },
-            onImport = {
-                viewModel.applyInspirationToToday(draftItems.filter { it.selected }.map { it.text })
-                mode = InspirationMode.SAVE
-            },
-            onImportAndOpen = {
-                viewModel.applyInspirationToToday(draftItems.filter { it.selected }.map { it.text })
-                mode = InspirationMode.FLIP
-                onOpenHandbook()
-            },
+            onImport = { importSelected(openHandbook = false) },
+            onImportAndOpen = { importSelected(openHandbook = true) },
         )
 
         if (mode == InspirationMode.FLIP) {
@@ -257,10 +266,7 @@ fun InspirationScreen(
                     ),
                     shape = RoundedCornerShape(GoaldayDesign.RadiusPill),
                 )
-                .clickable {
-                    viewModel.applyInspirationToToday(draftItems.filter { it.selected }.map { it.text })
-                    mode = InspirationMode.SAVE
-                }
+                .clickable { importSelected(openHandbook = false) }
                 .padding(horizontal = 40.dp, vertical = 10.dp),
         )
     }

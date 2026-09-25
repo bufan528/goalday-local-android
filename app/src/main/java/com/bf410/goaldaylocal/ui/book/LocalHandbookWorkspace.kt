@@ -128,7 +128,7 @@ internal fun LocalHandbookWorkspace(
                         completedItems = uiState.todayCompletedItems,
                         anchorDate = focusedDate.plusWeeks(overviewWeekOffset.toLong()),
                         onAddPool = viewModel::addHandbookPoolItem,
-                        onAddSchedule = { title, day -> viewModel.addScheduleFromHandbook(title, focusedDate.monthValue, day) },
+                        onAddSchedule = { title, day -> viewModel.addScheduleFromHandbook(title, focusedDate.monthValue, day, year = focusedDate.year) },
                         onToggleEntry = viewModel::toggleScheduleCompletedFromHandbook,
                     )
                     LocalHandbookSegment.PLAN -> ReferenceListPage(

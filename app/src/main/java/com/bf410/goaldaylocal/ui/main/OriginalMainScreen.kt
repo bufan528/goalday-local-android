@@ -51,6 +51,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
@@ -135,6 +136,7 @@ import com.bf410.goaldaylocal.data.TargetPage
 import com.bf410.goaldaylocal.data.TopicBook
 import com.bf410.goaldaylocal.ui.book.BookUiState
 import com.bf410.goaldaylocal.ui.book.BookViewModel
+import com.bf410.goaldaylocal.ui.calendar.dayEntryTimeRank
 import com.bf410.goaldaylocal.ui.book.diaryPromptOffsetKey
 import com.bf410.goaldaylocal.ui.book.journalPromptFor
 import com.bf410.goaldaylocal.ui.book.randomPromptOffset
@@ -263,7 +265,7 @@ fun OriginalMainScreen(
     fun executeRepeatScope(request: BookViewModel.RepeatScopeRequest, scope: BookViewModel.RepeatScope) {
         if (request.isMove) {
             val id = request.targetIds.firstOrNull()
-            if (id != null) bookViewModel.moveScheduleDayWithScope(id, request.moveMonth, request.moveDay, scope)
+            if (id != null) bookViewModel.moveScheduleDayWithScope(id, request.moveYear, request.moveMonth, request.moveDay, scope)
         } else {
             bookViewModel.deleteScheduleWithScope(request.targetIds, scope)
         }
@@ -1106,10 +1108,11 @@ private fun WeekScheduleView(
             modifier = Modifier.fillMaxSize(),
         ) {
             items(weekDays, key = { it.toEpochDay() }) { date ->
-                // 稳定排序只到时间：同键保持入库顺序（id 是随机串，排进去展示顺序随机跳变）
+                // 稳定排序只到时间：同键保持入库顺序（id 是随机串，排进去展示顺序随机跳变）；
+                // 时间按数值排（09:30 不会掉到 10:00 后面），无时间仍置顶（与旧字符串排序一致）
                 val entries = uiState.schedulePreviewEntries
                     .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
-                    .sortedWith(compareBy({ !it.pinned }, { it.timeText }))
+                    .sortedWith(compareBy({ !it.pinned }, { if (it.timeText.isBlank()) -1 else dayEntryTimeRank(it.timeText, it.note) }))
                 val isToday = date == today
                 val isEditing = editingDate == date
                 // 超限当天行增高（min 撑开，footer 可见）+ 整周可滑；未超限保持等高不可滑；
@@ -1292,6 +1295,7 @@ private fun WeekScheduleView(
                                                             quickInput,
                                                             date.monthValue,
                                                             date.dayOfMonth,
+                                                            year = date.year,
                                                             colorArgb = newEntryColorArgb,
                                                         )
                                                     }
@@ -1605,7 +1609,7 @@ private fun WeekScheduleView(
                                                 val item = draggingItem
                                                 if (target != null && item != null) {
                                                     InteractionFeedback.click(dragContext)
-                                                    viewModel.addScheduleFromHandbook(item, target.monthValue, target.dayOfMonth, colorArgb = dropColorArgb ?: currentBook?.color?.toArgb())
+                                                    viewModel.addScheduleFromHandbook(item, target.monthValue, target.dayOfMonth, year = target.year, colorArgb = dropColorArgb ?: currentBook?.color?.toArgb())
                                                 }
                                                 draggingItem = null
                                                 dropTarget = null
@@ -2183,8 +2187,10 @@ private fun TopicListView(
             ) {
                 items(uiState.books, key = { it.id }) { book ->
                     val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
-                    val done = page?.items?.count { store.isChecked(book.id, page.title, it) } ?: 0
-                    val total = page?.items?.size ?: 0
+                    // 与详情页同口径：模板去隐藏 + 自定义追加，否则新加的条不计入 x/y
+                    val cardItems = page?.let { viewModel.detailBaseItems(book, it.title) } ?: emptyList()
+                    val done = cardItems.count { store.isChecked(book.id, page?.title.orEmpty(), it) }
+                    val total = cardItems.size
                     // 左滑操作层（对照原版清单卡片左滑：黑色信息 + 红色删除）
                     SwipeableActionsRow(
                         actions = buildList {
@@ -2519,6 +2525,10 @@ private fun TopicDetailSimple(
     fun selectDetailItem(item: String) {
         InteractionFeedback.haptic(detailContext)
         selectedDetailItem = if (selectedDetailItem == item) null else item
+    }
+    // 选中态下返回先取消选中，再按一次才退详情
+    androidx.activity.compose.BackHandler(enabled = selectedDetailItem != null) {
+        selectedDetailItem = null
     }
     // 日期改期（对照原版底栏日期钮：选定日期记为完成时间并勾选）
     fun assignDetailItemDate(item: String, dateText: String) {
@@ -2929,7 +2939,8 @@ private fun TopicAddSheet(
         containerColor = if (dark) Color(0xFF2C2722) else Color.White,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+        // 键盘弹起时把内容顶上去，不盖住完成行
+        Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp)) {
             KeepImmersiveInDialog()
             Text(
                 "新建清单",
@@ -3070,7 +3081,8 @@ private fun EntryEditSheet(
         containerColor = if (dark) Color(0xFF2C2722) else Color.White,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+        // 键盘弹起时把内容顶上去，不盖住保存行
+        Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp)) {
             KeepImmersiveInDialog()
             Text(
                 "${entryDate.monthValue}月${entryDate.dayOfMonth}日 · ${weekdayName(entryDate)}",
@@ -3267,10 +3279,11 @@ private fun EntryEditSheet(
                                             isMove = true,
                                             moveMonth = day.monthValue,
                                             moveDay = day.dayOfMonth,
+                                            moveYear = day.year,
                                         ),
                                     )
                                 } else {
-                                    viewModel.moveScheduleDayFromHandbook(entry.id, day.monthValue, day.dayOfMonth)
+                                    viewModel.moveScheduleDayFromHandbook(entry.id, day.monthValue, day.dayOfMonth, year = day.year)
                                     onDismiss()
                                 }
                             }
@@ -3542,10 +3555,10 @@ private fun MonthScheduleView(
         contentPadding = PaddingValues(bottom = 90.dp),
     ) {
         items(monthDays, key = { it.toEpochDay() }) { date ->
-            // 稳定排序只到时间：同键保持入库顺序（与周视图/书内一致）
+            // 稳定排序只到时间：同键保持入库顺序（与周视图/书内一致；时间按数值排，无时间置顶）
             val entries = uiState.schedulePreviewEntries
                 .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
-                .sortedWith(compareBy({ !it.pinned }, { it.timeText }))
+                .sortedWith(compareBy({ !it.pinned }, { if (it.timeText.isBlank()) -1 else dayEntryTimeRank(it.timeText, it.note) }))
             val isToday = date == today
             Row(
                 modifier = Modifier
@@ -3743,6 +3756,7 @@ private fun MonthScheduleView(
                                         item,
                                         selectedDate.monthValue,
                                         selectedDate.dayOfMonth,
+                                        year = selectedDate.year,
                                     )
                                 }
                                 .padding(horizontal = 14.dp, vertical = 9.dp),
@@ -3864,6 +3878,20 @@ private fun WeekPickerSheet(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "上个月",
+                    tint = GoaldayDesign.adaptiveInkPrimary,
+                    modifier = Modifier
+                        .size(26.dp)
+                        .clickable {
+                            monthAnchor = if (monthAnchor.monthValue == 1) {
+                                YearMonth.of(monthAnchor.year - 1, 12)
+                            } else {
+                                monthAnchor.minusMonths(1)
+                            }
+                        },
+                )
                 Text(
                     "${monthAnchor.monthValue}月 ${monthAnchor.year}",
                     fontSize = 20.sp,

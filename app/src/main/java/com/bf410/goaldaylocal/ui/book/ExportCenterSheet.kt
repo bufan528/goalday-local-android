@@ -283,6 +283,42 @@ internal fun ExportCenterSheet(
                 )
                 DateRow("结束", endDate) { endDate = it }
             }
+            // 起止反选/超范围行内即提示，不等点确定才 toast
+            val reversed = startDate != null && endDate != null && startDate!!.isAfter(endDate!!)
+            if (reversed) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "开始晚于结束，预览为空",
+                        fontSize = 13.sp,
+                        color = Color(0xFFD44A4A),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        "对调",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color_Blue,
+                        modifier = Modifier
+                            .clickable {
+                                val t = startDate
+                                startDate = endDate
+                                endDate = t
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    )
+                }
+            } else if (rangeTooLarge) {
+                Text(
+                    "所选超93天，点确定会被拦截，请缩小范围",
+                    fontSize = 13.sp,
+                    color = Color(0xFFD44A4A),
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
             Spacer(Modifier.height(16.dp))
 
             // 预览分区
@@ -298,7 +334,7 @@ internal fun ExportCenterSheet(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        "请选择时间范围和内容类型",
+                        if (reversed) "开始晚于结束，点上面对调" else "请选择时间范围和内容类型",
                         fontSize = 14.sp,
                         color = GoaldayDesign.adaptiveInkMuted,
                     )
