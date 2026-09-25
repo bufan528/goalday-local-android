@@ -1826,8 +1826,10 @@ private fun RecordDiaryPager(
             if (settled != DIARY_PAGER_CENTER) {
                 // 对照原版落定 500ms 后回正：快滑合并，只处理最后一次落定
                 delay(500)
-                anchorDate = diaryPagerDate(anchorDate, settled)
-                onSelectDate(anchorDate)
+                // 先算新锚点再发布：连滑时闭包里的 anchorDate 是旧值，分两行会跳错一天
+                val newAnchor = diaryPagerDate(anchorDate, settled)
+                anchorDate = newAnchor
+                onSelectDate(newAnchor)
                 pagerState.scrollToPage(DIARY_PAGER_CENTER)
             }
         }
@@ -3714,12 +3716,15 @@ private fun MonthScheduleView(
                 Spacer(Modifier.height(10.dp))
                 LazyColumn(Modifier.weight(1f)) {
                     val targetPage = currentBook?.pages?.filterIsInstance<TargetPage>()?.firstOrNull()
+                    // 与周池/详情页同口径：滤隐藏 + 置顶排序，否则删掉/隐藏的条目在月池阴魂不散
                     val listItems = if (targetPage != null && currentBook != null) {
-                        (targetPage.items + monthStore.customPageItems(currentBook.id, targetPage.title)).distinct()
+                        val monthHidden = monthStore.hiddenPageItems(currentBook.id, targetPage.title)
+                        val monthMerged = ((targetPage.items - monthHidden) + monthStore.customPageItems(currentBook.id, targetPage.title)).distinct()
+                        monthStore.applyPageItemOrder(currentBook.id, targetPage.title, monthMerged)
                     } else {
                         emptyList()
                     }
-                    items(listItems, key = { it }) { item ->
+                    itemsIndexed(listItems, key = { index, item -> "$index:$item" }) { _, item ->
                         val itemChecked = targetPage != null && viewModel.isChecked(targetPage.title, item)
                         Row(
                             modifier = Modifier
