@@ -1,6 +1,13 @@
 package com.bf410.goaldaylocal.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import com.bf410.goaldaylocal.ui.reminder.ReminderScheduler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -338,6 +345,24 @@ fun GoaldayApp(
 
     // 返回反馈：应用内逐级返回；已在主页时双击返回退出（Toast 提示，避免误触闪退）
     val appBackContext = LocalContext.current
+    // 每日提醒默认开但 33+ 要运行时授权：首启问一次，拒绝不再打扰（设置里可重开）
+    val reminderPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (!granted) {
+            android.widget.Toast.makeText(appBackContext, "通知被拒，每日提醒不会打扰你，设置里可重开", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+    LaunchedEffect(Unit) {
+        if (ReminderScheduler.isEnabled() &&
+            Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(appBackContext, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
+            !mmkv.decodeBool("reminder_permission_asked", false)
+        ) {
+            mmkv.encode("reminder_permission_asked", true)
+            reminderPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
     var lastBackExitTick by remember { mutableLongStateOf(0L) }
     BackHandler(enabled = true) {
         if (canGoBackInsideApp) {

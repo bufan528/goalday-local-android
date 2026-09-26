@@ -42,7 +42,8 @@ class QuickDiaryWidgetProvider : AppWidgetProvider() {
             views.setInt(R.id.quick_diary_root, "setBackgroundColor", style.backgroundColor)
             views.setTextViewText(R.id.quick_diary_title, "记录今天")
             views.setTextViewText(R.id.quick_diary_subtitle, "本地日记 · 无 VIP 锁")
-            views.setTextViewText(R.id.quick_diary_date, "${today.monthValue}/${today.dayOfMonth}")
+            // 日期格式与日记组件统一（M月d日 周X），原来 M/d 两边对不上
+            views.setTextViewText(R.id.quick_diary_date, DiaryAddWidgetProvider.diaryWidgetTitle(today))
             views.setTextViewText(R.id.quick_diary_hint, "补一条文字、目标或图片块，写完只保存在本机")
             views.setTextViewText(R.id.quick_diary_action, "打开手账")
             views.setTextColor(R.id.quick_diary_title, style.titleColor)

@@ -327,6 +327,24 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
             mmkv.encode("$KEY_WIDGET_DENSITY_PREFIX$widgetId", config.density.raw)
         }
 
+        /** 行文本唯一口径：真机与配置预览共用，所见即所得 */
+        internal fun scheduleRowText(
+            entry: ScheduleEntry,
+            today: LocalDate,
+            scope: ScheduleWidgetScope,
+            density: ScheduleWidgetDensity,
+        ): String {
+            val time = entry.timeText.takeIf { it.isNotBlank() }?.let { "$it " }.orEmpty()
+            val repeat = widgetRepeatLabel(entry).takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()
+            val date = widgetDatePrefix(entry, today, scope)
+            val note = if (density == ScheduleWidgetDensity.DETAILED) {
+                entry.note.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()
+            } else {
+                ""
+            }
+            return "$date$time${entry.title}$repeat$note"
+        }
+
         fun deleteConfig(widgetId: Int) {
             val mmkv = MMKV.defaultMMKV()
             mmkv.removeValueForKey("$KEY_WIDGET_STYLE_PREFIX$widgetId")
@@ -377,13 +395,10 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
                     views.setViewVisibility(rowIds[index], View.GONE)
                 } else {
                     views.setViewVisibility(rowIds[index], View.VISIBLE)
-                    val time = entry.timeText.takeIf { it.isNotBlank() }?.let { "$it " }.orEmpty()
-                    val repeat = widgetRepeatLabel(entry).takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()
-                    val date = widgetDatePrefix(entry, today, config.scope)
-                    val note = if (config.density == ScheduleWidgetDensity.DETAILED) entry.note.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty() else ""
                     views.setTextViewText(dotIds[index], "●")
+                    views.setContentDescription(rowIds[index], "${entry.title}，${if (entry.completed) "已完成" else "未完成"}")
                     views.setTextColor(dotIds[index], if (entry.completed) style.doneColor else style.accentColor)
-                    views.setTextViewText(id, "$date$time${entry.title}$repeat$note")
+                    views.setTextViewText(id, scheduleRowText(entry, today, config.scope, config.density))
                     views.setTextColor(id, if (entry.completed) style.doneTextColor else style.titleColor)
                     views.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_SP, config.density.taskTextSp)
                 }

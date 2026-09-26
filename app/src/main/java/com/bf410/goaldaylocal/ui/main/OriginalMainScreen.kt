@@ -1002,6 +1002,8 @@ private fun WeekScheduleView(
     val monday = selectedDate.with(DayOfWeek.MONDAY)
     val weekDays = remember(monday) { (0..6).map { monday.plusDays(it.toLong()) } }
     var quickInput by remember(editingDate) { mutableStateOf("") }
+    // 初挂载会先回调一次未聚焦：得过焦点之后才允许失焦提交（同池改名/详情改名守卫）
+    var quickHadFocus by remember(editingDate) { mutableStateOf(false) }
     val dividerColor = MainTabDivider
     val diaryStore = remember { LocalStateStore(MMKV.defaultMMKV()) }
     // 长按拖拽：池条目 → 日期行排期（拖拽时上报告知外层禁掉横滑切页）
@@ -1287,7 +1289,26 @@ private fun WeekScheduleView(
                                             cursorBrush = SolidColor(TodayCoral),
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .focusRequester(focusRequester),
+                                                .focusRequester(focusRequester)
+                                                .onFocusChanged {
+                                                    if (it.isFocused) {
+                                                        quickHadFocus = true
+                                                    } else if (quickHadFocus) {
+                                                        // 三星键盘完成键只收键盘不发 Done：失焦即落盘，中文输入不再丢字
+                                                        quickHadFocus = false
+                                                        if (quickInput.isNotBlank()) {
+                                                            InteractionFeedback.click(context)
+                                                            viewModel.addScheduleFromHandbook(
+                                                                quickInput,
+                                                                date.monthValue,
+                                                                date.dayOfMonth,
+                                                                year = date.year,
+                                                                colorArgb = newEntryColorArgb,
+                                                            )
+                                                        }
+                                                        quickInput = ""
+                                                    }
+                                                },
                                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                             keyboardActions = KeyboardActions(
                                                 onDone = {

@@ -362,7 +362,7 @@ private fun WidgetPreviewCard(
             } else {
                 previewRows.forEach { entry ->
                     PreviewScheduleRow(
-                        text = entry.previewText(today, config.scope, config.density),
+                        text = ScheduleWidgetProvider.scheduleRowText(entry, today, config.scope, config.density),
                         style = style,
                         completed = entry.completed,
                     )
@@ -390,27 +390,6 @@ private fun ScheduleEntry.matchesWidgetScopeForPreview(today: LocalDate, scope: 
             !date.isBefore(start) && !date.isAfter(end)
         }
     }
-}
-
-private fun ScheduleEntry.previewText(
-    today: LocalDate,
-    scope: ScheduleWidgetScope,
-    density: ScheduleWidgetDensity,
-): String {
-    val datePrefix = if (scope == ScheduleWidgetScope.TODAY) {
-        val date = runCatching { LocalDate.of(year, month, day) }.getOrNull()
-        if (date != null && date.isBefore(today)) "${month}/${day} " else ""
-    } else {
-        val date = runCatching { LocalDate.of(year, month, day) }.getOrNull()
-        when (date?.let { java.time.temporal.ChronoUnit.DAYS.between(today, it).toInt() }) {
-            0 -> "今天 "
-            1 -> "明天 "
-            else -> "${month}/${day} "
-        }
-    }
-    val time = timeText.takeIf { it.isNotBlank() }?.let { "$it " }.orEmpty()
-    val noteText = if (density == ScheduleWidgetDensity.DETAILED) note.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty() else ""
-    return "$datePrefix$time$title$noteText"
 }
 
 @Composable
