@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -101,6 +102,21 @@ fun SettingsScreen(
             mmkv.encode(KEY_DIARY_IMAGE_SIZE, normalized)
         }
         mutableStateOf(normalized)
+    }
+    var reminderOn by remember {
+        mutableStateOf(com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.isEnabled(mmkv))
+    }
+    // 33+ 开通知要运行时授权：拒绝则开关弹回，不静默开空头支票
+    val notifPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            reminderOn = true
+            com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.setEnabled(context, true)
+            Toast.makeText(context, "每日提醒已开启：早8点、晚9点各一次", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "未获得通知权限，请到系统设置中打开", Toast.LENGTH_LONG).show()
+        }
     }
     var pendingRestore by remember { mutableStateOf<BackupSnapshot?>(null) }
     var pendingDelete by remember { mutableStateOf<BackupSnapshot?>(null) }
@@ -237,6 +253,33 @@ fun SettingsScreen(
                 SettingsNavRow(
                     title = "新手引导",
                     onClick = onShowGuide,
+                )
+                SettingsDivider()
+                // 每日提醒行：早8点今日待办、晚9点当日剩余（含逾期），关掉即取消闹钟
+                SettingsSwitchRow(
+                    title = "每日提醒",
+                    subtitle = "早8点 · 晚9点",
+                    checked = reminderOn,
+                    onCheckedChange = { checked ->
+                        if (!checked) {
+                            reminderOn = false
+                            com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.setEnabled(context, false)
+                            Toast.makeText(context, "每日提醒已关闭", Toast.LENGTH_SHORT).show()
+                            return@SettingsSwitchRow
+                        }
+                        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+                            androidx.core.content.ContextCompat.checkSelfPermission(
+                                context,
+                                android.Manifest.permission.POST_NOTIFICATIONS,
+                            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                        ) {
+                            notifPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                            return@SettingsSwitchRow
+                        }
+                        reminderOn = true
+                        com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.setEnabled(context, true)
+                        Toast.makeText(context, "每日提醒已开启：早8点、晚9点各一次", Toast.LENGTH_SHORT).show()
+                    },
                 )
             }
 
@@ -553,6 +596,38 @@ private fun SettingsNavRow(
             tint = GoaldayDesign.adaptiveInkMuted,
             modifier = Modifier.size(20.dp),
         )
+    }
+}
+
+// 卡片内开关行：标题 + 副标题 + 右侧 Switch
+@Composable
+private fun SettingsSwitchRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(15.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = GoaldayDesign.adaptiveInkPrimary,
+            )
+            Text(
+                subtitle,
+                fontSize = 12.sp,
+                color = GoaldayDesign.adaptiveInkMuted,
+            )
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

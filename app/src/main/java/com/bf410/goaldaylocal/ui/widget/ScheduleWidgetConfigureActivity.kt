@@ -382,7 +382,7 @@ private fun ScheduleWidgetScope.previewEmptyText(): String =
 private fun ScheduleEntry.matchesWidgetScopeForPreview(today: LocalDate, scope: ScheduleWidgetScope): Boolean {
     val date = runCatching { LocalDate.of(year, month, day) }.getOrNull() ?: return false
     return when (scope) {
-        ScheduleWidgetScope.TODAY -> date == today
+        ScheduleWidgetScope.TODAY -> !date.isAfter(today)
         ScheduleWidgetScope.UPCOMING -> !date.isBefore(today) && java.time.temporal.ChronoUnit.DAYS.between(today, date) <= 6
         ScheduleWidgetScope.WEEK -> {
             val start = today.minusDays((today.dayOfWeek.value - 1).toLong())
@@ -398,7 +398,8 @@ private fun ScheduleEntry.previewText(
     density: ScheduleWidgetDensity,
 ): String {
     val datePrefix = if (scope == ScheduleWidgetScope.TODAY) {
-        ""
+        val date = runCatching { LocalDate.of(year, month, day) }.getOrNull()
+        if (date != null && date.isBefore(today)) "${month}/${day} " else ""
     } else {
         val date = runCatching { LocalDate.of(year, month, day) }.getOrNull()
         when (date?.let { java.time.temporal.ChronoUnit.DAYS.between(today, it).toInt() }) {

@@ -423,7 +423,8 @@ private val ScheduleWidgetScope.emptyText: String
 private fun ScheduleEntry.matchesWidgetScope(today: LocalDate, scope: ScheduleWidgetScope): Boolean {
     val date = runCatching { LocalDate.of(year, month, day) }.getOrNull() ?: return false
     return when (scope) {
-        ScheduleWidgetScope.TODAY -> date == today
+        // 当天含逾期未做：昨天没做完的今天还看得见，不会凭空消失
+        ScheduleWidgetScope.TODAY -> !date.isAfter(today)
         ScheduleWidgetScope.UPCOMING -> !date.isBefore(today) && ChronoUnit.DAYS.between(today, date) <= 6
         ScheduleWidgetScope.WEEK -> {
             val start = today.minusDays((today.dayOfWeek.value - 1).toLong())
@@ -434,7 +435,12 @@ private fun ScheduleEntry.matchesWidgetScope(today: LocalDate, scope: ScheduleWi
 }
 
 private fun widgetDatePrefix(entry: ScheduleEntry, today: LocalDate, scope: ScheduleWidgetScope): String {
-    if (scope == ScheduleWidgetScope.TODAY) return ""
+    if (scope == ScheduleWidgetScope.TODAY) {
+        val date = runCatching { LocalDate.of(entry.year, entry.month, entry.day) }.getOrNull()
+        // 逾期条目标注原日期，不跟当天混在一起
+        if (date != null && date.isBefore(today)) return "${entry.month}/${entry.day} "
+        return ""
+    }
     val date = runCatching { LocalDate.of(entry.year, entry.month, entry.day) }.getOrNull() ?: return ""
     val label = when (ChronoUnit.DAYS.between(today, date).toInt()) {
         0 -> "今天"

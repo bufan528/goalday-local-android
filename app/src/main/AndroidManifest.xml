@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:name=".GoaldayApplication"
         android:allowBackup="true"
@@ -70,6 +73,14 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/quick_diary_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.reminder.ReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
         </receiver>
 
         <receiver
