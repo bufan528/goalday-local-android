@@ -4,6 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.bf410.goaldaylocal.ui.GoaldayApp
 
 const val EXTRA_START_TARGET = "goalday_start_target"
@@ -11,14 +14,29 @@ const val START_TARGET_DIARY = "diary"
 const val START_TARGET_HANDBOOK = "handbook"
 
 class MainActivity : ComponentActivity() {
+    // 桌面组件二次跳转：singleTask 复用实例走 onNewIntent，用 state 送进 Compose；
+    // 消费后清 null，同 target 再点也能触发
+    private var liveTarget by androidx.compose.runtime.mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         hideSystemBars()
         val startTarget = intent?.getStringExtra(EXTRA_START_TARGET)
+        liveTarget = startTarget
         setContent {
-            GoaldayApp(startTarget = startTarget)
+            GoaldayApp(
+                startTarget = startTarget,
+                liveTarget = liveTarget,
+                onLiveTargetConsumed = { liveTarget = null },
+            )
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        liveTarget = intent.getStringExtra(EXTRA_START_TARGET)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

@@ -76,6 +76,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -90,6 +92,7 @@ import com.bf410.goaldaylocal.ui.inspiration.InspirationScreen
 import com.bf410.goaldaylocal.ui.main.OriginalMainScreen
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
 import com.bf410.goaldaylocal.ui.replica.LocalGoaldayDarkMode
+import com.bf410.goaldaylocal.ui.replica.LocalGoaldayFontScale
 import com.bf410.goaldaylocal.ui.settings.SettingsScreen
 import com.bf410.goaldaylocal.START_TARGET_DIARY
 import com.bf410.goaldaylocal.START_TARGET_HANDBOOK
@@ -154,7 +157,12 @@ private data class AppRoute(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GoaldayApp(startTarget: String? = null) {
+fun GoaldayApp(
+    startTarget: String? = null,
+    // 桌面组件后台二次跳转：MainActivity singleTask 经 onNewIntent 送达，应用后需消费
+    liveTarget: String? = null,
+    onLiveTargetConsumed: () -> Unit = {},
+) {
     var tab by rememberSaveable(startTarget) {
         mutableStateOf(
             if (startTarget == START_TARGET_DIARY || startTarget == START_TARGET_HANDBOOK) {
@@ -191,6 +199,23 @@ fun GoaldayApp(startTarget: String? = null) {
     LaunchedEffect(com.bf410.goaldaylocal.ui.main.MainUiBridge.tick) {
         if (com.bf410.goaldaylocal.ui.main.MainUiBridge.date != null) {
             tab = RootTab.MAIN
+        }
+    }
+    // 桌面组件后台点入：直接落到手账/日记，不再新开一个主页叠在返回栈上
+    LaunchedEffect(liveTarget) {
+        when (liveTarget) {
+            START_TARGET_DIARY -> {
+                tab = RootTab.BOOK
+                bookSurface = BookRootSurface.BOOK
+                bookEntryMode = BookEntryMode.DIARY
+                onLiveTargetConsumed()
+            }
+            START_TARGET_HANDBOOK -> {
+                tab = RootTab.BOOK
+                bookSurface = BookRootSurface.BOOK
+                bookEntryMode = BookEntryMode.HANDBOOK
+                onLiveTargetConsumed()
+            }
         }
     }
     val bookViewModel: BookViewModel = viewModel(factory = BookViewModel.Factory)
@@ -243,12 +268,31 @@ fun GoaldayApp(startTarget: String? = null) {
         showGuide = false
     }
 
+    // 进设置/灵感前记住从哪来：返回时先回原页，栈空才回主页（最小返回记忆，不做整栈）
+    var settingsReturnRoute by remember { mutableStateOf<AppRoute?>(null) }
+    var inspirationReturnRoute by remember { mutableStateOf<AppRoute?>(null) }
+    fun currentRoute() = AppRoute(tab, bookSurface, bookEntryMode)
+    fun applyRoute(route: AppRoute) {
+        tab = route.tab
+        bookSurface = route.bookSurface
+        bookEntryMode = route.bookEntryMode
+    }
+    fun goSettings() {
+        if (tab != RootTab.SETTINGS) settingsReturnRoute = currentRoute()
+        tab = RootTab.SETTINGS
+    }
+    fun goInspiration() {
+        if (bookSurface != BookRootSurface.INSPIRATION) inspirationReturnRoute = currentRoute()
+        bookSurface = BookRootSurface.INSPIRATION
+        bookEntryMode = BookEntryMode.PLANNER
+        tab = RootTab.BOOK
+    }
+
     fun openGuideTarget(target: GuideTarget) {
         tab = RootTab.BOOK
         when (target) {
             GuideTarget.INSPIRATION -> {
-                bookSurface = BookRootSurface.INSPIRATION
-                bookEntryMode = BookEntryMode.PLANNER
+                goInspiration()
             }
             GuideTarget.HANDBOOK -> {
                 bookSurface = BookRootSurface.BOOK
@@ -270,6 +314,21 @@ fun GoaldayApp(startTarget: String? = null) {
     fun navigateBackInsideApp() {
         // 注意：不能在这里 consume MainUiBridge——书内点页正是经由
         // onBackToLibrary → 本函数回到主界面，桥接需由主界面消费
+        settingsReturnRoute?.let { remembered ->
+            // 只在设置页消费记忆：别处返回不吞它
+            if (tab == RootTab.SETTINGS) {
+                applyRoute(remembered)
+                settingsReturnRoute = null
+                return
+            }
+        }
+        inspirationReturnRoute?.let { remembered ->
+            if (tab == RootTab.BOOK && bookSurface == BookRootSurface.INSPIRATION) {
+                applyRoute(remembered)
+                inspirationReturnRoute = null
+                return
+            }
+        }
         if (tab != RootTab.MAIN) {
             tab = RootTab.MAIN
             bookSurface = BookRootSurface.HOME
@@ -303,49 +362,41 @@ fun GoaldayApp(startTarget: String? = null) {
     val goaldayMmkv = remember { MMKV.defaultMMKV() }
     var fontSizeKey by remember { mutableStateOf(goaldayMmkv.decodeString("settings_font_size", "standard") ?: "standard") }
 
-    val goaldayTypography = remember(fontSizeKey) {
-        val scale = when (fontSizeKey) {
-            "compact" -> 0.88f
-            "large" -> 1.12f
-            else -> 1.0f
-        }
+    val goaldayFontScale = when (fontSizeKey) {
+        "compact" -> 0.88f
+        "large" -> 1.12f
+        else -> 1.0f
+    }
+    // 字号档走 Density.fontScale 全局生效：所有 .sp（含硬编码与 lineHeight）跟设置走，
+    // Typography 保持基准不再二次缩放，否则样式文字会被乘两遍
+    val goaldayTypography = remember {
         Typography().run {
             copy(
                 titleLarge = titleLarge.copy(
                     fontFamily = GoaldayDesign.DisplayFontFamily,
-                    fontSize = (24 * scale).sp,
                     fontWeight = FontWeight.SemiBold,
-                    lineHeight = (32 * scale).sp,
                 ),
-                titleMedium = titleMedium.copy(
-                    fontSize = (17 * scale).sp,
-                    fontWeight = FontWeight.SemiBold,
-                    lineHeight = (24 * scale).sp,
-                ),
-                bodyLarge = bodyLarge.copy(
-                    fontSize = (16 * scale).sp,
-                    lineHeight = (24 * scale).sp,
-                ),
-                bodyMedium = bodyMedium.copy(
-                    fontSize = (14 * scale).sp,
-                    lineHeight = (20 * scale).sp,
-                ),
-                bodySmall = bodySmall.copy(fontSize = (12 * scale).sp),
-                labelLarge = labelLarge.copy(fontSize = (14 * scale).sp),
-                labelMedium = labelMedium.copy(fontSize = (12 * scale).sp),
-                labelSmall = labelSmall.copy(fontSize = (11 * scale).sp),
             )
         }
     }
+    val baseDensity = LocalDensity.current
+    val appDensity = remember(baseDensity, goaldayFontScale) {
+        Density(baseDensity.density, baseDensity.fontScale * goaldayFontScale)
+    }
 
     MaterialTheme(colorScheme = if (isDark) goaldayDarkColorScheme else goaldayColorScheme, typography = goaldayTypography) {
-        CompositionLocalProvider(LocalGoaldayDarkMode provides isDark) {
+        CompositionLocalProvider(
+            LocalDensity provides appDensity,
+            LocalGoaldayDarkMode provides isDark,
+            LocalGoaldayFontScale provides goaldayFontScale,
+        ) {
         Scaffold(
             containerColor = if (isDark) GoaldayDesign.DarkAppBg else GoaldayDesign.AppBg,
             topBar = {
-                // 原版化导航：MAIN 自带 周|记录|清单 顶栏；设置页对照原版全屏无 Tab（同底栏处理）
+                // 原版化导航：MAIN 自带 周|记录|清单 顶栏；设置页对照原版全屏无 Tab（同底栏处理）；
+                // BOOK 下只留 BookRootHeader 一层，顶栏 Tab 会跟它叠罗汉
                 val immersiveBook = tab == RootTab.BOOK && bookSurface == BookRootSurface.BOOK && bookEntryMode != BookEntryMode.PLANNER
-                if (!immersiveBook && tab != RootTab.MAIN && tab != RootTab.SETTINGS) {
+                if (!immersiveBook && tab != RootTab.MAIN && tab != RootTab.SETTINGS && tab != RootTab.BOOK) {
                     val visibleTabs = tabConfigs
                         .filter { it.visible && it.tab != RootTab.MAIN }
                         .map { it.tab }
@@ -383,7 +434,7 @@ fun GoaldayApp(startTarget: String? = null) {
                             } else if (item == RootTab.MAIN && tab == RootTab.MAIN) {
                                 // 原版行为：再点已选中的首页图标 = 打开设置页
                                 // （对照 MainTabFragment TabInfo.action + FlexibleTabContainer.selectTab）
-                                tab = RootTab.SETTINGS
+                                goSettings()
                             } else {
                                 tab = item
                                 when (item) {
@@ -455,8 +506,7 @@ fun GoaldayApp(startTarget: String? = null) {
                                 tab = RootTab.BOOK
                             }
                             fun openInspiration() {
-                                bookSurface = BookRootSurface.INSPIRATION
-                                tab = RootTab.BOOK
+                                goInspiration()
                             }
                             BookRootScaffold(
                                 surface = currentRoute.bookSurface,
@@ -501,11 +551,9 @@ fun GoaldayApp(startTarget: String? = null) {
                                 bookEntryMode = BookEntryMode.HANDBOOK
                             },
                             onOpenInspiration = {
-                                tab = RootTab.BOOK
-                                bookSurface = BookRootSurface.INSPIRATION
-                                bookEntryMode = BookEntryMode.PLANNER
+                                goInspiration()
                             },
-                            onOpenSettings = { tab = RootTab.SETTINGS },
+                            onOpenSettings = { goSettings() },
                         )
                         RootTab.CALENDAR -> CalendarScreen(
                             viewModel = calendarViewModel,
@@ -682,6 +730,7 @@ private fun BookRootSegmentChip(
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

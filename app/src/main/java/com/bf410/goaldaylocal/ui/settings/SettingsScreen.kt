@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -104,6 +105,8 @@ fun SettingsScreen(
     var pendingRestore by remember { mutableStateOf<BackupSnapshot?>(null) }
     var pendingDelete by remember { mutableStateOf<BackupSnapshot?>(null) }
     var showBackupDialog by remember { mutableStateOf(false) }
+    // 恢复后重启遮罩：直接杀进程像崩溃，先盖层说明再走
+    var restarting by remember { mutableStateOf(false) }
 
     // 备份列表走 IO 线程读目录：remember 里直接调会卡主线程
     var snapshots by remember { mutableStateOf(listOf<BackupSnapshot>()) }
@@ -318,11 +321,27 @@ fun SettingsScreen(
                     scope.launch {
                         val result = withContext(Dispatchers.IO) { manager.restoreBackup(snapshotToRestore.absolutePath) }
                         result.onSuccess {
-                            Toast.makeText(context, "恢复完成，应用将重启", Toast.LENGTH_LONG).show()
-                            Handler(Looper.getMainLooper()).postDelayed({
-                                MMKV.onExit()
-                                Process.killProcess(Process.myPid())
-                            }, 800)
+                            // 先刷桌面组件再重启：否则组件长期残留旧数据
+                            runCatching {
+                                withContext(Dispatchers.IO) {
+                                    com.bf410.goaldaylocal.ui.widget.WidgetRefresh.refreshScheduleWidgets(context)
+                                }
+                            }
+                            restarting = true
+                            kotlinx.coroutines.delay(900)
+                            MMKV.onExit()
+                            // 定时拉起再退出：回到应用而不是停在桌面，用户不以为崩溃
+                            runCatching {
+                                val alarm = context.getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
+                                val relaunch = android.app.PendingIntent.getActivity(
+                                    context,
+                                    99,
+                                    android.content.Intent(context, com.bf410.goaldaylocal.MainActivity::class.java),
+                                    android.app.PendingIntent.FLAG_IMMUTABLE,
+                                )
+                                alarm.set(android.app.AlarmManager.RTC, System.currentTimeMillis() + 400, relaunch)
+                            }
+                            Process.killProcess(Process.myPid())
                         }.onFailure {
                             Toast.makeText(context, it.message ?: "恢复失败", Toast.LENGTH_SHORT).show()
                         }
@@ -336,6 +355,26 @@ fun SettingsScreen(
                     Text("取消")
                 }
             },
+        )
+    }
+
+    // 恢复后重启遮罩：点不掉，盖住“假死”期
+    if (restarting) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("已恢复备份") },
+            text = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.5.dp,
+                        color = GoaldayDesign.adaptiveInkPrimary,
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text("正在重启应用…", color = GoaldayDesign.adaptiveInkSecondary)
+                }
+            },
+            confirmButton = {},
         )
     }
 
