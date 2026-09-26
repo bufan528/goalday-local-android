@@ -746,6 +746,25 @@ internal fun plainTextFromHtml(html: String): String =
         .filter(String::isNotBlank)
         .joinToString("\n")
 
+/** 行内快编用：与 plainTextFromHtml 同管线但保留空行，否则每敲一字空行就被洗掉 */
+internal fun plainTextFromHtmlForEdit(html: String): String =
+    html
+        .replace(Regex("(?i)<br\\s*/?>"), "\n")
+        .replace(Regex("(?i)</(p|div|h1|h2|blockquote|li)>"), "\n")
+        .replace(Regex("<[^>]+>"), "")
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .lines()
+        .map(String::trim)
+        .joinToString("\n")
+        .trim()
+
+/** 是否含纯段落之外的格式（标题/引用/列表/加粗等）：含则行内快编只读，防一敲格式全洗成 <p> */
+internal fun diaryHtmlHasRichFormatting(html: String): Boolean =
+    Regex("(?i)<(h1|h2|blockquote|ul|ol|li|b|strong|i|em|u|s|a|img)\\b").containsMatchIn(html)
+
 // 对照原版 item_diary_text.xml：文字块 16sp、自适应色、行间距 2dp（lineHeight ≈ 18sp）
 @Composable
 internal fun diaryBlockTextStyle(block: DiaryEntryBlock): TextStyle {

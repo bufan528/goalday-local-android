@@ -1899,7 +1899,11 @@ private fun RecordDiaryView(
     }
 
     fun saveAll() {
-        store.setDiaryText(DIARY_BOOK_ID, selectedDate.toString(), buildStructuredDiary(selectedDate, entries, text, imagePaths))
+        // 落盘读库最新排期：entries 参数是上游快照，周页刚勾完成、重组还没递过来时直接用会覆盖回滚完成卡
+        val freshEntries = store.scheduleEntries().filter {
+            it.year == selectedDate.year && it.month == selectedDate.monthValue && it.day == selectedDate.dayOfMonth
+        }
+        store.setDiaryText(DIARY_BOOK_ID, selectedDate.toString(), buildStructuredDiary(selectedDate, freshEntries, text, imagePaths))
     }
 
     val ioScope = rememberCoroutineScope()
@@ -2652,9 +2656,8 @@ private fun TopicDetailSimple(
             // 行自带左右边距（对照原版勾选框起 27dp、内容尾 27dp、分隔线边距 20dp）
             contentPadding = PaddingValues(vertical = 0.dp),
         ) {
-            // key 带上 revision：勾选写入的是 MMKV（非 Compose 观测状态），
-            // revision 变化时换 key 强制重建 item，重读 isChecked 刷新勾选框；
-            // 显示选项同样带进 key，否则 key 命中会跳过重组、开关看着没反应；
+            // key 只带显示选项：勾选写入的是 MMKV（非 Compose 观测状态），行内订阅 revision
+            // 变化时重组重读（不断整列 dispose，滚动不跳、不闪）；显示选项带进 key 否则开关看着没反应；
             // 关掉“显示已完成”时过滤掉已勾选项
             val baseItems = viewModel.detailBaseItems(book, pageTitle)
             val orderedItems = store.applyPageItemOrder(book.id, pageTitle, baseItems)
@@ -2662,7 +2665,8 @@ private fun TopicDetailSimple(
                 showCompleted || !store.isChecked(book.id, pageTitle, item)
             }
             val displayFlags = "${if (showCompleted) 1 else 0}${if (showNumbers) 1 else 0}${if (showDates) 1 else 0}"
-            itemsIndexed(visibleItems, key = { _, item -> "$revision-$displayFlags-$item" }) { index, item ->
+            itemsIndexed(visibleItems, key = { _, item -> "$displayFlags-$item" }) { index, item ->
+                revision.let { }
                 val checked = store.isChecked(book.id, pageTitle, item)
                 val checkedDateText = if (checked) store.checkedDate(book.id, pageTitle, item) else ""
                 // 行内直接改名（对照原版行内 EditText）：左滑编辑进行内态，Done/失焦落盘（清空=删）

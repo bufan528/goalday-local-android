@@ -70,7 +70,8 @@ internal fun StructuredDiaryEditor(
     val dateLabel = remember(state.dateIso) { diaryDateLabel(state.date) }
     var richEditorExpanded by remember(state.dateIso) { mutableStateOf(false) }
     var promptGridVisible by remember { mutableStateOf(false) }
-    var focusedBlockIndex by remember(state.blocksRaw) { mutableStateOf(0) }
+    // 工具栏焦点按日期记：原来按 blocksRaw 记，每敲一字重置回 0，焦点跟着跳
+    var focusedBlockIndex by remember(state.dateIso) { mutableStateOf(0) }
     val editorTextCount = state.blocks.count { it.type == DiaryBlockType.TEXT } +
         listOf(state.todayDone, state.workTasks, state.smallJoy, state.canImprove, state.richHtml)
             .count { it.isNotBlank() }
@@ -136,25 +137,43 @@ internal fun StructuredDiaryEditor(
                 }
             }
             if (state.richHtml.isNotBlank()) {
-                BasicTextField(
-                    value = plainTextFromHtml(state.richHtml),
-                    onValueChange = { html ->
-                        onStateChange(
-                            state.withRichHtml(
-                                html.lines().filter { it.isNotBlank() }
-                                    .joinToString("") { "<p>$it</p>" },
-                        ),
-                        )
-                    },
-                    textStyle = TextStyle(
+                // 含格式的行内只读：纯文本框一敲就会把标题/加粗/列表全洗成 <p>，要改去记录页富文本编辑器
+                if (diaryHtmlHasRichFormatting(state.richHtml)) {
+                    Text(
+                        text = plainTextFromHtml(state.richHtml),
                         fontSize = 12.sp,
                         lineHeight = 17.sp,
                         color = GoaldayDesign.InkPrimary,
                         fontFamily = GoaldayDesign.BodyFontFamily,
-                    ),
-                    cursorBrush = SolidColor(GoaldayDesign.Pink),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        text = "含格式，在记录页富文本编辑器中修改",
+                        fontSize = 10.sp,
+                        color = GoaldayDesign.InkMuted,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    BasicTextField(
+                        value = plainTextFromHtmlForEdit(state.richHtml),
+                        onValueChange = { html ->
+                            onStateChange(
+                                state.withRichHtml(
+                                    // 空行存成空 <p> 留住，读写往返稳定
+                                    html.lines().joinToString("") { if (it.isBlank()) "<p></p>" else "<p>$it</p>" },
+                            ),
+                            )
+                        },
+                        textStyle = TextStyle(
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            color = GoaldayDesign.InkPrimary,
+                            fontFamily = GoaldayDesign.BodyFontFamily,
+                        ),
+                        cursorBrush = SolidColor(GoaldayDesign.Pink),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
             // 对照原版空白日记页：纯白，不打任何提示文案（添加行保留为唯一入口）
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {

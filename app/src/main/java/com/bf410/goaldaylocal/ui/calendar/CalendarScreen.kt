@@ -268,7 +268,6 @@ fun CalendarScreen(
                 hover = activeDropSlot == "上午",
                 onZoneBounds = { rect -> dropSlotBounds["上午"] = rect },
             ) { e ->
-                if (grabbedPoolEntry?.id == e.id) viewModel.moveScheduleToDay(e.id, selectedDay)
                 viewModel.updateSchedule(e.id, e.title, selectedDay, mergeTimeSlot(e.note, "上午"))
                 grabbedPoolEntry = null
                 toast = "已投放到上午"
@@ -282,7 +281,6 @@ fun CalendarScreen(
                 hover = activeDropSlot == "下午",
                 onZoneBounds = { rect -> dropSlotBounds["下午"] = rect },
             ) { e ->
-                if (grabbedPoolEntry?.id == e.id) viewModel.moveScheduleToDay(e.id, selectedDay)
                 viewModel.updateSchedule(e.id, e.title, selectedDay, mergeTimeSlot(e.note, "下午"))
                 grabbedPoolEntry = null
                 toast = "已投放到下午"
@@ -296,7 +294,6 @@ fun CalendarScreen(
                 hover = activeDropSlot == "晚上",
                 onZoneBounds = { rect -> dropSlotBounds["晚上"] = rect },
             ) { e ->
-                if (grabbedPoolEntry?.id == e.id) viewModel.moveScheduleToDay(e.id, selectedDay)
                 viewModel.updateSchedule(e.id, e.title, selectedDay, mergeTimeSlot(e.note, "晚上"))
                 grabbedPoolEntry = null
                 toast = "已投放到晚上"
@@ -531,7 +528,6 @@ fun CalendarScreen(
                                     val targetSlot = activeDropSlot
                                     val targetEntry = draggingPoolEntry
                                     if (targetSlot != null && targetEntry != null) {
-                                        viewModel.moveScheduleToDay(targetEntry.id, selectedDay)
                                         viewModel.updateSchedule(targetEntry.id, targetEntry.title, selectedDay, mergeTimeSlot(targetEntry.note, targetSlot))
                                         toast = "已投放到$targetSlot"
                                     } else if (targetEntry != null) {
@@ -576,17 +572,14 @@ fun CalendarScreen(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                         DropToSlotChip("上") {
-                            viewModel.moveScheduleToDay(entry.id, selectedDay)
                             viewModel.updateSchedule(entry.id, entry.title, selectedDay, mergeTimeSlot(entry.note, "上午"))
                             toast = "已投放到上午"
                         }
                         DropToSlotChip("下") {
-                            viewModel.moveScheduleToDay(entry.id, selectedDay)
                             viewModel.updateSchedule(entry.id, entry.title, selectedDay, mergeTimeSlot(entry.note, "下午"))
                             toast = "已投放到下午"
                         }
                         DropToSlotChip("晚") {
-                            viewModel.moveScheduleToDay(entry.id, selectedDay)
                             viewModel.updateSchedule(entry.id, entry.title, selectedDay, mergeTimeSlot(entry.note, "晚上"))
                             toast = "已投放到晚上"
                         }
@@ -611,19 +604,16 @@ fun CalendarScreen(
                 Text("快速投放：${entry.title}", color = GoaldayDesign.adaptiveInkPrimary, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
                 Row(horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space1)) {
                     DropToSlotChip("上") {
-                        viewModel.moveScheduleToDay(entry.id, selectedDay)
                         viewModel.updateSchedule(entry.id, entry.title, selectedDay, mergeTimeSlot(entry.note, "上午"))
                         grabbedPoolEntry = null
                         toast = "已投放到上午"
                     }
                     DropToSlotChip("下") {
-                        viewModel.moveScheduleToDay(entry.id, selectedDay)
                         viewModel.updateSchedule(entry.id, entry.title, selectedDay, mergeTimeSlot(entry.note, "下午"))
                         grabbedPoolEntry = null
                         toast = "已投放到下午"
                     }
                     DropToSlotChip("晚") {
-                        viewModel.moveScheduleToDay(entry.id, selectedDay)
                         viewModel.updateSchedule(entry.id, entry.title, selectedDay, mergeTimeSlot(entry.note, "晚上"))
                         grabbedPoolEntry = null
                         toast = "已投放到晚上"

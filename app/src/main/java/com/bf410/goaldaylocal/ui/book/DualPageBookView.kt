@@ -457,12 +457,13 @@ fun DualPageBookView(
                                         // 之前width*0.45偏敏感9%，改回width/2与原版一致。
                                         // 对照原版：一次手势只判一次、最多进一位（单进位），走满不提前进位，
                                         // 松手 settle 时按阈值/甩速决定进位或回弹。
+                                        // 只在横滑锁定后消费：竖滑与方向未定时不消费，里层日记纵滑与输入框才能拿到事件
                                         val singlePage = (width / 2f).coerceAtLeast(1f)
                                         val newProgress = (abs(change.position.x - startX) / singlePage).coerceIn(0f, 1f)
                                         dragJobHolder[0]?.cancel()
                                         dragJobHolder[0] = scope.launch { progress.snapTo(newProgress) }
+                                        change.consume()
                                     }
-                                    change.consume()
                                 }
                             }
                         }

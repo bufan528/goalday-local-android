@@ -193,15 +193,19 @@ internal data class StructuredDiary(
     companion object {
         fun fromRaw(raw: String): StructuredDiary {
             if (raw.isBlank()) return StructuredDiary(LocalDate.now().toString(), "", "", "", "", "", "", "", "")
+            // 标记只认行首整行：正文里写 “# 今日完成” 不再被误切分区
             fun section(name: String, nextMarkers: List<String> = emptyList()): String {
-                val start = raw.indexOf("# $name")
-                if (start < 0) return ""
-                val bodyStart = raw.indexOf('\n', start).takeIf { it >= 0 }?.plus(1) ?: return ""
-                val bodyEnd = nextMarkers
-                    .mapNotNull { marker -> raw.indexOf("# $marker", bodyStart).takeIf { it >= 0 } }
-                    .minOrNull()
-                    ?: raw.length
-                return raw.substring(bodyStart, bodyEnd).trim()
+                val lines = raw.lines()
+                val startIdx = lines.indexOfFirst { it.trim() == "# $name" }
+                if (startIdx < 0) return ""
+                var endIdx = lines.size
+                for (i in startIdx + 1 until lines.size) {
+                    if (nextMarkers.any { marker -> lines[i].trim() == "# $marker" }) {
+                        endIdx = i
+                        break
+                    }
+                }
+                return lines.subList(startIdx + 1, endIdx).joinToString("\n").trim()
             }
             return StructuredDiary(
                 dateIso = section("日期", listOf("心情标签")).ifBlank { LocalDate.now().toString() },

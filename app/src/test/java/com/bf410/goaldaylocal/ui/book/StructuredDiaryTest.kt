@@ -77,4 +77,29 @@ class StructuredDiaryTest {
     fun diary_date_label_uses_chinese_weekday() {
         assertEquals("6月28日 · 周日", diaryDateLabel(LocalDate.of(2026, 6, 28)))
     }
+
+    @Test
+    fun body_text_containing_marker_like_line_is_not_cut_into_sections() {
+        val raw = "# 日期\n2026-06-28\n# 工作任务\n正文里写 # 今日完成 不算分区\n# 小幸福\n咖啡"
+        val diary = StructuredDiary.fromRaw(raw)
+
+        assertEquals("正文里写 # 今日完成 不算分区", diary.workTasks)
+        assertEquals("咖啡", diary.smallJoy)
+        assertEquals("", diary.todayDone)
+    }
+
+    @Test
+    fun rich_formatting_detection_only_matches_real_tags() {
+        assertTrue(diaryHtmlHasRichFormatting("<p>a</p><p><b>加粗</b></p>"))
+        assertTrue(diaryHtmlHasRichFormatting("<blockquote>引用</blockquote>"))
+        assertFalse(diaryHtmlHasRichFormatting("<p>纯文本</p><p></p>"))
+        assertFalse(diaryHtmlHasRichFormatting("3 < 5 纯文本"))
+    }
+
+    @Test
+    fun edit_plain_text_keeps_blank_lines_for_stable_round_trip() {
+        val displayed = plainTextFromHtmlForEdit("<p>第一行</p><p></p><p>第三行</p>")
+
+        assertEquals("第一行\n\n第三行", displayed)
+    }
 }
