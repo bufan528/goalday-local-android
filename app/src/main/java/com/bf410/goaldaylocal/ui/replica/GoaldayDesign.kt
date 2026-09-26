@@ -13,6 +13,12 @@ import com.bf410.goaldaylocal.R
 // 暗色模式开关：由 GoaldayApp 顶层根据 MMKV "dark_mode" (AUTO/LIGHT/DARK) + 系统主题决定后提供
 val LocalGoaldayDarkMode = compositionLocalOf { false }
 
+/**
+ * 字号档缩放：由 GoaldayApp 顶层根据设置字号（compact 0.88 / standard 1 / large 1.12）提供；
+ * 硬编码 fontSize 一律写成 `X.sp * LocalGoaldayFontScale.current`，设置里切档即全局生效。
+ */
+val LocalGoaldayFontScale = compositionLocalOf { 1f }
+
 object GoaldayDesign {
     // 对照原版 colors.xml：主背景 #FDFAF6（暖奶白），Tab 背景 #E5DAD4（浅褐米色）
     val AppBg = Color(0xFFFDFAF6)

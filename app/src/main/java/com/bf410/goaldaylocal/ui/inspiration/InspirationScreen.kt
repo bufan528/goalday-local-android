@@ -249,7 +249,7 @@ fun InspirationScreen(
             .align(Alignment.BottomCenter)
             .fillMaxWidth()
             .height(88.dp)
-            .background(Color(0xF2FFFFFF))
+            .background(GoaldayDesign.adaptiveSurface)
             .shadow(10.dp, clip = true),
         contentAlignment = Alignment.Center,
     ) {

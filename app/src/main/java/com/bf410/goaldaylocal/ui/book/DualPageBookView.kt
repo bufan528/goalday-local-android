@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -709,7 +711,8 @@ fun DualPageBookView(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(26.dp)
+                        // 大字号下文字长高：只定最小高，不裁字
+                        .heightIn(min = 26.dp)
                         .padding(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
@@ -746,14 +749,16 @@ fun DualPageBookView(
                     }
                     Box(
                         modifier = Modifier
-                            .size(26.dp)
-                            .clickableNoRipple { onBack() },
+                            .sizeIn(minWidth = 26.dp, minHeight = 26.dp)
+                            .clickableNoRipple { onBack() }
+                            .padding(horizontal = 4.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = "返回",
                             fontSize = 13.sp,
                             color = GoaldayDesign.InkPrimary,
+                            maxLines = 1,
                         )
                     }
                 }

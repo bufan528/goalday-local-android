@@ -889,7 +889,7 @@ private fun EmptyHint(text: String) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(GoaldayDesign.RadiusM))
-            .background(GoaldayDesign.Paper)
+            .background(GoaldayDesign.adaptivePaper)
             .border(GoaldayDesign.Hairline, GoaldayDesign.BorderColor.copy(alpha = 0.12f), RoundedCornerShape(GoaldayDesign.RadiusM))
             .padding(horizontal = GoaldayDesign.Space2, vertical = GoaldayDesign.Space2),
         horizontalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),

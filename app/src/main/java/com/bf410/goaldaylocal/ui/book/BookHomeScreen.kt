@@ -471,8 +471,8 @@ private fun BookUnavailableState(
                 Brush.verticalGradient(
                     listOf(
                         GoaldayDesign.adaptiveSurface,
-                        GoaldayDesign.PaperWarm,
-                        GoaldayDesign.PaperAged,
+                        GoaldayDesign.adaptivePaperWarm,
+                        GoaldayDesign.adaptivePaper,
                     ),
                 ),
             )
@@ -1606,15 +1606,15 @@ private fun TargetDetailRouteOverlay(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(46.dp)
-                .background(Color.White),
+                .background(GoaldayDesign.adaptiveSurface),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "${LocalDate.now().monthValue}月${LocalDate.now().dayOfMonth}日",
                 fontSize = 20.sp,
-                color = Color.Black,
+                color = GoaldayDesign.adaptiveInkPrimary,
                 modifier = Modifier
-                    .background(Color(0xCFF6F6F6))
+                    .background(GoaldayDesign.adaptiveSurfaceSoft)
                     .padding(horizontal = 10.dp),
             )
             Box(
