@@ -162,6 +162,10 @@ internal fun ExportCenterSheet(
                 }.getOrNull()
             }
             generating = false
+            // 存盘失败（空间不足/无权限）旧逻辑静默无事发生：明确 toast
+            if (resultUri == null) {
+                android.widget.Toast.makeText(context, "保存失败，请检查存储空间后重试", android.widget.Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -467,10 +471,21 @@ private fun generateExportPdfQueued(
 }
 
 private fun appendPdfPage(document: PdfDocument, bitmap: Bitmap) {
-    val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, document.pages.size + 1).create()
-    val page = document.startPage(pageInfo)
-    page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-    document.finishPage(page)
+    // 超大页等比压到 14400 内：PageInfo 超限直接抛 IllegalArgument，极端长日记会闪退
+    val safe = if (bitmap.height > 14400 || bitmap.width > 14400) {
+        val ratio = minOf(14400f / bitmap.width, 14400f / bitmap.height)
+        Bitmap.createScaledBitmap(bitmap, (bitmap.width * ratio).toInt(), (bitmap.height * ratio).toInt(), true)
+    } else {
+        bitmap
+    }
+    try {
+        val pageInfo = PdfDocument.PageInfo.Builder(safe.width, safe.height, document.pages.size + 1).create()
+        val page = document.startPage(pageInfo)
+        page.canvas.drawBitmap(safe, 0f, 0f, null)
+        document.finishPage(page)
+    } finally {
+        if (safe !== bitmap) safe.recycle()
+    }
 }
 
 private fun savePdfToDownloads(context: Context, document: PdfDocument, fileName: String): Uri? =
@@ -492,9 +507,11 @@ private fun savePdfToDownloads(context: Context, document: PdfDocument, fileName
 
 private fun sharePdf(context: Context, uri: Uri) {
     runCatching {
+        // 部分机型只认 ClipData 不认 EXTRA_STREAM：双写授权，否则分享黑屏/打不开
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "application/pdf"
             putExtra(Intent.EXTRA_STREAM, uri)
+            clipData = android.content.ClipData.newUri(context.contentResolver, "Goalday PDF", uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(Intent.createChooser(intent, "分享 Goalday PDF"))

@@ -265,7 +265,10 @@ class LocalStateStore(
     }
 
     fun targetItemMeta(bookId: String, pageTitle: String, item: String): TargetItemMeta {
-        val raw = mmkv.decodeString(targetMetaKey(bookId, pageTitle, item), null) ?: return TargetItemMeta()
+        // 新键优先，旧 hashCode 键兜底（备注/截止日不错乱，如 Aa/BB 同 2112）
+        val raw = mmkv.decodeString(targetMetaKey(bookId, pageTitle, item), null)
+            ?: mmkv.decodeString(targetMetaKeyLegacy(bookId, pageTitle, item), null)
+            ?: return TargetItemMeta()
         val json = runCatching { JSONObject(raw) }.getOrNull() ?: return TargetItemMeta()
         // 读侧只做 1..31 合法性兜底：写入时已按锚点月钳制，这里不能再按 now() 月重钳，
         // 否则切月后（如 31 日遇到 2 月）会把有效截止日改小
@@ -279,8 +282,11 @@ class LocalStateStore(
         val key = targetMetaKey(bookId, pageTitle, item)
         if (meta.note.isBlank() && meta.deadlineDay == null) {
             mmkv.removeValueForKey(key)
+            mmkv.removeValueForKey(targetMetaKeyLegacy(bookId, pageTitle, item))
             return
         }
+        // 只写新键，顺手清旧键（懒迁移）
+        mmkv.removeValueForKey(targetMetaKeyLegacy(bookId, pageTitle, item))
         mmkv.encode(
             key,
             JSONObject()
@@ -309,6 +315,7 @@ class LocalStateStore(
                 setChecked(bookId, newTitle, item, true)
             }
             moveRawString(targetMetaKey(bookId, oldTitle, item), targetMetaKey(bookId, newTitle, item))
+            moveRawString(targetMetaKeyLegacy(bookId, oldTitle, item), targetMetaKeyLegacy(bookId, newTitle, item))
             val dateText = checkedDate(bookId, oldTitle, item)
             if (dateText.isNotBlank()) {
                 setCheckedDate(bookId, newTitle, item, dateText)
@@ -337,6 +344,7 @@ class LocalStateStore(
             mmkv.removeValueForKey(checkKeyLegacy(bookId, pageTitle, item))
             mmkv.removeValueForKey(checkDateKeyLegacy(bookId, pageTitle, item))
             mmkv.removeValueForKey(targetMetaKey(bookId, pageTitle, item))
+            mmkv.removeValueForKey(targetMetaKeyLegacy(bookId, pageTitle, item))
         }
     }
 
@@ -474,6 +482,10 @@ class LocalStateStore(
         "today_done_${bookId}_${pageTitle.hashCode()}"
 
     private fun targetMetaKey(bookId: String, pageTitle: String, item: String): String =
+        "target_meta_${bookId}_${pageTitle.hashCode()}_${sha256Hex(item)}"
+
+    /** 旧 hashCode 键（懒迁移兜底读，写回时清掉） */
+    private fun targetMetaKeyLegacy(bookId: String, pageTitle: String, item: String): String =
         "target_meta_${bookId}_${pageTitle.hashCode()}_${item.hashCode()}"
 
     private fun decodeStringList(key: String): List<String> {

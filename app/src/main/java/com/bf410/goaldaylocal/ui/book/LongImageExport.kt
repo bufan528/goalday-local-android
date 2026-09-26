@@ -877,15 +877,31 @@ internal fun renderDiaryLongImage(
     val width = 1080
     val padding = 72f
     val contentWidth = width - padding * 2
+    // 两遍绘制拿精确高度：y 全是排版数学（图片固定 320 盒），8px 占位走一遍，超长不断尾；
+    // 原先按估算分配 + 末尾 coerceAtMost 静默裁掉超长尾巴
+    val measureBitmap = Bitmap.createBitmap(width, 8, Bitmap.Config.ARGB_8888)
+    val contentEndY = drawDiaryLongImageContent(Canvas(measureBitmap), context, title, state, padding, contentWidth)
+    measureBitmap.recycle()
+    val exactHeight = (contentEndY + 72f).toInt().coerceAtLeast(8)
+    val bitmap = Bitmap.createBitmap(width, exactHeight, Bitmap.Config.ARGB_8888)
+    drawDiaryLongImageContent(Canvas(bitmap), context, title, state, padding, contentWidth)
+    return bitmap
+}
+
+// 纯绘制：返回内容底边 y（调用方按此分配精确高度；图片解码只影响像素不影响排版）
+private fun drawDiaryLongImageContent(
+    canvas: Canvas,
+    context: Context,
+    title: String,
+    state: StructuredDiary,
+    padding: Float,
+    contentWidth: Float,
+): Float {
     // 记录页存的是无前缀裸路径（# 图片段），同样视为图片；展示层永不打路径原文
     val bareImagePaths = state.photoText.lines().map(String::trim).filter { it.isBareDiaryFilePath() }
     val photoDescText = state.photoText.lines().map(String::trim)
         .filter { it.isNotBlank() && !it.isBareDiaryFilePath() }
         .joinToString("\n")
-    val exportImageUris = (state.imageBlockUris + state.legacyImageUris + bareImagePaths).distinct()
-    val estimatedHeight = 1600 + exportImageUris.take(9).size * 360 + state.toRaw().length.coerceAtMost(2200)
-    val scratch = Bitmap.createBitmap(width, estimatedHeight.coerceAtLeast(2200), Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(scratch)
     canvas.drawColor(GoaldayDesign.ExportCanvasPaper.toArgb())
     val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = GoaldayDesign.ExportInkPrimary.toArgb()
@@ -962,8 +978,7 @@ internal fun renderDiaryLongImage(
     }
     y += 48f
     canvas.drawText("Goalday Local", padding, y, footerPaint)
-    val finalHeight = (y + 72f).toInt().coerceAtMost(scratch.height)
-    return Bitmap.createBitmap(scratch, 0, 0, width, finalHeight)
+    return y
 }
 
 private fun drawExportSection(

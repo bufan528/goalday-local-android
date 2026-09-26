@@ -1013,6 +1013,8 @@ private fun WeekScheduleView(
     var poolOrigin by remember { mutableStateOf(Offset.Zero) }
     // 跟手浮层：手指窗口坐标 + 外层容器原点（浮层偏移=手指窗口-容器窗口）
     var dragFingerWindow by remember { mutableStateOf(Offset.Zero) }
+    // 拖拽起点：抬手位移不足 18dp 视为池内误滑，不落盘（慢滚池子时手指一顿一挪的幽灵排期即此类）
+    var dragStartWindow by remember { mutableStateOf(Offset.Zero) }
     var weekRootOrigin by remember { mutableStateOf(Offset.Zero) }
     val poolItemOrigins = remember { androidx.compose.runtime.mutableStateMapOf<String, Offset>() }
     // 右侧任务池折叠开关（对照原版 fragment_schedule 的 bg_arrow 圆钮）
@@ -1592,6 +1594,7 @@ private fun WeekScheduleView(
                                                     draggingItem = poolItem
                                                 val origin = poolItemOrigins[poolItem] ?: poolOrigin
                                                 dragFingerWindow = Offset(origin.x + touch.x, origin.y + touch.y)
+                                                dragStartWindow = dragFingerWindow
                                                 InteractionFeedback.haptic(dragContext)
                                             },
                                             onDrag = { change, _ ->
@@ -1607,9 +1610,16 @@ private fun WeekScheduleView(
                                             onDragEnd = {
                                                 val target = dropTarget
                                                 val item = draggingItem
-                                                if (target != null && item != null) {
+                                                // 位移不足 18dp：手指没离开原条目，大概率误触，直接取消不落盘
+                                                val traveled = (dragFingerWindow - dragStartWindow).getDistance()
+                                                if (target != null && item != null && traveled >= 48f) {
                                                     InteractionFeedback.click(dragContext)
                                                     viewModel.addScheduleFromHandbook(item, target.monthValue, target.dayOfMonth, year = target.year, colorArgb = dropColorArgb ?: currentBook?.color?.toArgb())
+                                                    android.widget.Toast.makeText(
+                                                        dragContext,
+                                                        "已排入${target.monthValue}月${target.dayOfMonth}日",
+                                                        android.widget.Toast.LENGTH_SHORT,
+                                                    ).show()
                                                 }
                                                 draggingItem = null
                                                 dropTarget = null
@@ -1619,6 +1629,7 @@ private fun WeekScheduleView(
                                                 draggingItem = null
                                                 dropTarget = null
                                                 dropColorArgb = null
+                                                dragStartWindow = Offset.Zero
                                             },
                                         )
                                     }
