@@ -73,7 +73,8 @@ internal fun buildExportItems(
         if (previewCap && items.size >= EXPORT_PREVIEW_CAP) break
         cursor = cursor.plusDays(1)
     }
-    return items
+    // 周一双勾一天加两页，循环内 break 可到 31 页：末尾截齐 30
+    return if (previewCap) items.take(EXPORT_PREVIEW_CAP) else items
 }
 
 /** 周计划页对应的周一（页内渲染 Mon-Sun 整周，对照书内周 spread）。 */
@@ -102,6 +103,6 @@ internal class ExportPdfQueue(items: List<ExportPreviewItem>) {
     }
 
     fun markDone() {
-        doneCount++
+        doneCount = (doneCount + 1).coerceAtMost(total)
     }
 }

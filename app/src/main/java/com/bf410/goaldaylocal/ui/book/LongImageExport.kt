@@ -134,18 +134,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import java.io.File
 import java.io.FileOutputStream
 
-internal fun exportHandbookScheduleLongImage(
-    context: Context,
-    year: Int,
-    month: Int,
-    days: List<Int>,
-    entries: List<ScheduleEntry>,
-    weeklyTheme: String,
-): Uri? = runCatching {
-    val bitmap = renderHandbookScheduleLongImage(year, month, days, entries, weeklyTheme)
-    saveBitmapToPictures(context, bitmap, "Goalday_schedule_${System.currentTimeMillis()}.png")
-}.getOrNull()
-
 internal data class LongImagePreview(
     val title: String,
     val subtitle: String,
@@ -749,9 +737,7 @@ private fun LongImageActionChip(
 }
 
 internal fun renderHandbookScheduleLongImage(
-    year: Int,
-    month: Int,
-    days: List<Int>,
+    dates: List<LocalDate>,
     entries: List<ScheduleEntry>,
     weeklyTheme: String,
 ): Bitmap {
@@ -761,19 +747,17 @@ internal fun renderHandbookScheduleLongImage(
     // 两遍绘制降峰值：先在 8px 占位图上走完纯文本排版拿精确高度，再按需分配；
     // 原先按 420px/天高估常驻 + 末尾裁剪复制一份，31 天峰值约 60MB×2 是低端机主因
     val measureBitmap = Bitmap.createBitmap(width, 8, Bitmap.Config.ARGB_8888)
-    val contentEndY = drawHandbookScheduleContent(Canvas(measureBitmap), year, month, days, entries, weeklyTheme, padding, contentWidth)
+    val contentEndY = drawHandbookScheduleContent(Canvas(measureBitmap), dates, entries, weeklyTheme, padding, contentWidth)
     measureBitmap.recycle()
     val exactHeight = (contentEndY + 72f).toInt().coerceAtLeast(8)
     val bitmap = Bitmap.createBitmap(width, exactHeight, Bitmap.Config.ARGB_8888)
-    drawHandbookScheduleContent(Canvas(bitmap), year, month, days, entries, weeklyTheme, padding, contentWidth)
+    drawHandbookScheduleContent(Canvas(bitmap), dates, entries, weeklyTheme, padding, contentWidth)
     return bitmap
 }
 
 private fun drawHandbookScheduleContent(
     canvas: Canvas,
-    year: Int,
-    month: Int,
-    days: List<Int>,
+    dates: List<LocalDate>,
     entries: List<ScheduleEntry>,
     weeklyTheme: String,
     padding: Float,
@@ -804,17 +788,23 @@ private fun drawHandbookScheduleContent(
     var y = 86f
     canvas.drawText("Goalday 日程手账", padding, y, titlePaint)
     y += 48f
-    val range = days.firstOrNull()?.let { first ->
-        val last = days.lastOrNull() ?: first
-        "$year 年 $month 月 $first-$last 日"
-    } ?: "$year 年 $month 月"
+    // 跨月/跨年周按首尾实际日期分段写，不再挂周一的年月
+    val range = dates.firstOrNull()?.let { first ->
+        val last = dates.lastOrNull() ?: first
+        when {
+            first.year != last.year -> "${first.year}年${first.monthValue}月${first.dayOfMonth}日-${last.year}年${last.monthValue}月${last.dayOfMonth}日"
+            first.monthValue != last.monthValue -> "${first.monthValue}月${first.dayOfMonth}日-${last.monthValue}月${last.dayOfMonth}日"
+            else -> "${first.year} 年 ${first.monthValue} 月 ${first.dayOfMonth}-${last.dayOfMonth} 日"
+        }
+    } ?: ""
     canvas.drawText(range, padding, y, subtitlePaint)
     y += 54f
     if (weeklyTheme.isNotBlank()) {
         y = drawExportSection(canvas, "本周主题", weeklyTheme, padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
     }
-    days.forEach { day ->
-        val dayEntries = entries.filter { it.day == day }
+    dates.forEach { date ->
+        // 全日期匹配：跨月周只比 dayOfMonth 会把 9.1 和 10.1 的任务混进同一槽
+        val dayEntries = entries.filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
         val todo = dayEntries.filterNot { it.completed }
         val done = dayEntries.filter { it.completed }
         val body = buildString {
@@ -838,7 +828,7 @@ private fun drawHandbookScheduleContent(
                 }
             }
         }
-        y = drawExportSection(canvas, "${month}月${day}日", body.trim(), padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
+        y = drawExportSection(canvas, "${date.monthValue}月${date.dayOfMonth}日", body.trim(), padding, y, contentWidth, labelPaint, bodyPaint, cardPaint)
     }
     val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFFB7A893.toInt()

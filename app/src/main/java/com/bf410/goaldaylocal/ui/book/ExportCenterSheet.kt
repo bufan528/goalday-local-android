@@ -45,9 +45,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bf410.goaldaylocal.data.ScheduleEntry
 import com.bf410.goaldaylocal.ui.replica.GoaldayDesign
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.coroutineContext
 import java.time.LocalDate
 
 /**
@@ -140,28 +143,39 @@ internal fun ExportCenterSheet(
         runJob = scope.launch {
             generating = true
             progressDone = 0
-            resultUri = withContext(Dispatchers.Default) {
-                runCatching {
-                    generateExportPdfQueued(
-                        context = context,
-                        startDate = s,
-                        endDate = e,
-                        includeSchedule = includeSchedule,
-                        includeDiary = includeDiary,
-                        diaryTextFor = diaryTextFor,
-                        scheduleEntries = scheduleEntries,
-                        weeklyTheme = weeklyTheme,
-                        // 进度回调跑在 Default 线程：抛回主线程再写 state，否则闪退
-                        onProgress = { done, total ->
-                            scope.launch {
-                                progressDone = done
-                                progressTotal = total
-                            }
-                        },
-                    )
-                }.getOrNull()
+            try {
+                resultUri = withContext(Dispatchers.Default) {
+                    try {
+                        generateExportPdfQueued(
+                            context = context,
+                            startDate = s,
+                            endDate = e,
+                            includeSchedule = includeSchedule,
+                            includeDiary = includeDiary,
+                            diaryTextFor = diaryTextFor,
+                            scheduleEntries = scheduleEntries,
+                            weeklyTheme = weeklyTheme,
+                            // 进度回调跑在 Default 线程：抛回主线程再写 state，否则闪退
+                            onProgress = { done, total ->
+                                scope.launch {
+                                    progressDone = done
+                                    progressTotal = total
+                                }
+                            },
+                        )
+                    } catch (e: CancellationException) {
+                        // runCatching 会吞掉取消：显式重抛，否则取消也被当失败 toast
+                        throw e
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+            } catch (e: CancellationException) {
+                android.widget.Toast.makeText(context, "已取消导出", android.widget.Toast.LENGTH_SHORT).show()
+                return@launch
+            } finally {
+                generating = false
             }
-            generating = false
             // 存盘失败（空间不足/无权限）旧逻辑静默无事发生：明确 toast
             if (resultUri == null) {
                 android.widget.Toast.makeText(context, "保存失败，请检查存储空间后重试", android.widget.Toast.LENGTH_LONG).show()
@@ -409,7 +423,7 @@ internal fun ExportCenterSheet(
 }
 
 /** 组装 PDF：FIFO 任务队列逐项渲染（对照 PdfTask 队列 + processBatch 顺序），空日记也成页 */
-private fun generateExportPdfQueued(
+private suspend fun generateExportPdfQueued(
     context: Context,
     startDate: LocalDate,
     endDate: LocalDate,
@@ -428,15 +442,15 @@ private fun generateExportPdfQueued(
     try {
         onProgress(0, queue.total)
         while (true) {
+            // 离开弹层即取消：不再无声跑完整个大范围
+            coroutineContext.ensureActive()
             val item = queue.poll() ?: break
             val bitmap = when (item.type) {
                 ExportPreviewType.SCHEDULE -> {
                     val monday = item.weekMonday()
                     val days = (0..6).map { monday.plusDays(it.toLong()) }
                     renderHandbookScheduleLongImage(
-                        year = monday.year,
-                        month = monday.monthValue,
-                        days = days.map { it.dayOfMonth },
+                        dates = days,
                         entries = scheduleEntries,
                         weeklyTheme = weeklyTheme,
                     )

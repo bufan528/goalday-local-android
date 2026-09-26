@@ -18,8 +18,12 @@ data class BackupSnapshot(
 class BackupManager(
     private val context: Context,
 ) {
+    // 外置目录可能返回 null（旧机/权限）：回退应用私有目录，绝不写相对路径
     private val backupDir: File
-        get() = File(context.getExternalFilesDir(null), "backups").apply { mkdirs() }
+        get() {
+            val base = context.getExternalFilesDir(null) ?: context.filesDir
+            return File(base, "backups").apply { mkdirs() }
+        }
 
     fun backupMmkv(): Result<File> = runCatching {
         MMKV.defaultMMKV().sync()
@@ -27,9 +31,16 @@ class BackupManager(
         require(sourceDir.exists()) { "未找到本地数据目录" }
         val targetDir = File(
             backupDir,
-            "goalday-backup-${SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())}",
+            // 毫秒时间戳：同秒连点两次不再合并覆盖
+            "goalday-backup-${SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US).format(Date())}",
         ).apply { mkdirs() }
-        copyMmkvFiles(sourceDir, targetDir)
+        try {
+            copyMmkvFiles(sourceDir, targetDir)
+        } catch (e: Exception) {
+            // 拷贝失败不留空目录：否则列表出现 0 文件备份，恢复它即清库
+            runCatching { targetDir.deleteRecursively() }
+            throw e
+        }
         targetDir
     }
 
@@ -42,6 +53,10 @@ class BackupManager(
     fun restoreBackup(path: String): Result<File> = runCatching {
         val source = requireBackupChild(path)
         require(source.exists() && source.isDirectory) { "备份不存在" }
+        // 空目录/手工丢入的目录直接恢复=清库：必须含有效数据文件
+        require(source.listFiles()?.any { it.isFile && isSafeMmkvFileName(it.name) } == true) {
+            "该备份是空的，没有可恢复的数据"
+        }
         restoreBackupDirectory(source)
     }
 
@@ -55,7 +70,7 @@ class BackupManager(
     fun cleanupOldBackups(keepLatest: Int = 6): Result<Int> = runCatching {
         val safeKeep = keepLatest.coerceAtLeast(1)
         val oldBackups = backupDir.listFiles()
-            ?.filter { it.isDirectory }
+            ?.filter { it.isDirectory && !it.name.startsWith(".") }
             ?.sortedByDescending { it.lastModified() }
             ?.drop(safeKeep)
             ?: emptyList()
@@ -74,7 +89,7 @@ class BackupManager(
 
     fun backupSnapshots(): List<BackupSnapshot> =
         backupDir.listFiles()
-            ?.filter { it.isDirectory }
+            ?.filter { it.isDirectory && !it.name.startsWith(".") }
             ?.sortedByDescending { it.lastModified() }
             ?.map { dir ->
                 val files = dir.walkTopDown().filter { it.isFile }.toList()
@@ -96,26 +111,41 @@ class BackupManager(
 
     private fun latestBackupFile(): File? =
         backupDir.listFiles()
-            ?.filter { it.isDirectory }
+            ?.filter { it.isDirectory && !it.name.startsWith(".") }
             ?.maxByOrNull { it.lastModified() }
 
     private fun requireBackupChild(path: String): File {
         val root = backupDir.canonicalFile
-        val target = File(path).canonicalFile
+        // 相对路径按备份根解析，不跟随进程工作目录
+        val target = (if (File(path).isAbsolute) File(path) else File(root, path)).canonicalFile
         require(target.parentFile?.canonicalPath == root.canonicalPath) { "只能操作备份目录内的数据" }
         return target
     }
 
     private fun restoreBackupDirectory(source: File): File {
         val targetDir = File(context.filesDir.parentFile, "mmkv").apply { mkdirs() }
-        clearRestoreTarget(targetDir)
-        copyMmkvFiles(source, targetDir)
+        // 先给当前数据做临时快照：恢复中途失败可回滚，不会半清空丢库
+        val rollbackDir = File(backupDir, ".tmp-restore-${System.currentTimeMillis()}").apply { mkdirs() }
+        runCatching { copyMmkvFiles(targetDir, rollbackDir) }
+        try {
+            clearRestoreTarget(targetDir)
+            copyMmkvFiles(source, targetDir)
+        } catch (e: Exception) {
+            runCatching {
+                clearRestoreTarget(targetDir)
+                copyMmkvFiles(rollbackDir, targetDir)
+            }
+            throw e
+        } finally {
+            runCatching { rollbackDir.deleteRecursively() }
+        }
         return source
     }
 
     private fun clearRestoreTarget(targetDir: File) {
+        // 全量清（含点文件/tmp 残留）：只删安全名会新旧混合出幽灵勾选
         targetDir.listFiles()
-            ?.filter { it.isFile && isSafeMmkvFileName(it.name) }
+            ?.filter { it.isFile }
             ?.forEach { file ->
                 check(file.delete()) { "清理旧数据失败：${file.name}" }
             }
