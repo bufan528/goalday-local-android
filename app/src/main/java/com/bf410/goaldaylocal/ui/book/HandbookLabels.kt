@@ -11,3 +11,11 @@ internal object HandbookLabels {
     const val bookShelf = "书架"
     const val export = "导出"
 }
+
+/** 手账分段（原 LocalHandbookWorkspace.kt 已删，枚举有单测 pin，迁到此处保留契约） */
+internal enum class LocalHandbookSegment(val label: String) {
+    PLAN(HandbookLabels.plan),
+    SCHEDULE(HandbookLabels.schedule),
+    DIARY(HandbookLabels.diary),
+    TOPICS(HandbookLabels.topics),
+}

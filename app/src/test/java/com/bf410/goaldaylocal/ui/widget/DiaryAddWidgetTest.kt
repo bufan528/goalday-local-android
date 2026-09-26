@@ -55,6 +55,20 @@ class DiaryAddWidgetTest {
     }
 
     @Test
+    fun marker_like_text_inside_body_is_not_cut() {
+        val raw = "# 日期\n2026-09-16\n# 富文本\n记得# 富文本别误切\n第二行\n# 图片\n"
+        assertEquals("记得# 富文本别误切\n第二行", diaryWidgetUserText(raw))
+    }
+
+    @Test
+    fun truncation_keeps_emoji_surrogate_pairs_intact() {
+        val placeholder = "占位"
+        val out = diaryWidgetContent("😀".repeat(80), placeholder)
+        assertEquals("😀".repeat(50), out)
+        assertFalse(out.contains("�"))
+    }
+
+    @Test
     fun local_build_is_never_locked() {
         // 本地版无 VIP 门槛（对照原版锁形遮罩分支，结构保留）
         assertFalse(isDiaryWidgetLocked())

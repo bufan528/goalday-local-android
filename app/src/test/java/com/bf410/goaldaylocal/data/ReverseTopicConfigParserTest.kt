@@ -38,6 +38,37 @@ class ReverseTopicConfigParserTest {
     }
 
     @Test
+    fun broken_json_bom_and_array_top_level_return_empty() {
+        assertTrue(ReverseTopicConfigParser.parse("{坏掉").isEmpty())
+        assertTrue(ReverseTopicConfigParser.parse("\uFEFF").isEmpty())
+        assertTrue(ReverseTopicConfigParser.parse("[1,2]").isEmpty())
+        assertTrue(ReverseTopicConfigParser.parse("").isEmpty())
+    }
+
+    @Test
+    fun bad_element_skipped_duplicate_id_suffixed_color_expanded() {
+        val topics = ReverseTopicConfigParser.parse(
+            """
+            {
+              "cn": [
+                {"id": "dup", "name": "A", "color": "#f60", "targets": ["ok", 123, ""]},
+                "坏元素",
+                {"id": "dup", "name": "B", "color": "#8033AABB"},
+                {"name": "", "color": "zzz"}
+              ]
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals(2, topics.size)
+        assertEquals("dup", topics[0].id)
+        assertEquals("FF6600", topics[0].colorHex)
+        assertEquals(listOf("ok"), topics[0].targets)
+        assertEquals("dup_2", topics[1].id)
+        assertEquals("33AABB", topics[1].colorHex)
+    }
+
+    @Test
     fun parses_existing_roots_shape() {
         val topics = ReverseTopicConfigParser.parse(
             """

@@ -20,4 +20,8 @@ class LargeScheduleWidgetProvider : AppWidgetProvider() {
             appWidgetManager.updateAppWidget(widgetId, ScheduleWidgetProvider.buildLargeRemoteViews(context, widgetId))
         }
     }
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        appWidgetIds.forEach { ScheduleWidgetProvider.deleteConfig(it) }
+    }
 }

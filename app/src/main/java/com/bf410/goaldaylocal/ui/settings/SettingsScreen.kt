@@ -155,12 +155,15 @@ fun SettingsScreen(
     }
 
     fun cleanupOldBackups() {
-        val result = manager.cleanupOldBackups(keepLatest = 6)
-        result.onSuccess { deleted ->
-            refreshBackups()
-            Toast.makeText(context, if (deleted > 0) "已清理 $deleted 个旧备份" else "没有需要清理的旧备份", Toast.LENGTH_SHORT).show()
-        }.onFailure {
-            Toast.makeText(context, it.message ?: "清理失败", Toast.LENGTH_SHORT).show()
+        // 遍历删除跑 IO 线程，主线程直接调会卡死
+        scope.launch {
+            val result = withContext(Dispatchers.IO) { manager.cleanupOldBackups(keepLatest = 6) }
+            result.onSuccess { deleted ->
+                refreshBackups()
+                Toast.makeText(context, if (deleted > 0) "已清理 $deleted 个旧备份" else "没有需要清理的旧备份", Toast.LENGTH_SHORT).show()
+            }.onFailure {
+                Toast.makeText(context, it.message ?: "清理失败", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -349,14 +352,16 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    val result = manager.deleteBackup(snapshot.absolutePath)
-                    result.onSuccess {
-                        refreshBackups()
-                        Toast.makeText(context, "已删除备份", Toast.LENGTH_SHORT).show()
-                    }.onFailure {
-                        Toast.makeText(context, it.message ?: "删除失败", Toast.LENGTH_SHORT).show()
+                    scope.launch {
+                        val result = withContext(Dispatchers.IO) { manager.deleteBackup(snapshot.absolutePath) }
+                        result.onSuccess {
+                            refreshBackups()
+                            Toast.makeText(context, "已删除备份", Toast.LENGTH_SHORT).show()
+                        }.onFailure {
+                            Toast.makeText(context, it.message ?: "删除失败", Toast.LENGTH_SHORT).show()
+                        }
+                        pendingDelete = null
                     }
-                    pendingDelete = null
                 }) {
                     Text("确认删除")
                 }

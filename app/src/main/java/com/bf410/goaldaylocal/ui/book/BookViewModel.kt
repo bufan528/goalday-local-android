@@ -254,8 +254,18 @@ class BookViewModel(
             store.setChecked(book.id, pageTitle, trimmed, true)
             store.setChecked(book.id, pageTitle, oldItem, false)
         }
-        val meta = store.targetItemMeta(book.id, pageTitle, oldItem)
-        store.setTargetItemMeta(book.id, pageTitle, trimmed, meta)
+        // 改到已存在的名字上时合并备注/截止日，不用旧的覆盖新的
+        val oldMeta = store.targetItemMeta(book.id, pageTitle, oldItem)
+        val newMeta = store.targetItemMeta(book.id, pageTitle, trimmed)
+        store.setTargetItemMeta(
+            book.id,
+            pageTitle,
+            trimmed,
+            TargetItemMeta(
+                note = newMeta.note.ifBlank { oldMeta.note },
+                deadlineDay = newMeta.deadlineDay ?: oldMeta.deadlineDay,
+            ),
+        )
         store.setTargetItemMeta(book.id, pageTitle, oldItem, TargetItemMeta())
         store.savePageItemOrder(
             book.id,

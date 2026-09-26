@@ -65,6 +65,29 @@ class PageContentModeTest {
     }
 
     @Test
+    fun blank_tapped_item_stays_in_browsing_mode() {
+        val result = pageContentModeForTap(
+            page = PlanPage(title = "Plan", items = listOf("A", "B")),
+            tappedItem = "   ",
+        )
+
+        assertEquals(PageContentMode.Browsing, result)
+    }
+
+    @Test
+    fun renaming_to_existing_name_merges_without_duplicates() {
+        assertEquals(
+            listOf("A", "C"),
+            renameDisplayedChecklistItem(listOf("A", "B", "C"), " B ", "C"),
+        )
+    }
+
+    @Test
+    fun condensed_preview_text_keeps_emoji_intact() {
+        assertEquals("😀😀…", condensedPreviewText("😀😀😀abc", maxLength = 2))
+    }
+
+    @Test
     fun destination_page_subtitle_tracks_turn_direction() {
         assertEquals("下一页", destinationPageSubtitle(TurnDirection.NEXT, "Fallback"))
         assertEquals("上一页", destinationPageSubtitle(TurnDirection.PREVIOUS, "Fallback"))

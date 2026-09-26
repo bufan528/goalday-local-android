@@ -97,7 +97,13 @@ class LocalStateStore(
         return (order + (items - order.toSet())).distinct()
     }
 
-    fun savedBookIds(): Set<String> = mmkv.decodeStringSet(KEY_SAVED_BOOKS, emptySet()) ?: emptySet()
+    // 旧备份/脏包同键存过 String 会抛 ClassCastException：清键回空集合，不崩启动
+    fun savedBookIds(): Set<String> = runCatching {
+        mmkv.decodeStringSet(KEY_SAVED_BOOKS, emptySet()) ?: emptySet()
+    }.getOrElse {
+        runCatching { mmkv.removeValueForKey(KEY_SAVED_BOOKS) }
+        emptySet()
+    }
 
     fun saveBook(bookId: String) {
         mmkv.encode(KEY_SAVED_BOOKS, savedBookIds() + bookId)
@@ -423,7 +429,9 @@ class LocalStateStore(
         val page = SampleLibrary.books.firstOrNull { it.id == "weekly-review" }
             ?.pages?.filterIsInstance<TargetPage>()?.firstOrNull()
         val items = page?.items ?: emptyList()
-        val seeds = listOf(items.getOrNull(8), items.getOrNull(9)).filterNotNull()
+        // 按种子文本匹配：下标硬编码一改月页顺序就打到错条目
+        val seeds = listOf("完成或取消完成事件", "事件的时间")
+            .mapNotNull { seed -> items.firstOrNull { it.contains(seed) } }
         seeds.forEach { item ->
             // 存不存在看新旧两格式（升级用户旧键即存在，不覆盖用户选择）
             val key = checkKey("weekly-review", page?.title ?: "回顾页", item)

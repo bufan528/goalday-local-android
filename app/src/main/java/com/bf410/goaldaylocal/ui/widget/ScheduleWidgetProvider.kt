@@ -247,6 +247,11 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    // 删组件清配置键：ID 复用时不再读到旧样式/范围
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        appWidgetIds.forEach { deleteConfig(it) }
+    }
+
     companion object {
         const val KEY_WIDGET_STYLE_PREFIX = "schedule_widget_style_"
         const val KEY_WIDGET_SCOPE_PREFIX = "schedule_widget_scope_"
@@ -322,6 +327,13 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
             mmkv.encode("$KEY_WIDGET_DENSITY_PREFIX$widgetId", config.density.raw)
         }
 
+        fun deleteConfig(widgetId: Int) {
+            val mmkv = MMKV.defaultMMKV()
+            mmkv.removeValueForKey("$KEY_WIDGET_STYLE_PREFIX$widgetId")
+            mmkv.removeValueForKey("$KEY_WIDGET_SCOPE_PREFIX$widgetId")
+            mmkv.removeValueForKey("$KEY_WIDGET_DENSITY_PREFIX$widgetId")
+        }
+
         private fun buildScheduleViews(
             context: Context,
             widgetId: Int,
@@ -382,17 +394,18 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
                 views.setViewVisibility(R.id.widget_empty, View.GONE)
             }
             sectionId?.let { id -> views.setViewVisibility(id, if (entries.isEmpty()) View.GONE else View.VISIBLE) }
-            views.setOnClickPendingIntent(R.id.widget_root, openAppPendingIntent(context))
+            views.setOnClickPendingIntent(R.id.widget_root, openAppPendingIntent(context, widgetId))
             return views
         }
 
-        private fun openAppPendingIntent(context: Context): PendingIntent {
+        private fun openAppPendingIntent(context: Context, widgetId: Int): PendingIntent {
             val intent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
+            // requestCode 按组件隔离： extras 不参与相等性，后续加 extra 不会全跳同一页
             return PendingIntent.getActivity(
                 context,
-                0,
+                widgetId,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )

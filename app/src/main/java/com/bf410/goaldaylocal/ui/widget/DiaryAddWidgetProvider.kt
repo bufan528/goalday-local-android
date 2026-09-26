@@ -70,11 +70,18 @@ class DiaryAddWidgetProvider : AppWidgetProvider() {
         internal fun diaryWidgetUserText(raw: String): String {
             if (raw.isBlank()) return ""
             if (!raw.contains("# ")) return raw
-            val start = raw.indexOf("# 富文本")
-            if (start < 0) return ""
-            val bodyStart = raw.indexOf('\n', start).takeIf { it >= 0 }?.plus(1) ?: return ""
-            val next = raw.indexOf("# ", bodyStart).takeIf { it >= 0 } ?: raw.length
-            return raw.substring(bodyStart, next).trim()
+            // 标记只认行首整行：正文里写“记得# 富文本”不再被误切
+            val lines = raw.lines()
+            val startIdx = lines.indexOfFirst { it.trim() == "# 富文本" }
+            if (startIdx < 0) return ""
+            var endIdx = lines.size
+            for (i in startIdx + 1 until lines.size) {
+                if (lines[i].trimStart().startsWith("# ")) {
+                    endIdx = i
+                    break
+                }
+            }
+            return lines.subList(startIdx + 1, endIdx).joinToString("\n").trim()
         }
 
         /**
@@ -86,7 +93,10 @@ class DiaryAddWidgetProvider : AppWidgetProvider() {
             if (text.isBlank()) return placeholder
             val stripped = text.replace(Regex("<img[^>]*>"), "")
             if (stripped.isBlank()) return placeholder
-            return stripped.substring(0, minOf(MAX_CONTENT_CHARS, stripped.length))
+            // 按码点截：substring 按 Char 会把 emoji 代理对切成 �
+            val codePoints = stripped.codePointCount(0, stripped.length)
+            if (codePoints <= MAX_CONTENT_CHARS) return stripped
+            return stripped.substring(0, stripped.offsetByCodePoints(0, MAX_CONTENT_CHARS))
         }
 
         fun buildRemoteViews(context: Context, widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID): RemoteViews {

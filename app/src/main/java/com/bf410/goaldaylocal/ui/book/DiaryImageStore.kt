@@ -14,13 +14,29 @@ internal fun copyDiaryImageToPrivateDir(context: Context, uri: Uri, dateIso: Str
         val dir = java.io.File(context.filesDir, "diary_images").apply { mkdirs() }
         val stamp = dateIso.replace("-", "").ifBlank { "nodate" }
         // 同毫秒连选会互覆盖：补随机后缀；扩展名保留源格式，jpg 强制改名不影响解码但丢语义
-        val ext = context.contentResolver.getType(uri)
-            ?.substringAfterLast('/', "jpg")
-            ?.takeIf { it.matches(Regex("[A-Za-z0-9]+")) } ?: "jpg"
-        val file = java.io.File(dir, "b" + stamp + "_" + System.currentTimeMillis() + "_" + java.util.UUID.randomUUID().toString().take(8) + "." + ext)
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            file.outputStream().use { output -> input.copyTo(output) }
+        // 扩展名白名单：svg+xml 之类取尾巴会被正则踢掉，heic 语义保留，解码靠魔数不靠扩展名
+        val rawExt = context.contentResolver.getType(uri)?.substringAfterLast('/', "") ?: ""
+        val ext = when (rawExt.lowercase()) {
+            "jpeg", "jpg" -> "jpg"
+            "png" -> "png"
+            "webp" -> "webp"
+            "gif" -> "gif"
+            "heic", "heif" -> "heic"
+            else -> "jpg"
         }
-        if (file.exists() && file.length() > 0) file.absolutePath else null
+        val file = java.io.File(dir, "b" + stamp + "_" + System.currentTimeMillis() + "_" + java.util.UUID.randomUUID().toString().take(8) + "." + ext)
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                file.outputStream().use { output -> input.copyTo(output) }
+            }
+        } catch (e: Exception) {
+            runCatching { file.delete() }
+            throw e
+        }
+        // 空文件不残留：openInputStream 为 null 时删掉 0 字节占位
+        if (file.exists() && file.length() > 0) file.absolutePath else run {
+            runCatching { file.delete() }
+            null
+        }
     }.getOrNull()
 }

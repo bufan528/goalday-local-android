@@ -74,7 +74,12 @@ import java.time.LocalDate
 import java.time.DayOfWeek
 import java.time.YearMonth
 import java.time.ZoneId
+import java.time.ZoneOffset
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
@@ -106,17 +111,24 @@ fun CalendarScreen(
     val dropSlotBounds = remember { mutableStateMapOf<String, Rect>() }
     val context = LocalContext.current
 
+    val importScope = rememberCoroutineScope()
     fun prepareCalendarImportPreview(rangeMonths: Int) {
         importRangeMonths = rangeMonths
-        val events = readSystemCalendarEvents(context, state.year, state.month, rangeMonths)
-        importPreviewEvents = events
-        if (events.isEmpty()) {
-            toast = "没有可导入的新日历事件"
-        } else if (events.map { importCalendarName(it) }.distinct().size > 1) {
-            selectedImportCalendars = events.map { importCalendarName(it) }.toSet()
-            showImportSourcePicker = true
-        } else {
-            showImportPreview = true
+        // 系统日历 6 个月上千条：查库走 IO，主线程直接查会卡顿
+        toast = "正在读取系统日历…"
+        importScope.launch {
+            val events = withContext(Dispatchers.IO) {
+                readSystemCalendarEvents(context, state.year, state.month, rangeMonths)
+            }
+            importPreviewEvents = events
+            if (events.isEmpty()) {
+                toast = "没有可导入的新日历事件"
+            } else if (events.map { importCalendarName(it) }.distinct().size > 1) {
+                selectedImportCalendars = events.map { importCalendarName(it) }.toSet()
+                showImportSourcePicker = true
+            } else {
+                showImportPreview = true
+            }
         }
     }
 
@@ -1396,54 +1408,62 @@ private fun readSystemCalendarEvents(
     val startMillis = targetMonth.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val safeRangeMonths = rangeMonths.coerceIn(1, 6)
     val endMillis = targetMonth.plusMonths(safeRangeMonths.toLong()).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1L
-    val uriBuilder = CalendarContract.Instances.CONTENT_URI.buildUpon()
-    ContentUris.appendId(uriBuilder, startMillis)
-    ContentUris.appendId(uriBuilder, endMillis)
-    val projection = arrayOf(
-        CalendarContract.Instances.TITLE,
-        CalendarContract.Instances.BEGIN,
-        CalendarContract.Instances.DESCRIPTION,
-        CalendarContract.Instances.ALL_DAY,
-        CalendarContract.Instances.CALENDAR_DISPLAY_NAME,
-    )
-    return context.contentResolver.query(
-        uriBuilder.build(),
-        projection,
-        null,
-        null,
-        "${CalendarContract.Instances.BEGIN} ASC",
-    )?.use { cursor ->
-        buildList {
-            val titleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.TITLE)
-            val beginIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.BEGIN)
-            val descriptionIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.DESCRIPTION)
-            val allDayIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.ALL_DAY)
-            val calendarNameIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.CALENDAR_DISPLAY_NAME)
-            while (cursor.moveToNext()) {
-                val begin = cursor.getLong(beginIndex)
-                val dateTime = Instant.ofEpochMilli(begin).atZone(zone)
-                val date = dateTime.toLocalDate()
-                val eventMonth = YearMonth.of(date.year, date.monthValue)
-                if (eventMonth.isBefore(targetMonth) || !eventMonth.isBefore(targetMonth.plusMonths(safeRangeMonths.toLong()))) continue
-                val title = cursor.getString(titleIndex)?.trim().orEmpty().ifBlank { "无标题日程" }
-                val description = cursor.getString(descriptionIndex)?.trim().orEmpty()
-                val calendarName = cursor.getString(calendarNameIndex)?.trim().orEmpty()
-                val allDay = cursor.getInt(allDayIndex) == 1
-                val timeText = if (allDay) "" else "%02d:%02d".format(dateTime.hour, dateTime.minute)
-                add(
-                    CalendarImportCandidate(
-                        title = title,
-                        year = date.year,
-                        month = date.monthValue,
-                        day = date.dayOfMonth,
-                        note = listOf("系统日历", calendarName, description).filter { it.isNotBlank() }.joinToString(" · "),
-                        timeText = timeText,
-                        calendarName = calendarName,
-                    ),
-                )
+    // 部分 OEM 缺列 getColumnIndexOrThrow 直接抛：整体兜底回空列表，不闪退
+    return runCatching {
+        val uriBuilder = CalendarContract.Instances.CONTENT_URI.buildUpon()
+        ContentUris.appendId(uriBuilder, startMillis)
+        ContentUris.appendId(uriBuilder, endMillis)
+        val projection = arrayOf(
+            CalendarContract.Instances.TITLE,
+            CalendarContract.Instances.BEGIN,
+            CalendarContract.Instances.DESCRIPTION,
+            CalendarContract.Instances.ALL_DAY,
+            CalendarContract.Instances.CALENDAR_DISPLAY_NAME,
+        )
+        context.contentResolver.query(
+            uriBuilder.build(),
+            projection,
+            null,
+            null,
+            "${CalendarContract.Instances.BEGIN} ASC",
+        )?.use { cursor ->
+            buildList {
+                val titleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.TITLE)
+                val beginIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.BEGIN)
+                val descriptionIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.DESCRIPTION)
+                val allDayIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.ALL_DAY)
+                val calendarNameIndex = cursor.getColumnIndexOrThrow(CalendarContract.Instances.CALENDAR_DISPLAY_NAME)
+                while (cursor.moveToNext()) {
+                    val begin = cursor.getLong(beginIndex)
+                    val allDay = cursor.getInt(allDayIndex) == 1
+                    // 全天事件 BEGIN 是 UTC 午夜：按 UTC 取日期，否则西半球早/晚一天
+                    val dateTime = Instant.ofEpochMilli(begin).atZone(zone)
+                    val date = if (allDay) {
+                        Instant.ofEpochMilli(begin).atZone(ZoneOffset.UTC).toLocalDate()
+                    } else {
+                        dateTime.toLocalDate()
+                    }
+                    val eventMonth = YearMonth.of(date.year, date.monthValue)
+                    if (eventMonth.isBefore(targetMonth) || !eventMonth.isBefore(targetMonth.plusMonths(safeRangeMonths.toLong()))) continue
+                    val title = cursor.getString(titleIndex)?.trim().orEmpty().ifBlank { "无标题日程" }
+                    val description = cursor.getString(descriptionIndex)?.trim().orEmpty()
+                    val calendarName = cursor.getString(calendarNameIndex)?.trim().orEmpty()
+                    val timeText = if (allDay) "" else "%02d:%02d".format(dateTime.hour, dateTime.minute)
+                    add(
+                        CalendarImportCandidate(
+                            title = title,
+                            year = date.year,
+                            month = date.monthValue,
+                            day = date.dayOfMonth,
+                            note = listOf("系统日历", calendarName, description).filter { it.isNotBlank() }.joinToString(" · "),
+                            timeText = timeText,
+                            calendarName = calendarName,
+                        ),
+                    )
+                }
             }
-        }
-    } ?: emptyList()
+        } ?: emptyList()
+    }.getOrElse { emptyList() }
 }
 
 @Composable

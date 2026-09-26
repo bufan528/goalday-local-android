@@ -13,4 +13,12 @@ class TargetItemMigrationTest {
     fun rename_exact_item_deduplicates_destination() {
         assertEquals(listOf("A", "C"), renameExactItemDistinct(listOf("A", "B", "C"), "B", "C"))
     }
+
+    @Test
+    fun trim_and_blank_guarded() {
+        assertEquals(listOf("A", "C"), removeExactItem(listOf("A", " B ", "C"), "B"))
+        assertEquals(listOf("A", "B"), removeExactItem(listOf("A", "B"), "  "))
+        assertEquals(listOf("A", "C"), renameExactItemDistinct(listOf("A", " B ", "C"), "B", "C "))
+        assertEquals(listOf("A", "B"), renameExactItemDistinct(listOf("A", "B"), "B", "  "))
+    }
 }

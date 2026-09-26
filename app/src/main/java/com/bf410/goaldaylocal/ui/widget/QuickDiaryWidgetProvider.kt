@@ -30,6 +30,10 @@ class QuickDiaryWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        appWidgetIds.forEach { ScheduleWidgetProvider.deleteConfig(it) }
+    }
+
     companion object {
         fun buildRemoteViews(context: Context, widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID): RemoteViews {
             val today = LocalDate.now()
@@ -46,19 +50,19 @@ class QuickDiaryWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.quick_diary_date, style.accentColor)
             views.setTextColor(R.id.quick_diary_hint, style.doneTextColor)
             views.setTextColor(R.id.quick_diary_action, if (style == ScheduleWidgetStyle.APK_WHITE) style.backgroundColor else Color.WHITE)
-            views.setOnClickPendingIntent(R.id.quick_diary_root, openDiaryPendingIntent(context))
-            views.setOnClickPendingIntent(R.id.quick_diary_action, openDiaryPendingIntent(context))
+            views.setOnClickPendingIntent(R.id.quick_diary_root, openDiaryPendingIntent(context, widgetId))
+            views.setOnClickPendingIntent(R.id.quick_diary_action, openDiaryPendingIntent(context, widgetId))
             return views
         }
 
-        private fun openDiaryPendingIntent(context: Context): PendingIntent {
+        private fun openDiaryPendingIntent(context: Context, widgetId: Int): PendingIntent {
             val intent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 putExtra(EXTRA_START_TARGET, START_TARGET_DIARY)
             }
             return PendingIntent.getActivity(
                 context,
-                12,
+                12 + widgetId.coerceAtLeast(0),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
