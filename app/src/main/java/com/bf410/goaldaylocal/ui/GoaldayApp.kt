@@ -9,8 +9,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.bf410.goaldaylocal.ui.reminder.ReminderScheduler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -511,7 +513,11 @@ fun GoaldayApp(
                 val route = AppRoute(tab, bookSurface, bookEntryMode)
                 AnimatedContent(
                     targetState = route,
-                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    // 切页淡入配 2% 微缩放：纯交叉淡入时两套布局叠影（尤其进手账），微缩进场盖住错位感
+                    transitionSpec = {
+                        (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.98f, animationSpec = tween(220))) togetherWith
+                            fadeOut(animationSpec = tween(180))
+                    },
                     label = "root-tab-switch",
                 ) { currentRoute ->
                     when (currentRoute.tab) {

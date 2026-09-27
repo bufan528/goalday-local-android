@@ -3,6 +3,7 @@ package com.bf410.goaldaylocal.ui.book
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -188,7 +189,8 @@ fun DualPageBookView(
             isOpening = true
             openProgress.snapTo(0f)
             kotlinx.coroutines.delay(800)
-            openProgress.animateTo(1f, tween(450, easing = LinearEasing))
+            // 开场翻封面快启缓落（线性像纸板，加 FastOutSlowIn 才有纸感）
+            openProgress.animateTo(1f, tween(450, easing = FastOutSlowInEasing))
             // 同帧提交开合态，消“已切未到”窗口
             bookIsOpen = true
             openProgress.snapTo(1f)
@@ -269,7 +271,7 @@ fun DualPageBookView(
         }
     }
 
-    // 对照原版：动画时长自适应，progress>0.5 时 100ms，否则 300ms，线性 easing；
+    // 对照原版：动画时长自适应，progress>0.5 时 100ms，否则 300ms，快启缓落 easing；
     // 单手势最多进一位，进位只发生在松手 settle（手势中途不提前进位）
     fun settle(complete: Boolean) {
         // 守卫必须同步置位：调用方在主线程，若在 launch 内才置位，两次快速松手都会通过检查致双进位
@@ -277,7 +279,8 @@ fun DualPageBookView(
         isAnimating = true
         scope.launch {
             val currentProgress = progress.value
-            val spec = tween<Float>(if (currentProgress > 0.5f) 100 else 300, easing = LinearEasing)
+            // 落定快启缓落：线性回弹像撞墙
+            val spec = tween<Float>(if (currentProgress > 0.5f) 100 else 300, easing = FastOutSlowInEasing)
             if (complete) {
                 progress.animateTo(1f, spec)
                 when (turnDirection) {
@@ -286,6 +289,8 @@ fun DualPageBookView(
                     null -> {}
                 }
                 turnCount++
+                // 翻页落定给一脚轻触感：之前翻完静默无声，手里没数
+                com.bf410.goaldaylocal.ui.InteractionFeedback.haptic(pickerContext, 30L)
                 progress.snapTo(0f)
             } else {
                 progress.animateTo(0f, spec)
@@ -504,9 +509,11 @@ fun DualPageBookView(
                 // 以主动页旋转的 FOLLOW_FACTOR(26.5/180) 跟随剥离；静止 progress=0 时跟随角=0
                 // （与主动页完全重合，稳态像素零变化），仅翻页中显出纸张层叠。
                 // 闭合期/开场期不组合双页（对照原版首帧只有竖书；开场扇页只是覆盖层，底层提前平铺会泄露内容）。
-                // bookIsOpen 置位后才挂载可交互双页，开场全程只见封面+纸扇。
+                // bookIsOpen 置位后才挂载可交互双页，开场全程只见封面+纸扇；
+                // 末尾 3% 提前交棒（封面已侧立看不见），避免封面背脸平躺盖住首页闪一下
                 val showClosedCover = !bookIsOpen && openProgress.value <= 0f
-                if (bookIsOpen) Row(
+                val spreadVisible = bookIsOpen || openProgress.value >= 0.97f
+                if (spreadVisible) Row(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(start = 3.dp, end = 3.dp, top = 6.dp, bottom = 6.dp),
@@ -640,7 +647,8 @@ fun DualPageBookView(
                                                 spotColor = shadowColor,
                                             )
                                             .clip(RoundedCornerShape(2.dp))
-                                            .background(Color.White),
+                                            // 纸扇用纸色不用纯白：跟壳内层叠纸同色，过渡不闪
+                                            .background(Color(0xFFFAF9F7)),
                                     )
                                 }
                             }
@@ -676,6 +684,29 @@ fun DualPageBookView(
                                 year = rightPage.date.year,
                                 width = coverPanelW,
                                 height = coverPanelH,
+                            )
+                        }
+                        // 封面背脸：过 90° 后正面不再凭空消失，内衬纸色继续压到收尾；
+                        // 0.97 后藏起交棒双页（与 spreadVisible 同阈值），不平躺盖首页
+                        if (-coverRot > 90f && openP < 0.97f) {
+                            Box(
+                                modifier = Modifier
+                                    .offset(x = 3.5.dp)
+                                    .size(width = coverPanelW, height = coverPanelH)
+                                    .graphicsLayer {
+                                        rotationY = coverRot + 180f
+                                        cameraDistance = 40f * density
+                                        transformOrigin = TransformOrigin(0f, 0.5f)
+                                    }
+                                    .shadow(
+                                        elevation = 10.dp,
+                                        shape = RoundedCornerShape(10.dp),
+                                        clip = false,
+                                        ambientColor = shadowColor,
+                                        spotColor = shadowColor,
+                                    )
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFFE8DFD3)),
                             )
                         }
                     }
@@ -719,8 +750,10 @@ fun DualPageBookView(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(26.dp)
-                            .clickableNoRipple { showExportSheet = true },
+                            // 有界波纹：点下去有活物感（纸面点按之前全是 noRipple 的死按）
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { showExportSheet = true }
+                            .size(26.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -733,7 +766,10 @@ fun DualPageBookView(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        modifier = Modifier.clickableNoRipple { showBookShelf = true },
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { showBookShelf = true }
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
                         Text(
                             text = "${rightPage.date.year}",
@@ -750,7 +786,8 @@ fun DualPageBookView(
                     Box(
                         modifier = Modifier
                             .sizeIn(minWidth = 26.dp, minHeight = 26.dp)
-                            .clickableNoRipple { onBack() }
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { onBack() }
                             .padding(horizontal = 4.dp),
                         contentAlignment = Alignment.Center,
                     ) {
