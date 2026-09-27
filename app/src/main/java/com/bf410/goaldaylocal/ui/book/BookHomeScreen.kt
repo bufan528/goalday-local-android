@@ -45,8 +45,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1339,6 +1344,7 @@ private fun DangerConfirmDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
+            com.bf410.goaldaylocal.ui.KeepImmersiveInDialog()
             Text(
                 body,
                 color = GoaldayDesign.adaptiveInkSecondary,
@@ -2280,25 +2286,44 @@ private fun CreateBookDialog(
     var subtitle by remember { mutableStateOf("") }
     var colorIndex by remember { mutableStateOf(0) }
 
+    val createContext = LocalContext.current
+    val subtitleFocus = remember { FocusRequester() }
+    fun submitCreateBook() {
+        if (title.isBlank()) {
+            android.widget.Toast.makeText(createContext, "先写手账名称", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        onConfirm(title.trim(), subtitle.trim(), bookPalette[colorIndex])
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            Button(
-                onClick = {
-                    if (title.isNotBlank()) {
-                        onConfirm(title.trim(), subtitle.trim(), bookPalette[colorIndex])
-                    }
-                },
-            ) {
+            Button(onClick = { submitCreateBook() }) {
                 Text(BookStrings.create)
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(BookStrings.cancel) } },
         title = { Text(BookStrings.createBookTitle) },
         text = {
+            com.bf410.goaldaylocal.ui.KeepImmersiveInDialog()
             Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.bookName) }, singleLine = true)
-                OutlinedTextField(value = subtitle, onValueChange = { subtitle = it }, label = { Text(BookStrings.subtitle) }, singleLine = true)
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text(BookStrings.bookName) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { runCatching { subtitleFocus.requestFocus() } }),
+                )
+                OutlinedTextField(
+                    value = subtitle,
+                    onValueChange = { subtitle = it },
+                    label = { Text(BookStrings.subtitle) },
+                    singleLine = true,
+                    modifier = Modifier.focusRequester(subtitleFocus),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { submitCreateBook() }),
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     bookPalette.forEachIndexed { index, color ->
                         Box(
@@ -2350,12 +2375,15 @@ private fun EditBookDialog(
     var subtitle by remember(book.subtitle) { mutableStateOf(book.subtitle) }
     var colorIndex by remember { mutableStateOf(bookPalette.indexOfFirst { it == book.color }.coerceAtLeast(0)) }
 
+    val editBookContext = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             Button(
                 onClick = {
-                    if (title.isNotBlank()) {
+                    if (title.isBlank()) {
+                        android.widget.Toast.makeText(editBookContext, "先写手账名称", android.widget.Toast.LENGTH_SHORT).show()
+                    } else {
                         onConfirm(title.trim(), subtitle.trim(), bookPalette[colorIndex])
                     }
                 },
@@ -2366,6 +2394,7 @@ private fun EditBookDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text(BookStrings.cancel) } },
         title = { Text(BookStrings.editBookTitle) },
         text = {
+            com.bf410.goaldaylocal.ui.KeepImmersiveInDialog()
             Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3)) {
                 OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.bookName) }, singleLine = true)
                 OutlinedTextField(value = subtitle, onValueChange = { subtitle = it }, label = { Text(BookStrings.subtitle) }, singleLine = true)
@@ -2408,6 +2437,7 @@ private fun CreatePageDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text(BookStrings.cancel) } },
         title = { Text(BookStrings.addPageTitle) },
         text = {
+            com.bf410.goaldaylocal.ui.KeepImmersiveInDialog()
             Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3)) {
                 OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.pageTitle) }, singleLine = true)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -2462,7 +2492,10 @@ private fun RenamePageDialog(
         confirmButton = { Button(onClick = { if (title.isNotBlank()) onConfirm(title.trim()) }) { Text(BookStrings.save) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(BookStrings.cancel) } },
         title = { Text(BookStrings.renamePageTitle) },
-        text = { OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.pageTitle) }, singleLine = true) },
+        text = {
+            com.bf410.goaldaylocal.ui.KeepImmersiveInDialog()
+            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.pageTitle) }, singleLine = true)
+        },
     )
 }
 

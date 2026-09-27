@@ -9,6 +9,7 @@ import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -84,6 +85,8 @@ internal fun ExportCenterSheet(
     var progressDone by remember { mutableStateOf(0) }
     var progressTotal by remember { mutableStateOf(0) }
     var resultUri by remember { mutableStateOf<Uri?>(null) }
+    // 全屏导出不是 Sheet/Dialog：系统返回默认回主页，先拦截关导出
+    androidx.activity.compose.BackHandler(enabled = !generating) { onDismiss() }
     var runJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     // 离开弹层取消未做完的渲染任务（对照队列取消）：key 跟随 runJob，否则闭包永远是初值 null
     androidx.compose.runtime.DisposableEffect(runJob) {
@@ -191,12 +194,13 @@ internal fun ExportCenterSheet(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
             Box(Modifier.fillMaxWidth()) {
-                Text(
-                    "取消",
-                    fontSize = 16.sp,
-                    color = Color_Blue,
-                    modifier = Modifier.align(Alignment.CenterStart).clickable { onDismiss() },
-                )
+                // 裸 Text.clickable 热区只有字大：换 TextButton 给 48dp 触区
+                androidx.compose.material3.TextButton(
+                    onClick = { onDismiss() },
+                    modifier = Modifier.align(Alignment.CenterStart),
+                ) {
+                    Text("取消", fontSize = 16.sp, color = Color_Blue)
+                }
                 Text(
                     "设置选项",
                     fontSize = 18.sp,
@@ -204,13 +208,18 @@ internal fun ExportCenterSheet(
                     color = GoaldayDesign.InkPrimary,
                     modifier = Modifier.align(Alignment.Center),
                 )
-                Text(
-                    if (generating) "生成中…" else "确定",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = GoaldayDesign.MorandiCoral,
-                    modifier = Modifier.align(Alignment.CenterEnd).clickable { startGenerate() },
-                )
+                androidx.compose.material3.TextButton(
+                    onClick = { startGenerate() },
+                    enabled = !generating,
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                ) {
+                    Text(
+                        if (generating) "生成中…" else "确定",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (generating) GoaldayDesign.InkMuted else GoaldayDesign.MorandiCoral,
+                    )
+                }
             }
             Spacer(Modifier.height(16.dp))
 
@@ -315,19 +324,18 @@ internal fun ExportCenterSheet(
                         color = Color(0xFFD44A4A),
                         modifier = Modifier.weight(1f),
                     )
-                    Text(
-                        "对调",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color_Blue,
-                        modifier = Modifier
-                            .clickable {
-                                val t = startDate
-                                startDate = endDate
-                                endDate = t
-                            }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                    )
+                    androidx.compose.material3.TextButton(onClick = {
+                        val t = startDate
+                        startDate = endDate
+                        endDate = t
+                    }) {
+                        Text(
+                            "对调",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color_Blue,
+                        )
+                    }
                 }
             } else if (rangeTooLarge) {
                 Text(

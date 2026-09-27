@@ -106,6 +106,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bf410.goaldaylocal.R
 import com.bf410.goaldaylocal.data.BookPage
@@ -354,6 +356,21 @@ private fun RenameTaskDialog(
     onConfirm: (String) -> Unit,
 ) {
     var text by remember { mutableStateOf(initial) }
+    val renameContext = LocalContext.current
+    val renameFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        runCatching {
+            kotlinx.coroutines.delay(300)
+            renameFocus.requestFocus()
+        }
+    }
+    fun submitRename() {
+        if (text.trim().isBlank()) {
+            android.widget.Toast.makeText(renameContext, "名称不能为空", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        onConfirm(text.trim())
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { KeepImmersiveInDialog(); Text("重命名任务") },
@@ -363,10 +380,13 @@ private fun RenameTaskDialog(
                 onValueChange = { text = it },
                 label = { Text("任务名称") },
                 singleLine = true,
+                modifier = Modifier.focusRequester(renameFocus),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { submitRename() }),
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(text.trim()) }) {
+            TextButton(onClick = { submitRename() }) {
                 Text("确定")
             }
         },

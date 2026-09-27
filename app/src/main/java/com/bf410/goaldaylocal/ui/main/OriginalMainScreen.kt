@@ -553,11 +553,20 @@ private fun RepeatScopeSheet(
                         .background(GoaldayDesign.adaptiveDivider.copy(alpha = 0.6f)),
                 )
             }
-            ScopeRow("仅此日程", BookViewModel.RepeatScope.ONLY_THIS)
+            ScopeRow("仅改这一天", BookViewModel.RepeatScope.ONLY_THIS)
             if (isMove) {
-                ScopeRow("更改所有未来日程的时间", BookViewModel.RepeatScope.ALL_FUTURE)
+                ScopeRow("这一天及以后都改", BookViewModel.RepeatScope.ALL_FUTURE)
             } else {
-                ScopeRow("删除所有未来日程", BookViewModel.RepeatScope.ALL_FUTURE)
+                ScopeRow("这一天及以后都删", BookViewModel.RepeatScope.ALL_FUTURE)
+            }
+            // 无关闭钮只能点遮罩：补显式取消
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                androidx.compose.material3.TextButton(onClick = onDismiss) {
+                    Text("取消", fontSize = 15.sp, color = GoaldayDesign.adaptiveInkMuted)
+                }
             }
         }
     }
@@ -2041,7 +2050,7 @@ private fun RecordDiaryView(
                     Box {
                         if (text.isEmpty()) {
                             Text(
-                                "点击输入",
+                                "写下今天的日记…（回车换行）",
                                 fontSize = 16.sp,
                                 lineHeight = 24.sp,
                                 color = GoaldayDesign.adaptiveInkMuted,
@@ -2433,7 +2442,26 @@ private fun TopicListView(
         // 重命名弹层（仅自建清单；预设示例不可改名）
         val renameBook = uiState.books.firstOrNull { it.id == renameBookId }
         if (renameBook != null) {
-            var renameText by remember(renameBook.id) { mutableStateOf(renameBook.title) }
+            // 光标默认文末（原来在首，改长名要重移）；Done 即保存
+            var renameText by remember(renameBook.id) {
+                mutableStateOf(TextFieldValue(renameBook.title, TextRange(renameBook.title.length)))
+            }
+            val renameFocus = remember { FocusRequester() }
+            LaunchedEffect(renameBook.id) {
+                runCatching {
+                    kotlinx.coroutines.delay(300)
+                    renameFocus.requestFocus()
+                }
+            }
+            fun submitRename() {
+                if (renameText.text.trim().isBlank()) {
+                    android.widget.Toast.makeText(listContext, "名称不能为空", android.widget.Toast.LENGTH_SHORT).show()
+                    return
+                }
+                InteractionFeedback.click(listContext)
+                viewModel.renameListBook(renameBook.id, renameText.text.trim())
+                renameBookId = null
+            }
             AlertDialog(
                 onDismissRequest = { renameBookId = null },
                 title = { Text("重命名清单", fontSize = 17.sp, fontWeight = FontWeight.SemiBold) },
@@ -2445,7 +2473,11 @@ private fun TopicListView(
                         singleLine = true,
                         textStyle = TextStyle(fontSize = 17.sp, color = GoaldayDesign.adaptiveInkPrimary),
                         cursorBrush = SolidColor(TodayCoral),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(renameFocus),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { submitRename() }),
                     )
                 },
                 confirmButton = {
@@ -2454,11 +2486,7 @@ private fun TopicListView(
                         color = GoaldayDesign.adaptiveInkPrimary,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
-                            .clickable {
-                                InteractionFeedback.click(listContext)
-                                viewModel.renameListBook(renameBook.id, renameText)
-                                renameBookId = null
-                            }
+                            .clickable { submitRename() }
                             .padding(horizontal = 12.dp, vertical = 6.dp),
                     )
                 },
@@ -2547,6 +2575,16 @@ private fun TopicDetailSimple(
     // 底部操作栏选中态：长按行选中，再次长按取消（对照原版选中后出底栏）
     var selectedDetailItem by remember { mutableStateOf<String?>(null) }
     var renameDetailItem by remember { mutableStateOf<String?>(null) }
+    // 删除二次确认：左滑删除与底栏删除共用，误删可恢复前拦截
+    var pendingDeleteDetailItem by remember { mutableStateOf<String?>(null) }
+    fun doDeleteDetailItem(item: String) {
+        InteractionFeedback.haptic(detailContext)
+        viewModel.removeListPageItemIn(book, pageTitle, item)
+        if (selectedDetailItem == item) selectedDetailItem = null
+        if (renameDetailItem == item) renameDetailItem = null
+        pendingDeleteDetailItem = null
+        onToggle()
+    }
     fun selectDetailItem(item: String) {
         InteractionFeedback.haptic(detailContext)
         selectedDetailItem = if (selectedDetailItem == item) null else item
@@ -2700,11 +2738,7 @@ private fun TopicDetailSimple(
                             renameDetailItem = item
                         },
                         SwipeAction("删除", Color(0xFFED8888), Icons.Filled.Delete) {
-                            InteractionFeedback.haptic(detailContext)
-                            viewModel.removeListPageItemIn(book, pageTitle, item)
-                            if (selectedDetailItem == item) selectedDetailItem = null
-                            if (renameDetailItem == item) renameDetailItem = null
-                            onToggle()
+                            pendingDeleteDetailItem = item
                         },
                     ),
                     onContentClick = if (isEditingDetail) null else ({ toggleItem(item, pageTitle, checked) }),
@@ -2907,10 +2941,7 @@ private fun TopicDetailSimple(
                 }
                 // 自绘描线图标（对照原版详情底栏 ic_trash/ic_top/ic_complete 位图）
                 BoardIcon("删除", onTap = {
-                    InteractionFeedback.haptic(detailContext)
-                    viewModel.removeListPageItemIn(book, pageTitle, selectedItem)
-                    selectedDetailItem = null
-                    onToggle()
+                    pendingDeleteDetailItem = selectedItem
                 }) {
                     OutlineTrashGlyph(tint = GoaldayDesign.adaptiveInkPrimary)
                 }
@@ -2929,6 +2960,27 @@ private fun TopicDetailSimple(
             }
         }
         // 行内改名已移到行内 BasicTextField（对照原版行内 EditText），此处无弹层
+        // 删除二次确认（左滑/底栏共用）
+        pendingDeleteDetailItem?.let { target ->
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { pendingDeleteDetailItem = null },
+                title = { Text("删除这条事项？", fontSize = 17.sp, fontWeight = FontWeight.SemiBold) },
+                text = {
+                    KeepImmersiveInDialog()
+                    Text(target, fontSize = 15.sp, color = GoaldayDesign.adaptiveInkSecondary, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = { doDeleteDetailItem(target) }) {
+                        Text("删除", color = TodayCoral, fontWeight = FontWeight.SemiBold)
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { pendingDeleteDetailItem = null }) {
+                        Text("取消", color = GoaldayDesign.adaptiveInkMuted)
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -2957,6 +3009,22 @@ private fun TopicAddSheet(
     // 对照原版新建清单弹层：关联到日程开关
     var linked by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
+    val addContext = LocalContext.current
+    // 进来即弹键盘聚焦；Done 有字才建，无字 toast 不关框
+    val nameFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        runCatching {
+            kotlinx.coroutines.delay(350)
+            nameFocus.requestFocus()
+        }
+    }
+    fun submitNewList() {
+        if (name.trim().isBlank()) {
+            android.widget.Toast.makeText(addContext, "先写清单名称", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        onCreate(name.trim(), selected, linked)
+    }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -2984,7 +3052,10 @@ private fun TopicAddSheet(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
                     .background(fieldBg)
+                    .focusRequester(nameFocus)
                     .padding(horizontal = 14.dp, vertical = 12.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { submitNewList() }),
                 decorationBox = { inner ->
                     Box {
                         if (name.isEmpty()) {
@@ -3092,6 +3163,17 @@ private fun EntryEditSheet(
     }
     var title by remember(entry.id) { mutableStateOf(entry.title) }
     var timeText by remember(entry.id) { mutableStateOf(entry.timeText) }
+    val timeFocus = remember { FocusRequester() }
+    val entrySheetContext = LocalContext.current
+    fun saveEntryAndClose() {
+        if (title.trim().isBlank()) {
+            android.widget.Toast.makeText(entrySheetContext, "标题空着，只保存了时间", android.widget.Toast.LENGTH_SHORT).show()
+        } else {
+            viewModel.updateScheduleTitleFromHandbook(entry.id, title)
+        }
+        viewModel.updateScheduleTimeFromHandbook(entry.id, timeText)
+        onDismiss()
+    }
     // 删改的作用域判定必须读最新快照：弹层内改了重复后 entry 参数已过期（对照作用域 dormant 根因）
     val liveEntry = allEntries.firstOrNull { it.id == entry.id } ?: entry
     val dark = LocalGoaldayDarkMode.current
@@ -3099,14 +3181,34 @@ private fun EntryEditSheet(
     val fieldBg = if (dark) Color(0xFF35312B) else Color(0xFFFBF7F1)
     val sheetState = rememberModalBottomSheetState()
     val diaryStore = remember { LocalStateStore(MMKV.defaultMMKV()) }
+    // 非重复删除二次确认（重复走作用域已有确认）
+    var confirmDeleteEntry by remember(entry.id) { mutableStateOf(false) }
+    fun doDeleteSingleEntry() {
+        viewModel.deleteScheduleFromHandbook(entry.id)
+        // 同步清理该日日记「今日完成」段（与勾选联动共用同一存储）
+        val remaining = allEntries.filter {
+            it.id != entry.id &&
+                it.year == entry.year && it.month == entry.month && it.day == entry.day
+        }
+        diaryStore.setDiaryText(
+            DIARY_BOOK_ID,
+            entryDate.toString(),
+            buildStructuredDiary(
+                entryDate,
+                remaining,
+                diaryUserText(diaryStore, entryDate),
+                diaryImagePaths(diaryStore, entryDate),
+            ),
+        )
+        confirmDeleteEntry = false
+        onDismiss()
+    }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = null,
         containerColor = if (dark) Color(0xFF2C2722) else Color.White,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
-        // 键盘弹起时把内容顶上去，不盖住保存行
         Column(Modifier.fillMaxWidth().imePadding().padding(horizontal = 20.dp)) {
             KeepImmersiveInDialog()
             Text(
@@ -3127,6 +3229,20 @@ private fun EntryEditSheet(
                     .clip(RoundedCornerShape(10.dp))
                     .background(fieldBg)
                     .padding(horizontal = 14.dp, vertical = 12.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { runCatching { timeFocus.requestFocus() } }),
+                decorationBox = { inner ->
+                    Box {
+                        if (title.isEmpty()) {
+                            Text(
+                                "任务标题",
+                                fontSize = 16.sp,
+                                color = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.7f),
+                            )
+                        }
+                        inner()
+                    }
+                },
             )
             Spacer(Modifier.height(8.dp))
             // 时间（可选，如 09:30）
@@ -3140,7 +3256,10 @@ private fun EntryEditSheet(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
                     .background(fieldBg)
+                    .focusRequester(timeFocus)
                     .padding(horizontal = 14.dp, vertical = 10.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { saveEntryAndClose() }),
                 decorationBox = { inner ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -3365,23 +3484,7 @@ private fun EntryEditSheet(
                                     ),
                                 )
                             } else {
-                                viewModel.deleteScheduleFromHandbook(entry.id)
-                                // 同步清理该日日记「今日完成」段（与勾选联动共用同一存储）
-                            val remaining = allEntries.filter {
-                                it.id != entry.id &&
-                                    it.year == entry.year && it.month == entry.month && it.day == entry.day
-                            }
-                            diaryStore.setDiaryText(
-                                DIARY_BOOK_ID,
-                                entryDate.toString(),
-                                buildStructuredDiary(
-                                    entryDate,
-                                    remaining,
-                                    diaryUserText(diaryStore, entryDate),
-                                    diaryImagePaths(diaryStore, entryDate),
-                                ),
-                            )
-                            onDismiss()
+                                confirmDeleteEntry = true
                             }
                         }
                         .padding(horizontal = 12.dp, vertical = 7.dp),
@@ -3392,13 +3495,7 @@ private fun EntryEditSheet(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .background(TodayBlack)
-                        .clickable {
-                            if (title.trim().isNotBlank()) {
-                                viewModel.updateScheduleTitleFromHandbook(entry.id, title)
-                            }
-                            viewModel.updateScheduleTimeFromHandbook(entry.id, timeText)
-                            onDismiss()
-                        }
+                        .clickable { saveEntryAndClose() }
                         .padding(horizontal = 20.dp, vertical = 8.dp),
                 ) {
                     Text("保存", fontSize = 14.sp, color = Color.White)
@@ -3406,6 +3503,32 @@ private fun EntryEditSheet(
             }
             Spacer(Modifier.height(24.dp))
         }
+    }
+    if (confirmDeleteEntry) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { confirmDeleteEntry = false },
+            title = { Text("删除这条日程？", fontSize = 17.sp, fontWeight = FontWeight.SemiBold) },
+            text = {
+                KeepImmersiveInDialog()
+                Text(
+                    "${entryDate.monthValue}月${entryDate.dayOfMonth}日 · ${entry.title}",
+                    fontSize = 15.sp,
+                    color = GoaldayDesign.adaptiveInkSecondary,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { doDeleteSingleEntry() }) {
+                    Text("删除", color = TodayCoral, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { confirmDeleteEntry = false }) {
+                    Text("取消", color = GoaldayDesign.adaptiveInkMuted)
+                }
+            },
+        )
     }
 }
 
@@ -3508,7 +3631,10 @@ private fun TabManageSheet(
                                 },
                             )
                         }
-                        // 对照原版：行体只有长按（拖拽），点击只在眼睛上；行体点击无操作
+                        // 行体点按即切换显隐（原来只认 24dp 眼睛，点行体以为卡死）；长按仍是拖拽排序
+                        .clickable {
+                            if (canHideTab) onToggle(tab, !visible) else cantHideHint()
+                        }
                         .height(52.dp)
                         .padding(start = 20.dp, end = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -3520,18 +3646,23 @@ private fun TabManageSheet(
                         color = GoaldayDesign.adaptiveInkPrimary,
                     )
                     Spacer(Modifier.weight(1f))
-                    Icon(
-                        // 对照原版 ic_eye_visible/ic_eye_hidden（#252525矢量）；不可隐藏的周恒显+0.6灰
-                        imageVector = if (visible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                        contentDescription = if (visible) "隐藏" else "显示",
-                        tint = GoaldayDesign.adaptiveInkPrimary,
+                    Box(
                         modifier = Modifier
-                            .size(24.dp)
+                            .size(48.dp)
                             .alpha(if (canHideTab) 1f else 0.6f)
                             .clickable {
                                 if (canHideTab) onToggle(tab, !visible) else cantHideHint()
                             },
-                    )
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            // 对照原版 ic_eye_visible/ic_eye_hidden（#252525矢量）；不可隐藏的周恒显+0.6灰
+                            imageVector = if (visible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (visible) "隐藏" else "显示",
+                            tint = GoaldayDesign.adaptiveInkPrimary,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
                 }
                 }
             }
@@ -3903,12 +4034,10 @@ private fun WeekPickerSheet(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = "上个月",
-                    tint = GoaldayDesign.adaptiveInkPrimary,
+                // 箭头视觉不变，热区扩到 48dp（原来 22/26dp 点不中）
+                Box(
                     modifier = Modifier
-                        .size(26.dp)
+                        .size(48.dp)
                         .clickable {
                             monthAnchor = if (monthAnchor.monthValue == 1) {
                                 YearMonth.of(monthAnchor.year - 1, 12)
@@ -3916,19 +4045,24 @@ private fun WeekPickerSheet(
                                 monthAnchor.minusMonths(1)
                             }
                         },
-                )
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = "上个月",
+                        tint = GoaldayDesign.adaptiveInkPrimary,
+                        modifier = Modifier.size(26.dp),
+                    )
+                }
                 Text(
                     "${monthAnchor.monthValue}月 ${monthAnchor.year}",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Normal,
                     color = GoaldayDesign.adaptiveInkPrimary,
                 )
-                Icon(
-                    Icons.Filled.KeyboardArrowRight,
-                    contentDescription = "下个月",
-                    tint = GoaldayDesign.adaptiveInkPrimary,
+                Box(
                     modifier = Modifier
-                        .size(22.dp)
+                        .size(48.dp)
                         .clickable {
                             monthAnchor = if (monthAnchor.monthValue == 12) {
                                 YearMonth.of(monthAnchor.year + 1, 1)
@@ -3936,7 +4070,15 @@ private fun WeekPickerSheet(
                                 monthAnchor.plusMonths(1)
                             }
                         },
-                )
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Filled.KeyboardArrowRight,
+                        contentDescription = "下个月",
+                        tint = GoaldayDesign.adaptiveInkPrimary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
                 Spacer(Modifier.weight(1f))
                 Box(
                     modifier = Modifier

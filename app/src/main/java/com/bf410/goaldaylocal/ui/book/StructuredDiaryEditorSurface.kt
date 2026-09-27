@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -175,19 +176,32 @@ internal fun StructuredDiaryEditor(
                     )
                 }
             }
-            // 对照原版空白日记页：纯白，不打任何提示文案（添加行保留为唯一入口）
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            // 对照原版空白日记页：纯白，不打任何提示文案（添加行保留为唯一入口）；
+            // 入口做成 40dp 高 Pill 按钮：原来 10sp 裸文字触高约 14px 点不中
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     "+ 文字",
-                    fontSize = 10.sp,
-                    color = GoaldayDesign.InkMuted,
-                    modifier = Modifier.clickable { onStateChange(state.withTextBlock()) },
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GoaldayDesign.Pink,
+                    modifier = Modifier
+                        .heightIn(min = 40.dp)
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .background(GoaldayDesign.PinkTint)
+                        .clickable { onStateChange(state.withTextBlock()) }
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                 )
                 Text(
                     "+ 图片",
-                    fontSize = 10.sp,
-                    color = GoaldayDesign.InkMuted,
-                    modifier = Modifier.clickable { onAddImage() },
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GoaldayDesign.Pink,
+                    modifier = Modifier
+                        .heightIn(min = 40.dp)
+                        .clip(RoundedCornerShape(GoaldayDesign.RadiusPill))
+                        .background(GoaldayDesign.PinkTint)
+                        .clickable { onAddImage() }
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                 )
             }
         }

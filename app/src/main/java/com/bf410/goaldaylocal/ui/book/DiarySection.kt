@@ -381,6 +381,12 @@ internal fun DiarySection(
     var longImagePreview by remember(title) { mutableStateOf<LongImagePreview?>(null) }
     val context = LocalContext.current
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = structured.date.toEpochMillis())
+    // initial 只首帧生效：每次打开按当前日记日期校准，否则第二次打开还是旧日期
+    LaunchedEffect(showDatePicker, structured.date) {
+        if (showDatePicker) {
+            datePickerState.selectedDateMillis = structured.date.toEpochMillis()
+        }
+    }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) {
             // 物理复制后存绝对路径（content 直链重启即失效，见 DiaryImageStore）
@@ -522,8 +528,10 @@ internal fun DiarySection(
                         if (millis != null) {
                             structured = structured.withDate(millis.toLocalDate())
                             onDiaryChange(structured.toRaw())
+                            showDatePicker = false
+                        } else {
+                            android.widget.Toast.makeText(context, "还没选日期", android.widget.Toast.LENGTH_SHORT).show()
                         }
-                        showDatePicker = false
                     }) { Text("确定") }
                 },
                 dismissButton = {

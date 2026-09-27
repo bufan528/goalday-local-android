@@ -536,7 +536,8 @@ private fun InBookScheduleTargetColumn(
                         singleLine = true,
                         textStyle = TextStyle(
                             fontSize = 8.sp,
-                            lineHeight = 9.sp,
+                            // 中文上下部会被 9sp 行高裁掉：提到 11sp，12dp 槽照样装下
+                            lineHeight = 11.sp,
                             color = GoaldayDesign.InkPrimary,
                         ),
                         cursorBrush = SolidColor(GoaldayDesign.Pink),
@@ -557,8 +558,8 @@ private fun InBookScheduleTargetColumn(
                     Text(
                         entry.title,
                         fontSize = 8.sp,
-                        // 槽高仅 12dp，必须收紧 lineHeight（默认 24sp 会把文字挤出槽位）
-                        lineHeight = 9.sp,
+                        // 12dp 槽内 11sp 行高刚好，中文不再被裁降部
+                        lineHeight = 11.sp,
                         color = if (checked) GoaldayDesign.InkMuted else GoaldayDesign.InkPrimary,
                         textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None,
                         maxLines = 1,

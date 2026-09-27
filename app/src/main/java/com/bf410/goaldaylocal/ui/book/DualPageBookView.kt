@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
@@ -865,6 +866,7 @@ private fun BookShelfSheet(
     onPickYear: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val shelfContext = LocalContext.current
     androidx.compose.material3.Surface(color = Color.White) {
         Column(
             Modifier
@@ -899,6 +901,7 @@ private fun BookShelfSheet(
                 // 对照原版 BookConstant：固定 2023–2026 四本年度书，书衣按 BookShelfManager.bookCoverMapping
                 val years = listOf(2026, 2025, 2024, 2023)
                 years.forEach { year ->
+                    val isCurrent = year == currentYear
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -909,19 +912,33 @@ private fun BookShelfSheet(
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(yearCoverColor(year))
                                 .coverWeave()
-                                .clickableNoRipple { onPickYear(year) },
+                                .border(
+                                    width = if (isCurrent) 2.dp else 0.dp,
+                                    color = if (isCurrent) GoaldayDesign.Pink else Color.Transparent,
+                                    shape = RoundedCornerShape(6.dp),
+                                )
+                                .clickable {
+                                    com.bf410.goaldaylocal.ui.InteractionFeedback.haptic(shelfContext, 30L)
+                                    onPickYear(year)
+                                },
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(
-                                year.toString(),
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = Color(0xFF7A5C44),
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (isCurrent) {
+                                    Text("✓ ", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GoaldayDesign.Pink)
+                                }
+                                Text(
+                                    year.toString(),
+                                    fontSize = 13.sp,
+                                    fontFamily = FontFamily.Serif,
+                                    color = Color(0xFF7A5C44),
+                                )
+                            }
                         }
                         Text(
                             year.toString(),
                             fontSize = 14.sp,
+                            fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Normal,
                             color = GoaldayDesign.InkPrimary,
                         )
                     }

@@ -967,23 +967,26 @@ private fun BackupMigrationDialog(
                                     color = GoaldayDesign.adaptiveInkMuted,
                                 )
                             }
+                            // 恢复/删除热区放大：原来 4dp 内边距约 24dp 高，并排易误触删除
                             Text(
                                 "恢复",
                                 color = GoaldayDesign.Pink,
-                                fontSize = 12.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
                                     .clickable { onRestore(snapshot) }
-                                    .padding(4.dp),
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
                             )
                             Text(
                                 "删除",
                                 color = GoaldayDesign.Danger,
-                                fontSize = 12.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
                                     .clickable { onDelete(snapshot) }
-                                    .padding(4.dp),
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
                             )
                         }
                     }

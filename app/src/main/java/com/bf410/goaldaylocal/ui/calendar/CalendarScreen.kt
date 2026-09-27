@@ -27,7 +27,14 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.ImeAction
+import com.bf410.goaldaylocal.ui.KeepImmersiveInDialog
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -713,6 +720,7 @@ fun CalendarScreen(
             onDismissRequest = { deleteCandidate = null },
             title = { Text("删除这条日程？") },
             text = {
+                KeepImmersiveInDialog()
                 Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
                     Text(
                         "将删除「${entry.title}」以及它的本地日程记录。",
@@ -1255,6 +1263,7 @@ private fun CalendarImportRangeDialog(
         onDismissRequest = onDismiss,
         title = { Text("导入范围") },
         text = {
+            KeepImmersiveInDialog()
             Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
                 options.forEach { (months, label) ->
                     Text(
@@ -1301,6 +1310,7 @@ private fun CalendarImportSourceDialog(
         onDismissRequest = onDismiss,
         title = { Text("选择日历来源") },
         text = {
+            KeepImmersiveInDialog()
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
@@ -1357,6 +1367,7 @@ private fun CalendarImportPreviewDialog(
         onDismissRequest = onDismiss,
         title = { Text("导入预览") },
         text = {
+            KeepImmersiveInDialog()
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
@@ -1496,29 +1507,60 @@ private fun ScheduleDialog(
     var draftRepeatEndDate by remember(initialRepeatEndDate) { mutableStateOf(initialRepeatEndDate) }
     var applySeries by remember(allowSeriesEdit, initialTitle) { mutableStateOf(false) }
     val repeatOptions = listOf("" to "不重复", "daily" to "每天", "weekly" to "每周", "monthly" to "每月")
+    val dialogContext = LocalContext.current
+    // 标题→日期→时间 Next 串联，备注 Done 即保存；空标题 toast 不关框
+    val dayFocus = remember { FocusRequester() }
+    val timeFocus = remember { FocusRequester() }
+    val noteFocus = remember { FocusRequester() }
+    fun submitScheduleDialog() {
+        val t = draftTitle.trim()
+        if (t.isBlank()) {
+            android.widget.Toast.makeText(dialogContext, "先写任务名", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        val d = draftDay.toIntOrNull()?.coerceIn(1, maxDay) ?: initialDay
+        val normalizedTime = draftTime.trim()
+        val interval = if (draftRepeatRule.isBlank()) 1 else draftRepeatInterval.toIntOrNull()?.coerceIn(1, 30) ?: 1
+        val endDate = if (draftRepeatRule.isBlank()) "" else draftRepeatEndDate.trim()
+        onConfirm(t, d, draftNote.trim(), normalizedTime, draftRepeatRule, interval, endDate, applySeries)
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2)) {
+            KeepImmersiveInDialog()
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .imePadding(),
+                verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space2),
+            ) {
                 OutlinedTextField(
                     value = draftTitle,
                     onValueChange = { draftTitle = it },
                     label = { Text("任务") },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { runCatching { dayFocus.requestFocus() } }),
                 )
                 OutlinedTextField(
                     value = draftDay,
                     onValueChange = { input -> draftDay = input.filter { it.isDigit() }.take(2) },
                     label = { Text("日期(1-$maxDay)") },
                     singleLine = true,
+                    modifier = Modifier.focusRequester(dayFocus),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { runCatching { timeFocus.requestFocus() } }),
                 )
                 OutlinedTextField(
                     value = draftTime,
                     onValueChange = { input -> draftTime = input.filter { it.isDigit() || it == ':' }.take(5) },
                     label = { Text("时间，例如 09:30") },
                     singleLine = true,
+                    modifier = Modifier.focusRequester(timeFocus),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { runCatching { noteFocus.requestFocus() } }),
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     repeatOptions.forEach { (rule, label) ->
@@ -1581,18 +1623,14 @@ private fun ScheduleDialog(
                     value = draftNote,
                     onValueChange = { draftNote = it },
                     label = { Text("备注") },
+                    modifier = Modifier.focusRequester(noteFocus),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { submitScheduleDialog() }),
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                val t = draftTitle.trim()
-                val d = draftDay.toIntOrNull()?.coerceIn(1, maxDay) ?: initialDay
-                val normalizedTime = draftTime.trim()
-                val interval = if (draftRepeatRule.isBlank()) 1 else draftRepeatInterval.toIntOrNull()?.coerceIn(1, 30) ?: 1
-                val endDate = if (draftRepeatRule.isBlank()) "" else draftRepeatEndDate.trim()
-                if (t.isNotBlank()) onConfirm(t, d, draftNote.trim(), normalizedTime, draftRepeatRule, interval, endDate, applySeries)
-            }) { Text("保存") }
+            TextButton(onClick = { submitScheduleDialog() }) { Text("保存") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("取消") }
