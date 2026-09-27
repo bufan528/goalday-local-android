@@ -64,6 +64,30 @@ class ReminderDigestTest {
     }
 
     @Test
+    fun rollover_moves_only_overdue_undone_without_duplicates() {
+        val rolled = rolloverOverdue(
+            listOf(
+                entry("逾期A", 24),
+                entry("今天已有", 26),
+                entry("今天已有", 24),
+                entry("做完的不动", 24, completed = true),
+                entry("未来不动", 27),
+            ),
+            today,
+        )
+        val byTitle = rolled.associateBy({ it.title }, { Triple(it.day, it.month, it.completed) })
+
+        // 逾期A搬到今天
+        assertEquals(Triple(26, 9, false), byTitle["逾期A"])
+        // 今天已有同名：留在原地，不搬
+        assertTrue(rolled.any { it.title == "今天已有" && it.day == 24 })
+        assertTrue(rolled.any { it.title == "今天已有" && it.day == 26 })
+        // 完成态与未来不动
+        assertEquals(Triple(24, 9, true), byTitle["做完的不动"])
+        assertEquals(Triple(27, 9, false), byTitle["未来不动"])
+    }
+
+    @Test
     fun evening_copy_keeps_counts_with_evening_kind() {
         val digest = buildReminderDigest(listOf(entry("今天A", 26)), today).eveningCopy()
 

@@ -1037,32 +1037,14 @@ internal fun DiaryTypedBlockPreview(
     }
 }
 
-/** 书内日记图片块：从本地文件解码展示（对照原版日记图片卡） */
+/** 书内日记图片块：从本地文件解码展示（对照原版日记图片卡），解码走 IO */
 @Composable
 private fun DiaryImageBlockPreview(block: DiaryEntryBlock) {
-    val context = androidx.compose.ui.platform.LocalContext.current
     val path = block.text.trim().removePrefix("file://")
-    val bitmap = remember(path) {
-        runCatching {
-            val file = java.io.File(path)
-            if (file.exists()) {
-                val opts = android.graphics.BitmapFactory.Options().apply {
-                    inJustDecodeBounds = true
-                }
-                android.graphics.BitmapFactory.decodeFile(path, opts)
-                val targetW = 720
-                var sample = 1
-                while (opts.outWidth / sample > targetW * 2) sample *= 2
-                android.graphics.BitmapFactory.decodeFile(
-                    path,
-                    android.graphics.BitmapFactory.Options().apply { inSampleSize = sample },
-                )
-            } else null
-        }.getOrNull()
-    }
+    val bitmap = rememberDiaryImageBitmap(block.text.trim(), 720 * 2)
     if (bitmap != null) {
         Image(
-            bitmap = bitmap.asImageBitmap(),
+            bitmap = bitmap,
             contentDescription = "日记图片",
             contentScale = ContentScale.FillWidth,
             modifier = Modifier
@@ -1278,14 +1260,8 @@ internal fun DiaryImageTile(
     modifier: Modifier = Modifier,
     fixedHeight: Boolean = true,
 ) {
-    val context = LocalContext.current
-    val bitmap = remember(uri) {
-        runCatching {
-            context.contentResolver.openInputStream(Uri.parse(uri))?.use { stream ->
-                BitmapFactory.decodeStream(stream)
-            }
-        }.getOrNull()
-    }
+    // 全尺寸直解曾 OOM：改走采样异步，坏图仍落“图片不可读”占位
+    val bitmap = rememberDiaryImageBitmap(uri, 720 * 2)
     val aspectRatio = remember(bitmap) {
         if (bitmap != null && bitmap.width > 0 && bitmap.height > 0) {
             bitmap.width.toFloat() / bitmap.height.toFloat()
@@ -1303,7 +1279,7 @@ internal fun DiaryImageTile(
     ) {
         if (bitmap != null) {
             Image(
-                bitmap = bitmap.asImageBitmap(),
+                bitmap = bitmap,
                 contentDescription = null,
                 contentScale = if (fixedHeight) ContentScale.Crop else ContentScale.Fit,
                 modifier = Modifier.fillMaxSize(),

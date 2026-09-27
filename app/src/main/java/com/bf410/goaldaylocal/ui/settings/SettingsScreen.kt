@@ -306,11 +306,15 @@ fun SettingsScreen(
             // 联系我们分组卡片
             SettingsCard {
                 // 本地离线版无反馈通道：意见反馈行隐藏，不留死按钮
-                // 小红书行
+                // 小红书行：复制关键词再提示，不再点了没反应
                 SettingsNavRow(
                     title = "小红书",
                     onClick = {
-                        Toast.makeText(context, "请到小红书搜索 Goalday", Toast.LENGTH_SHORT).show()
+                        runCatching {
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("goalday", "Goalday"))
+                        }
+                        Toast.makeText(context, "已复制 Goalday，去小红书粘贴搜索", Toast.LENGTH_SHORT).show()
                     },
                 )
                 // 邮件行（隐藏，对照原版 visibility="gone"）

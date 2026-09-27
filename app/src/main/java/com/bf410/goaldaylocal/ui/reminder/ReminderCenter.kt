@@ -36,6 +36,7 @@ private const val REQUEST_MORNING = 2001
 private const val REQUEST_EVENING = 2002
 private const val ACTION_MORNING = "com.bf410.goaldaylocal.action.REMINDER_MORNING"
 private const val ACTION_EVENING = "com.bf410.goaldaylocal.action.REMINDER_EVENING"
+private const val ACTION_ROLLOVER = "com.bf410.goaldaylocal.action.REMINDER_ROLLOVER"
 private const val KEY_REMINDER_ENABLED = "reminder_daily_enabled"
 private const val MAX_LISTED_TITLES = 4
 
@@ -73,6 +74,26 @@ internal fun buildReminderDigest(entries: List<ScheduleEntry>, today: LocalDate)
 }
 
 internal fun ReminderDigest.eveningCopy(): ReminderDigest = copy(kind = ReminderKind.EVENING)
+
+/**
+ * 逾期顺延到今天（纯函数可单测）：只动未完成且早于今天的条目；
+ * 今天已有同名未完成的不重复搬（留在原地，避免成双）。
+ */
+internal fun rolloverOverdue(entries: List<ScheduleEntry>, today: LocalDate): List<ScheduleEntry> {
+    fun entryDate(e: ScheduleEntry) = runCatching { LocalDate.of(e.year, e.month, e.day) }.getOrNull()
+    val todayTodoTitles = entries
+        .filter { !it.completed && entryDate(it) == today }
+        .map { it.title.trim() }
+        .toSet()
+    return entries.map { e ->
+        val date = entryDate(e)
+        if (!e.completed && date != null && date.isBefore(today) && e.title.trim() !in todayTodoTitles) {
+            e.copy(year = today.year, month = today.monthValue, day = today.dayOfMonth)
+        } else {
+            e
+        }
+    }
+}
 
 internal fun ReminderDigest.notificationTitle(): String = when (kind) {
     ReminderKind.MORNING -> if (overdueTitles.isNotEmpty()) {
@@ -160,6 +181,7 @@ class ReminderReceiver : BroadcastReceiver() {
             }
             ACTION_MORNING -> fireReminder(context, ReminderKind.MORNING)
             ACTION_EVENING -> fireReminder(context, ReminderKind.EVENING)
+            ACTION_ROLLOVER -> rolloverOverdueToToday(context)
         }
     }
 }
@@ -182,7 +204,7 @@ internal fun fireReminder(context: Context, kind: ReminderKind) {
         },
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
-    val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+    val builder = NotificationCompat.Builder(context, CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_reward)
         .setContentTitle(digest.notificationTitle())
         .setContentText(digest.notificationContent().lines().firstOrNull().orEmpty())
@@ -190,9 +212,34 @@ internal fun fireReminder(context: Context, kind: ReminderKind) {
         .setContentIntent(tap)
         .setAutoCancel(true)
         .setWhen(System.currentTimeMillis())
-        .build()
+        // 关掉系统推测动作，只留手写的按钮
+        .setAllowSystemGeneratedContextualActions(false)
+    // 有逾期才给顺延按钮：点一下把它们搬到今天，不用进应用一条条改期
+    if (digest.overdueTitles.isNotEmpty()) {
+        val rollover = PendingIntent.getBroadcast(
+            context,
+            3000 + kind.ordinal + 10,
+            Intent(context, ReminderReceiver::class.java).setAction(ACTION_ROLLOVER),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        builder.addAction(android.R.drawable.ic_menu_today, "顺延到今天", rollover)
+    }
+    val notification = builder.build()
     val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
     manager.notify(if (kind == ReminderKind.MORNING) NOTIFICATION_ID_MORNING else NOTIFICATION_ID_EVENING, notification)
+}
+
+/** 通知上的“顺延到今天”：把逾期未做搬到今天，刷掉通知并刷新组件。 */
+internal fun rolloverOverdueToToday(context: Context) {
+    val mmkv = runCatching { MMKV.defaultMMKV() }.getOrNull() ?: return
+    val store = LocalStateStore(mmkv)
+    val today = LocalDate.now()
+    val moved = rolloverOverdue(store.scheduleEntries(), today)
+    com.bf410.goaldaylocal.data.ScheduleRepository.getInstance(store).saveEntries(moved)
+    val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+    manager?.cancel(NOTIFICATION_ID_MORNING)
+    manager?.cancel(NOTIFICATION_ID_EVENING)
+    android.widget.Toast.makeText(context, "逾期事项已顺延到今天", android.widget.Toast.LENGTH_SHORT).show()
 }
 
 private fun ensureChannel(context: Context) {

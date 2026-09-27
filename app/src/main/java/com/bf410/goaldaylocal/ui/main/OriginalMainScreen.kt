@@ -2099,21 +2099,10 @@ private fun RecordDiaryView(
     }
 }
 
-/** 记录页图片缩略图（含移除） */
+/** 记录页图片缩略图（含移除）：解码走 IO，主线程不卡 */
 @Composable
 private fun DiaryImageThumb(path: String, onRemove: () -> Unit) {
-    val bitmap = remember(path) {
-        runCatching {
-            val f = java.io.File(path)
-            if (f.exists()) {
-                val opts = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                android.graphics.BitmapFactory.decodeFile(path, opts)
-                var sample = 1
-                while (opts.outWidth / sample > 1080 * 2) sample *= 2
-                android.graphics.BitmapFactory.decodeFile(path, android.graphics.BitmapFactory.Options().apply { inSampleSize = sample })
-            } else null
-        }.getOrNull()
-    }
+    val bitmap = com.bf410.goaldaylocal.ui.book.rememberDiaryImageBitmap(path, 1080 * 2)
     if (bitmap != null) {
         Box(
             Modifier
@@ -2121,7 +2110,7 @@ private fun DiaryImageThumb(path: String, onRemove: () -> Unit) {
                 .clip(RoundedCornerShape(10.dp)),
         ) {
             androidx.compose.foundation.Image(
-                bitmap = bitmap.asImageBitmap(),
+                bitmap = bitmap,
                 contentDescription = "日记图片",
                 contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
                 modifier = Modifier.fillMaxWidth(),

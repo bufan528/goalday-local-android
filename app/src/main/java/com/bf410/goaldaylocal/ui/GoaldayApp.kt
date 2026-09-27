@@ -83,6 +83,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.text.font.FontWeight
@@ -784,6 +786,7 @@ private fun GoaldayBottomNavOriginal(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
+                    .semantics(mergeDescendants = true) { contentDescription = item.label }
                     .clickable { onSelect(item) },
                 contentAlignment = Alignment.Center,
             ) {

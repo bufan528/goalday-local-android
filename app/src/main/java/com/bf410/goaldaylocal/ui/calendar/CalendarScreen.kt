@@ -386,7 +386,13 @@ fun CalendarScreen(
             }
             Spacer(Modifier.height(6.dp))
             if (dayEntries.isEmpty()) {
-                Text("当天暂无任务", color = GoaldayDesign.adaptiveInkSecondary, style = MaterialTheme.typography.bodySmall)
+                // 空态即入口：点文案直接新增，不用再找粉钮
+                Text(
+                    "当天暂无任务 · 点我新建一条",
+                    color = GoaldayDesign.adaptiveInkSecondary,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.clickable { showAddDialog = true },
+                )
             }
             dayEntries.forEach { entry ->
                 var dayRowOrigin by remember(entry.id) { mutableStateOf(Offset.Zero) }
