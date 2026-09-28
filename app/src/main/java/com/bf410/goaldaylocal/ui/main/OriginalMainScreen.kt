@@ -692,8 +692,7 @@ private fun OriginalTopTabBar(
             .fillMaxWidth()
             .background(MainTabBarBg)
             // 状态栏 inset 由外层容器统一处理，这里再加会双重下移（对照原版 Tab 文字中心≈屏y152px）
-            // min 高：大字号档撑高不裁字（默认仍 49dp，视觉不变）
-            .heightIn(min = 49.dp)
+            .height(49.dp)
             .pointerInput(Unit) {
                 detectTapGestures(onLongPress = { onManageTabs() })
             },
@@ -1264,8 +1263,7 @@ private fun WeekScheduleView(
                                 modifier = if (isToday) {
                                     Modifier
                                         .width(33.dp)
-                                        // min 高：大字号档撑高不裁字（默认仍 75dp，视觉不变）
-                                        .heightIn(min = 75.dp)
+                                        .height(75.dp)
                                         .background(TodayBlack, RoundedCornerShape(8.dp))
                                 } else {
                                     Modifier.width(33.dp)
