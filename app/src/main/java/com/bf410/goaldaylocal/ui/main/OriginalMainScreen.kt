@@ -1760,7 +1760,9 @@ private fun WeekScheduleView(
                         BasicTextField(
                             value = poolNewValue,
                             onValueChange = { poolNewValue = it },
-                            singleLine = true,
+                            // 多行看全文（同池改名态；Done 照常落盘）
+                            singleLine = false,
+                            maxLines = 3,
                             textStyle = TextStyle(fontSize = 20.sp, lineHeight = 26.sp, color = GoaldayDesign.adaptiveInkPrimary),
                             cursorBrush = SolidColor(TodayCoral),
                             modifier = Modifier
@@ -2921,7 +2923,9 @@ private fun TopicDetailSimple(
                                 BasicTextField(
                                     value = detailField,
                                     onValueChange = { detailField = it },
-                                    singleLine = true,
+                                    // 多行看全文（对照原版行内 EditText 换行展示；Done 照常落盘）
+                                    singleLine = false,
+                                    maxLines = 4,
                                     textStyle = TextStyle(
                                         fontSize = 20.sp,
                                         lineHeight = 28.sp,
@@ -3335,11 +3339,12 @@ private fun EntryEditSheet(
                 color = GoaldayDesign.adaptiveInkMuted,
             )
             Spacer(Modifier.height(10.dp))
-            // 标题
+            // 标题（多行看全文；Next 跳时间）
             BasicTextField(
                 value = title,
                 onValueChange = { title = it },
-                singleLine = true,
+                singleLine = false,
+                maxLines = 4,
                 textStyle = TextStyle(fontSize = 16.sp, color = GoaldayDesign.adaptiveInkPrimary),
                 cursorBrush = SolidColor(TodayCoral),
                 modifier = Modifier
