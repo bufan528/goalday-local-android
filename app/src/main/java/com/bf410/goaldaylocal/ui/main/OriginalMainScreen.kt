@@ -64,6 +64,9 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -299,6 +302,18 @@ fun OriginalMainScreen(
         mutableStateOf(valid)
     }
     var showTabManage by remember { mutableStateOf(false) }
+    // 删除撤销条：删后 5 秒内可撤销（对照 Tasks/Compose-ToDo 的 Snackbar undo）
+    val snackbarHost = remember { SnackbarHostState() }
+    val snackScope = rememberCoroutineScope()
+    fun showDeleteUndo(snap: BookViewModel.DeletedPageItemSnapshot) {
+        snackScope.launch {
+            val label = if (snap.item.length > 12) snap.item.take(12) + "…" else snap.item
+            val result = snackbarHost.showSnackbar(message = "已删除「${label}」", actionLabel = "撤销")
+            if (result == SnackbarResult.ActionPerformed) {
+                bookViewModel.restorePageItem(snap)
+            }
+        }
+    }
     // 请求 Tab 可能已被隐藏：本地回退渲染可见页，状态同步走 LaunchedEffect（禁组合中回写 state）
     val requestedTab = MainSubTab.entries[subTabIndex.coerceIn(0, MainSubTab.entries.lastIndex)]
     // 回退到第一个可见 Tab（当前 Tab 被隐藏时，按用户自定顺序）
@@ -408,7 +423,9 @@ fun OriginalMainScreen(
         }
     }
 
-    Column(Modifier.fillMaxSize().background(MainContentBg)) {
+    // 根 Box：内容列 + 删除撤销条（撤销条贴内容层底部，底栏在应用层互不遮挡）
+    Box(Modifier.fillMaxSize().background(MainContentBg)) {
+    Column(Modifier.fillMaxSize()) {
         if (!listDetailExpanded) {
             OriginalTopTabBar(
                 selected = currentSubTab,
@@ -474,9 +491,15 @@ fun OriginalMainScreen(
                     onOpenBookShelf = onOpenBook,
                     onOpenInspiration = onOpenInspiration,
                     onOpenSettings = onOpenSettings,
+                    onUndoDelete = { showDeleteUndo(it) },
                 )
             }
         }
+    }
+        SnackbarHost(
+            hostState = snackbarHost,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+        )
     }
 
     if (showTabManage) {
@@ -2324,6 +2347,7 @@ private fun TopicListView(
     onOpenBookShelf: () -> Unit,
     onOpenInspiration: () -> Unit,
     onOpenSettings: () -> Unit,
+    onUndoDelete: (BookViewModel.DeletedPageItemSnapshot) -> Unit = {},
 ) {
     val store = remember { LocalStateStore(MMKV.defaultMMKV()) }
     var revision by remember { mutableIntStateOf(0) }
@@ -2421,6 +2445,7 @@ private fun TopicListView(
                     revision = revision,
                     onToggle = { revision++ },
                     onBack = { onExpandBook(null) },
+                    onUndoDelete = onUndoDelete,
                 )
             }
         }
@@ -2668,6 +2693,7 @@ private fun TopicDetailSimple(
     revision: Int,
     onToggle: () -> Unit,
     onBack: () -> Unit,
+    onUndoDelete: (BookViewModel.DeletedPageItemSnapshot) -> Unit = {},
 ) {
     val page = book.pages.filterIsInstance<TargetPage>().firstOrNull()
     val dividerColor = MainTabDivider
@@ -2724,11 +2750,12 @@ private fun TopicDetailSimple(
     var pendingDeleteDetailItem by remember { mutableStateOf<String?>(null) }
     fun doDeleteDetailItem(item: String) {
         InteractionFeedback.haptic(detailContext)
-        viewModel.removeListPageItemIn(book, pageTitle, item)
+        val snap = viewModel.deletePageItemWithUndo(book, pageTitle, item)
         if (selectedDetailItem == item) selectedDetailItem = null
         if (renameDetailItem == item) renameDetailItem = null
         pendingDeleteDetailItem = null
         onToggle()
+        if (snap != null) onUndoDelete(snap)
     }
     fun selectDetailItem(item: String) {
         InteractionFeedback.haptic(detailContext)

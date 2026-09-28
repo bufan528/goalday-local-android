@@ -223,6 +223,70 @@ class BookViewModel(
         syncEditableContent()
     }
 
+    /** 清单条目删除快照：删前整单拍下，撤销时原样写回（含勾选/日期/备注/排序/池/排期） */
+    data class DeletedPageItemSnapshot(
+        val bookId: String,
+        val pageTitle: String,
+        val item: String,
+        val customItems: List<String>,
+        val wasHidden: Boolean,
+        val wasChecked: Boolean,
+        val checkedDate: String,
+        val metaNote: String,
+        val metaDeadlineDay: Int?,
+        val order: List<String>,
+        val todayPlan: List<String>,
+        val todayCompleted: List<String>,
+        val removedSchedules: List<ScheduleEntry>,
+    )
+
+    /** 删除并返回快照（供 Snackbar 撤销；空标题返回 null） */
+    fun deletePageItemWithUndo(book: TopicBook, pageTitle: String, item: String): DeletedPageItemSnapshot? {
+        val normalized = item.trim()
+        if (normalized.isBlank()) return null
+        val snap = DeletedPageItemSnapshot(
+            bookId = book.id,
+            pageTitle = pageTitle,
+            item = normalized,
+            customItems = store.customPageItems(book.id, pageTitle),
+            wasHidden = normalized in store.hiddenPageItems(book.id, pageTitle),
+            wasChecked = store.isChecked(book.id, pageTitle, normalized),
+            checkedDate = store.checkedDate(book.id, pageTitle, normalized),
+            metaNote = store.targetItemMeta(book.id, pageTitle, normalized).note,
+            metaDeadlineDay = store.targetItemMeta(book.id, pageTitle, normalized).deadlineDay,
+            order = store.pageItemOrder(book.id, pageTitle),
+            todayPlan = store.todayPlanItems(book.id, pageTitle),
+            todayCompleted = store.todayCompletedItems(book.id, pageTitle),
+            removedSchedules = scheduleRepository.entries().filter { it.title == normalized && it.note == book.title },
+        )
+        removeListPageItemIn(book, pageTitle, normalized)
+        return snap
+    }
+
+    /** 撤销删除：快照原样写回（后建的同名条不顶掉，按 id 去重补回排期） */
+    fun restorePageItem(snap: DeletedPageItemSnapshot) {
+        store.saveCustomPageItems(snap.bookId, snap.pageTitle, snap.customItems)
+        store.setHiddenPageItem(snap.bookId, snap.pageTitle, snap.item, snap.wasHidden)
+        store.setChecked(snap.bookId, snap.pageTitle, snap.item, snap.wasChecked)
+        store.setCheckedDate(snap.bookId, snap.pageTitle, snap.item, snap.checkedDate)
+        store.setTargetItemMeta(
+            snap.bookId,
+            snap.pageTitle,
+            snap.item,
+            TargetItemMeta(note = snap.metaNote, deadlineDay = snap.metaDeadlineDay),
+        )
+        store.savePageItemOrder(snap.bookId, snap.pageTitle, snap.order)
+        store.saveTodayPlanItems(snap.bookId, snap.pageTitle, snap.todayPlan)
+        store.saveTodayCompletedItems(snap.bookId, snap.pageTitle, snap.todayCompleted)
+        if (snap.removedSchedules.isNotEmpty()) {
+            val current = scheduleRepository.entries()
+            val ids = current.map { it.id }.toSet()
+            scheduleRepository.saveEntries(current + snap.removedSchedules.filterNot { it.id in ids })
+        }
+        _uiState.update { it.copy(checkedRevision = it.checkedRevision + 1L) }
+        syncEditableContent()
+    }
+
     /** 主屏清单池行内改名：自定义条目直接改名并迁移勾选/备注/日程；模板条目转存为自定义并隐藏原条目。 */
     fun renameListPageItem(oldItem: String, newItem: String) {
         val book = currentBook()
