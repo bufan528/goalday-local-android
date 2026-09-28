@@ -80,6 +80,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -153,6 +154,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.WeekFields
 import kotlin.math.roundToInt
+import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -934,6 +936,7 @@ private val EntryColorChoices: List<Int?> = listOf(
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun SwipeableActionsRow(
+    rowKey: Any? = null,
     actions: List<SwipeAction>,
     onContentClick: (() -> Unit)? = null,
     onContentLongClick: (() -> Unit)? = null,
@@ -942,8 +945,13 @@ private fun SwipeableActionsRow(
     val density = LocalDensity.current
     // 对照原版：按钮内 ImageView 宽50dp居中，每操作占50dp
     val maxRevealPx = with(density) { (50.dp * actions.size).toPx() }
-    val reveal = remember { Animatable(0f) }
+    // 状态跟行身份：排序/置顶复用行时不把展开态串到别行
+    val reveal = remember(rowKey) { Animatable(0f) }
     val scope = rememberCoroutineScope()
+    // 本次手势累计横滑：超阈值后松手的点按只收起、不触发行点按；行已展开时点按只收起
+    var dragPx by remember(rowKey) { mutableFloatStateOf(0f) }
+    val tapSlopPx = with(density) { 10.dp.toPx() }
+    val contentClick = onContentClick
     Box(Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -980,6 +988,7 @@ private fun SwipeableActionsRow(
                     detectHorizontalDragGestures(
                         onHorizontalDrag = { change, dragAmount ->
                             change.consume()
+                            dragPx += abs(dragAmount)
                             scope.launch {
                                 reveal.snapTo((reveal.value - dragAmount).coerceIn(0f, maxRevealPx))
                             }
@@ -997,10 +1006,18 @@ private fun SwipeableActionsRow(
                     )
                 }
                 .then(
-                    if (onContentClick != null) {
+                    if (contentClick != null) {
                         Modifier.combinedClickable(
-                            onClick = onContentClick,
-                            onLongClick = onContentLongClick ?: onContentClick,
+                            onClick = {
+                                val dragged = dragPx
+                                dragPx = 0f
+                                if (dragged > tapSlopPx || reveal.value > 1f) {
+                                    scope.launch { reveal.animateTo(0f, tween(durationMillis = 180)) }
+                                } else {
+                                    contentClick()
+                                }
+                            },
+                            onLongClick = onContentLongClick ?: contentClick,
                         )
                     } else {
                         Modifier
@@ -2334,6 +2351,7 @@ private fun TopicListView(
                     val total = cardItems.size
                     // 左滑操作层（对照原版清单卡片左滑：黑色信息 + 红色删除）
                     SwipeableActionsRow(
+                        rowKey = book.id,
                         actions = buildList {
                             add(
                                 SwipeAction("打开", Color(0xFF252525), Icons.Filled.Info) {
@@ -2863,6 +2881,7 @@ private fun TopicDetailSimple(
                 val isEditingDetail = (renameDetailItem == item)
                 // 左滑露出编辑/删除（对照原版 SwipeRevealLayout 黑编辑+红删除）；点按切换勾选，长按选中出底栏
                 SwipeableActionsRow(
+                    rowKey = "${book.id}:$pageTitle:$item",
                     actions = listOf(
                         SwipeAction("编辑", Color(0xFF252525), Icons.Filled.Edit) {
                             selectedDetailItem = null
