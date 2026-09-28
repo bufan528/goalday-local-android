@@ -106,6 +106,12 @@ fun SettingsScreen(
     var reminderOn by remember {
         mutableStateOf(com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.isEnabled(mmkv))
     }
+    var morningMinutes by remember {
+        mutableStateOf(com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.morningMinutes(mmkv))
+    }
+    var eveningMinutes by remember {
+        mutableStateOf(com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.eveningMinutes(mmkv))
+    }
     // 33+ 开通知要运行时授权：拒绝则开关弹回，不静默开空头支票
     val notifPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
@@ -113,10 +119,38 @@ fun SettingsScreen(
         if (granted) {
             reminderOn = true
             com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.setEnabled(context, true)
-            Toast.makeText(context, "每日提醒已开启：早8点、晚9点各一次", Toast.LENGTH_SHORT).show()
+            val sched = com.bf410.goaldaylocal.ui.reminder.ReminderScheduler
+            Toast.makeText(
+                context,
+                "每日提醒已开启：早${sched.formatMinutes(morningMinutes)}、晚${sched.formatMinutes(eveningMinutes)}各一次",
+                Toast.LENGTH_SHORT,
+            ).show()
         } else {
             Toast.makeText(context, "未获得通知权限，请到系统设置中打开", Toast.LENGTH_LONG).show()
         }
+    }
+    // 提醒时间选择：落盘即重排（已开启才设闹钟，未开启只存时间）
+    fun pickReminderTime(isMorning: Boolean) {
+        val sched = com.bf410.goaldaylocal.ui.reminder.ReminderScheduler
+        val current = if (isMorning) morningMinutes else eveningMinutes
+        android.app.TimePickerDialog(
+            context,
+            { _, hour: Int, minute: Int ->
+                val total = (hour * 60 + minute).coerceIn(0, 1439)
+                if (isMorning) {
+                    morningMinutes = total
+                    sched.setTimes(context, total, eveningMinutes)
+                    Toast.makeText(context, "早提醒已设为 ${sched.formatMinutes(total)}", Toast.LENGTH_SHORT).show()
+                } else {
+                    eveningMinutes = total
+                    sched.setTimes(context, morningMinutes, total)
+                    Toast.makeText(context, "晚提醒已设为 ${sched.formatMinutes(total)}", Toast.LENGTH_SHORT).show()
+                }
+            },
+            current / 60,
+            current % 60,
+            true,
+        ).show()
     }
     var pendingRestore by remember { mutableStateOf<BackupSnapshot?>(null) }
     var pendingDelete by remember { mutableStateOf<BackupSnapshot?>(null) }
@@ -255,10 +289,10 @@ fun SettingsScreen(
                     onClick = onShowGuide,
                 )
                 SettingsDivider()
-                // 每日提醒行：早8点今日待办、晚9点当日剩余（含逾期），关掉即取消闹钟
+                // 每日提醒行：早晚各一次（含逾期），关掉即取消闹钟；时间行点按调时
                 SettingsSwitchRow(
                     title = "每日提醒",
-                    subtitle = "早8点 · 晚9点",
+                    subtitle = "早${com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.formatMinutes(morningMinutes)} · 晚${com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.formatMinutes(eveningMinutes)}",
                     checked = reminderOn,
                     onCheckedChange = { checked ->
                         if (!checked) {
@@ -278,8 +312,24 @@ fun SettingsScreen(
                         }
                         reminderOn = true
                         com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.setEnabled(context, true)
-                        Toast.makeText(context, "每日提醒已开启：早8点、晚9点各一次", Toast.LENGTH_SHORT).show()
+                        val reopenSched = com.bf410.goaldaylocal.ui.reminder.ReminderScheduler
+                        Toast.makeText(
+                            context,
+                            "每日提醒已开启：早${reopenSched.formatMinutes(morningMinutes)}、晚${reopenSched.formatMinutes(eveningMinutes)}各一次",
+                            Toast.LENGTH_SHORT,
+                        ).show()
                     },
+                )
+                SettingsDivider()
+                // 早/晚提醒时间：点按弹时间选择器，落盘即重排
+                SettingsNavRow(
+                    title = "早提醒时间 · ${com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.formatMinutes(morningMinutes)}",
+                    onClick = { pickReminderTime(true) },
+                )
+                SettingsDivider()
+                SettingsNavRow(
+                    title = "晚提醒时间 · ${com.bf410.goaldaylocal.ui.reminder.ReminderScheduler.formatMinutes(eveningMinutes)}",
+                    onClick = { pickReminderTime(false) },
                 )
             }
 

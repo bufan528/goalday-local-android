@@ -94,4 +94,12 @@ class ReminderDigestTest {
         assertEquals(ReminderKind.EVENING, digest.kind)
         assertTrue(digest.notificationTitle().contains("还剩1件"))
     }
+
+    @Test
+    fun format_minutes_pads_and_wraps_day() {
+        assertEquals("8:00", ReminderScheduler.formatMinutes(480))
+        assertEquals("21:05", ReminderScheduler.formatMinutes(1265))
+        assertEquals("0:00", ReminderScheduler.formatMinutes(0))
+        assertEquals("23:59", ReminderScheduler.formatMinutes(1439))
+    }
 }

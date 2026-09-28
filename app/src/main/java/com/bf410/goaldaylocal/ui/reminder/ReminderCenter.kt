@@ -26,8 +26,6 @@ import java.util.Calendar
  * 只用框架能力：AlarmManager.setInexactRepeating（无需精确闹钟权限，
  *  Doze 下最多延迟一批次，提醒场景可接受）+ BroadcastReceiver + NotificationCompat。
  */
-const val REMINDER_MORNING_HOUR = 8
-const val REMINDER_EVENING_HOUR = 21
 
 private const val CHANNEL_ID = "goalday_reminder"
 private const val NOTIFICATION_ID_MORNING = 1001
@@ -38,6 +36,10 @@ private const val ACTION_MORNING = "com.bf410.goaldaylocal.action.REMINDER_MORNI
 private const val ACTION_EVENING = "com.bf410.goaldaylocal.action.REMINDER_EVENING"
 private const val ACTION_ROLLOVER = "com.bf410.goaldaylocal.action.REMINDER_ROLLOVER"
 private const val KEY_REMINDER_ENABLED = "reminder_daily_enabled"
+private const val KEY_MORNING_MINUTES = "reminder_morning_minutes"
+private const val KEY_EVENING_MINUTES = "reminder_evening_minutes"
+const val DEFAULT_MORNING_MINUTES = 8 * 60
+const val DEFAULT_EVENING_MINUTES = 21 * 60
 private const val MAX_LISTED_TITLES = 4
 
 enum class ReminderKind {
@@ -126,19 +128,44 @@ object ReminderScheduler {
         if (enabled) schedule(context) else cancel(context)
     }
 
-    /** 开机/升级/安装后重排：幂等，先取消再设。 */
+    /** 当天分钟数（0..1439，脏值钳回默认）：设置页时间选择器落盘走这里。 */
+    fun morningMinutes(mmkv: MMKV = MMKV.defaultMMKV()): Int =
+        runCatching { mmkv.decodeInt(KEY_MORNING_MINUTES, DEFAULT_MORNING_MINUTES) }
+            .getOrDefault(DEFAULT_MORNING_MINUTES).coerceIn(0, 1439)
+
+    fun eveningMinutes(mmkv: MMKV = MMKV.defaultMMKV()): Int =
+        runCatching { mmkv.decodeInt(KEY_EVENING_MINUTES, DEFAULT_EVENING_MINUTES) }
+            .getOrDefault(DEFAULT_EVENING_MINUTES).coerceIn(0, 1439)
+
+    fun formatMinutes(minutes: Int): String =
+        "${minutes / 60}:${(minutes % 60).toString().padStart(2, '0')}"
+
+    /** 改时间：落盘 + 已开启则立即重排（幂等，先取消再设）。 */
+    fun setTimes(context: Context, morningMinutes: Int, eveningMinutes: Int) {
+        runCatching {
+            MMKV.defaultMMKV().encode(KEY_MORNING_MINUTES, morningMinutes.coerceIn(0, 1439))
+            MMKV.defaultMMKV().encode(KEY_EVENING_MINUTES, eveningMinutes.coerceIn(0, 1439))
+        }
+        if (isEnabled()) schedule(context, morningMinutes, eveningMinutes)
+    }
+
+    /** 开机/升级/安装后重排：读存盘时间，幂等，先取消再设。 */
     fun schedule(context: Context) {
+        schedule(context, morningMinutes(), eveningMinutes())
+    }
+
+    fun schedule(context: Context, morningMinutes: Int, eveningMinutes: Int) {
         cancel(context)
         val alarm = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         alarm.setInexactRepeating(
             AlarmManager.RTC_WAKEUP,
-            nextTriggerMillis(REMINDER_MORNING_HOUR),
+            nextTriggerMillis(morningMinutes / 60, morningMinutes % 60),
             AlarmManager.INTERVAL_DAY,
             operationFor(context, ACTION_MORNING, REQUEST_MORNING),
         )
         alarm.setInexactRepeating(
             AlarmManager.RTC_WAKEUP,
-            nextTriggerMillis(REMINDER_EVENING_HOUR),
+            nextTriggerMillis(eveningMinutes / 60, eveningMinutes % 60),
             AlarmManager.INTERVAL_DAY,
             operationFor(context, ACTION_EVENING, REQUEST_EVENING),
         )
@@ -150,11 +177,11 @@ object ReminderScheduler {
         alarm.cancel(operationFor(context, ACTION_EVENING, REQUEST_EVENING))
     }
 
-    private fun nextTriggerMillis(hour: Int): Long {
+    private fun nextTriggerMillis(hour: Int, minute: Int): Long {
         val now = Calendar.getInstance()
         val next = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, 0)
+            set(Calendar.HOUR_OF_DAY, hour.coerceIn(0, 23))
+            set(Calendar.MINUTE, minute.coerceIn(0, 59))
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
