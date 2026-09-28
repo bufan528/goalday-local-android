@@ -78,6 +78,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -1073,6 +1074,14 @@ private fun WeekScheduleView(
     val context = LocalContext.current
     val monday = selectedDate.with(DayOfWeek.MONDAY)
     val weekDays = remember(monday) { (0..6).map { monday.plusDays(it.toLong()) } }
+    // 按日分组+排序一次记忆：逐行 filter+sort 在每次重组跑 7 次全表扫描，勾选一次整周重算
+    val weekEntriesByDate = remember(uiState.schedulePreviewEntries, monday) {
+        weekDays.associateWith { date ->
+            uiState.schedulePreviewEntries
+                .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
+                .sortedWith(compareBy({ !it.pinned }, { if (it.timeText.isBlank()) -1 else dayEntryTimeRank(it.timeText, it.note) }))
+        }
+    }
     // 草稿不跟 editingDate 作 key：外部清编辑态（返回/切页/切Tab）会 dispose 输入框，
     // key 写法会在补提交 effect 跑之前先重置草稿；改无 key + 显式提交/清空
     var quickInput by remember { mutableStateOf("") }
@@ -1196,11 +1205,7 @@ private fun WeekScheduleView(
             val taskAreaWidth = (maxWidth - 43.dp - 4.dp - 12.dp).coerceAtLeast(0.dp)
             // 固定态截断上限（展开 3 / 收起 6）；有任何一天超限则整周允许纵滑，否则保持固定等高不可滑
             val fixedCap = if (poolCollapsed) 6 else 3
-            val weekHasOverflow = weekDays.any { d ->
-                uiState.schedulePreviewEntries.count {
-                    it.year == d.year && it.month == d.monthValue && it.day == d.dayOfMonth
-                } > fixedCap
-            }
+            val weekHasOverflow = weekDays.any { d -> (weekEntriesByDate[d]?.size ?: 0) > fixedCap }
         LazyColumn(
             state = listState,
             // 收起态双列多行撑高后也要能滑，否则长标题的后几行看不到
@@ -1211,10 +1216,9 @@ private fun WeekScheduleView(
         ) {
             items(weekDays, key = { it.toEpochDay() }) { date ->
                 // 稳定排序只到时间：同键保持入库顺序（id 是随机串，排进去展示顺序随机跳变）；
-                // 时间按数值排（09:30 不会掉到 10:00 后面），无时间仍置顶（与旧字符串排序一致）
-                val entries = uiState.schedulePreviewEntries
-                    .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
-                    .sortedWith(compareBy({ !it.pinned }, { if (it.timeText.isBlank()) -1 else dayEntryTimeRank(it.timeText, it.note) }))
+                // 时间按数值排（09:30 不会掉到 10:00 后面），无时间仍置顶（与旧字符串排序一致）；
+                // 分组已在外层记忆，行内只取表
+                val entries = weekEntriesByDate[date].orEmpty()
                 val isToday = date == today
                 val isEditing = editingDate == date
                 // 超限当天行增高（min 撑开，footer 可见）+ 整周可滑；未超限保持等高不可滑；
@@ -2051,6 +2055,34 @@ private fun RecordDiaryView(
     }
 
     val ioScope = rememberCoroutineScope()
+    // 逐字落盘防抖：输入停 400ms 后放 IO 线程编解码，主线程不卡；
+    // 初挂载跳过一次（否则每次进页都写一次相同内容）
+    var diarySaveArmed by remember(selectedDate) { mutableStateOf(false) }
+    fun saveAllAsync() {
+        val snapshotText = text
+        val snapshotImages = imagePaths
+        val snapshotDate = selectedDate
+        ioScope.launch {
+            withContext(Dispatchers.IO) {
+                val freshEntries = store.scheduleEntries().filter {
+                    it.year == snapshotDate.year && it.month == snapshotDate.monthValue && it.day == snapshotDate.dayOfMonth
+                }
+                store.setDiaryText(DIARY_BOOK_ID, snapshotDate.toString(), buildStructuredDiary(snapshotDate, freshEntries, snapshotText, snapshotImages))
+            }
+        }
+    }
+    LaunchedEffect(text, imagePaths) {
+        if (!diarySaveArmed) {
+            diarySaveArmed = true
+            return@LaunchedEffect
+        }
+        delay(400)
+        saveAllAsync()
+    }
+    // 切页/退页前同步 flush：debounce 赶不上 400ms 内切页，离页前把草稿落定（与逐字旧行为同数据零丢失）
+    DisposableEffect(selectedDate) {
+        onDispose { saveAll() }
+    }
     val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia(),
     ) { uri ->
@@ -2069,7 +2101,7 @@ private fun RecordDiaryView(
                 }
                 if (absPath != null) {
                     imagePaths = imagePaths + absPath
-                    saveAll()
+                    saveAllAsync()
                 }
             }
         }
@@ -2139,7 +2171,7 @@ private fun RecordDiaryView(
                 value = text,
                 onValueChange = {
                     text = it
-                    saveAll()
+                    // 落盘走 400ms 防抖（见 saveAllAsync），逐字同步 encode 会卡输入
                 },
                 textStyle = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, color = GoaldayDesign.adaptiveInkPrimary),
                 cursorBrush = SolidColor(TodayCoral),
@@ -2168,8 +2200,11 @@ private fun RecordDiaryView(
                 Spacer(Modifier.height(10.dp))
                 DiaryImageThumb(path = path, onRemove = {
                     imagePaths = imagePaths - path
-                    java.io.File(path).delete()
-                    saveAll()
+                    // 删文件走 IO，落盘走防抖异步，主线程不卡
+                    ioScope.launch {
+                        withContext(Dispatchers.IO) { runCatching { java.io.File(path).delete() } }
+                        saveAllAsync()
+                    }
                 })
             }
             Spacer(Modifier.height(120.dp))
@@ -3881,6 +3916,14 @@ private fun MonthScheduleView(
     val listState = rememberLazyListState()
     val monthContext = LocalContext.current
     val monthStore = remember { LocalStateStore(MMKV.defaultMMKV()) }
+    // 按日分组+排序一次记忆：30 行逐行全表扫描在每次重组跑 30 次，月视图是最大头
+    val monthEntriesByDate = remember(uiState.schedulePreviewEntries, selectedDate.withDayOfMonth(1)) {
+        monthDays.associateWith { date ->
+            uiState.schedulePreviewEntries
+                .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
+                .sortedWith(compareBy({ !it.pinned }, { if (it.timeText.isBlank()) -1 else dayEntryTimeRank(it.timeText, it.note) }))
+        }
+    }
     // 右侧清单侧栏折叠（对照 fragment_monthly_schedule 的 bg_arrow 圆钮）
     var monthPoolCollapsed by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(selectedDate) {
@@ -3896,10 +3939,8 @@ private fun MonthScheduleView(
         contentPadding = PaddingValues(bottom = 90.dp),
     ) {
         items(monthDays, key = { it.toEpochDay() }) { date ->
-            // 稳定排序只到时间：同键保持入库顺序（与周视图/书内一致；时间按数值排，无时间置顶）
-            val entries = uiState.schedulePreviewEntries
-                .filter { it.year == date.year && it.month == date.monthValue && it.day == date.dayOfMonth }
-                .sortedWith(compareBy({ !it.pinned }, { if (it.timeText.isBlank()) -1 else dayEntryTimeRank(it.timeText, it.note) }))
+            // 稳定排序只到时间：同键保持入库顺序（与周视图/书内一致；时间按数值排，无时间置顶）；分组已记忆
+            val entries = monthEntriesByDate[date].orEmpty()
             val isToday = date == today
             Row(
                 modifier = Modifier
