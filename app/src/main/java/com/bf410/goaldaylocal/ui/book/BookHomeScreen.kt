@@ -52,6 +52,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -2376,18 +2377,23 @@ private fun EditBookDialog(
     var colorIndex by remember { mutableStateOf(bookPalette.indexOfFirst { it == book.color }.coerceAtLeast(0)) }
 
     val editBookContext = LocalContext.current
+    val editTitleFocus = remember { FocusRequester() }
+    val editSubtitleFocus = remember { FocusRequester() }
+    fun submitEditBook() {
+        if (title.isBlank()) {
+            android.widget.Toast.makeText(editBookContext, "先写手账名称", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        onConfirm(title.trim(), subtitle.trim(), bookPalette[colorIndex])
+    }
+    LaunchedEffect(Unit) {
+        delay(150)
+        runCatching { editTitleFocus.requestFocus() }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            Button(
-                onClick = {
-                    if (title.isBlank()) {
-                        android.widget.Toast.makeText(editBookContext, "先写手账名称", android.widget.Toast.LENGTH_SHORT).show()
-                    } else {
-                        onConfirm(title.trim(), subtitle.trim(), bookPalette[colorIndex])
-                    }
-                },
-            ) {
+            Button(onClick = { submitEditBook() }) {
                 Text(BookStrings.save)
             }
         },
@@ -2396,8 +2402,24 @@ private fun EditBookDialog(
         text = {
             com.bf410.goaldaylocal.ui.KeepImmersiveInDialog()
             Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.bookName) }, singleLine = true)
-                OutlinedTextField(value = subtitle, onValueChange = { subtitle = it }, label = { Text(BookStrings.subtitle) }, singleLine = true)
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text(BookStrings.bookName) },
+                    singleLine = true,
+                    modifier = Modifier.focusRequester(editTitleFocus),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { runCatching { editSubtitleFocus.requestFocus() } }),
+                )
+                OutlinedTextField(
+                    value = subtitle,
+                    onValueChange = { subtitle = it },
+                    label = { Text(BookStrings.subtitle) },
+                    singleLine = true,
+                    modifier = Modifier.focusRequester(editSubtitleFocus),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { submitEditBook() }),
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     bookPalette.forEachIndexed { index, color ->
                         Box(
@@ -2423,6 +2445,11 @@ private fun CreatePageDialog(
 ) {
     var title by remember(preset) { mutableStateOf(preset.title) }
     var type by remember(preset) { mutableStateOf(preset.type) }
+    val pageTitleFocus = remember { FocusRequester() }
+    LaunchedEffect(preset) {
+        delay(150)
+        runCatching { pageTitleFocus.requestFocus() }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -2439,7 +2466,15 @@ private fun CreatePageDialog(
         text = {
             com.bf410.goaldaylocal.ui.KeepImmersiveInDialog()
             Column(verticalArrangement = Arrangement.spacedBy(GoaldayDesign.Space3)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.pageTitle) }, singleLine = true)
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text(BookStrings.pageTitle) },
+                    singleLine = true,
+                    modifier = Modifier.focusRequester(pageTitleFocus),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { if (title.isNotBlank()) onConfirm(type, title) }),
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     listOf(
                         "target" to "目标",
@@ -2486,6 +2521,11 @@ private fun RenamePageDialog(
     onConfirm: (String) -> Unit,
 ) {
     var title by remember(currentTitle) { mutableStateOf(currentTitle) }
+    val renameTitleFocus = remember { FocusRequester() }
+    LaunchedEffect(currentTitle) {
+        delay(150)
+        runCatching { renameTitleFocus.requestFocus() }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -2494,7 +2534,15 @@ private fun RenamePageDialog(
         title = { Text(BookStrings.renamePageTitle) },
         text = {
             com.bf410.goaldaylocal.ui.KeepImmersiveInDialog()
-            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(BookStrings.pageTitle) }, singleLine = true)
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text(BookStrings.pageTitle) },
+                singleLine = true,
+                modifier = Modifier.focusRequester(renameTitleFocus),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { if (title.isNotBlank()) onConfirm(title.trim()) }),
+            )
         },
     )
 }

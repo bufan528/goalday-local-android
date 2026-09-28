@@ -1357,7 +1357,8 @@ private fun WeekScheduleView(
                                                 },
                                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                             keyboardActions = KeyboardActions(
-                                                onDone = { commitQuick(date) },
+                                                // 有字落盘连击（键盘不收）；空按退出编辑（纯键盘退出路径）
+                                                onDone = { if (quickInput.isBlank()) onFinishEdit() else commitQuick(date) },
                                             ),
                                             decorationBox = { inner ->
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
