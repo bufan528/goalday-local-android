@@ -127,6 +127,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import com.bf410.goaldaylocal.ui.InteractionFeedback
 import com.bf410.goaldaylocal.ui.KeepImmersiveInDialog
 import com.bf410.goaldaylocal.ui.KeepImmersiveInPopup
@@ -597,28 +601,42 @@ private fun WeekColorBar(
         EntryColorChoices.forEach { argb ->
             val resolved = argb ?: defaultArgb
             val isSelected = (activeArgb ?: defaultArgb) == resolved
+            // 触区放大到 40dp（视觉圆仍 30dp；6 点+12dp 间距+32dp 边距共 332dp，屏宽 344dp 放得下）
             Box(
                 modifier = Modifier
-                    .size(30.dp)
-                    .clip(CircleShape)
-                    .background(Color(resolved))
-                    .border(
-                        width = if (isSelected) 2.dp else 0.dp,
-                        color = if (isSelected) GoaldayDesign.adaptiveInkPrimary else Color.Transparent,
-                        shape = CircleShape,
-                    )
-                    .clickable {
+                    .size(40.dp)
+                    .semantics {
+                        contentDescription = "选择颜色"
+                        role = Role.Button
+                    }
+                    .clickable(
+                        role = Role.Button,
+                        onClickLabel = "选择颜色",
+                    ) {
                         InteractionFeedback.click(barContext)
                         onPick(argb)
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                if (argb == null) {
-                    Box(
-                        Modifier
-                            .size(22.dp)
-                            .border(1.2.dp, Color.White.copy(alpha = 0.85f), CircleShape),
-                    )
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(Color(resolved))
+                        .border(
+                            width = if (isSelected) 2.dp else 0.dp,
+                            color = if (isSelected) GoaldayDesign.adaptiveInkPrimary else Color.Transparent,
+                            shape = CircleShape,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (argb == null) {
+                        Box(
+                            Modifier
+                                .size(22.dp)
+                                .border(1.2.dp, Color.White.copy(alpha = 0.85f), CircleShape),
+                        )
+                    }
                 }
             }
         }
@@ -1418,7 +1436,12 @@ private fun WeekScheduleView(
                                             color = GoaldayDesign.adaptiveInkMuted,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.fillMaxWidth().padding(start = 28.dp, top = 2.dp).clickable { onExpandAll() },
+                                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(start = 28.dp)
+                                                .semantics {
+                                                    contentDescription = "还有${hiddenCount}项，点按展开全部"
+                                                    role = Role.Button
+                                                }
+                                                .clickable(role = Role.Button, onClickLabel = "展开全部") { onExpandAll() },
                                         )
                                     }
                                 }
@@ -1452,7 +1475,12 @@ private fun WeekScheduleView(
                                             color = GoaldayDesign.adaptiveInkMuted,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.fillMaxWidth().padding(start = 28.dp, top = 2.dp).clickable { onExpandAll() },
+                                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(start = 28.dp)
+                                                .semantics {
+                                                    contentDescription = "还有${hiddenCount}项，点按展开全部"
+                                                    role = Role.Button
+                                                }
+                                                .clickable(role = Role.Button, onClickLabel = "展开全部") { onExpandAll() },
                                         )
                                     }
                                 }
@@ -1769,37 +1797,60 @@ private fun WeekScheduleView(
                 item { Spacer(Modifier.height(90.dp)) }
             }
 
-            // 收起/展开按钮：43×43dp 圆形 #E5DAD4（对照原版 bg_arrow，margin 33dp）
+            // 收起/展开按钮：视觉仍 43×43dp 圆形 #E5DAD4（对照原版 bg_arrow，margin 33dp），触区放大到 48dp
             Box(Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 33.dp, bottom = 20.dp)
-                        .size(43.dp)
-                        .background(MainTabBarBg, CircleShape)
-                        .clickable { poolCollapsed = !poolCollapsed },
+                        .size(48.dp)
+                        .semantics {
+                            contentDescription = if (poolCollapsed) "展开任务池" else "收起任务池"
+                            role = Role.Button
+                        }
+                        .clickable(
+                            role = Role.Button,
+                            onClickLabel = if (poolCollapsed) "展开任务池" else "收起任务池",
+                        ) { poolCollapsed = !poolCollapsed },
                     contentAlignment = Alignment.Center,
                 ) {
-                    // 自绘描线箭头（对照原版 bg_arrow 内 8×15dp 位图箭头）
-                    ChevronGlyph(mirrored = poolCollapsed, color = GoaldayDesign.adaptiveInkPrimary)
+                    Box(
+                        modifier = Modifier
+                            .size(43.dp)
+                            .background(MainTabBarBg, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        // 自绘描线箭头（对照原版 bg_arrow 内 8×15dp 位图箭头）
+                        ChevronGlyph(mirrored = poolCollapsed, color = GoaldayDesign.adaptiveInkPrimary)
+                    }
                 }
             }
         }
         }
 
-        // 池折叠时：右下角展开按钮
+        // 池折叠时：右下角展开按钮（视觉 43dp 不动，触区 48dp）
         if (poolCollapsed) {
             Box(Modifier.fillMaxHeight()) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 33.dp, bottom = 40.dp)
-                        .size(43.dp)
-                        .background(MainTabBarBg, CircleShape)
-                        .clickable { poolCollapsed = false },
+                        .size(48.dp)
+                        .semantics {
+                            contentDescription = "展开任务池"
+                            role = Role.Button
+                        }
+                        .clickable(role = Role.Button, onClickLabel = "展开任务池") { poolCollapsed = false },
                     contentAlignment = Alignment.Center,
                 ) {
-                    ChevronGlyph(mirrored = true, color = GoaldayDesign.adaptiveInkPrimary)
+                    Box(
+                        modifier = Modifier
+                            .size(43.dp)
+                            .background(MainTabBarBg, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        ChevronGlyph(mirrored = true, color = GoaldayDesign.adaptiveInkPrimary)
+                    }
                 }
             }
         }
@@ -2087,29 +2138,47 @@ private fun RecordDiaryView(
                     .padding(start = 8.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    Icons.Filled.Image,
-                    contentDescription = "插入图片",
-                    tint = GoaldayDesign.adaptiveInkPrimary,
+                // 工具图标触区放大到 48dp（视觉仍 25dp）
+                Box(
                     modifier = Modifier
-                        .size(25.dp)
-                        .clickable {
+                        .size(48.dp)
+                        .semantics {
+                            contentDescription = "插入图片"
+                            role = Role.Button
+                        }
+                        .clickable(role = Role.Button, onClickLabel = "插入图片") {
                             imagePicker.launch(
                                 androidx.activity.result.PickVisualMediaRequest(
                                     androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly,
                                 ),
                             )
                         },
-                )
-                Spacer(Modifier.width(16.dp))
-                Icon(
-                    Icons.Filled.Keyboard,
-                    contentDescription = "收起键盘",
-                    tint = GoaldayDesign.adaptiveInkPrimary,
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Filled.Image,
+                        contentDescription = null,
+                        tint = GoaldayDesign.adaptiveInkPrimary,
+                        modifier = Modifier.size(25.dp),
+                    )
+                }
+                Box(
                     modifier = Modifier
-                        .size(25.dp)
-                        .clickable { focusManager.clearFocus() },
-                )
+                        .size(48.dp)
+                        .semantics {
+                            contentDescription = "收起键盘"
+                            role = Role.Button
+                        }
+                        .clickable(role = Role.Button, onClickLabel = "收起键盘") { focusManager.clearFocus() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Filled.Keyboard,
+                        contentDescription = null,
+                        tint = GoaldayDesign.adaptiveInkPrimary,
+                        modifier = Modifier.size(25.dp),
+                    )
+                }
             }
         }
     }
@@ -2131,17 +2200,27 @@ private fun DiaryImageThumb(path: String, onRemove: () -> Unit) {
                 contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
                 modifier = Modifier.fillMaxWidth(),
             )
-            Text(
-                "×",
-                fontSize = 14.sp,
-                color = Color.White,
+            // 移除键：视觉保持小黑底丸，触区外包到 48dp
+            Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(6.dp)
-                    .background(Color(0x66000000), CircleShape)
-                    .padding(horizontal = 7.dp, vertical = 1.dp)
-                    .clickable { onRemove() },
-            )
+                    .size(48.dp)
+                    .semantics {
+                        contentDescription = "移除图片"
+                        role = Role.Button
+                    }
+                    .clickable(role = Role.Button, onClickLabel = "移除图片") { onRemove() },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    "×",
+                    fontSize = 14.sp,
+                    color = Color.White,
+                    modifier = Modifier
+                        .background(Color(0x66000000), CircleShape)
+                        .padding(horizontal = 7.dp, vertical = 1.dp),
+                )
+            }
         }
     }
 }
@@ -2319,27 +2398,47 @@ private fun TopicListView(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(43.dp)
-                        .background(FabLight, CircleShape)
-                        .clickable { showAddSheet = true },
+                        .size(48.dp)
+                        .semantics {
+                            contentDescription = "新建清单"
+                            role = Role.Button
+                        }
+                        .clickable(role = Role.Button, onClickLabel = "新建清单") { showAddSheet = true },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = "新建清单",
-                        tint = GoaldayDesign.adaptiveInkPrimary,
-                        modifier = Modifier.size(22.dp),
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(43.dp)
+                            .background(FabLight, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = null,
+                            tint = GoaldayDesign.adaptiveInkPrimary,
+                            modifier = Modifier.size(22.dp),
+                        )
+                    }
                 }
                 Box(
                     modifier = Modifier
-                        .size(43.dp)
-                        .background(TodayBlack, CircleShape)
-                        .clickable { onOpenInspiration() },
+                        .size(48.dp)
+                        .semantics {
+                            contentDescription = "打开灵感"
+                            role = Role.Button
+                        }
+                        .clickable(role = Role.Button, onClickLabel = "打开灵感") { onOpenInspiration() },
                     contentAlignment = Alignment.Center,
                 ) {
-                    // 自绘描线灯泡（对照原版 iv_tip 描线灯泡）
-                    OutlineBulbGlyph(tint = Color.White)
+                    Box(
+                        modifier = Modifier
+                            .size(43.dp)
+                            .background(TodayBlack, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        // 自绘描线灯泡（对照原版 iv_tip 描线灯泡）
+                        OutlineBulbGlyph(tint = Color.White)
+                    }
                 }
             }
         }
@@ -2940,8 +3039,15 @@ private fun TopicDetailSimple(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(width = 56.dp, height = 46.dp)
-                            .clickable {
+                            .size(width = 56.dp, height = 48.dp)
+                            .semantics {
+                                contentDescription = label
+                                role = Role.Button
+                            }
+                            .clickable(
+                                role = Role.Button,
+                                onClickLabel = label,
+                            ) {
                                 InteractionFeedback.click(detailContext)
                                 onTap()
                             },
@@ -3361,28 +3467,42 @@ private fun EntryEditSheet(
             ) {
                 EntryColorChoices.forEach { argb ->
                     val isSelected = colorNow == argb
+                    // 触区放大到 40dp（视觉圆仍 28dp；6 点+10dp 间距共 290dp，屏宽内放得下）
                     Box(
                         modifier = Modifier
-                            .size(28.dp)
-                            .clip(CircleShape)
-                            .background(argb?.let { Color(it) } ?: Color.Transparent)
-                            .border(
-                                width = if (isSelected) 2.dp else 1.dp,
-                                color = if (isSelected) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveDivider,
-                                shape = CircleShape,
-                            )
-                            .clickable {
+                            .size(40.dp)
+                            .semantics {
+                                contentDescription = "选择颜色"
+                                role = Role.Button
+                            }
+                            .clickable(
+                                role = Role.Button,
+                                onClickLabel = "选择颜色",
+                            ) {
                                 colorNow = argb
                                 viewModel.updateScheduleColorFromHandbook(entry.id, argb)
                             },
                         contentAlignment = Alignment.Center,
                     ) {
-                        if (argb == null) {
-                            Box(
-                                Modifier
-                                    .size(20.dp)
-                                    .border(1.2.dp, GoaldayDesign.adaptiveInkMuted, CircleShape),
-                            )
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(argb?.let { Color(it) } ?: Color.Transparent)
+                                .border(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = if (isSelected) GoaldayDesign.adaptiveInkPrimary else GoaldayDesign.adaptiveDivider,
+                                    shape = CircleShape,
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (argb == null) {
+                                Box(
+                                    Modifier
+                                        .size(20.dp)
+                                        .border(1.2.dp, GoaldayDesign.adaptiveInkMuted, CircleShape),
+                                )
+                            }
                         }
                     }
                 }
@@ -3976,38 +4096,58 @@ private fun MonthScheduleView(
                     }
                     item { Spacer(Modifier.height(90.dp)) }
                 }
-                // 收起圆钮（对照 bg_arrow 43×43dip）
+                // 收起圆钮（视觉仍 43×43dip，触区 48dp）
                 Box(Modifier.fillMaxWidth()) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(end = 33.dp, bottom = 20.dp)
-                            .size(43.dp)
-                            .background(MainTabBarBg, CircleShape)
-                            .clickable { monthPoolCollapsed = true },
+                            .size(48.dp)
+                            .semantics {
+                                contentDescription = "收起任务池"
+                                role = Role.Button
+                            }
+                            .clickable(role = Role.Button, onClickLabel = "收起任务池") { monthPoolCollapsed = true },
                         contentAlignment = Alignment.Center,
                     ) {
-                        // 与周池统一用自绘箭头（对照原版 bg_arrow）
-                        ChevronGlyph(mirrored = false, color = GoaldayDesign.adaptiveInkPrimary)
+                        Box(
+                            modifier = Modifier
+                                .size(43.dp)
+                                .background(MainTabBarBg, CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            // 与周池统一用自绘箭头（对照原版 bg_arrow）
+                            ChevronGlyph(mirrored = false, color = GoaldayDesign.adaptiveInkPrimary)
+                        }
                     }
                 }
             }
         }
         }
 
-        // 折叠态：右下角展开钮
+        // 折叠态：右下角展开钮（视觉 43dp 不动，触区 48dp）
         if (monthPoolCollapsed) {
             Box(Modifier.fillMaxSize()) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 33.dp, bottom = 40.dp)
-                        .size(43.dp)
-                        .background(MainTabBarBg, CircleShape)
-                        .clickable { monthPoolCollapsed = false },
+                        .size(48.dp)
+                        .semantics {
+                            contentDescription = "展开任务池"
+                            role = Role.Button
+                        }
+                        .clickable(role = Role.Button, onClickLabel = "展开任务池") { monthPoolCollapsed = false },
                         contentAlignment = Alignment.Center,
                     ) {
-                        ChevronGlyph(mirrored = true, color = GoaldayDesign.adaptiveInkPrimary)
+                        Box(
+                            modifier = Modifier
+                                .size(43.dp)
+                                .background(MainTabBarBg, CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            ChevronGlyph(mirrored = true, color = GoaldayDesign.adaptiveInkPrimary)
+                        }
                     }
             }
         }
