@@ -292,12 +292,16 @@ fun OriginalMainScreen(
         mutableStateOf(valid)
     }
     var showTabManage by remember { mutableStateOf(false) }
-    var currentSubTab = MainSubTab.entries[subTabIndex.coerceIn(0, MainSubTab.entries.lastIndex)]
-    if (tabVisibility[currentSubTab] == false) {
-        // 回退到第一个可见 Tab（当前 Tab 被隐藏时，按用户自定顺序）
-        val firstVisible = tabOrder.firstOrNull { tabVisibility[it] == true } ?: MainSubTab.WEEK
-        currentSubTab = firstVisible
-        subTabIndex = firstVisible.ordinal
+    // 请求 Tab 可能已被隐藏：本地回退渲染可见页，状态同步走 LaunchedEffect（禁组合中回写 state）
+    val requestedTab = MainSubTab.entries[subTabIndex.coerceIn(0, MainSubTab.entries.lastIndex)]
+    // 回退到第一个可见 Tab（当前 Tab 被隐藏时，按用户自定顺序）
+    val currentSubTab = if (tabVisibility[requestedTab] == false) {
+        tabOrder.firstOrNull { tabVisibility[it] == true } ?: MainSubTab.WEEK
+    } else {
+        requestedTab
+    }
+    LaunchedEffect(currentSubTab.ordinal) {
+        if (subTabIndex != currentSubTab.ordinal) subTabIndex = currentSubTab.ordinal
     }
     // 可见 Tab 页（对照原版 ViewPager2 页组；顺序/显隐可配；前移以便 bridge 导航直接驱 pager）
     val visibleTabs = remember(tabOrder, tabVisibility) {
@@ -1010,9 +1014,11 @@ private fun WeekScheduleView(
     val context = LocalContext.current
     val monday = selectedDate.with(DayOfWeek.MONDAY)
     val weekDays = remember(monday) { (0..6).map { monday.plusDays(it.toLong()) } }
-    var quickInput by remember(editingDate) { mutableStateOf("") }
+    // 草稿不跟 editingDate 作 key：外部清编辑态（返回/切页/切Tab）会 dispose 输入框，
+    // key 写法会在补提交 effect 跑之前先重置草稿；改无 key + 显式提交/清空
+    var quickInput by remember { mutableStateOf("") }
     // 初挂载会先回调一次未聚焦：得过焦点之后才允许失焦提交（同池改名/详情改名守卫）
-    var quickHadFocus by remember(editingDate) { mutableStateOf(false) }
+    var quickHadFocus by remember { mutableStateOf(false) }
     val dividerColor = MainTabDivider
     val diaryStore = remember { LocalStateStore(MMKV.defaultMMKV()) }
     // 长按拖拽：池条目 → 日期行排期（拖拽时上报告知外层禁掉横滑切页）
@@ -1084,6 +1090,30 @@ private fun WeekScheduleView(
     }
     LaunchedEffect(editingDate) {
         if (editingDate != null) runCatching { focusRequester.requestFocus() }
+    }
+    // 行内新增统一提交：失焦/Done/外部清编辑态三处同调，空白丢弃、有字新增
+    fun commitQuick(date: LocalDate) {
+        val text = quickInput.trim()
+        if (text.isNotBlank()) {
+            InteractionFeedback.click(context)
+            viewModel.addScheduleFromHandbook(
+                text,
+                date.monthValue,
+                date.dayOfMonth,
+                year = date.year,
+                colorArgb = newEntryColorArgb,
+            )
+        }
+        quickInput = ""
+        quickHadFocus = false
+    }
+    // 外部清掉编辑态（顶栏完成/返回/切页/切Tab/选日期）时先落盘再丢草稿；
+    // 失焦/Done 路径已提交则此处幂等无操作
+    var prevEditingDate by remember { mutableStateOf<LocalDate?>(null) }
+    LaunchedEffect(editingDate) {
+        val prev = prevEditingDate
+        if (prev != null && prev != editingDate) commitQuick(prev)
+        prevEditingDate = editingDate
     }
 
     // 外层Box承载跟手浮层（对照原版TargetDragShadowBuilder系统阴影跟手）
@@ -1304,35 +1334,12 @@ private fun WeekScheduleView(
                                                         quickHadFocus = true
                                                     } else if (quickHadFocus) {
                                                         // 三星键盘完成键只收键盘不发 Done：失焦即落盘，中文输入不再丢字
-                                                        quickHadFocus = false
-                                                        if (quickInput.isNotBlank()) {
-                                                            InteractionFeedback.click(context)
-                                                            viewModel.addScheduleFromHandbook(
-                                                                quickInput,
-                                                                date.monthValue,
-                                                                date.dayOfMonth,
-                                                                year = date.year,
-                                                                colorArgb = newEntryColorArgb,
-                                                            )
-                                                        }
-                                                        quickInput = ""
+                                                        commitQuick(date)
                                                     }
                                                 },
                                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                             keyboardActions = KeyboardActions(
-                                                onDone = {
-                                                    if (quickInput.isNotBlank()) {
-                                                        InteractionFeedback.click(context)
-                                                        viewModel.addScheduleFromHandbook(
-                                                            quickInput,
-                                                            date.monthValue,
-                                                            date.dayOfMonth,
-                                                            year = date.year,
-                                                            colorArgb = newEntryColorArgb,
-                                                        )
-                                                    }
-                                                    quickInput = ""
-                                                },
+                                                onDone = { commitQuick(date) },
                                             ),
                                             decorationBox = { inner ->
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1573,8 +1580,8 @@ private fun WeekScheduleView(
                 } else {
                     uiState.todayPlanItems
                 }
-                // key 带序号：同名条目跨源并存时不撞 key、不串行
-                itemsIndexed(listItems, key = { index, item -> "$index:$item" }) { _, poolItem ->
+                // key 用书+页+标题稳定身份：列表已 distinct，无需序号；序号进 key 会导致增删时全列 dispose+焦点丢
+                itemsIndexed(listItems, key = { _, item -> "${currentBook?.id}:${targetPage?.title}:$item" }) { _, poolItem ->
                         val itemChecked = targetPage != null && viewModel.isChecked(targetPage.title, poolItem)
                         // 初挂载会先回调一次未聚焦：得过焦点之后才允许失焦提交
                         var poolRowHadFocus by remember(poolItem) { mutableStateOf(false) }
@@ -2724,7 +2731,11 @@ private fun TopicDetailSimple(
                 showCompleted || !store.isChecked(book.id, pageTitle, item)
             }
             val displayFlags = "${if (showCompleted) 1 else 0}${if (showNumbers) 1 else 0}${if (showDates) 1 else 0}"
-            itemsIndexed(visibleItems, key = { _, item -> "$displayFlags-$item" }) { index, item ->
+            itemsIndexed(
+                visibleItems,
+                key = { _, item -> "${book.id}:$pageTitle:$item" },
+                contentType = { _, _ -> displayFlags },
+            ) { index, item ->
                 revision.let { }
                 val checked = store.isChecked(book.id, pageTitle, item)
                 val checkedDateText = if (checked) store.checkedDate(book.id, pageTitle, item) else ""
@@ -3901,7 +3912,8 @@ private fun MonthScheduleView(
                     } else {
                         emptyList()
                     }
-                    itemsIndexed(listItems, key = { index, item -> "$index:$item" }) { _, item ->
+                    // key 用书+页+标题稳定身份（同周池口径）：序号进 key 会导致增删时全列 dispose
+                    itemsIndexed(listItems, key = { _, item -> "${currentBook?.id}:${targetPage?.title}:$item" }) { _, item ->
                         val itemChecked = targetPage != null && viewModel.isChecked(targetPage.title, item)
                         Row(
                             modifier = Modifier
