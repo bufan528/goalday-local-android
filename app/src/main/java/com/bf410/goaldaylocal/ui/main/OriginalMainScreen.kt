@@ -46,6 +46,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Image
@@ -1590,7 +1591,7 @@ private fun WeekScheduleView(
                             val guideKey = "pool_drag_guide_shown"
                             if (!MMKV.defaultMMKV().decodeBool(guideKey, false)) {
                                 MMKV.defaultMMKV().encode(guideKey, true)
-                                android.widget.Toast.makeText(context, "长按右侧清单事件，可以拖动到左侧日程哦。", android.widget.Toast.LENGTH_LONG).show()
+                                android.widget.Toast.makeText(context, "按住右侧把手，可以拖到左侧日程哦。", android.widget.Toast.LENGTH_LONG).show()
                             }
                         },
                     )
@@ -1637,68 +1638,19 @@ private fun WeekScheduleView(
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
-                        // 条目行：点按行内改名（清空失焦即删除）+ 长按拖拽排期
+                        // 条目行：点按内容行内改名（清空失焦即删除）；拖拽只从右侧把手发起，
+                        // 池内慢滚停顿不再误触成幽灵排期（对照 Reorderable 拖把手模式）
                         val dragContext = context
-                        val dragEnable = true
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .alpha(if (draggingItem == poolItem) 0.35f else 1f)
                                 // 对照原版 item_schedule_target：上下内距 7dp；多行时圆点顶对齐首行
-                                .padding(start = 17.dp, end = 14.dp, top = 7.dp, bottom = 7.dp),
+                                .padding(start = 17.dp, end = 4.dp, top = 7.dp, bottom = 7.dp),
                             verticalAlignment = Alignment.Top,
                         ) {
                             Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .onGloballyPositioned { poolItemOrigins[poolItem] = it.boundsInWindow().topLeft }
-                                    .pointerInput(dragEnable) {
-                                        detectDragGesturesAfterLongPress(
-                                                onDragStart = { touch ->
-                                                    if (poolEditingItem == poolItem) commitPoolEdit()
-                                                    if (poolCreatingNew) commitPoolNew()
-                                                    draggingItem = poolItem
-                                                val origin = poolItemOrigins[poolItem] ?: poolOrigin
-                                                dragFingerWindow = Offset(origin.x + touch.x, origin.y + touch.y)
-                                                dragStartWindow = dragFingerWindow
-                                                InteractionFeedback.haptic(dragContext)
-                                            },
-                                            onDrag = { change, _ ->
-                                                change.consume()
-                                                // 用绝对坐标（Box 原点+指针位置）反推窗口坐标；
-                                                // 不能在 consume() 之后读 positionChange()（会恒为 Zero，浮条不跟手）
-                                                val origin = poolItemOrigins[poolItem] ?: poolOrigin
-                                                dragFingerWindow = Offset(origin.x + change.position.x, origin.y + change.position.y)
-                                                dropTarget = rowBounds.entries
-                                                    .firstOrNull { it.value.contains(dragFingerWindow) }
-                                                    ?.let { LocalDate.ofEpochDay(it.key) }
-                                            },
-                                            onDragEnd = {
-                                                val target = dropTarget
-                                                val item = draggingItem
-                                                // 位移不足 18dp：手指没离开原条目，大概率误触，直接取消不落盘
-                                                val traveled = (dragFingerWindow - dragStartWindow).getDistance()
-                                                if (target != null && item != null && traveled >= 48f) {
-                                                    InteractionFeedback.click(dragContext)
-                                                    viewModel.addScheduleFromHandbook(item, target.monthValue, target.dayOfMonth, year = target.year, colorArgb = dropColorArgb ?: currentBook?.color?.toArgb())
-                                                    android.widget.Toast.makeText(
-                                                        dragContext,
-                                                        "已排入${target.monthValue}月${target.dayOfMonth}日",
-                                                        android.widget.Toast.LENGTH_SHORT,
-                                                    ).show()
-                                                }
-                                                draggingItem = null
-                                                dropTarget = null
-                                                dropColorArgb = null
-                                            },
-                                            onDragCancel = {
-                                                draggingItem = null
-                                                dropTarget = null
-                                                dropColorArgb = null
-                                                dragStartWindow = Offset.Zero
-                                            },
-                                        )
-                                    }
+                                modifier = Modifier.weight(1f),
                             ) {
                                 if (poolEditingItem == poolItem) {
                                     BasicTextField(
@@ -1724,7 +1676,7 @@ private fun WeekScheduleView(
                                         keyboardActions = KeyboardActions(onDone = { commitPoolEdit() }),
                                     )
                                 } else {
-                                    // 点按行内改名（外层只处理长按拖拽）；Top 对齐使圆点落在首行字心
+                                    // 点按行内改名；Top 对齐使圆点落在首行字心
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -1741,12 +1693,78 @@ private fun WeekScheduleView(
                                     }
                                 }
                             }
+                            // 拖拽把手：唯一拖拽发起点（key 跟 poolItem，闭包不取错条）；
+                            // 把手原点即触摸坐标系原点，浮层跟手=把手原点+指针偏移
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .onGloballyPositioned { poolItemOrigins[poolItem] = it.boundsInWindow().topLeft }
+                                    .semantics {
+                                        contentDescription = "按住拖到左侧日期排期"
+                                        role = Role.Button
+                                    }
+                                    .pointerInput(poolItem) {
+                                        detectDragGesturesAfterLongPress(
+                                            onDragStart = { touch ->
+                                                if (poolEditingItem == poolItem) commitPoolEdit()
+                                                if (poolCreatingNew) commitPoolNew()
+                                                draggingItem = poolItem
+                                                val origin = poolItemOrigins[poolItem] ?: poolOrigin
+                                                dragFingerWindow = Offset(origin.x + touch.x, origin.y + touch.y)
+                                                dragStartWindow = dragFingerWindow
+                                                InteractionFeedback.haptic(dragContext)
+                                            },
+                                            onDrag = { change, _ ->
+                                                change.consume()
+                                                // 用绝对坐标（把手原点+指针位置）反推窗口坐标；
+                                                // 不能在 consume() 之后读 positionChange()（会恒为 Zero，浮条不跟手）
+                                                val origin = poolItemOrigins[poolItem] ?: poolOrigin
+                                                dragFingerWindow = Offset(origin.x + change.position.x, origin.y + change.position.y)
+                                                dropTarget = rowBounds.entries
+                                                    .firstOrNull { it.value.contains(dragFingerWindow) }
+                                                    ?.let { LocalDate.ofEpochDay(it.key) }
+                                            },
+                                            onDragEnd = {
+                                                val target = dropTarget
+                                                val item = draggingItem
+                                                // 位移不足 48px：手指没离开原条目，大概率误触，直接取消不落盘
+                                                val traveled = (dragFingerWindow - dragStartWindow).getDistance()
+                                                if (target != null && item != null && traveled >= 48f) {
+                                                    InteractionFeedback.click(dragContext)
+                                                    viewModel.addScheduleFromHandbook(item, target.monthValue, target.dayOfMonth, year = target.year, colorArgb = dropColorArgb ?: currentBook?.color?.toArgb())
+                                                    android.widget.Toast.makeText(
+                                                        dragContext,
+                                                        "已排入${target.monthValue}月${target.dayOfMonth}日",
+                                                        android.widget.Toast.LENGTH_SHORT,
+                                                    ).show()
+                                                }
+                                                draggingItem = null
+                                                dropTarget = null
+                                                dropColorArgb = null
+                                            },
+                                            onDragCancel = {
+                                                draggingItem = null
+                                                dropTarget = null
+                                                dropColorArgb = null
+                                                dragStartWindow = Offset.Zero
+                                            },
+                                        )
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.DragHandle,
+                                    contentDescription = null,
+                                    tint = GoaldayDesign.adaptiveInkMuted.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
                         }
                     }
                 if (listItems.isEmpty()) {
                     item {
                         Text(
-                            "长按右侧清单条目，可以拖动到左侧选中日期",
+                            "按住右侧把手，可以拖到左侧选中日期",
                             fontSize = 13.sp,
                             lineHeight = 18.sp,
                             color = GoaldayDesign.adaptiveInkMuted,
