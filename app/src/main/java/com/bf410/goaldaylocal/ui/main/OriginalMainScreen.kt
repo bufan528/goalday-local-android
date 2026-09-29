@@ -74,6 +74,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -240,6 +241,8 @@ private const val DRAG_CHIP_POP_MS = 140
 private const val DRAG_CHIP_SHADOW_DP = 10f
 // 按住未达长按阈值时的按压缩放：让手指落下瞬间就有回应
 private const val POOL_PRESS_SCALE = 0.96f
+// 按住/拖起之间的过渡时长：太短会读作"弹一下"，太长会迟钝
+private const val POOL_PRESS_ANIM_MS = 160
 
 /**
  * 跨界面导航桥：书内点页 → 跳回主界面并选中对应日期/Tab
@@ -1725,26 +1728,34 @@ private fun WeekScheduleView(
                         }
                         // 条目行：点按行内改名（清空失焦即删除）+ 长按拖拽排期
                         val dragContext = context
+                        // 按住→拖起 的视觉过渡。
+                        // 瞬切会在长按震动那一刻整行"啪"地弹一下，主观读作"震动后出现偏移"，
+                        // 所以缩放与透明度都走短动画。
+                        // 注意：动画值必须在组合层声明 —— graphicsLayer{} 不是 composable 作用域。
+                        val poolItemIsDragging = draggingItem == poolItem
+                        val poolItemIsPressing = poolPressingItem == poolItem
+                        val poolPressScale = animateFloatAsState(
+                            targetValue = if (poolItemIsPressing && !poolItemIsDragging) POOL_PRESS_SCALE else 1f,
+                            animationSpec = tween(POOL_PRESS_ANIM_MS),
+                            label = "poolPressScale_$poolItem",
+                        )
+                        val poolPressAlpha = animateFloatAsState(
+                            targetValue = when {
+                                poolItemIsDragging -> 0.35f
+                                poolItemIsPressing -> 0.6f
+                                else -> 1f
+                            },
+                            animationSpec = tween(POOL_PRESS_ANIM_MS),
+                            label = "poolPressAlpha_$poolItem",
+                        )
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                // 按住（未达长按）→ 轻微缩小；已拖起 → 半透明让位给浮条
                                 .graphicsLayer {
-                                    val scale = when {
-                                        draggingItem == poolItem -> 1f
-                                        poolPressingItem == poolItem -> POOL_PRESS_SCALE
-                                        else -> 1f
-                                    }
-                                    scaleX = scale
-                                    scaleY = scale
+                                    scaleX = poolPressScale.value
+                                    scaleY = poolPressScale.value
                                 }
-                                .alpha(
-                                    when {
-                                        draggingItem == poolItem -> 0.35f
-                                        poolPressingItem == poolItem -> 0.6f
-                                        else -> 1f
-                                    },
-                                )
+                                .alpha(poolPressAlpha.value)
                                 // 对照原版 item_schedule_target：上下内距 7dp；多行时圆点顶对齐首行
                                 .padding(start = 17.dp, end = 14.dp, top = 7.dp, bottom = 7.dp),
                             verticalAlignment = Alignment.Top,
