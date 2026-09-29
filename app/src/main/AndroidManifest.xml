@@ -3,6 +3,10 @@
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 长按拖拽/勾选的触感反馈：VIBRATE 是普通权限，装机即授予。
+         漏了它 vibrator.vibrate() 抛 SecurityException，被 runCatching 静默吞掉，
+         表现为"长按了但完全没有反馈"。 -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:name=".GoaldayApplication"

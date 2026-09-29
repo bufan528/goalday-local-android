@@ -90,6 +90,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -100,6 +101,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -223,6 +225,16 @@ internal enum class MainSubTab(val label: String) {
 }
 
 private const val DIARY_BOOK_ID = "diary"
+
+// 池→日期拖拽浮条的手感参数
+// 拿起时向左让出半个身位、向上抬起一个身高：手指按在条目前半段，
+// 浮条不偏移就会被手指整块盖住，用户看不到自己拖的是什么
+private const val DRAG_CHIP_OFFSET_X = 56f
+private const val DRAG_CHIP_OFFSET_Y = 44f
+// 拿起瞬间的弹性放大：0.88 → 1.0，给"已离手"的物理暗示
+private const val DRAG_CHIP_POP_START = 0.88f
+private const val DRAG_CHIP_POP_MS = 140
+private const val DRAG_CHIP_SHADOW_DP = 10f
 
 /**
  * 跨界面导航桥：书内点页 → 跳回主界面并选中对应日期/Tab
@@ -1100,9 +1112,22 @@ private fun WeekScheduleView(
     var poolOrigin by remember { mutableStateOf(Offset.Zero) }
     // 跟手浮层：手指窗口坐标 + 外层容器原点（浮层偏移=手指窗口-容器窗口）
     var dragFingerWindow by remember { mutableStateOf(Offset.Zero) }
-    // 拖拽起点：抬手位移不足 18dp 视为池内误滑，不落盘（慢滚池子时手指一顿一挪的幽灵排期即此类）
+    // 拖拽起点：抬手位移不足 18dp 视为池内误滑，不落盘（慢滚池子时手指一顿一挪的幽灵排期即此类）。
+    // 存普通 var 而非 state：只有抬手时读一次，不需要每帧触发重组
     var dragStartWindow by remember { mutableStateOf(Offset.Zero) }
+    // 拿起时给一次弹性动画：控制器常驻，值变化只走绘制阶段
     var weekRootOrigin by remember { mutableStateOf(Offset.Zero) }
+    // 浮条拿起时的位移动画：0→1 用短 tween，起点略小、终点 1.0，做出"被拎起来"的弹性感
+    // 浮条拿起时的位移动画：起点略小、终点 1.0，做出"被拎起来"的弹性感
+    val dragChipScale = remember { Animatable(DRAG_CHIP_POP_START) }
+    // 只在绘制阶段读动画值：放组合里会让整个周列跟着每一帧重组
+    val dragChipScaleState = rememberUpdatedState(dragChipScale)
+    LaunchedEffect(draggingItem) {
+        if (draggingItem != null) {
+            dragChipScale.snapTo(DRAG_CHIP_POP_START)
+            dragChipScale.animateTo(1f, animationSpec = tween(DRAG_CHIP_POP_MS))
+        }
+    }
     val poolItemOrigins = remember { androidx.compose.runtime.mutableStateMapOf<String, Offset>() }
     // 右侧任务池折叠开关（对照原版 fragment_schedule 的 bg_arrow 圆钮）
     var poolCollapsed by rememberSaveable { mutableStateOf(false) }
@@ -1701,24 +1726,29 @@ private fun WeekScheduleView(
                                     // key 跟条目：复用行时闭包不取错条（恒 true 会导致过期闭包）
                                     .pointerInput(poolItem) {
                                         detectDragGesturesAfterLongPress(
-                                                onDragStart = { touch ->
-                                                    if (poolEditingItem == poolItem) commitPoolEdit()
-                                                    if (poolCreatingNew) commitPoolNew()
-                                                    draggingItem = poolItem
+                                            onDragStart = { touch ->
+                                                if (poolEditingItem == poolItem) commitPoolEdit()
+                                                if (poolCreatingNew) commitPoolNew()
+                                                draggingItem = poolItem
                                                 val origin = poolItemOrigins[poolItem] ?: poolOrigin
                                                 dragFingerWindow = Offset(origin.x + touch.x, origin.y + touch.y)
                                                 dragStartWindow = dragFingerWindow
-                                                InteractionFeedback.haptic(dragContext)
+                                                // 拿起瞬间的触感：告诉用户"已经拎起来了，可以拖了"
+                                                InteractionFeedback.lift(dragContext)
                                             },
                                             onDrag = { change, _ ->
                                                 change.consume()
                                                 // 用绝对坐标（Box 原点+指针位置）反推窗口坐标；
                                                 // 不能在 consume() 之后读 positionChange()（会恒为 Zero，浮条不跟手）
                                                 val origin = poolItemOrigins[poolItem] ?: poolOrigin
-                                                dragFingerWindow = Offset(origin.x + change.position.x, origin.y + change.position.y)
-                                                dropTarget = rowBounds.entries
-                                                    .firstOrNull { it.value.contains(dragFingerWindow) }
+                                                val finger = Offset(origin.x + change.position.x, origin.y + change.position.y)
+                                                dragFingerWindow = finger
+                                                // 只在目标真的变了才写状态：dropTarget 被每个日期行读，
+                                                // 每帧都写等于每帧重组整个周列 = 拖动发涩掉帧
+                                                val hit = rowBounds.entries
+                                                    .firstOrNull { it.value.contains(finger) }
                                                     ?.let { LocalDate.ofEpochDay(it.key) }
+                                                if (hit != dropTarget) dropTarget = hit
                                             },
                                             onDragEnd = {
                                                 val target = dropTarget
@@ -1726,7 +1756,7 @@ private fun WeekScheduleView(
                                                 // 位移不足 18dp：手指没离开原条目，大概率误触，直接取消不落盘
                                                 val traveled = (dragFingerWindow - dragStartWindow).getDistance()
                                                 if (target != null && item != null && traveled >= 48f) {
-                                                    InteractionFeedback.click(dragContext)
+                                                    InteractionFeedback.confirm(dragContext)
                                                     viewModel.addScheduleFromHandbook(item, target.monthValue, target.dayOfMonth, year = target.year, colorArgb = dropColorArgb ?: currentBook?.color?.toArgb())
                                                     android.widget.Toast.makeText(
                                                         dragContext,
@@ -1906,13 +1936,38 @@ private fun WeekScheduleView(
         }
     } // Row
     // 跟手浮层：对照原版1.2倍灰影，对应 dccccc 灰底
+    //
+    // 跟手的关键：手指坐标必须在**布局阶段**读，不能在组合阶段读。
+    // 原来写 `val local = dragFingerWindow - weekRootOrigin` 在组合里，
+    // 等于每移动 1px 就重组整个周列（含 7 个日期行 + 任务卡 + 底栏），
+    // 帧率被拖垮 = 浮条"不跟手"、拖起来发涩。改成 offset{} 的延迟读，
+    // 只跑摆放不重组，指针移动与浮条位移同帧。
     draggingItem?.let { label ->
-        val local = dragFingerWindow - weekRootOrigin
         Box(
             Modifier
                 .align(Alignment.TopStart)
-                .offset { IntOffset(local.x.roundToInt(), local.y.roundToInt()) }
+                .offset {
+                    val local = dragFingerWindow - weekRootOrigin
+                    // 手指按在条目前半段，浮条整块压在手指下会被完全遮住 → 抬起来
+                    // 留出偏移：向右让出半个身位、向上抬一个身高，手指始终看得见内容
+                    val lift = with(this) { DRAG_CHIP_OFFSET_Y.dp.toPx() }
+                    val lead = with(this) { DRAG_CHIP_OFFSET_X.dp.toPx() }
+                    IntOffset(
+                        (local.x + lead).roundToInt(),
+                        (local.y - lift).roundToInt(),
+                    )
+                }
                 .width(120.dp)
+                .graphicsLayer {
+                    // 拿起瞬间轻微放大：给"已离手"的物理暗示，比只变透明度更容易感知。
+                    // 动画值在绘制阶段读，拖动全程不触发重组。
+                    val pop = dragChipScaleState.value.value
+                    scaleX = pop
+                    scaleY = pop
+                    shadowElevation = DRAG_CHIP_SHADOW_DP.dp.toPx()
+                    // 抬起的卡片不该透出下面的字
+                    alpha = 0.97f
+                }
                 .background(Color(0xFFCCCCCC), RoundedCornerShape(6.dp))
                 .padding(horizontal = 10.dp, vertical = 8.dp),
         ) {
