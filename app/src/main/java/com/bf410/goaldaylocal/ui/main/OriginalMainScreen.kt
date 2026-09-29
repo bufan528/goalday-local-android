@@ -235,6 +235,8 @@ private const val DRAG_CHIP_OFFSET_Y = 44f
 private const val DRAG_CHIP_POP_START = 0.88f
 private const val DRAG_CHIP_POP_MS = 140
 private const val DRAG_CHIP_SHADOW_DP = 10f
+// 按住未达长按阈值时的按压缩放：让手指落下瞬间就有回应
+private const val POOL_PRESS_SCALE = 0.96f
 
 /**
  * 跨界面导航桥：书内点页 → 跳回主界面并选中对应日期/Tab
@@ -1105,6 +1107,8 @@ private fun WeekScheduleView(
     val diaryStore = remember { LocalStateStore(MMKV.defaultMMKV()) }
     // 长按拖拽：池条目 → 日期行排期（拖拽时上报告知外层禁掉横滑切页）
     var draggingItem by remember { mutableStateOf<String?>(null) }
+    // 按住未达长按阈值：先给"按住了"的视觉反馈，消掉长按成立前的 500ms 死等
+    var poolPressingItem by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(draggingItem) { onPoolDragging(draggingItem != null) }
     var dropTarget by remember { mutableStateOf<LocalDate?>(null) }
     val rowBounds = remember { androidx.compose.runtime.mutableStateMapOf<Long, Rect>() }
@@ -1670,7 +1674,14 @@ private fun WeekScheduleView(
             }
             }
             Spacer(Modifier.height(10.dp))
-            LazyColumn(Modifier.weight(1f)) {
+            // 拖拽期间必须禁掉池子自己的滚动：
+            // 否则它和外层 pointerInput 抢同一次触摸，纵向拖动被 LazyColumn 吃掉一部分，
+            // 浮条与手指之间出现滞后/漂移 = "不跟手"。
+            // 原来这里没加（外层 Pager 和左侧周列表都加了），是手感问题的隐藏来源。
+            LazyColumn(
+                Modifier.weight(1f),
+                userScrollEnabled = draggingItem == null,
+            ) {
                 // 右栏 = 当前清单条目全集；点按行内改名（清空失焦即删除），长按拖拽排入左侧选中日期
                 val targetPage = currentBook?.pages?.filterIsInstance<TargetPage>()?.firstOrNull()
                 val listItems = if (targetPage != null && currentBook != null) {
@@ -1714,7 +1725,23 @@ private fun WeekScheduleView(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .alpha(if (draggingItem == poolItem) 0.35f else 1f)
+                                // 按住（未达长按）→ 轻微缩小；已拖起 → 半透明让位给浮条
+                                .graphicsLayer {
+                                    val scale = when {
+                                        draggingItem == poolItem -> 1f
+                                        poolPressingItem == poolItem -> POOL_PRESS_SCALE
+                                        else -> 1f
+                                    }
+                                    scaleX = scale
+                                    scaleY = scale
+                                }
+                                .alpha(
+                                    when {
+                                        draggingItem == poolItem -> 0.35f
+                                        poolPressingItem == poolItem -> 0.6f
+                                        else -> 1f
+                                    },
+                                )
                                 // 对照原版 item_schedule_target：上下内距 7dp；多行时圆点顶对齐首行
                                 .padding(start = 17.dp, end = 14.dp, top = 7.dp, bottom = 7.dp),
                             verticalAlignment = Alignment.Top,
@@ -1724,14 +1751,29 @@ private fun WeekScheduleView(
                                     .weight(1f)
                                     .onGloballyPositioned { poolItemOrigins[poolItem] = it.boundsInWindow().topLeft }
                                     // key 跟条目：复用行时闭包不取错条（恒 true 会导致过期闭包）
+                                    // 按下即时反馈：与下面的拖拽检测并行，不消费事件。
+                                    // 消除"长按成立前 500ms 毫无反应"的死等。
                                     .pointerInput(poolItem) {
+                                        detectPressFeedback(
+                                            onPress = {
+                                                poolPressingItem = poolItem
+                                                InteractionFeedback.click(dragContext)
+                                            },
+                                            onRelease = { if (poolPressingItem == poolItem) poolPressingItem = null },
+                                        )
+                                    }
+                                    .pointerInput(poolItem) {
+                                        val toWindow: (Offset) -> Offset = { local ->
+                                            val origin = poolItemOrigins[poolItem] ?: poolOrigin
+                                            Offset(origin.x + local.x, origin.y + local.y)
+                                        }
                                         detectDragGesturesAfterLongPress(
-                                            onDragStart = { touch ->
+                                            onDragStart = { local ->
                                                 if (poolEditingItem == poolItem) commitPoolEdit()
                                                 if (poolCreatingNew) commitPoolNew()
+                                                poolPressingItem = null
                                                 draggingItem = poolItem
-                                                val origin = poolItemOrigins[poolItem] ?: poolOrigin
-                                                dragFingerWindow = Offset(origin.x + touch.x, origin.y + touch.y)
+                                                dragFingerWindow = toWindow(local)
                                                 dragStartWindow = dragFingerWindow
                                                 // 拿起瞬间的触感：告诉用户"已经拎起来了，可以拖了"
                                                 InteractionFeedback.lift(dragContext)
@@ -1740,8 +1782,7 @@ private fun WeekScheduleView(
                                                 change.consume()
                                                 // 用绝对坐标（Box 原点+指针位置）反推窗口坐标；
                                                 // 不能在 consume() 之后读 positionChange()（会恒为 Zero，浮条不跟手）
-                                                val origin = poolItemOrigins[poolItem] ?: poolOrigin
-                                                val finger = Offset(origin.x + change.position.x, origin.y + change.position.y)
+                                                val finger = toWindow(change.position)
                                                 dragFingerWindow = finger
                                                 // 只在目标真的变了才写状态：dropTarget 被每个日期行读，
                                                 // 每帧都写等于每帧重组整个周列 = 拖动发涩掉帧
@@ -1767,8 +1808,10 @@ private fun WeekScheduleView(
                                                 draggingItem = null
                                                 dropTarget = null
                                                 dropColorArgb = null
+                                                dragStartWindow = Offset.Zero
                                             },
                                             onDragCancel = {
+                                                poolPressingItem = null
                                                 draggingItem = null
                                                 dropTarget = null
                                                 dropColorArgb = null
