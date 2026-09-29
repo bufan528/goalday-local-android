@@ -227,10 +227,13 @@ internal enum class MainSubTab(val label: String) {
 private const val DIARY_BOOK_ID = "diary"
 
 // 池→日期拖拽浮条的手感参数
-// 拿起时向左让出半个身位、向上抬起一个身高：手指按在条目前半段，
-// 浮条不偏移就会被手指整块盖住，用户看不到自己拖的是什么
-private const val DRAG_CHIP_OFFSET_X = 56f
-private const val DRAG_CHIP_OFFSET_Y = 44f
+//
+// 偏移只用来"把浮条从指尖底下让出来一点"，必须**小**。
+// 曾经给到 56dp/44dp（约 147px/115px），浮条整个跳到手指斜后方，
+// 主观就是"拖起来严重偏移、不是跟着手走"。
+// 现在 10dp/6dp：浮条左上角贴着指尖右上，看得见内容又几乎不脱手。
+private const val DRAG_CHIP_OFFSET_X = 10f
+private const val DRAG_CHIP_OFFSET_Y = 6f
 // 拿起瞬间的弹性放大：0.88 → 1.0，给"已离手"的物理暗示
 private const val DRAG_CHIP_POP_START = 0.88f
 private const val DRAG_CHIP_POP_MS = 140
