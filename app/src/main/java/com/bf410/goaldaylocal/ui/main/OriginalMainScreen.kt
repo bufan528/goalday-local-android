@@ -70,6 +70,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -2207,8 +2210,13 @@ private fun RecordDiaryView(
             }
             Spacer(Modifier.height(120.dp))
         }
-        // 键盘工具栏（对照原版 fragment_diary 底栏：bg #E5DAD4 高约 46dp，插图/键盘双 25dp 图标，仅编辑时出现）
-        if (editorFocused) {
+        // 键盘工具栏（对照原版 fragment_diary 底栏：bg #E5DAD4 高约 46dp，插图/键盘双 25dp 图标，仅编辑时出现；
+        // 常驻占位 + 展开/收起动画，聚焦失焦不再整列跳变）
+        AnimatedVisibility(
+            visible = editorFocused,
+            enter = expandVertically(animationSpec = tween(durationMillis = 180)) + fadeIn(animationSpec = tween(durationMillis = 180)),
+            exit = shrinkVertically(animationSpec = tween(durationMillis = 180)) + fadeOut(animationSpec = tween(durationMillis = 180)),
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
