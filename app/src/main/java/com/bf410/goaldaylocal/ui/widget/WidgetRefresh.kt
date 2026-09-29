@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 
 object WidgetRefresh {
     fun refreshForSystemTimeChange(context: Context, intent: Intent?): Boolean {
@@ -13,19 +14,25 @@ object WidgetRefresh {
         return true
     }
 
+    /**
+     * 组件刷新多由 TIME_SET/TIMEZONE_CHANGED 广播触发，此时没有前台 Activity 接异常：
+     * 任一 buildRemoteViews 抛出去就是整进程崩溃。这里逐个 provider、逐个组件隔离，
+     * 一个组件数据异常只影响它自己。
+     */
     fun refreshScheduleWidgets(context: Context) {
-        val manager = AppWidgetManager.getInstance(context)
-        refreshProvider(context, manager, ScheduleWidgetProvider::class.java) { id ->
-            ScheduleWidgetProvider.buildRemoteViews(context, id)
+        val appContext = context.applicationContext
+        val manager = runCatching { AppWidgetManager.getInstance(appContext) }.getOrNull() ?: return
+        refreshProvider(appContext, manager, ScheduleWidgetProvider::class.java) { id ->
+            ScheduleWidgetProvider.buildRemoteViews(appContext, id)
         }
-        refreshProvider(context, manager, LargeScheduleWidgetProvider::class.java) { id ->
-            ScheduleWidgetProvider.buildLargeRemoteViews(context, id)
+        refreshProvider(appContext, manager, LargeScheduleWidgetProvider::class.java) { id ->
+            ScheduleWidgetProvider.buildLargeRemoteViews(appContext, id)
         }
-        refreshProvider(context, manager, QuickDiaryWidgetProvider::class.java) { id ->
-            QuickDiaryWidgetProvider.buildRemoteViews(context, id)
+        refreshProvider(appContext, manager, QuickDiaryWidgetProvider::class.java) { id ->
+            QuickDiaryWidgetProvider.buildRemoteViews(appContext, id)
         }
-        refreshProvider(context, manager, DiaryAddWidgetProvider::class.java) { id ->
-            DiaryAddWidgetProvider.buildRemoteViews(context, id)
+        refreshProvider(appContext, manager, DiaryAddWidgetProvider::class.java) { id ->
+            DiaryAddWidgetProvider.buildRemoteViews(appContext, id)
         }
     }
 
@@ -35,8 +42,13 @@ object WidgetRefresh {
         providerClass: Class<*>,
         buildViews: (Int) -> android.widget.RemoteViews,
     ) {
-        val ids = manager.getAppWidgetIds(ComponentName(context, providerClass))
-        ids.forEach { id -> manager.updateAppWidget(id, buildViews(id)) }
+        val ids = runCatching {
+            manager.getAppWidgetIds(ComponentName(context, providerClass))
+        }.getOrNull() ?: return
+        ids.forEach { id ->
+            runCatching { manager.updateAppWidget(id, buildViews(id)) }
+                .onFailure { Log.w("WidgetRefresh", "刷新 ${providerClass.simpleName} #$id 失败", it) }
+        }
     }
 
     private val REFRESH_ACTIONS = setOf(

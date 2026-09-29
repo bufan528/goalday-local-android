@@ -132,8 +132,16 @@ class LocalStateStore(
 
     fun scheduleEntries(): List<ScheduleEntry> {
         val raw = mmkv.decodeString(KEY_SCHEDULES, "[]") ?: "[]"
-        val array = runCatching { JSONArray(raw) }.getOrElse { JSONArray() }
-        return buildList {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty() || trimmed == "[]" || trimmed == "null") return emptyList()
+        val array = runCatching { JSONArray(trimmed) }.getOrNull()
+        if (array == null) {
+            // 原文不是合法 JSON：绝不能当空表继续（下一次任意写入会把原文覆盖成 []，数据彻底没了）
+            quarantineCorruptSchedules(trimmed)
+            return emptyList()
+        }
+        val usedIds = HashSet<String>()
+        val entries = buildList {
             repeat(array.length()) { index ->
                 runCatching {
                     val item = array.getJSONObject(index)
@@ -143,7 +151,9 @@ class LocalStateStore(
                         day = item.optInt("day", LocalDate.now().dayOfMonth),
                     )
                     ScheduleEntry(
-                        id = item.optString("id").ifBlank { UUID.randomUUID().toString() },
+                        // 缺 id 曾经用随机 UUID 兜底：每次读都换新 id，编辑/删除永远命中不了，
+                        // 重复条目也判不出来。改为按内容+序号派生稳定 id，读几次都一样。
+                        id = stableFallbackScheduleId(item, index, usedIds),
                         title = item.optString("title").ifBlank { "未命名日程" },
                         year = safeDate.year,
                         month = safeDate.month,
@@ -163,7 +173,28 @@ class LocalStateStore(
                 }.getOrNull()?.let(::add)
             }
         }
+        // 部分条目解析失败（脏字段）时不要静默丢：整段留档，等于把用户数据当空
+        if (entries.size < array.length()) {
+            quarantineCorruptSchedules(trimmed)
+        }
+        return entries
     }
+
+    private fun stableFallbackScheduleId(item: JSONObject, index: Int, usedIds: MutableSet<String>): String =
+        recoveredScheduleId(item, index, usedIds)
+
+    /**
+     * 把无法解析的排期原文留档到独立 key：宁可留着垃圾，也不让下一次写入把用户数据静默抹掉。
+     * 只留第一份，避免每次读都写盘。
+     */
+    private fun quarantineCorruptSchedules(raw: String) {
+        if (mmkv.decodeString(KEY_SCHEDULES_QUARANTINE, "") != null) return
+        mmkv.encode(KEY_SCHEDULES_QUARANTINE, raw)
+    }
+
+    /** 排期原文曾无法解析并已留档：设置页据此提示用户，避免用户以为"日程自己没了" */
+    fun hasQuarantinedSchedules(): Boolean =
+        (mmkv.decodeString(KEY_SCHEDULES_QUARANTINE, "") ?: "").isNotBlank()
 
     fun saveScheduleEntries(entries: List<ScheduleEntry>) {
         val array = JSONArray()
@@ -603,6 +634,8 @@ class LocalStateStore(
         const val KEY_CALENDAR_YEAR = "calendar_year"
         const val KEY_CALENDAR_MONTH = "calendar_month"
         const val KEY_SCHEDULES = "schedules"
+        // 排期原文解析失败时的留档位：防止后续任意写入把无法解析的用户数据静默覆盖成空表
+        const val KEY_SCHEDULES_QUARANTINE = "schedules_corrupt_quarantine"
         const val KEY_CUSTOM_BOOKS = "custom_books"
     }
 }
@@ -616,6 +649,40 @@ private fun JSONObject.toStringList(key: String): List<String> {
 }
 
 private fun Color.toArgbCompat(): Int = toArgb()
+
+private val SCHEDULE_ID_SALT_KEYS = listOf(
+    "title",
+    "year",
+    "month",
+    "day",
+    "note",
+    "timeText",
+    "repeatRule",
+    "repeatGroupId",
+    "status",
+)
+
+/**
+ * 缺 id 时按"内容+序号"派生稳定 id：同一条脏数据每次读出同一个 id，编辑/删除能命中。
+ * 同内容重复出现时按序号错开，仍保证 id 唯一。
+ */
+internal fun recoveredScheduleId(item: JSONObject, index: Int, usedIds: MutableSet<String>): String {
+    val declared = item.optString("id").trim()
+    if (declared.isNotEmpty() && usedIds.add(declared)) return declared
+    val salt = buildString {
+        for (key in SCHEDULE_ID_SALT_KEYS) {
+            append(item.optString(key)).append('|')
+            append(item.optInt(key, 0)).append('|')
+            append(item.optBoolean(key, false)).append('|')
+        }
+        append(index)
+    }
+    val base = "recovered-" + sha256Hex(salt)
+    if (declared.isEmpty() && usedIds.add(base)) return base
+    var suffix = 2
+    while (!usedIds.add("$base-$suffix")) suffix++
+    return "$base-$suffix"
+}
 
 /** 勾选键 SHA-256 摘要（文件级可单测，不依赖 MMKV） */
 internal fun sha256Hex(input: String): String {

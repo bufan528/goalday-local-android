@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.bf410.goaldaylocal.MainActivity
@@ -202,13 +203,22 @@ object ReminderScheduler {
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-        when (intent?.action) {
-            Intent.ACTION_BOOT_COMPLETED -> {
-                if (ReminderScheduler.isEnabled()) ReminderScheduler.schedule(context)
+        val appContext = context.applicationContext
+        // 广播里抛异常会直接崩掉整个应用（没有前台 Activity 接住），
+        // 且闹钟/通知权限、系统版本差异都可能在这里抛。提醒失败只该少一条通知，绝不该杀进程。
+        val handled = runCatching {
+            when (intent?.action) {
+                Intent.ACTION_BOOT_COMPLETED -> {
+                    if (ReminderScheduler.isEnabled()) ReminderScheduler.schedule(appContext)
+                }
+                ACTION_MORNING -> fireReminder(appContext, ReminderKind.MORNING)
+                ACTION_EVENING -> fireReminder(appContext, ReminderKind.EVENING)
+                ACTION_ROLLOVER -> rolloverOverdueToToday(appContext)
+                else -> return@runCatching
             }
-            ACTION_MORNING -> fireReminder(context, ReminderKind.MORNING)
-            ACTION_EVENING -> fireReminder(context, ReminderKind.EVENING)
-            ACTION_ROLLOVER -> rolloverOverdueToToday(context)
+        }
+        handled.onFailure { error ->
+            Log.w("ReminderReceiver", "提醒广播处理失败：${intent?.action}", error)
         }
     }
 }
@@ -261,8 +271,9 @@ internal fun rolloverOverdueToToday(context: Context) {
     val mmkv = runCatching { MMKV.defaultMMKV() }.getOrNull() ?: return
     val store = LocalStateStore(mmkv)
     val today = LocalDate.now()
-    val moved = rolloverOverdue(store.scheduleEntries(), today)
-    com.bf410.goaldaylocal.data.ScheduleRepository.getInstance(store).saveEntries(moved)
+    // 在仓库锁内做顺延：先读全表再写会覆盖掉这期间 UI/组件刚落的改动
+    com.bf410.goaldaylocal.data.ScheduleRepository.getInstance(store)
+        .updateEntries { all -> rolloverOverdue(all, today) }
     val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
     manager?.cancel(NOTIFICATION_ID_MORNING)
     manager?.cancel(NOTIFICATION_ID_EVENING)

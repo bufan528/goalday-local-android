@@ -45,19 +45,24 @@ class BackupManager(
     }
 
     fun restoreLatestBackup(): Result<File> = runCatching {
-        val source = latestBackupFile()
-            ?: error("没有可恢复的备份")
+        val source = latestBackupFile() ?: error("没有可恢复的备份")
+        // 与 restoreBackup 同一道校验：最新目录若是空的，恢复等于清库
+        requireRestorable(source)
         restoreBackupDirectory(source)
     }
 
     fun restoreBackup(path: String): Result<File> = runCatching {
         val source = requireBackupChild(path)
+        requireRestorable(source)
+        restoreBackupDirectory(source)
+    }
+
+    /** 空目录/手工丢入的目录直接恢复=清库：必须含有效数据文件 */
+    private fun requireRestorable(source: File) {
         require(source.exists() && source.isDirectory) { "备份不存在" }
-        // 空目录/手工丢入的目录直接恢复=清库：必须含有效数据文件
         require(source.listFiles()?.any { it.isFile && isSafeMmkvFileName(it.name) } == true) {
             "该备份是空的，没有可恢复的数据"
         }
-        restoreBackupDirectory(source)
     }
 
     fun deleteBackup(path: String): Result<Boolean> = runCatching {
@@ -124,18 +129,34 @@ class BackupManager(
 
     private fun restoreBackupDirectory(source: File): File {
         val targetDir = File(context.filesDir.parentFile, "mmkv").apply { mkdirs() }
-        // 先给当前数据做临时快照：恢复中途失败可回滚，不会半清空丢库
         val rollbackDir = File(backupDir, ".tmp-restore-${System.currentTimeMillis()}").apply { mkdirs() }
-        runCatching { copyMmkvFiles(targetDir, rollbackDir) }
+        // 快照必须成功且非空才允许动目标：原来这里 runCatching 吞掉失败直接往下走，
+        // 一旦恢复中途再失败，回滚源是空目录 = 清空后什么都没得拷 = 静默丢库
+        val snapshotCount = runCatching { copyMmkvFiles(targetDir, rollbackDir) }.getOrElse { e ->
+            runCatching { rollbackDir.deleteRecursively() }
+            throw IllegalStateException("无法备份当前数据，已取消恢复以免丢失：${e.message}", e)
+        }
+        if (snapshotCount == 0) {
+            runCatching { rollbackDir.deleteRecursively() }
+            throw IllegalStateException("当前没有可回滚的数据快照，已取消恢复")
+        }
         try {
             clearRestoreTarget(targetDir)
             copyMmkvFiles(source, targetDir)
         } catch (e: Exception) {
-            runCatching {
+            // 回滚本身失败要显式说清：这时数据是真的没了，不能只抛原始异常让人以为"没变化"
+            val rollbackError = runCatching {
                 clearRestoreTarget(targetDir)
                 copyMmkvFiles(rollbackDir, targetDir)
+            }.exceptionOrNull()
+            if (rollbackError != null) {
+                throw IllegalStateException(
+                    "恢复失败且回滚也失败，本地数据可能已丢失。原始错误：${e.message}；回滚错误：${rollbackError.message}。" +
+                        "请从备份列表中恢复一个可用备份。",
+                    e,
+                )
             }
-            throw e
+            throw IllegalStateException("恢复失败，已回滚到操作前的数据：${e.message}", e)
         } finally {
             runCatching { rollbackDir.deleteRecursively() }
         }
@@ -151,7 +172,8 @@ class BackupManager(
             }
     }
 
-    private fun copyMmkvFiles(sourceDir: File, targetDir: File) {
+    /** 返回实际拷贝的文件数：回滚校验靠它确认快照非空 */
+    private fun copyMmkvFiles(sourceDir: File, targetDir: File): Int {
         val files = sourceDir.listFiles()
             ?.filter { it.isFile && isSafeMmkvBackupFile(it) }
             ?: emptyList()
@@ -160,6 +182,7 @@ class BackupManager(
         files.forEach { file ->
             file.copyTo(File(targetDir, file.name), overwrite = true)
         }
+        return files.size
     }
 
     private fun isSafeMmkvBackupFile(file: File): Boolean {

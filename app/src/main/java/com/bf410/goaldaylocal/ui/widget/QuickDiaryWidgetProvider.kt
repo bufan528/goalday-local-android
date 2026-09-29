@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.util.Log
 import android.widget.RemoteViews
 import com.bf410.goaldaylocal.EXTRA_START_TARGET
 import com.bf410.goaldaylocal.MainActivity
@@ -16,8 +17,10 @@ import java.time.LocalDate
 
 class QuickDiaryWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (WidgetRefresh.refreshForSystemTimeChange(context, intent)) return
-        super.onReceive(context, intent)
+        runCatching {
+            if (WidgetRefresh.refreshForSystemTimeChange(context, intent)) return
+            super.onReceive(context, intent)
+        }.onFailure { Log.w("QuickDiaryWidget", "组件广播处理失败：${intent.action}", it) }
     }
 
     override fun onUpdate(
@@ -26,12 +29,14 @@ class QuickDiaryWidgetProvider : AppWidgetProvider() {
         appWidgetIds: IntArray,
     ) {
         appWidgetIds.forEach { widgetId ->
-            appWidgetManager.updateAppWidget(widgetId, buildRemoteViews(context, widgetId))
+            runCatching { appWidgetManager.updateAppWidget(widgetId, buildRemoteViews(context, widgetId)) }
+                .onFailure { Log.w("QuickDiaryWidget", "更新组件 #$widgetId 失败", it) }
         }
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        appWidgetIds.forEach { ScheduleWidgetProvider.deleteConfig(it) }
+        runCatching { appWidgetIds.forEach { ScheduleWidgetProvider.deleteConfig(it) } }
+            .onFailure { Log.w("QuickDiaryWidget", "清理组件配置失败", it) }
     }
 
     companion object {

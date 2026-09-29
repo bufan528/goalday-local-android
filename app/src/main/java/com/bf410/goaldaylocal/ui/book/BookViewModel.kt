@@ -215,10 +215,11 @@ class BookViewModel(
         store.setChecked(book.id, pageTitle, normalized, false)
         store.setTargetItemMeta(book.id, pageTitle, normalized, TargetItemMeta())
         store.savePageItemOrder(book.id, pageTitle, store.pageItemOrder(book.id, pageTitle).filterNot { it == normalized })
-        val cleanedSchedules = scheduleRepository.entries().filterNot { entry ->
-            entry.title == normalized && entry.note == book.title
+        scheduleRepository.updateEntries { all ->
+            all.filterNot { entry ->
+                entry.title == normalized && entry.note == book.title
+            }
         }
-        scheduleRepository.saveEntries(cleanedSchedules)
         _uiState.update { it.copy(checkedRevision = it.checkedRevision + 1L) }
         syncEditableContent()
     }
@@ -257,7 +258,9 @@ class BookViewModel(
             order = store.pageItemOrder(book.id, pageTitle),
             todayPlan = store.todayPlanItems(book.id, pageTitle),
             todayCompleted = store.todayCompletedItems(book.id, pageTitle),
-            removedSchedules = scheduleRepository.entries().filter { it.title == normalized && it.note == book.title },
+            removedSchedules = scheduleRepository.withEntries { all ->
+                all.filter { it.title == normalized && it.note == book.title }
+            },
         )
         removeListPageItemIn(book, pageTitle, normalized)
         return snap
@@ -279,9 +282,11 @@ class BookViewModel(
         store.saveTodayPlanItems(snap.bookId, snap.pageTitle, snap.todayPlan)
         store.saveTodayCompletedItems(snap.bookId, snap.pageTitle, snap.todayCompleted)
         if (snap.removedSchedules.isNotEmpty()) {
-            val current = scheduleRepository.entries()
-            val ids = current.map { it.id }.toSet()
-            scheduleRepository.saveEntries(current + snap.removedSchedules.filterNot { it.id in ids })
+            val restored = snap.removedSchedules
+            scheduleRepository.updateEntries { current ->
+                val ids = current.mapTo(HashSet()) { it.id }
+                current + restored.filterNot { it.id in ids }
+            }
         }
         _uiState.update { it.copy(checkedRevision = it.checkedRevision + 1L) }
         syncEditableContent()
@@ -336,10 +341,11 @@ class BookViewModel(
             pageTitle,
             store.pageItemOrder(book.id, pageTitle).map { if (it == oldItem) trimmed else it },
         )
-        val renamedSchedules = scheduleRepository.entries().map { entry ->
-            if (entry.title == oldItem && entry.note == book.title) entry.copy(title = trimmed) else entry
+        scheduleRepository.updateEntries { all ->
+            all.map { entry ->
+                if (entry.title == oldItem && entry.note == book.title) entry.copy(title = trimmed) else entry
+            }
         }
-        scheduleRepository.saveEntries(renamedSchedules)
         _uiState.update { it.copy(checkedRevision = it.checkedRevision + 1L) }
         syncEditableContent()
     }
@@ -410,10 +416,11 @@ class BookViewModel(
         if (page is TargetPage) {
             store.setTargetItemMeta(book.id, page.title, item, TargetItemMeta())
         }
-        val cleanedSchedules = scheduleRepository.entries().filterNot { entry ->
-            entry.title == item && entry.note == book.title
+        scheduleRepository.updateEntries { all ->
+            all.filterNot { entry ->
+                entry.title == item && entry.note == book.title
+            }
         }
-        scheduleRepository.saveEntries(cleanedSchedules)
         syncEditableContent()
     }
 
@@ -437,14 +444,15 @@ class BookViewModel(
             store.setTargetItemMeta(book.id, page.title, trimmed, meta)
             store.setTargetItemMeta(book.id, page.title, oldItem, TargetItemMeta())
         }
-        val renamedSchedules = scheduleRepository.entries().map { entry ->
-            if (entry.title == oldItem && entry.note == book.title) {
-                entry.copy(title = trimmed)
-            } else {
-                entry
+        scheduleRepository.updateEntries { all ->
+            all.map { entry ->
+                if (entry.title == oldItem && entry.note == book.title) {
+                    entry.copy(title = trimmed)
+                } else {
+                    entry
+                }
             }
         }
-        scheduleRepository.saveEntries(renamedSchedules)
         syncEditableContent()
     }
 
@@ -501,22 +509,33 @@ class BookViewModel(
         val maxDay = YearMonth.of(year, month).lengthOfMonth()
         val safeDay = day.coerceIn(1, maxDay)
         val bookTitle = currentBook().title
-        val duplicated = scheduleRepository.entries().any { entry ->
-            entry.title == title &&
-                entry.year == year &&
-                entry.month == month &&
-                entry.day == safeDay &&
-                entry.note == bookTitle
+        // 查重+落库必须同锁：分开做时两次快速点击会插出两条同名同日条目
+        var added = false
+        scheduleRepository.updateEntries { all ->
+            val duplicated = all.any { entry ->
+                entry.title == title &&
+                    entry.year == year &&
+                    entry.month == month &&
+                    entry.day == safeDay &&
+                    entry.note == bookTitle
+            }
+            if (duplicated) {
+                all
+            } else {
+                added = true
+                all + ScheduleEntry(
+                    id = UUID.randomUUID().toString(),
+                    title = title,
+                    year = year,
+                    month = month,
+                    day = safeDay,
+                    note = bookTitle,
+                )
+            }
         }
-        if (duplicated) return
-        scheduleRepository.addEntry(
-            title = title,
-            year = year,
-            month = month,
-            day = safeDay,
-            note = bookTitle,
-        )
-        _uiState.update { it.copy(schedulePreviewEntries = yearEntriesForAnchor()) }
+        if (added) {
+            _uiState.update { it.copy(schedulePreviewEntries = yearEntriesForAnchor()) }
+        }
     }
 
     /** 手账侧新增排期：年份由调用方日期给（缺省回今年，不用日历锚点年，翻过别年日历后新增不再错年） */
@@ -527,24 +546,35 @@ class BookViewModel(
         val safeMonth = month.coerceIn(1, 12)
         val maxDay = YearMonth.of(resolvedYear, safeMonth).lengthOfMonth()
         val safeDay = day.coerceIn(1, maxDay)
-        val duplicated = scheduleRepository.entries().any { entry ->
-            entry.title == title &&
-                entry.year == resolvedYear &&
-                entry.month == safeMonth &&
-                entry.day == safeDay
-        }
-        if (duplicated) return
-        scheduleRepository.addEntry(
+        val bookTitle = currentBook().title
+        val interval = repeatInterval.coerceAtLeast(1)
+        val newEntry = ScheduleEntry(
+            id = UUID.randomUUID().toString(),
             title = title,
             year = resolvedYear,
             month = safeMonth,
             day = safeDay,
-            note = currentBook().title,
+            note = bookTitle,
             repeatRule = repeatRule,
-            repeatInterval = repeatInterval.coerceAtLeast(1),
+            repeatInterval = interval,
             colorArgb = colorArgb,
         )
-        syncEditableContent()
+        var added = false
+        scheduleRepository.updateEntries { all ->
+            val duplicated = all.any { entry ->
+                entry.title == title &&
+                    entry.year == newEntry.year &&
+                    entry.month == newEntry.month &&
+                    entry.day == newEntry.day
+            }
+            if (duplicated) {
+                all
+            } else {
+                added = true
+                all + newEntry
+            }
+        }
+        if (added) syncEditableContent()
     }
 
     fun addHandbookPoolItem(item: String) {
@@ -625,43 +655,50 @@ class BookViewModel(
     fun updateScheduleTitleFromHandbook(entryId: String, newTitle: String) {
         val normalized = newTitle.trim()
         if (entryId.isBlank() || normalized.isBlank()) return
-        val updated = scheduleRepository.entries().map { entry ->
-            if (entry.id == entryId) entry.copy(title = normalized) else entry
+        scheduleRepository.updateEntries { all ->
+            all.map { entry ->
+                if (entry.id == entryId) entry.copy(title = normalized) else entry
+            }
         }
-        scheduleRepository.saveEntries(updated)
         syncEditableContent()
     }
 
     fun updateScheduleTimeFromHandbook(entryId: String, timeText: String) {
         if (entryId.isBlank()) return
-        val updated = scheduleRepository.entries().map { entry ->
-            if (entry.id == entryId) entry.copy(timeText = timeText.trim()) else entry
+        val normalized = timeText.trim()
+        scheduleRepository.updateEntries { all ->
+            all.map { entry ->
+                if (entry.id == entryId) entry.copy(timeText = normalized) else entry
+            }
         }
-        scheduleRepository.saveEntries(updated)
         syncEditableContent()
     }
 
     /** 条目改色（对照原版周底栏选色：专题色，无值=默认） */
     fun updateScheduleColorFromHandbook(entryId: String, colorArgb: Int?) {
         if (entryId.isBlank()) return
-        scheduleRepository.saveEntries(scheduleRepository.entries().map { entry ->
-            if (entry.id == entryId) entry.copy(colorArgb = colorArgb) else entry
-        })
+        scheduleRepository.updateEntries { all ->
+            all.map { entry ->
+                if (entry.id == entryId) entry.copy(colorArgb = colorArgb) else entry
+            }
+        }
         syncEditableContent()
     }
 
     fun deleteScheduleFromHandbook(entryId: String) {
         if (entryId.isBlank()) return
-        scheduleRepository.saveEntries(scheduleRepository.entries().filterNot { it.id == entryId })
+        scheduleRepository.updateEntries { all -> all.filterNot { it.id == entryId } }
         syncEditableContent()
     }
 
     /** 周多选置顶（对照原版周底栏置顶：选中条目在本日排最前） */
     fun pinScheduleEntries(entryIds: Set<String>, pinned: Boolean) {
         if (entryIds.isEmpty()) return
-        scheduleRepository.saveEntries(scheduleRepository.entries().map { entry ->
-            if (entry.id in entryIds) entry.copy(pinned = pinned) else entry
-        })
+        scheduleRepository.updateEntries { all ->
+            all.map { entry ->
+                if (entry.id in entryIds) entry.copy(pinned = pinned) else entry
+            }
+        }
         syncEditableContent()
     }
 
@@ -692,66 +729,70 @@ class BookViewModel(
     /** 按作用域删除（批量）：ALL_FUTURE 展开同组今日及以后，其余仅删自身 */
     fun deleteScheduleWithScope(targetIds: Set<String>, scope: RepeatScope) {
         if (targetIds.isEmpty()) return
-        val all = scheduleRepository.entries()
-        val byId = all.associateBy { it.id }
-        val deleteIds = mutableSetOf<String>()
-        targetIds.forEach { id ->
-            val target = byId[id] ?: return@forEach
-            if (scope == RepeatScope.ALL_FUTURE && target.repeatGroupId.isNotBlank()) {
-                val tDay = epochDayOf(target)
-                all.filter { it.repeatGroupId == target.repeatGroupId && epochDayOf(it) >= tDay }
-                    .forEach { deleteIds.add(it.id) }
-            } else {
-                deleteIds.add(id)
+        scheduleRepository.updateEntries { all ->
+            val byId = all.associateBy { it.id }
+            val deleteIds = mutableSetOf<String>()
+            targetIds.forEach { id ->
+                val target = byId[id] ?: return@forEach
+                if (scope == RepeatScope.ALL_FUTURE && target.repeatGroupId.isNotBlank()) {
+                    val tDay = epochDayOf(target)
+                    all.filter { it.repeatGroupId == target.repeatGroupId && epochDayOf(it) >= tDay }
+                        .forEach { deleteIds.add(it.id) }
+                } else {
+                    deleteIds.add(id)
+                }
             }
+            all.filterNot { it.id in deleteIds }
         }
-        scheduleRepository.saveEntries(all.filterNot { it.id in deleteIds })
         syncEditableContent()
     }
 
     /** 按作用域改期（单条）：ALL_FUTURE 把同组今日及以后整体平移同样天数；改期保留完成态 */
     fun moveScheduleDayWithScope(targetId: String, year: Int, month: Int, day: Int, scope: RepeatScope) {
-        val all = scheduleRepository.entries()
-        val target = all.firstOrNull { it.id == targetId } ?: return
-        // 年优先用调用方给的日期年（跨年 12→1 不错年）；缺省回条目自身年，不用日历锚点年
-        val baseYear = if (year in 1970..2100) year else target.year
-        val safeMonth = month.coerceIn(1, 12)
-        val maxDay = YearMonth.of(baseYear, safeMonth).lengthOfMonth()
-        val safeDay = day.coerceIn(1, maxDay)
-        val newDate = LocalDate.of(baseYear, safeMonth, safeDay)
-        val deltas = mutableMapOf<String, Long>()
-        if (scope == RepeatScope.ALL_FUTURE && target.repeatGroupId.isNotBlank()) {
-            val tDay = epochDayOf(target)
-            val delta = newDate.toEpochDay() - tDay
-            all.filter { it.repeatGroupId == target.repeatGroupId && epochDayOf(it) >= tDay }
-                .forEach { deltas[it.id] = delta }
-        } else {
-            deltas[targetId] = newDate.toEpochDay() - epochDayOf(target)
+        scheduleRepository.updateEntries { all ->
+            val target = all.firstOrNull { it.id == targetId } ?: return@updateEntries all
+            // 年优先用调用方给的日期年（跨年 12→1 不错年）；缺省回条目自身年，不用日历锚点年
+            val baseYear = if (year in 1970..2100) year else target.year
+            val safeMonth = month.coerceIn(1, 12)
+            val maxDay = YearMonth.of(baseYear, safeMonth).lengthOfMonth()
+            val safeDay = day.coerceIn(1, maxDay)
+            val newDate = LocalDate.of(baseYear, safeMonth, safeDay)
+            val deltas = mutableMapOf<String, Long>()
+            if (scope == RepeatScope.ALL_FUTURE && target.repeatGroupId.isNotBlank()) {
+                val tDay = epochDayOf(target)
+                val delta = newDate.toEpochDay() - tDay
+                all.filter { it.repeatGroupId == target.repeatGroupId && epochDayOf(it) >= tDay }
+                    .forEach { deltas[it.id] = delta }
+            } else {
+                deltas[targetId] = newDate.toEpochDay() - epochDayOf(target)
+            }
+            all.map { entry ->
+                val delta = deltas[entry.id] ?: return@map entry
+                val shifted = LocalDate.ofEpochDay(epochDayOf(entry) + delta)
+                entry.copy(year = shifted.year, month = shifted.monthValue, day = shifted.dayOfMonth)
+            }
         }
-        scheduleRepository.saveEntries(all.map { entry ->
-            val delta = deltas[entry.id] ?: return@map entry
-            val shifted = LocalDate.ofEpochDay(epochDayOf(entry) + delta)
-            entry.copy(year = shifted.year, month = shifted.monthValue, day = shifted.dayOfMonth)
-        })
         syncEditableContent()
     }
 
     fun updateScheduleRepeatFromHandbook(entryId: String, repeatRule: String, repeatInterval: Int = 1) {
         if (entryId.isBlank()) return
-        val updated = scheduleRepository.entries().map { entry ->
-            if (entry.id == entryId) {
-                entry.copy(
-                    repeatRule = repeatRule,
-                    repeatInterval = repeatInterval.coerceAtLeast(1),
-                    // 非空规则保留原有截止日（日历侧可设）；关重复才清空，避免手账侧一碰规则就抹掉日历设的结束日
-                    repeatEndDate = if (repeatRule.isBlank()) "" else entry.repeatEndDate,
-                    repeatGroupId = if (repeatRule.isBlank()) "" else entry.repeatGroupId.ifBlank { entry.id },
-                )
-            } else {
-                entry
+        val interval = repeatInterval.coerceAtLeast(1)
+        scheduleRepository.updateEntries { all ->
+            all.map { entry ->
+                if (entry.id == entryId) {
+                    entry.copy(
+                        repeatRule = repeatRule,
+                        repeatInterval = interval,
+                        // 非空规则保留原有截止日（日历侧可设）；关重复才清空，避免手账侧一碰规则就抹掉日历设的结束日
+                        repeatEndDate = if (repeatRule.isBlank()) "" else entry.repeatEndDate,
+                        repeatGroupId = if (repeatRule.isBlank()) "" else entry.repeatGroupId.ifBlank { entry.id },
+                    )
+                } else {
+                    entry
+                }
             }
         }
-        scheduleRepository.saveEntries(updated)
         syncEditableContent()
     }
 
@@ -761,75 +802,89 @@ class BookViewModel(
      */
     fun setScheduleRepeatFromHandbook(entryId: String, repeatRule: String, repeatInterval: Int = 1) {
         if (entryId.isBlank()) return
-        // 先记下组号：关重复要把同组事项一并转普通（update 会先清掉本条组号）
-        val groupIdBefore = scheduleRepository.entries().firstOrNull { it.id == entryId }?.repeatGroupId.orEmpty()
-        updateScheduleRepeatFromHandbook(entryId, repeatRule, repeatInterval)
-        var all = scheduleRepository.entries()
-        if (repeatRule.isBlank()) {
-            all = all.map { entry ->
-                if (entry.id == entryId || (groupIdBefore.isNotBlank() && entry.repeatGroupId == groupIdBefore)) {
-                    entry.copy(repeatRule = "", repeatGroupId = "")
-                } else {
-                    entry
-                }
-            }
-        } else {
-            val target = all.firstOrNull { it.id == entryId } ?: return
-            // 换规则先清掉旧序列兄弟（同组未来事项），再按新规则展开，避免新旧序列叠加
-            val groupId = target.repeatGroupId
-            if (groupId.isNotBlank()) {
-                all = all.filter { it.id == entryId || it.repeatGroupId != groupId }
-            }
-            val additions = com.bf410.goaldaylocal.ui.calendar.expandRepeatingScheduleEntry(target)
-                .filterNot { candidate ->
-                    all.any { saved ->
-                        saved.title == candidate.title &&
-                            saved.year == candidate.year &&
-                            saved.month == candidate.month &&
-                            saved.day == candidate.day &&
-                            saved.timeText == candidate.timeText
+        val interval = repeatInterval.coerceAtLeast(1)
+        // 整件事（改规则 → 清/展开同组）必须在同一次锁内完成：
+        // 原来分三步读改写，中间任何一步被通知广播/组件写入穿插都会丢同组条目
+        scheduleRepository.updateEntries { all ->
+            val before = all.firstOrNull { it.id == entryId } ?: return@updateEntries all
+            // 先记下组号：关重复要把同组事项一并转普通（改写会先清掉本条组号）
+            val groupIdBefore = before.repeatGroupId
+            val target = before.copy(
+                repeatRule = repeatRule,
+                repeatInterval = interval,
+                repeatEndDate = if (repeatRule.isBlank()) "" else before.repeatEndDate,
+                repeatGroupId = if (repeatRule.isBlank()) "" else groupIdBefore.ifBlank { entryId },
+            )
+            if (repeatRule.isBlank()) {
+                all.map { entry ->
+                    if (entry.id == entryId) {
+                        target
+                    } else if (groupIdBefore.isNotBlank() && entry.repeatGroupId == groupIdBefore) {
+                        entry.copy(repeatRule = "", repeatGroupId = "")
+                    } else {
+                        entry
                     }
                 }
-            if (additions.isNotEmpty()) all = all + additions
+            } else {
+                // 换规则先清掉旧序列兄弟（同组未来事项），再按新规则展开，避免新旧序列叠加
+                val groupId = target.repeatGroupId
+                val kept = if (groupId.isNotBlank()) {
+                    all.filter { it.id == entryId || it.repeatGroupId != groupId }
+                } else {
+                    all
+                }
+                val replaced = kept.map { entry -> if (entry.id == entryId) target else entry }
+                val additions = com.bf410.goaldaylocal.ui.calendar.expandRepeatingScheduleEntry(target)
+                    .filterNot { candidate ->
+                        replaced.any { saved ->
+                            saved.title == candidate.title &&
+                                saved.year == candidate.year &&
+                                saved.month == candidate.month &&
+                                saved.day == candidate.day &&
+                                saved.timeText == candidate.timeText
+                        }
+                    }
+                if (additions.isEmpty()) replaced else replaced + additions
+            }
         }
-        scheduleRepository.saveEntries(all)
         syncEditableContent()
     }
 
     /** 手账侧单条改期：年份缺省回条目自身年（不用日历锚点年），改期保留完成态 */
     fun moveScheduleDayFromHandbook(entryId: String, month: Int, day: Int, year: Int = 0) {
         if (entryId.isBlank()) return
-        val all = scheduleRepository.entries()
-        val target = all.firstOrNull { it.id == entryId } ?: return
-        val baseYear = if (year in 1970..2100) year else target.year
-        val safeMonth = month.coerceIn(1, 12)
-        val maxDay = YearMonth.of(baseYear, safeMonth).lengthOfMonth()
-        val safeDay = day.coerceIn(1, maxDay)
-        val updated = all.map { entry ->
-            if (entry.id == entryId) {
-                entry.copy(
-                    year = baseYear,
-                    month = safeMonth,
-                    day = safeDay,
-                )
-            } else {
-                entry
+        scheduleRepository.updateEntries { all ->
+            val target = all.firstOrNull { it.id == entryId } ?: return@updateEntries all
+            val baseYear = if (year in 1970..2100) year else target.year
+            val safeMonth = month.coerceIn(1, 12)
+            val maxDay = YearMonth.of(baseYear, safeMonth).lengthOfMonth()
+            val safeDay = day.coerceIn(1, maxDay)
+            all.map { entry ->
+                if (entry.id == entryId) {
+                    entry.copy(
+                        year = baseYear,
+                        month = safeMonth,
+                        day = safeDay,
+                    )
+                } else {
+                    entry
+                }
             }
         }
-        scheduleRepository.saveEntries(updated)
         syncEditableContent()
     }
 
     fun toggleScheduleCompletedFromHandbook(entryId: String) {
         if (entryId.isBlank()) return
-        val updated = scheduleRepository.entries().map { entry ->
-            if (entry.id == entryId) {
-                entry.withStatus(if (entry.status == ScheduleStatus.DONE) ScheduleStatus.PLANNED else ScheduleStatus.DONE)
-            } else {
-                entry
+        scheduleRepository.updateEntries { all ->
+            all.map { entry ->
+                if (entry.id == entryId) {
+                    entry.withStatus(if (entry.status == ScheduleStatus.DONE) ScheduleStatus.PLANNED else ScheduleStatus.DONE)
+                } else {
+                    entry
+                }
             }
         }
-        scheduleRepository.saveEntries(updated)
         syncEditableContent()
     }
 
@@ -1148,7 +1203,18 @@ class BookViewModel(
         val diaryPages = book.pages.filterIsInstance<DiaryPage>()
         if (diaryPages.isEmpty()) return
         val sourceNotes = diaryPages.map { page -> diaryScheduleSourceNote(book, page) }.toSet()
-        val existing = scheduleRepository.entries()
+        scheduleRepository.updateEntries { existing ->
+            val next = syncDiarySchedulesLocked(existing, book, diaryPages, sourceNotes)
+            if (next.scheduleSignature() != existing.scheduleSignature()) next else existing
+        }
+    }
+
+    private fun syncDiarySchedulesLocked(
+        existing: List<ScheduleEntry>,
+        book: TopicBook,
+        diaryPages: List<DiaryPage>,
+        sourceNotes: Set<String>,
+    ): List<ScheduleEntry> {
         val existingDiaryEntries = existing.filter { it.note in sourceNotes }
         val existingByKey = existingDiaryEntries.associateBy { entry ->
             diaryScheduleKey(entry.title, entry.year, entry.month, entry.day, entry.completed, entry.note)
@@ -1194,10 +1260,7 @@ class BookViewModel(
                 note = candidate.sourceNote,
             )
         }
-        val next = existing.filterNot { it.note in sourceNotes } + desiredEntries
-        if (next.scheduleSignature() != existing.scheduleSignature()) {
-            scheduleRepository.saveEntries(next)
-        }
+        return existing.filterNot { it.note in sourceNotes } + desiredEntries
     }
 
     // 那年今日闪回：枚举所有历史日记，筛选与给定日期同月同日且往年的记录
@@ -1270,28 +1333,30 @@ class BookViewModel(
         val year = today.year
         val month = today.monthValue
         val day = today.dayOfMonth
-        val existing = scheduleRepository.entries()
-        var matched = false
-        val updated = existing.map { entry ->
-            if (!matched && entry.year == year && entry.month == month && entry.day == day && entry.title == normalized) {
-                matched = true
-                entry.withStatus(if (completed) ScheduleStatus.DONE else ScheduleStatus.PLANNED)
-            } else {
-                entry
+        val bookTitle = currentBook().title
+        scheduleRepository.updateEntries { existing ->
+            var matched = false
+            val updated = existing.map { entry ->
+                if (!matched && entry.year == year && entry.month == month && entry.day == day && entry.title == normalized) {
+                    matched = true
+                    entry.withStatus(if (completed) ScheduleStatus.DONE else ScheduleStatus.PLANNED)
+                } else {
+                    entry
+                }
+            }.toMutableList()
+            if (!matched) {
+                updated += ScheduleEntry(
+                    id = UUID.randomUUID().toString(),
+                    title = normalized,
+                    year = year,
+                    month = month,
+                    day = day,
+                    note = bookTitle,
+                    completed = completed,
+                )
             }
-        }.toMutableList()
-        if (!matched) {
-            updated += ScheduleEntry(
-                id = UUID.randomUUID().toString(),
-                title = normalized,
-                year = year,
-                month = month,
-                day = day,
-                note = currentBook().title,
-                completed = completed,
-            )
+            updated
         }
-        scheduleRepository.saveEntries(updated)
     }
 
     private fun removeTodayScheduleEntry(item: String) {
@@ -1301,10 +1366,11 @@ class BookViewModel(
         val year = today.year
         val month = today.monthValue
         val day = today.dayOfMonth
-        val updated = scheduleRepository.entries().filterNot {
-            it.year == year && it.month == month && it.day == day && it.title == normalized
+        scheduleRepository.updateEntries { all ->
+            all.filterNot {
+                it.year == year && it.month == month && it.day == day && it.title == normalized
+            }
         }
-        scheduleRepository.saveEntries(updated)
     }
 
     /** 预览按锚点年±1 加载：跨年周（12.29-1.4）不断片，翻过别年日历后本周也不空白 */

@@ -4,11 +4,14 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 
 class LargeScheduleWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (WidgetRefresh.refreshForSystemTimeChange(context, intent)) return
-        super.onReceive(context, intent)
+        runCatching {
+            if (WidgetRefresh.refreshForSystemTimeChange(context, intent)) return
+            super.onReceive(context, intent)
+        }.onFailure { Log.w("LargeScheduleWidget", "组件广播处理失败：${intent.action}", it) }
     }
 
     override fun onUpdate(
@@ -17,11 +20,14 @@ class LargeScheduleWidgetProvider : AppWidgetProvider() {
         appWidgetIds: IntArray,
     ) {
         appWidgetIds.forEach { widgetId ->
-            appWidgetManager.updateAppWidget(widgetId, ScheduleWidgetProvider.buildLargeRemoteViews(context, widgetId))
+            runCatching {
+                appWidgetManager.updateAppWidget(widgetId, ScheduleWidgetProvider.buildLargeRemoteViews(context, widgetId))
+            }.onFailure { Log.w("LargeScheduleWidget", "更新组件 #$widgetId 失败", it) }
         }
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        appWidgetIds.forEach { ScheduleWidgetProvider.deleteConfig(it) }
+        runCatching { appWidgetIds.forEach { ScheduleWidgetProvider.deleteConfig(it) } }
+            .onFailure { Log.w("LargeScheduleWidget", "清理组件配置失败", it) }
     }
 }

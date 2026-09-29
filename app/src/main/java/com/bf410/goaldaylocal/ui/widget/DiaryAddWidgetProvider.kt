@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import android.util.TypedValue
 import android.widget.RemoteViews
 import com.bf410.goaldaylocal.EXTRA_START_TARGET
@@ -33,8 +34,10 @@ import java.time.LocalDate
  */
 class DiaryAddWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (WidgetRefresh.refreshForSystemTimeChange(context, intent)) return
-        super.onReceive(context, intent)
+        runCatching {
+            if (WidgetRefresh.refreshForSystemTimeChange(context, intent)) return
+            super.onReceive(context, intent)
+        }.onFailure { Log.w("DiaryAddWidget", "组件广播处理失败：${intent.action}", it) }
     }
 
     override fun onUpdate(
@@ -43,7 +46,8 @@ class DiaryAddWidgetProvider : AppWidgetProvider() {
         appWidgetIds: IntArray,
     ) {
         appWidgetIds.forEach { widgetId ->
-            appWidgetManager.updateAppWidget(widgetId, buildRemoteViews(context, widgetId))
+            runCatching { appWidgetManager.updateAppWidget(widgetId, buildRemoteViews(context, widgetId)) }
+                .onFailure { Log.w("DiaryAddWidget", "更新组件 #$widgetId 失败", it) }
         }
     }
 

@@ -107,20 +107,20 @@ class CalendarViewModel(
     }
 
     fun removeSchedule(id: String, applySeries: Boolean = false) {
-        val updated = removeScheduleEntries(scheduleRepository.entries(), id, applySeries)
-        scheduleRepository.saveEntries(updated)
+        scheduleRepository.updateEntries { all -> removeScheduleEntries(all, id, applySeries) }
         refreshEntries()
     }
 
     fun toggleScheduleCompleted(id: String) {
-        val updated = scheduleRepository.entries().map { entry ->
-            if (entry.id == id) {
-                entry.withStatus(if (entry.status == ScheduleStatus.DONE) ScheduleStatus.PLANNED else ScheduleStatus.DONE)
-            } else {
-                entry
+        scheduleRepository.updateEntries { all ->
+            all.map { entry ->
+                if (entry.id == id) {
+                    entry.withStatus(if (entry.status == ScheduleStatus.DONE) ScheduleStatus.PLANNED else ScheduleStatus.DONE)
+                } else {
+                    entry
+                }
             }
         }
-        scheduleRepository.saveEntries(updated)
         refreshEntries()
     }
 
@@ -137,7 +137,7 @@ class CalendarViewModel(
     ) {
         val current = _uiState.value
         val clampedDay = day.coerceIn(1, YearMonth.of(current.year, current.month).lengthOfMonth())
-        val all = scheduleRepository.entries()
+        scheduleRepository.updateEntries { all ->
         val target = all.firstOrNull { it.id == id }
         val targetGroupId = target?.repeatGroupId.orEmpty()
         // 整组改期：同组兄弟按同样天数平移，否则改期后序列日期脱节（标题/时间同步但日期不动）
@@ -148,7 +148,7 @@ class CalendarViewModel(
         } else {
             0L
         }
-        val updated = all.map { entry ->
+        all.map { entry ->
             if (entry.id == id) {
                 entry.copy(
                     title = title.trim(),
@@ -182,14 +182,13 @@ class CalendarViewModel(
                 entry
             }
         }
-        scheduleRepository.saveEntries(updated)
+        }
         refreshEntries()
     }
 
     fun importSystemCalendarEvents(events: List<CalendarImportCandidate>): Int {
         val current = _uiState.value
-        val existing = scheduleRepository.entries()
-        val additions = events
+        val candidates = events
             .mapNotNull { event ->
                 val title = event.title.trim()
                 if (title.isBlank()) {
@@ -210,7 +209,10 @@ class CalendarViewModel(
                 }
             }
             .distinctBy { "${it.title}|${it.year}|${it.month}|${it.day}|${it.timeText}" }
-            .filterNot { candidate ->
+        // 查重必须在锁内对着最新全表做：先读后写会漏掉别的写入刚插进来的同款条目
+        var added = 0
+        scheduleRepository.updateEntries { existing ->
+            val additions = candidates.filterNot { candidate ->
                 existing.any { saved ->
                     saved.title == candidate.title &&
                         saved.year == candidate.year &&
@@ -219,50 +221,57 @@ class CalendarViewModel(
                         saved.timeText == candidate.timeText
                 }
             }
-        if (additions.isEmpty()) return 0
-        scheduleRepository.saveEntries(existing + additions)
+            added = additions.size
+            if (additions.isEmpty()) existing else existing + additions
+        }
+        if (added == 0) return 0
         refreshEntries()
-        return additions.size
+        return added
     }
 
     fun moveScheduleToDay(id: String, day: Int) {
         val current = _uiState.value
         val clampedDay = day.coerceIn(1, YearMonth.of(current.year, current.month).lengthOfMonth())
-        val updated = scheduleRepository.entries().map { entry ->
-            if (entry.id == id) {
-                entry.copy(
-                    year = current.year,
-                    month = current.month,
-                    day = clampedDay,
-                )
-            } else {
-                entry
+        scheduleRepository.updateEntries { all ->
+            all.map { entry ->
+                if (entry.id == id) {
+                    entry.copy(
+                        year = current.year,
+                        month = current.month,
+                        day = clampedDay,
+                    )
+                } else {
+                    entry
+                }
             }
         }
-        scheduleRepository.saveEntries(updated)
         refreshEntries()
     }
 
     fun reorderScheduleInDay(id: String, moveUp: Boolean) {
-        val all = scheduleRepository.entries().toMutableList()
-        val currentIndex = all.indexOfFirst { it.id == id }
-        if (currentIndex < 0) return
-        val target = all[currentIndex]
-        val dayIndexes = all.withIndex()
-            .filter { (_, entry) ->
-                entry.year == target.year && entry.month == target.month && entry.day == target.day
-            }
-            .map { it.index }
-        val dayPos = dayIndexes.indexOf(currentIndex)
-        if (dayPos < 0) return
-        val swapPos = if (moveUp) dayPos - 1 else dayPos + 1
-        if (swapPos !in dayIndexes.indices) return
-        val swapIndex = dayIndexes[swapPos]
-        val temp = all[currentIndex]
-        all[currentIndex] = all[swapIndex]
-        all[swapIndex] = temp
-        scheduleRepository.saveEntries(all)
-        refreshEntries()
+        var moved = false
+        scheduleRepository.updateEntries { rawAll ->
+            val all = rawAll.toMutableList()
+            val currentIndex = all.indexOfFirst { it.id == id }
+            if (currentIndex < 0) return@updateEntries rawAll
+            val target = all[currentIndex]
+            val dayIndexes = all.withIndex()
+                .filter { (_, entry) ->
+                    entry.year == target.year && entry.month == target.month && entry.day == target.day
+                }
+                .map { it.index }
+            val dayPos = dayIndexes.indexOf(currentIndex)
+            if (dayPos < 0) return@updateEntries rawAll
+            val swapPos = if (moveUp) dayPos - 1 else dayPos + 1
+            if (swapPos !in dayIndexes.indices) return@updateEntries rawAll
+            val swapIndex = dayIndexes[swapPos]
+            val temp = all[currentIndex]
+            all[currentIndex] = all[swapIndex]
+            all[swapIndex] = temp
+            moved = true
+            all
+        }
+        if (moved) refreshEntries()
     }
 
     private fun setMonth(year: Int, month: Int) {
@@ -285,19 +294,21 @@ class CalendarViewModel(
     private fun expandRepeatingEntry(entry: ScheduleEntry) {
         val additions = expandRepeatingScheduleEntry(entry)
         if (additions.isEmpty()) return
-        val existing = scheduleRepository.entries()
-        val uniqueAdditions = additions.filterNot { candidate ->
-            existing.any { saved ->
-                saved.title == candidate.title &&
-                    saved.year == candidate.year &&
-                    saved.month == candidate.month &&
-                    saved.day == candidate.day &&
-                    saved.timeText == candidate.timeText
+        var appended = false
+        scheduleRepository.updateEntries { existing ->
+            val uniqueAdditions = additions.filterNot { candidate ->
+                existing.any { saved ->
+                    saved.title == candidate.title &&
+                        saved.year == candidate.year &&
+                        saved.month == candidate.month &&
+                        saved.day == candidate.day &&
+                        saved.timeText == candidate.timeText
+                }
             }
+            appended = uniqueAdditions.isNotEmpty()
+            if (uniqueAdditions.isEmpty()) existing else existing + uniqueAdditions
         }
-        if (uniqueAdditions.isNotEmpty()) {
-            scheduleRepository.saveEntries(existing + uniqueAdditions)
-        }
+        if (appended) refreshEntries()
     }
 
     private fun monthEntries(year: Int, month: Int): List<ScheduleEntry> =

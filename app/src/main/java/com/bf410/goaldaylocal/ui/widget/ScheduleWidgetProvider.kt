@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
@@ -233,8 +234,11 @@ data class ScheduleWidgetConfig(
 
 class ScheduleWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (WidgetRefresh.refreshForSystemTimeChange(context, intent)) return
-        super.onReceive(context, intent)
+        // 组件广播没有前台兜底：任何异常都会杀进程
+        runCatching {
+            if (WidgetRefresh.refreshForSystemTimeChange(context, intent)) return
+            super.onReceive(context, intent)
+        }.onFailure { Log.w("ScheduleWidget", "组件广播处理失败：${intent.action}", it) }
     }
 
     override fun onUpdate(
@@ -243,13 +247,15 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
         appWidgetIds: IntArray,
     ) {
         appWidgetIds.forEach { widgetId ->
-            appWidgetManager.updateAppWidget(widgetId, buildRemoteViews(context, widgetId))
+            runCatching { appWidgetManager.updateAppWidget(widgetId, buildRemoteViews(context, widgetId)) }
+                .onFailure { Log.w("ScheduleWidget", "更新组件 #$widgetId 失败", it) }
         }
     }
 
     // 删组件清配置键：ID 复用时不再读到旧样式/范围
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        appWidgetIds.forEach { deleteConfig(it) }
+        runCatching { appWidgetIds.forEach { deleteConfig(it) } }
+            .onFailure { Log.w("ScheduleWidget", "清理组件配置失败", it) }
     }
 
     companion object {
