@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -79,6 +80,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import com.bf410.goaldaylocal.ui.InteractionFeedback
+import com.bf410.goaldaylocal.ui.replica.LocalGoaldayDarkMode
 import androidx.compose.ui.res.painterResource
 import android.os.Build
 import androidx.compose.ui.layout.positionInWindow
@@ -154,6 +158,8 @@ fun DualPageBookView(
     }
     var pendingImageDate by remember { mutableStateOf<LocalDate?>(null) }
     val pickerContext = LocalContext.current
+    // 翻页收键盘/清焦点用（翻页时焦点会跟着被转走的日记页走）
+    val bookFocusManager = LocalFocusManager.current
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: android.net.Uri? ->
         val date = pendingImageDate
         if (uri != null && date != null) {
@@ -208,6 +214,10 @@ fun DualPageBookView(
     // 书芯单页渲染：日程面=该页所在周的书内周视图（原版书内嵌 ScheduleFragment，7 行 Mon-Sun），
     // 日记面=可写日记页（原版书内嵌 DiaryFragment，翻到即可书写；改动即时落盘）
     val pageContent: @Composable (DayPage, Boolean) -> Unit = { page, isLeftPage ->
+        // 纸质书页恒为浅色（对照原版书页是米白纸，不随 App 深色反色）：页内若拿到深色模式的
+        // adaptiveInk*（浅灰）配白纸底会看不清。只包页内容，不包书壳/手势层——
+        // 之前把 provider 加在整个书上会连带打乱翻页手势的重组，直接导致翻页回弹不翻页。
+        CompositionLocalProvider(LocalGoaldayDarkMode provides false) {
         if (page.isSchedule) {
             InBookSchedulePreview(
                 modifier = Modifier.fillMaxSize(),
@@ -247,6 +257,7 @@ fun DualPageBookView(
                 onToggleScheduleCompleted = viewModel::toggleScheduleCompletedFromHandbook,
             )
         }
+        }
     }
 
     // 把书页左右边缘排除在系统返回手势之外，确保全宽翻页热区可用
@@ -279,6 +290,8 @@ fun DualPageBookView(
         if (isAnimating) return
         isAnimating = true
         scope.launch {
+            // 翻页前先收键盘/清焦点：否则焦点仍挂在随页转走的日记输入框上，继续打字会写进上一个日期
+            bookFocusManager.clearFocus(force = true)
             val currentProgress = progress.value
             // 落定快启缓落：线性回弹像撞墙
             val spec = tween<Float>(if (currentProgress > 0.5f) 100 else 300, easing = FastOutSlowInEasing)
@@ -310,6 +323,8 @@ fun DualPageBookView(
     // 书壳布纹：程序化细颗粒（自绘，避免位图资源依赖）
     val fabricImage: androidx.compose.ui.graphics.ImageBitmap? = null
 
+    // 纸质书页恒为浅色（对照原版书页是米白纸，不随 App 深色反色）：
+    // 页内若拿到深色模式的 adaptiveInk*（浅灰）配白纸底会看不清，这里统一钉死浅色
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Text(
             "${rightPage.date.monthValue}月",
@@ -452,10 +467,14 @@ fun DualPageBookView(
                                         }
                                         if (can) {
                                             turnDirection = turnDir
-                                            flipConfigurator.start()
+                                            // 方向显式锁定：NEXT 用 left config、PREVIOUS 用 right config，
+                                            // 不再靠 progress 位置反推（快滑首帧会取错分支导致整页不动/回抽）
+                                            flipConfigurator.start(leftSlide = turnDir == TurnDirection.NEXT)
                                             dragJobHolder[0]?.cancel()
                                             dragJobHolder[0] = scope.launch { progress.snapTo(0f) }
                                         } else {
+                                            // 到首/末页：给一脚轻触感当"没有下一页"的反馈，否则静默吞掉像是卡死
+                                            InteractionFeedback.haptic(pickerContext, 20L)
                                             finished = true
                                             break
                                         }
@@ -838,7 +857,6 @@ fun DualPageBookView(
                 }
             }
         }
-
         // 导出全屏页（打印PDF分区勾选 + 起止日期 + 预览 + 生成分享）
         if (showExportSheet) {
             Box(
@@ -959,7 +977,7 @@ private fun HandbookPage(
     onTap: (() -> Unit)? = null,
     configurator: BookPageAnimationConfigurator? = null,
 ) {
-    // 左页：左侧平、右侧圆；右页：左侧圆、右侧平
+    // 左页：书脊侧平、外缘圆；右页反之
     val pageShape = handbookPageShape(isLeft)
 
     // 翻页时当前页绕书脊旋转
@@ -1061,12 +1079,15 @@ private fun HandbookPage(
     }
 }
 
-/** 书页圆角：左页左侧平、右侧圆；右页反之（对照原版 cornerRadius=10dp）。 */
+/**
+ * 书页圆角：书脊侧（两页相接的中缝）平直，屏幕外缘圆角 10dp（对照原版 cornerRadius=10dp）。
+ * 反过来会在中缝留两个圆角缺口、外缘方角顶出圆角书壳。
+ */
 private fun handbookPageShape(isLeft: Boolean): RoundedCornerShape = RoundedCornerShape(
-    topStart = if (isLeft) 0.dp else 10.dp,
-    topEnd = if (isLeft) 10.dp else 0.dp,
-    bottomEnd = if (isLeft) 10.dp else 0.dp,
-    bottomStart = if (isLeft) 0.dp else 10.dp,
+    topStart = if (isLeft) 10.dp else 0.dp,
+    topEnd = if (isLeft) 0.dp else 10.dp,
+    bottomEnd = if (isLeft) 0.dp else 10.dp,
+    bottomStart = if (isLeft) 10.dp else 0.dp,
 )
 
 /**

@@ -56,6 +56,20 @@ class BookPageAnimationConfigurator {
         isLeftSlide = null
     }
 
+    /**
+     * 进入拖动/动画态并**显式锁定**翻页方向。
+     *
+     * 翻页手势方向是确定的（NEXT 向左翻 / PREVIOUS 向右翻），不能靠 progress 位置反推：
+     * 原实现首次 [calculate] 时按 `abs(p-0) <= abs(p-1)` 判 left，一旦首次采样落在 0.5 另一侧
+     * （快滑首帧、动画接力、中途重入），整条曲线会取错分支——PREVIOUS 会出现
+     * "两端都是 0°、整页不动"，NEXT 会在 90° 处突然回抽。
+     * 开场纸扇没有手势方向，仍走 [start] 的自动判定。
+     */
+    fun start(leftSlide: Boolean) {
+        isStateIdle = false
+        isLeftSlide = leftSlide
+    }
+
     /** 进入空闲态。 */
     fun idle() {
         isStateIdle = true
@@ -143,12 +157,14 @@ class BookPageAnimationConfigurator {
     fun handbookPageRotationY(direction: TurnDirection?, progress: Float): Float {
         return when (direction) {
             TurnDirection.NEXT -> {
-                // pageThree 左滑：-26.5° → -153.5°
+                // pageThree 左滑：-26.5° → -153.5°（显式锁 left config，不靠 progress 位置猜）
+                useLeftConfig = true
                 val r = calculate("pageThree", progress)
                 ((r + 26.5f) / -127f).coerceIn(0f, 1f) * -180f
             }
             TurnDirection.PREVIOUS -> {
-                // pageTwo 右滑：原 progress 0→1 映射为 1→0，触发 right config
+                // pageTwo 右滑：原 progress 0→1 映射为 1→0，取 right config
+                useLeftConfig = false
                 val reversed = 1f - progress.coerceIn(0f, 1f)
                 val r = calculate("pageTwo", reversed)
                 ((r + 153.5f) / 127f).coerceIn(0f, 1f) * 180f
@@ -156,6 +172,17 @@ class BookPageAnimationConfigurator {
             null -> 0f
         }
     }
+
+    /**
+     * 翻页手势期间的方向锁：[handbookPageRotationY] 在同一次重组里对左右两页各算一次，
+     * 两侧同向（NEXT 锁 left、PREVIOUS 锁 right），不会互相覆盖；
+     * [idle] 复位后由下一次 [start] 重新决定。
+     */
+    private var useLeftConfig: Boolean
+        get() = isLeftSlide ?: true
+        set(value) {
+            isLeftSlide = value
+        }
 
     private fun lerp(start: Float, end: Float, fraction: Float): Float {
         return start + (end - start) * fraction
