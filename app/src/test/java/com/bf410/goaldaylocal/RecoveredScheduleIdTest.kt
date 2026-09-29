@@ -1,8 +1,10 @@
 package com.bf410.goaldaylocal
 
 import com.bf410.goaldaylocal.data.recoveredScheduleId
+import com.bf410.goaldaylocal.data.shouldQuarantine
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -59,5 +61,32 @@ class RecoveredScheduleIdTest {
     fun `blank id is treated as missing`() {
         val item = JSONObject().put("id", "   ").put("title", "晨跑")
         assertTrue(recoveredScheduleId(item, 0, mutableSetOf()).startsWith("recovered-"))
+    }
+}
+
+/**
+ * 守住一次真实事故：留档守卫写成
+ * `if (mmkv.decodeString(QUARANTINE, "") != null) return`
+ * MMKV 带默认值时永远不返回 null，守卫恒成立 → 留档从不执行 →
+ * 我们以为已经防住的"解析失败后原文被静默覆盖"照旧发生。
+ */
+class ScheduleQuarantineGuardTest {
+    @Test
+    fun `first sighting must be quarantined`() {
+        assertTrue(
+            "尚无留档（key 不存在 → null）时必须留档",
+            shouldQuarantine(existing = null),
+        )
+    }
+
+    @Test
+    fun `already quarantined must not be overwritten`() {
+        assertFalse(shouldQuarantine(existing = "[{\"title\":\"旧原文\"}]"))
+    }
+
+    @Test
+    fun `blank existing value still counts as present`() {
+        // decodeString(key, "") 返回 ""，不是 null：不能被当成"还没有"
+        assertFalse(shouldQuarantine(existing = ""))
     }
 }

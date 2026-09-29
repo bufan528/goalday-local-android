@@ -294,21 +294,21 @@ class CalendarViewModel(
     private fun expandRepeatingEntry(entry: ScheduleEntry) {
         val additions = expandRepeatingScheduleEntry(entry)
         if (additions.isEmpty()) return
-        var appended = false
-        scheduleRepository.updateEntries { existing ->
-            val uniqueAdditions = additions.filterNot { candidate ->
-                existing.any { saved ->
-                    saved.title == candidate.title &&
-                        saved.year == candidate.year &&
-                        saved.month == candidate.month &&
-                        saved.day == candidate.day &&
-                        saved.timeText == candidate.timeText
+        if (scheduleRepository.updateEntries { existing ->
+                val uniqueAdditions = additions.filterNot { candidate ->
+                    existing.any { saved ->
+                        saved.title == candidate.title &&
+                            saved.year == candidate.year &&
+                            saved.month == candidate.month &&
+                            saved.day == candidate.day &&
+                            saved.timeText == candidate.timeText
+                    }
                 }
+                if (uniqueAdditions.isEmpty()) existing else existing + uniqueAdditions
             }
-            appended = uniqueAdditions.isNotEmpty()
-            if (uniqueAdditions.isEmpty()) existing else existing + uniqueAdditions
+        ) {
+            refreshEntries()
         }
-        if (appended) refreshEntries()
     }
 
     private fun monthEntries(year: Int, month: Int): List<ScheduleEntry> =

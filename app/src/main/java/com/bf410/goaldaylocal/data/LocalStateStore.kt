@@ -188,7 +188,7 @@ class LocalStateStore(
      * 只留第一份，避免每次读都写盘。
      */
     private fun quarantineCorruptSchedules(raw: String) {
-        if (mmkv.decodeString(KEY_SCHEDULES_QUARANTINE, "") != null) return
+        if (!shouldQuarantine(mmkv.decodeString(KEY_SCHEDULES_QUARANTINE))) return
         mmkv.encode(KEY_SCHEDULES_QUARANTINE, raw)
     }
 
@@ -661,6 +661,18 @@ private val SCHEDULE_ID_SALT_KEYS = listOf(
     "repeatGroupId",
     "status",
 )
+
+/**
+ * 排期留档守卫。
+ *
+ * 关键陷阱：MMKV 的 `decodeString(key, default)` **永远不返回 null**（缺 key 也返回默认值）。
+ * 所以必须用无默认值的重载并判 null；若写成
+ * `if (mmkv.decodeString(QUARANTINE, "") != null) return`
+ * 守卫恒成立 → 留档从不执行 → 我们以为已防住的"原文被静默覆盖"照旧发生。
+ *
+ * 抽成纯函数以便单测锁住这条不变量。
+ */
+internal fun shouldQuarantine(existing: String?): Boolean = existing == null
 
 /**
  * 缺 id 时按"内容+序号"派生稳定 id：同一条脏数据每次读出同一个 id，编辑/删除能命中。

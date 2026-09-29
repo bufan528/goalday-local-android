@@ -3,8 +3,12 @@ package com.bf410.goaldaylocal.data
 import com.bf410.goaldaylocal.GoaldayApplication
 import com.bf410.goaldaylocal.ui.widget.WidgetRefresh
 import java.util.UUID
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -26,18 +30,26 @@ class ScheduleRepository private constructor(
      */
     private val lock = Any()
 
-    /** 组件刷新去抖：一次连续改期/导入只刷一轮，不再每次写入都做 4 次 Binder IPC + 4 次全表解析 */
-    private val widgetRefresh = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(
+    /**
+     * 组件刷新信号。缓冲只留 1：刷新正在排队时后续写入直接丢弃（tryEmit 返回 false），
+     * 不排队——组件只是 UI 镜像，落后一次刷新无害，排一堆反而会连刷。
+     */
+    private val widgetRefresh = MutableSharedFlow<Unit>(
         replay = 0,
         extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-    // 单个常驻收集器做尾沿去抖：连续写入合并成最后一次刷新
-    private val refreshWorker = kotlinx.coroutines.CoroutineScope(
-        kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default,
-    ).launch {
+    /**
+     * 常驻收集器，做 300ms 静默期去抖：连续改期/导入只刷一轮组件。
+     *
+     * 这个 Job 必须持有引用，否则没有强引用的 coroutine 会被当成垃圾回收，
+     * 去抖就静默失效（表现为"改了日程组件偶尔不刷新"）。
+     */
+    @Suppress("unused")
+    private val refreshWorker = CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
         widgetRefresh.collect {
-            delay(300)
+            delay(WIDGET_REFRESH_DEBOUNCE_MS)
             GoaldayApplication.appContext?.let { ctx ->
                 withContext(Dispatchers.IO) { WidgetRefresh.refreshScheduleWidgets(ctx) }
             }
@@ -117,7 +129,7 @@ class ScheduleRepository private constructor(
         return entry
     }
 
-    /** 组件刷新排到后台并去抖 300ms：主线程不再为每次写入付 4 次 Binder IPC 的钱 */
+    /** 组件刷新排到后台并去抖：主线程不再为每次写入付 4 次 Binder IPC 的钱 */
     private fun scheduleWidgetRefresh() {
         widgetRefresh.tryEmit(Unit)
     }
@@ -129,6 +141,9 @@ class ScheduleRepository private constructor(
     }
 
     companion object {
+        /** 组件刷新静默期：连续改期/导入合并成一次刷新 */
+        private const val WIDGET_REFRESH_DEBOUNCE_MS = 300L
+
         @Volatile
         private var instance: ScheduleRepository? = null
 
